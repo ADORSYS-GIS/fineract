@@ -1,0 +1,3 @@
+curl -k -H "Fineract-Platform-TenantId: default" -H "Content-Type: application/json" -d '{"username": "mifos", "password": "password"}'  -X POST https://localhost:8443/fineract-provider/api/v1/authentication
+
+curl -k -H "Fineract-Platform-TenantId: default" -u mifos:password https://localhost/fineract-provider/fineract.json
