@@ -39,7 +39,40 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            {{- toYaml .Values.env | nindent 12 }}
+            - name: FINERACT_NODE_ID
+              value: "1"
+            - name: FINERACT_HIKARI_DRIVER_CLASS_NAME
+              value: org.mariadb.jdbc.Driver
+            - name: FINERACT_HIKARI_JDBC_URL
+              value: "jdbc:mariadb://{{ .Release.Name }}-mariadb:3306/{{ .Values.mariadb.auth.database }}"
+            - name: FINERACT_HIKARI_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fineract-helm-chart.fullname" . }}-db-secret
+                  key: username
+            - name: FINERACT_HIKARI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fineract-helm-chart.fullname" . }}-db-secret
+                  key: password
+            - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
+              value: "{{ .Release.Name }}-mariadb"
+            - name: FINERACT_DEFAULT_TENANTDB_PORT
+              value: "3306"
+            - name: FINERACT_DEFAULT_TENANTDB_UID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fineract-helm-chart.fullname" . }}-db-secret
+                  key: username
+            - name: FINERACT_DEFAULT_TENANTDB_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fineract-helm-chart.fullname" . }}-db-secret
+                  key: password
+            - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
+              value: ""
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xmx1G"
           ports:
             - name: https
               containerPort: {{ .Values.service.port }}
@@ -54,11 +87,20 @@ spec:
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
-      {{- with.Values.initContainers }}
       initContainers:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        - name: init-mydb
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              echo -e "Checking for the availability of MYSQL server deployment";
+              while ! nc -z "{{ .Release.Name }}-mariadb" 3306; do
+                sleep 1;
+                printf "-";
+              done;
+              echo -e " >> MYSQL server has started";
+      {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}
