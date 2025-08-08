@@ -139,6 +139,10 @@ mariadb:
     username: "fineract"
     password: "password"
   primary:
+    initdb:
+      scripts:
+        01-createdbs.sql: |
+          CREATE DATABASE IF NOT EXISTS `fineract_default`;
     persistence:
       enabled: true
       size: 8Gi
