@@ -131,3 +131,107 @@ This prevents Fineract from starting and immediately crashing because the databa
 7.  `templates/deployment.yaml` creates the Fineract deployment. It populates the environment variables by pointing to the database service name and the secret we just created.
 
 This creates a powerful, reusable, and easy-to-understand deployment where all the moving parts are connected logically through the Helm templating engine.
+
+---
+
+## 5. Deep Dive: How Fineract Connects to the Bitnami Database
+
+This is the most magical part of the chart, but it's actually a very logical and clever process. Let's break down exactly how the Fineract application, which knows nothing about Helm, is able to find and authenticate with the MariaDB database that gets created by the Bitnami subchart.
+
+Imagine you are giving instructions to a new employee (Fineract) on how to access a secure company safe (the Database).
+
+You can't just shout the password across the room. You need to give them two things:
+1.  The location of the safe.
+2.  A secure way to get the combination to open it.
+
+This is exactly what our Helm chart does.
+
+### Step 1: The Database Gets a Reliable Address (A Kubernetes Service)
+
+When Helm installs the MariaDB subchart, Bitnami's chart automatically creates a **Kubernetes Service**. A Service is a stable, internal network address inside the cluster. Pods can be created or destroyed, and their internal IP addresses can change, but the Service address never changes.
+
+The Bitnami chart creates this service with a predictable name, which by default is:
+
+`{{ .Release.Name }}-mariadb`
+
+-   `{{ .Release.Name }}` is a special Helm variable that gets replaced with the name you give your installation. If you run `helm install my-fineract .`, this becomes `my-fineract`.
+
+So, the final, stable address for the database inside the cluster will be `my-fineract-mariadb`.
+
+### Step 2: We Create a Secure Password Envelope (A Kubernetes Secret)
+
+We need to give Fineract the database username and password. We must **never** write passwords directly into a `deployment.yaml` file. The correct way to handle this is with a **Kubernetes Secret**.
+
+This is the job of our `templates/fineract-db-secret.yaml` file. Let's look at its code:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "fineract-helm-chart.fullname" . }}-db-secret # 1. Give the secret a unique name
+  labels:
+    {{- include "fineract-helm-chart.labels" . | nindent 4 }}
+type: Opaque
+data:
+  # 2. Get the username and password from values.yaml, then encode them
+  username: {{ .Values.mariadb.auth.username | b64enc | quote }}
+  password: {{ .Values.mariadb.auth.password | b64enc | quote }}
+```
+
+1.  **`metadata.name`**: We give the secret a unique name, like `my-fineract-fineract-helm-chart-db-secret`. This ensures that if you install Fineract multiple times in the same namespace, their secrets won't clash.
+2.  **`data`**: This is the important part. We are telling Helm:
+    -   Create a key inside the secret called `username`.
+    -   For its value, go to our `values.yaml` file, find the `mariadb.auth.username` value.
+    -   Take that value and encode it in Base64 (`b64enc`), which is how Kubernetes stores secret data.
+    -   Do the same for the `password`.
+
+This guarantees that the secret we create for Fineract contains the exact same credentials that the MariaDB chart is using to create the database user.
+
+### Step 3: Giving Fineract the Address and the Envelope (Environment Variables)
+
+Now we need to tell the Fineract container how to find the database address and how to open the password envelope. We do this using environment variables in our `templates/deployment.yaml`.
+
+#### Giving Fineract the Database Address:
+
+Fineract needs a JDBC connection string. We build this dynamically:
+
+```yaml
+- name: FINERACT_HIKARI_JDBC_URL
+  value: "jdbc:mariadb://{{ .Release.Name }}-mariadb:3306/{{ .Values.mariadb.auth.database }}"
+```
+
+When Helm renders this template, it replaces the placeholders:
+-   `{{ .Release.Name }}` becomes `my-fineract`.
+-   `{{ .Values.mariadb.auth.database }}` becomes `fineract_tenants` (from `values.yaml`).
+
+The final environment variable set in the Fineract container is:
+`FINERACT_HIKARI_JDBC_URL=jdbc:mariadb://my-fineract-mariadb:3306/fineract_tenants`
+
+Fineract now knows the exact DNS address to use to talk to the database service.
+
+#### Telling Fineract How to Get the Password:
+
+We don't give Fineract the password directly. We give it the *location* of the secret.
+
+```yaml
+- name: FINERACT_HIKARI_PASSWORD
+  valueFrom: # This tells Kubernetes to get the value from somewhere else
+    secretKeyRef:
+      name: {{ include "fineract-helm-chart.fullname" . }}-db-secret # The name of our secret
+      key: password # The specific key within the secret to use
+```
+
+This block tells the Kubernetes system (not Fineract directly): "When you start the Fineract container, create an environment variable called `FINERACT_HIKARI_PASSWORD`. For the value, you must go find the Secret named `my-fineract-fineract-helm-chart-db-secret`, open it, find the data stored under the key `password`, decode it, and inject that as the value for the environment variable."
+
+We do the exact same thing for the username.
+
+### Summary of the Connection Flow
+
+It's a chain of references that Helm connects for us:
+
+1.  **You** provide the master configuration in `values.yaml`.
+2.  The **MariaDB Chart** uses your values to create a **Service** (the address) and a database user.
+3.  Our **`fineract-db-secret.yaml`** template uses your values to create a **Secret** (the password envelope).
+4.  Our **`deployment.yaml`** template tells the Fineract container the name of the **Service** and tells it to get its credentials from the **Secret**.
+
+This is how all the pieces, despite being in separate files and even separate charts, are wired together into a single, functional application at deployment time.
