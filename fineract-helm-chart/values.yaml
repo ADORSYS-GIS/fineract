@@ -133,20 +133,20 @@ tolerations: []
 
 affinity: {}
 
-mariadb:
+postgresql:
   enabled: true
   auth:
-    rootPassword: "password"
+    postgresPassword: "postgres"
+    username: "postgres"
+    password: "postgres"
     database: "fineract_tenants"
-    username: "fineract"
-    password: "password"
 
-  initdbScripts:
-    # This script will run on first boot to create the second database
-    init.sql: |
-      CREATE DATABASE IF NOT EXISTS fineract_default;
-      GRANT ALL PRIVILEGES ON fineract_default.* TO 'fineract'@'%';
-      FLUSH PRIVILEGES;
+  primary:
+    initdb:
+      scripts:
+        init.sql: |
+          CREATE DATABASE fineract_default;
+          GRANT ALL PRIVILEGES ON DATABASE fineract_default TO postgres;
 
   persistence:
     enabled: true

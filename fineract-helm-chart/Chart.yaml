@@ -24,7 +24,7 @@ version: 0.1.0
 appVersion: "1.16.0"
 
 dependencies:
-  - name: mariadb
-    version: "11.4.2"
+  - name: postgresql
+    version: "15.5.1"
     repository: "https://charts.bitnami.com/bitnami"
-    condition: mariadb.enabled
+    condition: postgresql.enabled
