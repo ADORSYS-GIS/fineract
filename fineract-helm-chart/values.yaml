@@ -89,14 +89,16 @@ requests:
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
     httpGet:
+      scheme: HTTPS
       path: /fineract-provider/actuator/health/liveness
-      port: 8080
+      port: 8443
     initialDelaySeconds: 180
     periodSeconds: 1
 readinessProbe:
     httpGet:
+      scheme: HTTPS
       path: /fineract-provider/actuator/health/readiness
-      port: 8080
+      port: 8443
     initialDelaySeconds: 180
     periodSeconds: 1
 
@@ -138,11 +140,14 @@ mariadb:
     database: "fineract_tenants"
     username: "fineract"
     password: "password"
-  primary:
-    initdb:
-      scripts:
-        01-createdbs.sql: |
-          CREATE DATABASE IF NOT EXISTS `fineract_default`;
-    persistence:
-      enabled: true
-      size: 8Gi
+
+  initdbScripts:
+    # This script will run on first boot to create the second database
+    init.sql: |
+      CREATE DATABASE IF NOT EXISTS fineract_default;
+      GRANT ALL PRIVILEGES ON fineract_default.* TO 'fineract'@'%';
+      FLUSH PRIVILEGES;
+
+  persistence:
+    enabled: true
+    size: 8Gi
