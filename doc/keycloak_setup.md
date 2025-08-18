@@ -112,87 +112,52 @@ You are now ready to test out OAuth.
 
 ---
 
-## Interacting with the Fineract API
+## How to Manually Get an Access Token for Testing
 
-Once Keycloak and Fineract are configured, you can obtain an access token and use it to make authenticated requests to the Fineract API.
+Since the system uses the OAuth 2.0 Authorization Code flow, getting a token for a user requires an interactive login via a web browser. This guide explains how to do this manually for development and testing purposes.
 
-### Step 1: Obtain an Access Token
+### Step 1: Get the Authorization Code
 
-To get an access token, you need the `client_secret` for the `community-app` client. You can find this in the Keycloak Admin Console under **Realms** > **fineract** > **Clients** > **community-app** > **Credentials** tab.
+1.  Make sure all Docker services are running (`docker-compose up -d`).
+2.  Open your web browser and navigate to the following URL. This link is broken into multiple lines for readability; you should combine them into a single URL.
 
-Use the following `curl` command to request a token. Replace `**********` with your actual `client_secret`.
+    ```
+    http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth
+    ?client_id=community-app
+    &response_type=code
+    &scope=openid
+    &redirect_uri=http://localhost:8080/
+    ```
+
+3.  Keycloak will present a login page. Sign in with a user's credentials (e.g., `mifos` / `password`).
+4.  After login, your browser will be redirected to a non-existent page (`http://localhost:8080/...`) and will show a connection error. This is expected.
+5.  Copy the `code` parameter from your browser's address bar. It will look like this:
+    `http://localhost:8080/?session_state=...&code=A_VERY_LONG_STRING...`
+
+    **Important:** This authorization code is for a **single use** and will expire. If you need to get another token, you must repeat this step to get a new code.
+
+### Step 2: Exchange the Code for an Access Token
+
+Now, use the single-use code from the previous step to get an access token. You will also need the `client_secret`, which you can find in the Keycloak Admin Console (`Clients` > `community-app` > `Credentials` tab.
 
 ```bash
+# Replace placeholders with your actual code and client secret
 TOKEN=$(curl --silent --request POST \
   "http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/token" \
   --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode 'username=mifos' \
-  --data-urlencode 'password=password' \
+  --data-urlencode 'grant_type=authorization_code' \
   --data-urlencode 'client_id=community-app' \
-  --data-urlencode 'grant_type=password' \
-  --data-urlencode 'client_secret=**********' \
-  | jq -r '.access_token')
+  --data-urlencode 'client_secret=[YOUR_CLIENT_SECRET_HERE]' \
+  --data-urlencode 'code=[THE_CODE_YOU_COPIED_FROM_THE_BROWSER]' \
+  --data-urlencode 'redirect_uri=http://localhost:8080/' \
+  | jq -r ".access_token")
 
 echo "Access Token: $TOKEN"
 ```
 
-This command sends a request to Keycloak's token endpoint with the user credentials and client details and extracts the `access_token` from the JSON response.
+### Step 3: Use the Access Token
 
-### Step 2: Make an API Request
-
-Once you have the access token stored in the `$TOKEN` variable, you can use it to make authenticated requests to the Fineract API. The token must be included in the `Authorization` header as a Bearer token.
-
-#### Example 1: Create a Client
-
-Here is an example of how to create a new client in Fineract:
-
-```bash
-curl --insecure \
-  "https://localhost/fineract-provider/api/v1/clients" \
-  --header "Fineract-Platform-TenantId: default" \
-  --header "Authorization: Bearer $TOKEN" \
-  --header "Content-Type: application/json" \
-  --request POST \
-  --data '{
-    "officeId": 1,
-    "firstname": "Petra",
-    "lastname": "Yton",
-    "externalId": "786YYH7",
-    "dateFormat": "dd MMMM yyyy",
-    "locale": "en",
-    "active": true,
-    "activationDate": "04 March 2009",
-    "submittedOnDate": "04 March 2009",
-    "legalFormId": 1
-  }'
-```
-
-A successful request will return a JSON response with the details of the newly created client, like this:
-
-```json
-{"officeId":1,"clientId":1,"resourceId":1,"resourceExternalId":"786YYH7"}
-```
-
-#### Example 2: Get a Client Template
-
-Here is an example of how to retrieve a client template, which is useful for populating UI forms for client creation.
-
-```bash
-curl --insecure \
-  "https://localhost/fineract-provider/api/v1/clients/template?officeId=1" \
-  --header "Fineract-Platform-TenantId: default" \
-  --header "Authorization: Bearer $TOKEN"
-```
-
-A successful request will return a JSON response with template data, like this:
-
-```json
-{"activationDate":[2025,8,1],"isStaff":false,"officeId":1,"officeOptions":[{"id":1,"name":"Head Office","nameDecorated":"Head Office"}],"savingProductOptions":[],"genderOptions":[],"clientTypeOptions":[],"clientClassificationOptions":[],"clientNonPersonConstitutionOptions":[],"clientNonPersonMainBusinessLineOptions":[],"clientLegalFormOptions":[{"id":1,"code":"legalFormType.person","value":"Person"},{"id":2,"code":"legalFormType.entity","value":"Entity"}],"familyMemberOptions":{"relationshipIdOptions":[],"genderIdOptions":[],"maritalStatusIdOptions":[],"professionIdOptions":[]},"address":[null],"isAddressEnabled":false}
-```
-
-#### Example 3: List Clients
-
-This example shows how to list all clients.
+You can now use the value in the `$TOKEN` variable to make authenticated requests to the Fineract API.
 
 ```bash
 curl --insecure \
@@ -201,32 +166,7 @@ curl --insecure \
   --header "Authorization: Bearer $TOKEN"
 ```
 
-A successful request will return a JSON response with a list of clients:
-
-```json
-{"totalFilteredRecords":1,"pageItems":[{"id":1,"accountNo":"000000001","externalId":"786YYH7","status":{"id":300,"code":"clientStatusType.active","value":"Active"},"subStatus":{"active":false,"mandatory":false},"active":true,"activationDate":[2009,3,4],"firstname":"Petra","lastname":"Yton","displayName":"Petra Yton","gender":{"active":false,"mandatory":false},"clientType":{"active":false,"mandatory":false},"clientClassification":{"active":false,"mandatory":false},"isStaff":false,"officeId":1,"officeName":"Head Office","timeline":{"submittedOnDate":[2009,3,4],"submittedByUsername":"mifos","submittedByFirstname":"App","submittedByLastname":"Administrator","activatedOnDate":[2009,3,4],"activatedByUsername":"mifos","activatedByFirstname":"App","activatedByLastname":"Administrator"},"legalForm":{"id":1,"code":"legalFormType.person","value":"Person"},"clientNonPersonDetails":{"constitution":{"active":false,"mandatory":false},"mainBusinessLine":{"active":false,"mandatory":false}}}]}
-```
-
-#### Example 4: Update a Client
-
-This example shows how to update an existing client's information, such as their external ID.
-
-```bash
-curl --insecure -X PUT \
-  "https://localhost/fineract-provider/api/v1/clients/1" \
-  --header "Content-Type: application/json" \
-  --header "Fineract-Platform-TenantId: default" \
-  --header "Authorization: Bearer $TOKEN" \
-  --data '{
-    "externalId": "786444UUUYYH7"
-  }'
-```
-
-A successful request will return a JSON response confirming the changes:
-
-```json
-{"officeId":1,"clientId":1,"resourceId":1,"changes":{"externalId":"786444UUUYYH7"},"resourceExternalId":"786444UUUYYH7"}
-```
+> **Note on Code Lifespan:** For convenience during manual testing, the lifespan of the authorization code has been increased to 10 minutes. This was done by changing the `accessCodeLifespan` property to `600` in the `/keycloak-config/realm-export.json` file. This gives you more time to complete the manual steps of copying the code and executing the `curl` command.
 
 ---
 

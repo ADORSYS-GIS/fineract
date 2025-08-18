@@ -60,26 +60,43 @@ Let's examine the default user management configuration in a new Fineract instan
 
 ### 4.1. Obtaining an Access Token
 
-Before we can interact with the Fineract API, we need to obtain an access token for an administrative user. We will use the default `mifos` user, which has the `Super user` role.
+Before we can interact with the Fineract API, we need an access token. For administrative tasks, we can get a token for the `mifos` user using the Authorization Code flow.
 
-To get an access token, you may need the `client_secret` for the `community-app` client. You can find this in the Keycloak Admin Console under **Realms** > **fineract** > **Clients** > **community-app** > **Credentials** tab.
+**Step 1: Get the Authorization Code**
 
-Use the following `curl` command to request a token. Replace `**********` with your actual `client_secret` if required by your Keycloak client configuration.
+1.  In your browser, navigate to the following URL (ensure it's a single line):
+   
+    ```
+    http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth
+    ?client_id=community-app
+    &response_type=code
+    &scope=openid
+    &redirect_uri=http://localhost:8080/
+    ```
+2.  Log in with the `mifos` user credentials (`mifos` / `password`).
+3.  After login, you will be redirected to an error page. Copy the `code` from the URL in your browser's address bar. This code is single-use.
+
+**Step 2: Exchange the Code for an Access Token**
+
+Use the code you just copied to run the following command. Remember to replace `[YOUR_CLIENT_SECRET_HERE]` with the secret from the Keycloak Admin Console.
 
 ```bash
+# Replace placeholders with your code and client secret
 TOKEN=$(curl --silent --request POST \
   "http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/token" \
   --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode 'username=mifos' \
-  --data-urlencode 'password=password' \
+  --data-urlencode 'grant_type=authorization_code' \
   --data-urlencode 'client_id=community-app' \
-  --data-urlencode 'grant_type=password' \
-  --data-urlencode 'client_secret=**********' \
+  --data-urlencode 'client_secret=[YOUR_CLIENT_SECRET_HERE]' \
+  --data-urlencode 'code=[THE_CODE_YOU_COPIED_FROM_THE_BROWSER]' \
+  --data-urlencode 'redirect_uri=http://localhost:8080/' \
   | jq -r '.access_token')
 
 echo "Access Token: $TOKEN"
 ```
-This command stores the access token in the `$TOKEN` environment variable, which we will use in the following examples.
+This command stores the access token in the `$TOKEN` environment variable for the following examples.
+
+
 
 ### 4.2. Default Users
 
@@ -411,17 +428,34 @@ The `Teller` role does not have the `CREATE_CLIENT` permission. Let's try to cre
 
 #### 10.1.1. Get a Token for the Teller User
 
+To get a token for the `teller` user, follow the same Authorization Code flow.
+
+**Step 1: Get the Authorization Code**
+
+1.  In your browser, navigate to the following URL:
+    ```
+    http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth?client_id=community-app&response_type=code&scope=openid&redirect_uri=http://localhost:8080/
+    ```
+2.  Log in with the `teller` user credentials (`teller` / `Abc1!Xyz@2Df`).
+3.  Copy the single-use `code` from the URL in your browser's address bar after the redirect.
+
+**Step 2: Exchange the Code for an Access Token**
+
+Run the following command, pasting the new code and your client secret.
+
 ```bash
+# Replace placeholders with your new code and client secret
 TOKEN=$(curl --silent --request POST \
   "http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/token" \
   --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode 'username=teller' \
-  --data-urlencode 'password=password' \
+  --data-urlencode 'grant_type=authorization_code' \
   --data-urlencode 'client_id=community-app' \
-  --data-urlencode 'grant_type=password' \
-  --data-urlencode 'client_secret=**********' \
+  --data-urlencode 'client_secret=[YOUR_CLIENT_SECRET_HERE]' \
+  --data-urlencode 'code=[THE_TELLER_CODE_FROM_THE_BROWSER]' \
+  --data-urlencode 'redirect_uri=http://localhost:8080/' \
   | jq -r '.access_token')
 ```
+
 
 #### 10.1.2. Attempt to Create a Client
 
@@ -473,15 +507,31 @@ The `Loan Officer` role has the `CREATE_CLIENT` permission. Let's try to create 
 
 #### 10.2.1. Get a Token for the Loan Officer User
 
+To get a token for the `loan` user, follow the Authorization Code flow again.
+
+**Step 1: Get the Authorization Code**
+
+1.  In your browser, navigate to the following URL:
+    ```
+    http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth?client_id=community-app&response_type=code&scope=openid&redirect_uri=http://localhost:8080/
+    ```
+2.  Log in with the `loan` user credentials (`loan` / `Abc1!Xyz@2Df`).
+3.  Copy the single-use `code` from the URL in your browser's address bar after the redirect.
+
+**Step 2: Exchange the Code for an Access Token**
+
+Run the following command, pasting the new code and your client secret.
+
 ```bash
+# Replace placeholders with your new code and client secret
 TOKEN=$(curl --silent --request POST \
   "http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/token" \
   --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode 'username=loan' \
-  --data-urlencode 'password=password' \
+  --data-urlencode 'grant_type=authorization_code' \
   --data-urlencode 'client_id=community-app' \
-  --data-urlencode 'grant_type=password' \
-  --data-urlencode 'client_secret=**********' \
+  --data-urlencode 'client_secret=[YOUR_CLIENT_SECRET_HERE]' \
+  --data-urlencode 'code=[THE_LOAN_OFFICER_CODE_FROM_THE_BROWSER]' \
+  --data-urlencode 'redirect_uri=http://localhost:8080/' \
   | jq -r '.access_token')
 ```
 
