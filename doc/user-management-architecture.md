@@ -68,7 +68,7 @@ Before we can interact with the Fineract API, we need an access token. For admin
    
     ```
     http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth
-    ?client_id=community-app
+    ?client_id=web-client
     &response_type=code
     &scope=openid
     &redirect_uri=http://localhost:8080/
@@ -86,8 +86,8 @@ TOKEN=$(curl --silent --request POST \
   "http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/token" \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=authorization_code' \
-  --data-urlencode 'client_id=community-app' \
-  --data-urlencode 'client_secret=[YOUR_CLIENT_SECRET_HERE]' \
+  --data-urlencode 'client_id=web-client' \
+  --data-urlencode 'client_secret=**********' \
   --data-urlencode 'code=[THE_CODE_YOU_COPIED_FROM_THE_BROWSER]' \
   --data-urlencode 'redirect_uri=http://localhost:8080/' \
   | jq -r '.access_token')
