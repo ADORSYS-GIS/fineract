@@ -14,7 +14,7 @@ LAST_NAME="User"
 echo "👤 Creating users for realm '$REALM'..."
 
 # Login to Keycloak CLI
-$KEYCLOAK_BIN/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+$KEYCLOAK_BIN/kcadm.sh config credentials --server http://keycloak:8080/ --realm master --user admin --password admin
 
 # Create user with full profile
 echo "🔧 Creating user '$USERNAME'..."
