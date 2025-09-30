@@ -79,3 +79,14 @@ services:
     depends_on:
       keycloak-config-cli:
         condition: service_completed_successfully
+
+  apache-proxy:
+    build:
+      context: ./config/apache
+    depends_on:
+      - fineract
+      - keycloak
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
