@@ -877,7 +877,8 @@
       "secret": "**********",
       "redirectUris": [
         "http://localhost*",
-        "https://localhost*"
+        "https://localhost*",
+        "http://localhost/cashier/callback"
       ],
       "webOrigins": [
         "http://localhost*"
