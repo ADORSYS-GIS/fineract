@@ -1,10 +1,16 @@
 # Apache Proxy, Keycloak, and Multi-App Integration Guide
 
-This document details the setup and configuration of an Apache HTTP Server as a reverse proxy. It acts as a secure gateway for the Fineract backend API and multiple single-page frontend applications, with user authentication handled by Keycloak via OpenID Connect (OIDC).
+This document details the setup and configuration of an Apache HTTP Server as a reverse proxy. It acts as a secure gateway for the Fineract backend API and multiple single-page frontend applications, with user authentication handled entirely by the proxy via Keycloak and OpenID Connect (OIDC).
+
+This architecture removes all authentication and token management logic from the frontend applications, making them "auth-dumb" and centralizing security at the gateway level.
 
 ## 1. Architecture Overview
 
-The goal is to create a single entry point (`http://localhost`) that manages user authentication and seamlessly routes requests to the appropriate backend or frontend development server.
+The goal is to create a single entry point (`http://localhost`) that:
+1.  Intercepts all user traffic.
+2.  Manages the entire OIDC authentication flow with Keycloak.
+3.  Injects the user's JWT access token into API requests destined for the Fineract backend.
+4.  Seamlessly routes requests to the appropriate backend or frontend development server.
 
 ```mermaid
 graph TD
@@ -29,14 +35,16 @@ graph TD
     User -- "3. Authenticates" --> Keycloak
     Keycloak -- "4. Issues Token & Redirects to /cashier/callback" --> Proxy
     Proxy -- "5. Validates Token, Creates Session" --> Proxy
-    Proxy -- "6. Forwards Authenticated Request" --> ViteCashier
+    Proxy -- "6. Forwards UI Request" --> ViteCashier
+    User -- "7. Browser requests API data /fineract-provider/api/..." --> Proxy
+    Proxy -- "8. Injects Auth Headers (Bearer Token)" --> Fineract
 ```
 
 ## 2. Core Configuration Files
 
 ### 2.1. Apache HTTP Server Configuration (`httpd.conf`)
 
-This is the heart of the reverse proxy. It defines routing rules, security policies, and OIDC integration.
+This is the heart of the reverse proxy. It defines routing rules, security policies, OIDC integration, and the logic for injecting authentication headers.
 
 **File:** `fineract/config/apache/httpd.conf`
 
@@ -56,6 +64,7 @@ LoadModule ssl_module modules/mod_ssl.so
 LoadModule proxy_connect_module modules/mod_proxy_connect.so
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule proxy_wstunnel_module modules/mod_proxy_wstunnel.so
+LoadModule headers_module modules/mod_headers.so
 
 # 2. Global Server Settings
 ServerName localhost
@@ -71,7 +80,6 @@ CustomLog /proc/self/fd/1 common
 
 # 4. Virtual Host for All Traffic on Port 80
 <VirtualHost *:80>
-    # Preserves the original Host header from the client.
     ProxyPreserveHost On
 
     # 5. Fineract Backend API Proxy Configuration
@@ -79,47 +87,79 @@ CustomLog /proc/self/fd/1 common
     SSLProxyVerify none
     SSLProxyCheckPeerCN off
     SSLProxyCheckPeerName off
+    SSLProxyCheckPeerExpire off
     ProxyPass /fineract-provider/ https://fineract:8443/fineract-provider/
     ProxyPassReverse /fineract-provider/ https://fineract:8443/fineract-provider/
 
-    # 6. Cashier Frontend App Proxy Configuration
-    # WebSocket support for Vite's Hot Module Replacement (HMR)
-    RewriteEngine on
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/cashier/(.*) "ws://172.20.0.1:5173/cashier/$1" [P,L]
-
-    # Prevents the OIDC callback from being proxied to the Vite app.
-    ProxyPass /cashier/callback !
-    # Proxies all other /cashier/ requests to the Vite dev server.
-    ProxyPass /cashier/ http://172.20.0.1:5173/cashier/
-    ProxyPassReverse /cashier/ http://172.20.0.1:5173/cashier/
-    # Rewrites cookie domains and paths for proper session handling.
-    ProxyPassReverseCookieDomain 172.20.0.1 localhost
-    ProxyPassReverseCookiePath / /cashier/
-
-    # 7. OpenID Connect (OIDC) Configuration
+    # 6. OpenID Connect (OIDC) Global Configuration
     OIDCCryptoPassphrase a-very-secret-passphrase
-    OIDCProviderMetadataURL http://172.20.0.1:9000/realms/fineract/.well-known/openid-configuration
+    OIDCProviderMetadataURL http://172.17.0.1:9000/realms/fineract/.well-known/openid-configuration
     OIDCClientID web-client
     OIDCClientSecret **********
-    OIDCRedirectURI http://localhost/cashier/callback
     
     # OIDC Session Management: Uses a server-side shared memory cache.
     # This is crucial to prevent the "too many redirects" error.
     OIDCSessionType server-cache
-
-    # Sets the OIDC session cookie path to the root for potential SSO.
     OIDCCookiePath /
-    # Mitigates CSRF attacks by setting SameSite cookie attribute.
     OIDCCookieSameSite On
 
-    # 8. Protected Location for Cashier App
-    # This block triggers OIDC authentication for any request to /cashier/.
+    # 7. Frontend Application Routing
+    # Each app gets its own block for proxying and authentication.
+
+    # --- START: Cashier App Configuration ---
+    OIDCRedirectURI http://localhost/cashier/callback
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/cashier/(.*) "ws://172.20.0.1:5173/cashier/$1" [P,L]
+    ProxyPass /cashier/callback !
+    ProxyPass /cashier/ http://172.20.0.1:5173/cashier/
+    ProxyPassReverse /cashier/ http://172.20.0.1:5173/cashier/
+    ProxyPassReverseCookieDomain 172.20.0.1 localhost
+    ProxyPassReverseCookiePath / /cashier/
     <Location /cashier/>
         AuthType openid-connect
         Require valid-user
     </Location>
+    # --- END: Cashier App Configuration ---
+
+    # --- START: Branch Manager App Configuration ---
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/branch/(.*) "ws://172.20.0.1:5174/branch/$1" [P,L]
+    ProxyPass /branch/callback !
+    ProxyPass /branch/ http://172.20.0.1:5174/branch/
+    ProxyPassReverse /branch/ http://172.20.0.1:5174/branch/
+    ProxyPassReverseCookiePath / /branch/
+    <Location /branch/>
+        AuthType openid-connect
+        Require valid-user
+    </Location>
+    # --- END: Branch Manager App Configuration ---
+
+    # --- START: Account Manager App Configuration ---
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/account/(.*) "ws://172.20.0.1:5175/account/$1" [P,L]
+    ProxyPass /account/callback !
+    ProxyPass /account/ http://172.20.0.1:5175/account/
+    ProxyPassReverse /account/ http://172.20.0.1:5175/account/
+    ProxyPassReverseCookiePath / /account/
+    <Location /account/>
+        AuthType openid-connect
+        Require valid-user
+    </Location>
+    # --- END: Account Manager App Configuration ---
+
+    # 8. Fineract API Token Injection
+    # This is the core of the proxy-based auth. It protects API endpoints
+    # and injects the necessary headers for Fineract.
+    <LocationMatch "^/fineract-provider/api/.*">
+        AuthType openid-connect
+        Require valid-user
+        RequestHeader set Authorization "Bearer %{OIDC_access_token}e"
+        RequestHeader set Fineract-Platform-TenantId "default"
+    </LocationMatch>
 
 </VirtualHost>
 ```
@@ -135,7 +175,7 @@ services:
 
   apache-proxy:
     build:
-      context: ./fineract/config/apache # Corrected context path
+      context: ./fineract/config/apache
     depends_on:
       - fineract
       - keycloak
@@ -145,194 +185,99 @@ services:
       - ./fineract/config/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
 ```
 
-## 3. `httpd.conf` Explained Line-by-Line
+## 3. `httpd.conf` Explained
 
 #### **1. Module Loading**
--   `LoadModule ...`: These lines load the necessary Apache modules. Key modules for this setup are:
+-   `LoadModule ...`: Key modules for this setup are:
     -   `mod_auth_openidc`: The OpenID Connect module for Keycloak authentication.
     -   `mod_proxy` & `mod_proxy_http`: For acting as a reverse proxy.
-    -   `mod_rewrite` & `mod_proxy_wstunnel`: For supporting WebSockets, which Vite's dev server uses for Hot Module Replacement (HMR).
-    -   `mod_socache_shmcb`: Provides the shared memory cache used for server-side OIDC sessions.
-
-#### **2. Global Server Settings**
--   `ServerName localhost`: Sets the server's hostname.
--   `User daemon` / `Group daemon`: The user and group Apache runs under.
--   `Listen 80`: Instructs Apache to listen for traffic on port 80.
-
-#### **3. Logging Configuration**
--   `LogLevel warn`: Sets the logging level to `warn`. Changed from `debug` after troubleshooting.
--   `ErrorLog ...` & `CustomLog ...`: Redirects logs to the Docker container's standard output/error streams, making them accessible via `docker logs`.
-
-#### **4. Virtual Host**
--   `<VirtualHost *:80>`: A container for directives that apply to all traffic received on port 80.
--   `ProxyPreserveHost On`: Ensures that the original `Host` header from the client's request is passed to the backend services. This is important for applications that rely on this header.
+    -   `mod_rewrite` & `mod_proxy_wstunnel`: For supporting WebSockets (used by Vite's HMR).
+    -   `mod_socache_shmcb`: Provides the shared memory cache for server-side OIDC sessions.
+    -   `mod_headers`: **Crucial addition.** This module is required to use the `RequestHeader` directive, which allows us to add/modify request headers.
 
 #### **5. Fineract Backend API Proxy**
 -   `SSLProxyEngine on`: Enables the SSL/TLS protocol for proxying.
--   `SSLProxyVerify none` & `SSLProxyCheckPeer* off`: These directives disable certificate validation for the backend Fineract service. **This is acceptable for local development with self-signed certificates but should NEVER be used in production.**
--   `ProxyPass /fineract-provider/ ...`: Forwards any request whose path starts with `/fineract-provider/` to the Fineract backend service (`https://fineract:8443/fineract-provider/`).
--   `ProxyPassReverse /fineract-provider/ ...`: Rewrites the `Location`, `Content-Location`, and `URI` headers in responses from the Fineract backend to match the proxy's address.
+-   `SSLProxyVerify none` & `SSLProxyCheckPeer* off`: These directives disable certificate validation for the backend Fineract service. `SSLProxyCheckPeerExpire off` was added to prevent checks on certificate expiration. **This is acceptable for local development with self-signed certificates but should NEVER be used in production.**
+-   `ProxyPass` & `ProxyPassReverse`: Forward requests to the Fineract backend service.
 
-#### **6. Cashier Frontend App Proxy**
--   `RewriteEngine on ... RewriteRule ...`: This block specifically handles WebSocket traffic. If a request comes in for `/cashier/` with `Upgrade: websocket` headers, it's proxied to the Vite WebSocket server (`ws://...`). This is essential for HMR to work.
--   `ProxyPass /cashier/callback !`: A crucial directive that creates an exception. It tells Apache **not** to proxy requests for this specific path, allowing `mod_auth_openidc` to handle the authentication callback itself.
--   `ProxyPass /cashier/ ...`: Forwards all other HTTP requests under `/cashier/` to the Cashier app's Vite dev server.
--   `ProxyPassReverse /cashier/ ...`: Rewrites response headers from the Vite server.
--   `ProxyPassReverseCookieDomain ...` & `ProxyPassReverseCookiePath ...`: These rewrite cookies set by the backend service to match the proxy's domain and path structure, ensuring they are correctly handled by the browser.
+#### **6. OpenID Connect (OIDC) Global Configuration**
+-   `OIDCProviderMetadataURL`: The discovery URL for the Keycloak realm.
+    -   **CRITICAL:** The IP `172.17.0.1` is used. This is the Docker host's IP on the default bridge network. The Fineract backend is also configured to trust JWTs issued from this IP. Using a different IP (like `172.20.0.1`) would cause the JWT's `iss` (issuer) claim to be different from what Fineract expects, resulting in a `401 Unauthorized` error. This ensures consistency between the token issuer and the validator.
+-   `OIDCClientID` & `OIDCClientSecret`: Credentials for the `web-client` in Keycloak.
+-   `OIDCSessionType server-cache`: Configures server-side session storage, which is essential to prevent infinite redirect loops.
 
-#### **7. OpenID Connect (OIDC) Configuration**
--   `OIDCCryptoPassphrase ...`: A secret passphrase used for encrypting session data.
--   `OIDCProviderMetadataURL ...`: The URL where the OIDC module can find the Keycloak realm's configuration. The IP `172.20.0.1` is used for the Docker container to communicate with the Keycloak service running on the host.
--   `OIDCClientID` & `OIDCClientSecret`: Credentials for the `web-client` client configured in Keycloak.
--   `OIDCRedirectURI`: The URL that Keycloak will redirect to after a successful login. This must match a valid redirect URI in the Keycloak client settings.
--   `OIDCSessionType server-cache`: Configures `mod_auth_openidc` to store user sessions on the server-side in a shared memory cache. This is the key setting that solved the infinite redirect loop.
--   `OIDCCookiePath /`: Ensures the session cookie is sent for all paths on the domain, which is useful for enabling Single Sign-On (SSO) between different applications under the same proxy.
--   `OIDCCookieSameSite On`: A security measure to help prevent Cross-Site Request Forgery (CSRF) attacks.
+#### **7. Frontend Application Routing**
+-   **`OIDCRedirectURI`**: This is now defined within each application's configuration block (e.g., `OIDCRedirectURI http://localhost/cashier/callback`). It tells Keycloak where to send the user back to after a successful login for that specific app.
+-   **`Rewrite...` block**: Handles WebSocket traffic for Vite's Hot Module Replacement (HMR).
+-   **`ProxyPass /<app>/callback !`**: An exception that prevents the OIDC callback URL from being proxied to the frontend app, allowing `mod_auth_openidc` to handle it.
+-   **`ProxyPass /<app>/ ...`**: Forwards all other HTTP requests for that app's path to its Vite dev server.
+-   **`<Location /<app>/>`**: This block protects the application's path, triggering the OIDC authentication flow for any user who tries to access it.
 
-#### **8. Protected Location**
--   `<Location /cashier/>`: This block applies authentication rules specifically to requests whose path starts with `/cashier/`.
--   `AuthType openid-connect`: Specifies that OIDC should be used for authentication in this location.
--   `Require valid-user`: Enforces that a user must be authenticated to access this location. This is the directive that triggers the redirect to Keycloak.
+#### **8. Fineract API Token Injection**
+This is the most significant change from a client-side auth model.
+-   **`<LocationMatch "^/fineract-provider/api/.*">`**: This block applies its rules to any request whose path matches the given regular expression—in this case, any request to the Fineract API.
+-   `AuthType openid-connect` & `Require valid-user`: This ensures that only authenticated users can make API calls. If a user's session has expired, this will trigger a re-authentication flow.
+-   **`RequestHeader set Authorization "Bearer %{OIDC_access_token}e"`**: This is the core of the new architecture. For every matched request, it creates an `Authorization` header. The value is constructed with the word "Bearer " followed by the access token (`%{OIDC_access_token}e`) that `mod_auth_openidc` has stored in the user's session. This token is then sent to the Fineract backend, which validates it to authorize the API request.
+-   **`RequestHeader set Fineract-Platform-TenantId "default"`**: This adds the required tenant ID header for all API requests.
 
----
+## 4. Integrating Frontend Apps (Summary)
 
-## 4. Integrating Additional Frontend Apps
+The configuration in `httpd.conf` is already set up for three applications: `cashier-app`, `branchmanager-app`, and `account-manager-app`. To run them, follow this pattern for each:
 
-You can easily extend this setup to include the `branchmanager-app` and `account-manager-app`. The process is identical for each application. Here is a step-by-step guide.
+#### **Step 0: Ensure Frontend is "Auth-Dumb"**
+**This is the most important principle of this architecture.** Before proceeding, you must ensure that your frontend application contains **no authentication logic whatsoever**. The Apache proxy handles 100% of the user authentication flow.
 
-**Assumption:** We will run the applications on different ports:
--   `cashier-app`: `5173` (already configured)
--   `branchmanager-app`: `5174`
--   `account-manager-app`: `5175`
+This means your frontend code should **NOT**:
+- Store authentication tokens (e.g., in `localStorage` or `sessionStorage`).
+- Use interceptors (e.g., with Axios) to add `Authorization` headers to API requests.
+- Contain any pages or components for logging in or logging out.
+- Handle redirects to Keycloak or process authentication callbacks.
 
-### 4.0. A Note on Network Accessibility and the `--host` Flag
-
-Before integrating any frontend application, it's critical to understand how the Vite development server interacts with the Dockerized Apache proxy.
-
-By default, when you run `vite` (or `pnpm dev`), the development server only binds to `localhost`. This means it will only accept connections from the same machine (the host). However, our Apache proxy is running inside a separate Docker container, which has its own isolated network environment. From the proxy container's perspective, `localhost` refers to itself, not to your host machine where the Vite server is running.
-
-As a result, if you do not modify the startup command, the Apache proxy will be unable to connect to your Vite server, resulting in a "Connection Refused" or "Bad Gateway" error.
-
-**The Solution: The `--host` Flag**
-
-To solve this, we must modify the `dev` script in each frontend application's `package.json` file:
-
-```json
-// Example from frontend/cashier-app/package.json
-"scripts": {
-  "dev": "vite --host",
-}
-```
-
-Adding the `--host` flag tells Vite to listen on all available network interfaces (`0.0.0.0`). This makes the development server accessible not just from `localhost` on your host machine, but also from other devices on your network, and most importantly, from the Apache proxy container via the host's internal Docker IP address (e.g., `172.20.0.1`).
-
-**This change is a prerequisite for all frontend applications that need to be accessed through the proxy.**
-
-### 4.1. Integrating the `branchmanager-app`
+The frontend's only responsibility is to make relative API calls (e.g., `/fineract-provider/api/v1/clients`) as if no authentication exists. The proxy will automatically secure these calls.
 
 #### **Step 1: Configure Vite Base Path**
-
-The application needs to know it's being served from a sub-path.
-
-1.  Open `frontend/branchmanager-app/vite.config.ts`.
-2.  Add the `base` property to the `defineConfig` section.
+Ensure the app knows it's being served from a sub-path.
 
 ```typescript
-// frontend/branchmanager-app/vite.config.ts
-
-// ... imports
-
-// https://vitejs.dev/config/
-export default mergeConfig(
-	baseViteConfig,
-	defineConfig({
-        base: "/branch/", // <-- ADD THIS LINE
-		plugins: [
-			tanstackRouter({
-				target: "react",
-				autoCodeSplitting: true,
-			}),
-		],
-		// ... rest of config
-	}),
-);
-```
-
-#### **Step 2: Update Apache Configuration (`httpd.conf`)**
-
-Add a new set of proxy and authentication rules for the branch manager app.
-
-1.  Open `fineract/config/apache/httpd.conf`.
-2.  Add the following code block inside the `<VirtualHost *:80>` section, right after the `cashier-app` configuration.
-
-```apache
-    # --- START: Branch Manager App Configuration ---
-
-    # WebSocket support for Vite HMR
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/branch/(.*) "ws://172.20.0.1:5174/branch/$1" [P,L]
-
-    # OIDC Callback - Do not proxy
-    ProxyPass /branch/callback !
-    # Proxy requests to the Vite dev server for branch manager
-    ProxyPass /branch/ http://172.20.0.1:5174/branch/
-    ProxyPassReverse /branch/ http://172.20.0.1:5174/branch/
-    ProxyPassReverseCookiePath / /branch/
-
-    # Protected Location for Branch Manager App
-    <Location /branch/>
-        AuthType openid-connect
-        Require valid-user
-    </Location>
-
-    # --- END: Branch Manager App Configuration ---
-```
-
-#### **Step 3: Update Keycloak Redirect URIs**
-
-Your Keycloak client must be configured to accept the new callback URL.
-
-1.  Go to your Keycloak Admin Console.
-2.  Navigate to `fineract` realm -> `Clients` -> `web-client`.
-3.  In the "Valid Redirect URIs" field, add the new URI: `http://localhost/branch/callback`.
-4.  Save the changes.
-
-#### **Step 4: Configure Client-Side Router**
-
-Just as with the cashier app, you must inform TanStack Router about the base path.
-
-1.  Find the router creation logic in your `branchmanager-app` (likely in `src/main.tsx`).
-2.  Add the `basepath` option.
-
-```typescript
-// Example from frontend/branchmanager-app/src/main.tsx
-const router = createRouter({
-  routeTree,
-  context: { queryClient },
-  basepath: "/branch", // <-- ADD THIS LINE
+// Example: frontend/branchmanager-app/vite.config.ts
+defineConfig({
+    base: "/branch/", // <-- Must match the proxy path
+    // ...
 });
 ```
 
-#### **Step 5: Run the Development Server**
+#### **Step 2: Configure Client-Side Router**
+The client-side router (e.g., TanStack Router) must also be aware of the base path.
 
-Start the Vite server on the new port.
-
-```bash
-# In the frontend/branchmanager-app directory
-pnpm dev -- --port 5174
+```typescript
+// Example: frontend/branchmanager-app/src/main.tsx
+const router = createRouter({
+  // ...
+  basepath: "/branch", // <-- Must match the proxy path (without trailing slash)
+});
 ```
 
-You should now be able to access the Branch Manager app at `http://localhost/branch/`, and it will be protected by Keycloak.
+#### **Step 3: Update Keycloak Redirect URIs**
+Your Keycloak `web-client` must be configured to accept all callback URLs.
+1.  Go to your Keycloak Admin Console (`http://localhost:9000`).
+2.  Navigate to `fineract` realm -> `Clients` -> `web-client`.
+3.  Ensure the "Valid Redirect URIs" field contains an entry for each app:
+    -   `http://localhost/cashier/callback`
+    -   `http://localhost/branch/callback`
+    -   `http://localhost/account/callback`
 
-### 4.2. Integrating the `account-manager-app`
+#### **Step 4: Run the Development Server with `--host`**
+The Vite server must be accessible from the Docker container.
+1.  Modify the `dev` script in the app's `package.json`:
+    ```json
+    "scripts": {
+      "dev": "vite --host",
+    }
+    ```
+2.  Run the server on its designated port:
+    ```bash
+    # In frontend/branchmanager-app directory
+    pnpm dev -- --port 5174
 
-Follow the exact same steps as above, but use `/account/` as the path and `5175` as the port.
-
-1.  **Vite Config (`frontend/account-manager-app/vite.config.ts`):** Set `base: "/account/"`.
-2.  **Apache Config (`fineract/config/apache/httpd.conf`):** Add the corresponding proxy block for `/account/` and port `5175`.
-3.  **Keycloak:** Add `http://localhost/account/callback` to the valid redirect URIs.
-4.  **Router Config:** Set `basepath: "/account"` in the app's router setup.
-5.  **Run Dev Server:** `pnpm dev -- --port 5175`.
-
-By following this pattern, you can seamlessly add and protect any number of frontend applications behind the same Apache proxy with a single, centralized authentication system.
+    # In frontend/account-manager-app directory
+    pnpm dev -- --port 5175
