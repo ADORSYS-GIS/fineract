@@ -1,5 +1,6 @@
 *.class
 *.jar
+!/keycloak-theme/*.jar
 *.war
 *.ear
 .classpath

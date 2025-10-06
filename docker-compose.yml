@@ -44,14 +44,22 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
-    command: start-dev --health-enabled=true
+    command: >
+      start-dev
+      --health-enabled=true
+      --spi-theme-static-max-age=-1
+      --spi-theme-cache-themes=false
+      --spi-theme-cache-templates=false
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
+      KC_THEME_DEFAULT: adorsys-tm-01
     ports:
       - "9000:8080"
       - "8180:9000"
+    volumes:
+      - ./keycloak-theme/theme-1.0.1.jar:/opt/keycloak/providers/theme-1.0.1.jar:ro
     healthcheck:
       test: ["CMD-SHELL", "timeout 3 sh -c 'cat < /dev/null > /dev/tcp/localhost/9000' || exit 1"]
       interval: 15s
