@@ -878,7 +878,8 @@
       "redirectUris": [
         "http://localhost*",
         "https://localhost*",
-        "http://localhost/cashier/callback"
+        "http://localhost/cashier/callback",
+        "http://localhost/branch/callback"
       ],
       "webOrigins": [
         "http://localhost*"
