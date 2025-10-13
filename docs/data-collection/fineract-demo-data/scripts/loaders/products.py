@@ -1,0 +1,729 @@
+#!/usr/bin/env python3
+"""
+Product Loader
+Handles loading of financial products like loans, savings, charges, etc.
+"""
+
+import logging
+import time
+from typing import Dict
+import pandas as pd
+
+logger = logging.getLogger(__name__)
+
+
+class ProductLoader:
+    """Loads financial products into Fineract"""
+
+    def __init__(self, client, excel_file: str, config: Dict):
+        self.client = client
+        self.excel_file = excel_file
+        self.config = config
+
+    def _read_excel_sheet(self, sheet_name: str) -> pd.DataFrame:
+        """Read specific sheet from Excel"""
+        df = pd.read_excel(self.excel_file, sheet_name=sheet_name)
+        df = df.where(pd.notnull(df), None)
+        return df
+
+    def load_gl_accounts(self):
+        """Create chart of accounts"""
+        logger.info("=" * 80)
+        logger.info("LOADING CHART OF ACCOUNTS")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Chart of Accounts')
+
+        account_type_mapping = {
+            'Asset': 1,
+            'Liability': 2,
+            'Equity': 3,
+            'Income': 4,
+            'Expense': 5
+        }
+
+        usage_mapping = {
+            'Detail': 1,
+            'Header': 2
+        }
+
+        for idx, row in df.iterrows():
+            try:
+                data = {
+                    'name': row['gl_name'],
+                    'glCode': str(row['gl_code']),
+                    'type': account_type_mapping.get(row['account_type']),
+                    'usage': usage_mapping.get(row['usage'], 1),
+                    'manualEntriesAllowed': row['manual_entries'] == 'Yes',
+                    'description': row.get('description', '')
+                }
+
+                response = self.client.post('/glaccounts', data)
+                account_id = response.get('resourceId') or response.get('glAccountId')
+
+                self.client.created_gl_accounts[str(row['gl_code'])] = account_id
+
+                logger.info(f"✓ Created GL Account: {row['gl_code']} - {row['gl_name']} (ID: {account_id})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create GL account {row['gl_code']}: {str(e)}")
+
+    def load_charges(self):
+        """Create charges/fees"""
+        logger.info("=" * 80)
+        logger.info("LOADING CHARGES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Charges')
+
+        charge_applies_to = {
+            'Loan': 1,
+            'Savings': 2,
+            'Client': 3
+        }
+
+        charge_time_type = {
+            'Disbursement': 1,
+            'Specified Due Date': 2,
+            'Installment Fee': 8,
+            'Overdue Installment': 9,
+            'Tranche Disbursement': 12,
+            'Savings Activation': 3,
+            'Withdrawal': 5,
+            'Withdrawal Fee': 5,
+            'ATM Fee': 5,
+            'Annual': 6,
+            'Annual Fee': 6,
+            'Monthly': 7,
+            'Monthly Fee': 7,
+            'Overdraft Fee': 10,
+            'Weekly Fee': 11,
+            'Saving No Activity Fee': 16,
+            'Share Account Activate': 13,
+            'Share Purchase': 14,
+            'Share Redeem': 15,
+            'Activation': 3,
+            'On Demand': 2
+        }
+
+        savings_valid_charge_times = {2, 3, 5, 6, 7, 10, 11, 16}
+
+        charge_calculation_type = {
+            'Flat': 1,
+            'Percentage of Amount': 2,
+            'Percentage of Interest': 3
+        }
+
+        for idx, row in df.iterrows():
+            try:
+                charge_time_val = charge_time_type.get(row['charge_time'])
+
+                if not charge_time_val:
+                    logger.warning(f"⚠ Skipping charge {row['charge_name']}: unsupported charge_time '{row['charge_time']}'")
+                    continue
+
+                if row['charge_type'] == 'Savings' and charge_time_val not in savings_valid_charge_times:
+                    logger.warning(f"⚠ Skipping charge {row['charge_name']}: chargeTimeType {charge_time_val} not valid for Savings")
+                    continue
+
+                data = {
+                    'name': row['charge_name'],
+                    'currencyCode': row['currency'],
+                    'chargeAppliesTo': int(charge_applies_to.get(row['charge_type'])),
+                    'chargeTimeType': int(charge_time_val),
+                    'chargeCalculationType': int(charge_calculation_type.get(row['calculation_type'])),
+                    'chargePaymentMode': 0,
+                    'amount': float(row['amount']),
+                    'active': row['active'] == 'Yes',
+                    'locale': 'en'
+                }
+
+                if 'Penalty' in row['charge_name'] and row['charge_time'] == 'Overdue Installment':
+                    data['penalty'] = True
+
+                if row['charge_time'] in ['Monthly', 'Monthly Fee']:
+                    data['feeOnMonthDay'] = [1]
+                    data['feeInterval'] = 1
+
+                if row['charge_time'] in ['Annual', 'Annual Fee']:
+                    data['feeOnMonthDay'] = [1, 1]
+                    data['feeInterval'] = 1
+
+                if row['charge_time'] in ['Weekly', 'Weekly Fee']:
+                    data['feeOnMonthDay'] = [1]
+                    data['feeInterval'] = 1
+
+                response = self.client.post('/charges', data)
+                charge_id = response.get('resourceId') or response.get('chargeId')
+
+                self.client.created_charges[row['charge_name']] = charge_id
+
+                logger.info(f"✓ Created charge: {row['charge_name']} (ID: {charge_id})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create charge {row['charge_name']}: {str(e)}")
+
+    def load_fund_sources(self):
+        """Create fund sources"""
+        logger.info("=" * 80)
+        logger.info("LOADING FUND SOURCES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Fund Sources')
+
+        for idx, row in df.iterrows():
+            try:
+                data = {
+                    'name': row['fund_name'],
+                    'externalId': row['external_id']
+                }
+
+                response = self.client.post('/funds', data)
+                fund_id = response.get('resourceId') or response.get('fundId')
+
+                self.client.created_funds[row['fund_name']] = fund_id
+
+                logger.info(f"✓ Created fund: {row['fund_name']} (ID: {fund_id})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create fund {row['fund_name']}: {str(e)}")
+
+    def load_payment_types(self):
+        """Create payment types"""
+        logger.info("=" * 80)
+        logger.info("LOADING PAYMENT TYPES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Payment Types')
+
+        for idx, row in df.iterrows():
+            try:
+                data = {
+                    'name': row['payment_type'],
+                    'description': row['description'],
+                    'isCashPayment': row['is_cash_payment'] == 'Yes',
+                    'position': row['order_position']
+                }
+
+                response = self.client.post('/paymenttypes', data)
+                payment_type_id = response.get('resourceId')
+
+                self.client.created_payment_types[row['payment_type']] = payment_type_id
+
+                logger.info(f"✓ Created payment type: {row['payment_type']} (ID: {payment_type_id})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create payment type {row['payment_type']}: {str(e)}")
+
+    def load_loan_products(self):
+        """Create loan products with accounting mappings"""
+        logger.info("=" * 80)
+        logger.info("LOADING LOAN PRODUCTS")
+        logger.info("=" * 80)
+
+        df_products = self._read_excel_sheet('Loan Products')
+        df_accounting = self._read_excel_sheet('Loan Product Accounting')
+        df_payment_channels = self._read_excel_sheet('Payment Type Accounting')
+
+        for idx, row in df_products.iterrows():
+            try:
+                # Get accounting mappings for this product
+                product_mappings = df_accounting[df_accounting['product_short_name'] == row['short_name']]
+
+                def get_gl_id(mapping_type):
+                    mapping = product_mappings[product_mappings['mapping_type'] == mapping_type]
+                    if len(mapping) > 0:
+                        gl_code = str(mapping.iloc[0]['gl_code'])
+                        return self.client.created_gl_accounts.get(gl_code)
+                    return None
+
+                # Shorten product name if needed (max 4 characters)
+                short_name = row['short_name']
+                if len(short_name) > 4:
+                    short_name_mapping = {
+                        'MICRO-SOL': 'MSOL',
+                        'SME-BIZ': 'SBIZ',
+                        'AGRI-SEASON': 'ASEA'
+                    }
+                    short_name = short_name_mapping.get(short_name, short_name[:4])
+                    logger.info(f"  Shortened product name: {row['short_name']} → {short_name}")
+
+                # Build product data with Cash-based accounting
+                data = {
+                    'name': row['product_name'],
+                    'shortName': short_name,
+                    'description': row['description'],
+                    'currencyCode': row['currency'],
+                    'digitsAfterDecimal': 0,
+                    'inMultiplesOf': 0,
+                    'principal': row['principal_default'],
+                    'minPrincipal': row['principal_min'],
+                    'maxPrincipal': row['principal_max'],
+                    'numberOfRepayments': row['number_of_repayments_default'],
+                    'minNumberOfRepayments': row['number_of_repayments_min'],
+                    'maxNumberOfRepayments': row['number_of_repayments_max'],
+                    'repaymentEvery': 1,
+                    'repaymentFrequencyType': 2,
+                    'interestRatePerPeriod': row['interest_rate_default'],
+                    'minInterestRatePerPeriod': row['interest_rate_min'],
+                    'maxInterestRatePerPeriod': row['interest_rate_max'],
+                    'interestRateFrequencyType': 2,
+                    'amortizationType': 1,
+                    'interestType': 0,
+                    'interestCalculationPeriodType': 1,
+                    'transactionProcessingStrategyCode': 'mifos-standard-strategy',
+                    'accountingRule': 2,
+                    'locale': 'en',
+                    'dateFormat': 'yyyy-MM-dd',
+                    'graceOnPrincipalPayment': row['grace_on_principal_periods'],
+                    'graceOnInterestPayment': row['grace_on_interest_periods'],
+                    'daysInYearType': 365,
+                    'daysInMonthType': 30,
+                    'isInterestRecalculationEnabled': False
+                }
+
+                # Add GL account mappings for cash-based accounting
+                fund_source_id = get_gl_id('Fund Source')
+                loan_portfolio_id = get_gl_id('Loan Portfolio')
+                interest_income_id = get_gl_id('Interest Income')
+                fee_income_id = get_gl_id('Fee Income')
+                penalty_income_id = get_gl_id('Penalty Income')
+                transfer_suspense_id = get_gl_id('Transfer in Suspense')
+                income_from_recovery_id = get_gl_id('Income from Recovery')
+                write_off_id = self.client.created_gl_accounts.get('93')
+                overpayment_liability_id = self.client.created_gl_accounts.get('61')
+
+                if all([fund_source_id, loan_portfolio_id, interest_income_id, fee_income_id,
+                        penalty_income_id, transfer_suspense_id, write_off_id, overpayment_liability_id]):
+                    data['fundSourceAccountId'] = fund_source_id
+                    data['loanPortfolioAccountId'] = loan_portfolio_id
+                    data['interestOnLoanAccountId'] = interest_income_id
+                    data['incomeFromFeeAccountId'] = fee_income_id
+                    data['incomeFromPenaltyAccountId'] = penalty_income_id
+                    data['transfersInSuspenseAccountId'] = transfer_suspense_id
+                    data['incomeFromRecoveryAccountId'] = income_from_recovery_id or interest_income_id
+                    data['writeOffAccountId'] = write_off_id
+                    data['overpaymentLiabilityAccountId'] = overpayment_liability_id
+
+                    # Add payment channel to fund source mappings
+                    payment_channel_mappings = []
+                    for _, payment_row in df_payment_channels.iterrows():
+                        payment_type_id = self.client.created_payment_types.get(payment_row['payment_type'])
+                        gl_code = str(payment_row['gl_code'])
+                        fund_source_account_id = self.client.created_gl_accounts.get(gl_code)
+
+                        if payment_type_id and fund_source_account_id:
+                            payment_channel_mappings.append({
+                                'paymentTypeId': payment_type_id,
+                                'fundSourceAccountId': fund_source_account_id
+                            })
+
+                    if payment_channel_mappings:
+                        data['paymentChannelToFundSourceMappings'] = payment_channel_mappings
+                        logger.info(f"  Added {len(payment_channel_mappings)} payment channel mappings")
+                else:
+                    logger.warning(f"  ⚠ Some GL accounts not found for {row['short_name']}, using accountingRule=1 (None)")
+                    data['accountingRule'] = 1
+
+                response = self.client.post('/loanproducts', data)
+                product_id = response.get('resourceId') or response.get('loanProductId')
+
+                self.client.created_loan_products[row['short_name']] = product_id
+
+                logger.info(f"✓ Created loan product: {row['product_name']} (ID: {product_id})")
+                time.sleep(0.5)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create loan product {row['product_name']}: {str(e)}")
+
+    def load_savings_products(self):
+        """Create savings products with accounting mappings"""
+        logger.info("=" * 80)
+        logger.info("LOADING SAVINGS PRODUCTS")
+        logger.info("=" * 80)
+
+        df_products = self._read_excel_sheet('Savings Products')
+        df_accounting = self._read_excel_sheet('Savings Product Accounting')
+        df_payment_channels = self._read_excel_sheet('Payment Type Accounting')
+
+        for idx, row in df_products.iterrows():
+            try:
+                # Get accounting mappings for this product
+                product_mappings = df_accounting[df_accounting['product_short_name'] == row['short_name']]
+
+                def get_gl_id(mapping_type):
+                    mapping = product_mappings[product_mappings['mapping_type'] == mapping_type]
+                    if len(mapping) > 0:
+                        gl_code = str(mapping.iloc[0]['gl_code'])
+                        return self.client.created_gl_accounts.get(gl_code)
+                    return None
+
+                # Shorten the shortName to max 4 characters
+                short_name = row['short_name']
+                if len(short_name) > 4:
+                    short_name_mapping = {
+                        'VOL-SAV': 'VSAV',
+                        'FIXED-DEP': 'FDEP',
+                        'MAND-GRP': 'MGRP'
+                    }
+                    short_name = short_name_mapping.get(short_name, short_name[:4])
+                    logger.info(f"  Shortened product name: {row['short_name']} → {short_name}")
+
+                data = {
+                    'name': row['product_name'],
+                    'shortName': short_name,
+                    'description': row['description'],
+                    'currencyCode': row['currency'],
+                    'digitsAfterDecimal': 0,
+                    'inMultiplesOf': 0,
+                    'nominalAnnualInterestRate': row['nominal_annual_interest_rate'],
+                    'interestCompoundingPeriodType': 4,
+                    'interestPostingPeriodType': 4,
+                    'interestCalculationType': 1,
+                    'interestCalculationDaysInYearType': 365,
+                    'minRequiredOpeningBalance': row['minimum_opening_balance'],
+                    'accountingRule': 2,
+                    'locale': 'en',
+                    'withdrawalFeeForTransfers': row['withdrawal_fee_for_transfers'] == 'Yes',
+                    'allowOverdraft': row['overdraft_allowed'] == 'Yes',
+                    'withHoldTax': False
+                }
+
+                # Add GL account mappings
+                savings_reference_id = get_gl_id('Savings Reference')
+                savings_control_id = get_gl_id('Savings Control')
+                interest_expense_id = get_gl_id('Interest on Savings')
+                income_from_fees_id = get_gl_id('Income from Fees')
+                transfer_suspense_id = get_gl_id('Transfer in Suspense')
+                overdraft_portfolio_id = get_gl_id('Overdraft Portfolio Control') or self.client.created_gl_accounts.get('51')
+                income_from_interest_id = get_gl_id('Overdraft Interest Income') or self.client.created_gl_accounts.get('81')
+                write_off_id = get_gl_id('Overdraft Write-off') or self.client.created_gl_accounts.get('93')
+
+                if all([savings_reference_id, savings_control_id, interest_expense_id,
+                        income_from_fees_id, transfer_suspense_id, overdraft_portfolio_id,
+                        income_from_interest_id, write_off_id]):
+                    data['savingsReferenceAccountId'] = savings_reference_id
+                    data['savingsControlAccountId'] = savings_control_id
+                    data['interestOnSavingsAccountId'] = interest_expense_id
+                    data['incomeFromFeeAccountId'] = income_from_fees_id
+                    data['incomeFromPenaltyAccountId'] = income_from_fees_id
+                    data['transfersInSuspenseAccountId'] = transfer_suspense_id
+                    data['overdraftPortfolioControlId'] = overdraft_portfolio_id
+                    data['incomeFromInterestId'] = income_from_interest_id
+                    data['writeOffAccountId'] = write_off_id
+
+                    # Add payment channel to fund source mappings
+                    payment_channel_mappings = []
+                    for _, payment_row in df_payment_channels.iterrows():
+                        payment_type_id = self.client.created_payment_types.get(payment_row['payment_type'])
+                        gl_code = str(payment_row['gl_code'])
+                        fund_source_account_id = self.client.created_gl_accounts.get(gl_code)
+
+                        if payment_type_id and fund_source_account_id:
+                            payment_channel_mappings.append({
+                                'paymentTypeId': payment_type_id,
+                                'fundSourceAccountId': fund_source_account_id
+                            })
+
+                    if payment_channel_mappings:
+                        data['paymentChannelToFundSourceMappings'] = payment_channel_mappings
+                        logger.info(f"  Added {len(payment_channel_mappings)} payment channel mappings")
+                else:
+                    logger.warning(f"  ⚠ Some GL accounts not found for {row['short_name']}, using accountingRule=1 (None)")
+                    data['accountingRule'] = 1
+
+                response = self.client.post('/savingsproducts', data)
+                product_id = response.get('resourceId') or response.get('savingsProductId')
+
+                # Store with both original and shortened names
+                self.client.created_savings_products[row['short_name']] = product_id
+                self.client.created_savings_products[short_name] = product_id
+
+                logger.info(f"✓ Created savings product: {row['product_name']} (ID: {product_id})")
+                time.sleep(0.5)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create savings product {row['product_name']}: {str(e)}")
+
+    def load_financial_activity_mappings(self):
+        """Configure Financial Activity to GL Account mappings"""
+        logger.info("=" * 80)
+        logger.info("LOADING FINANCIAL ACTIVITY MAPPINGS")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Financial Activity Mapping')
+
+        activity_mapping = {
+            'Asset Transfer': 100,
+            'Liability Transfer': 200,
+            'Cash at Mainvault': 101,
+            'Cash at Teller': 102,
+            'Opening Balances Contra': 300,
+            'Fund Source': 103,
+        }
+
+        for idx, row in df.iterrows():
+            try:
+                activity_id = activity_mapping.get(row['financial_activity'])
+                gl_code = str(row['gl_code'])
+                gl_account_id = self.client.created_gl_accounts.get(gl_code)
+
+                if not activity_id:
+                    logger.warning(f"Unknown financial activity: {row['financial_activity']}")
+                    continue
+
+                if not gl_account_id:
+                    logger.warning(f"GL account not found: {gl_code} for {row['financial_activity']}")
+                    continue
+
+                data = {
+                    'financialActivityId': activity_id,
+                    'glAccountId': gl_account_id
+                }
+
+                response = self.client.post('/financialactivityaccounts', data)
+
+                logger.info(f"✓ Mapped {row['financial_activity']} → GL {gl_code} ({row['gl_name']})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to map financial activity {row['financial_activity']}: {str(e)}")
+
+    def enable_maker_checker(self):
+        """Enable Maker-Checker (4-eyes principle) for critical operations"""
+        logger.info("=" * 80)
+        logger.info("ENABLING MAKER-CHECKER (DUAL AUTHORIZATION)")
+        logger.info("=" * 80)
+
+        # Fetch available permissions from Fineract
+        try:
+            permissions_response = self.client.get('/permissions')
+            available_permissions = {perm['code'] for perm in permissions_response if perm.get('code')}
+            logger.info(f"Found {len(available_permissions)} permissions in Fineract")
+            logger.debug(f"Sample permissions: {list(available_permissions)[:20]}")
+        except Exception as e:
+            logger.warning(f"Could not fetch available permissions: {str(e)}")
+            available_permissions = set()
+
+        df = self._read_excel_sheet('Maker Checker Config')
+
+        # Try to enable each permission individually for better error handling
+        successful_count = 0
+        failed_permissions = []
+
+        for idx, row in df.iterrows():
+            entity = row['entity'].upper()
+            action = row['action'].upper()
+            permission_code = f"{action}_{entity}"
+
+            logger.info(f"  Attempting to enable: {row['task_name']}")
+            logger.info(f"    Permission code: {permission_code}")
+
+            # Check if permission exists in available permissions
+            if available_permissions and permission_code not in available_permissions:
+                logger.warning(f"    ⚠ Permission {permission_code} not found in available permissions")
+                logger.info(f"    Searching for similar permissions...")
+
+                # Search for similar permissions
+                similar = [p for p in available_permissions if entity in p or any(word in p for word in action.split('_'))]
+                if similar:
+                    logger.info(f"    Similar permissions found: {similar[:5]}")
+
+                failed_permissions.append((row['task_name'], permission_code, "not available"))
+                continue
+
+            try:
+                # Enable this single permission
+                data = {
+                    'permissions': {permission_code: True}
+                }
+
+                self.client.put('/permissions', data)
+                successful_count += 1
+                logger.info(f"    ✓ Enabled successfully")
+                logger.info(f"      Recommended Threshold: {row['threshold_amount']:,.0f} {row['threshold_currency']}")
+                logger.info(f"      Maker: {row['maker_role']}, Checker: {row['checker_role']}")
+
+                time.sleep(0.2)
+
+            except Exception as e:
+                error_str = str(e).lower()
+                if ('404' in error_str and 'does not exist' in error_str) or 'permission with code' in error_str:
+                    logger.warning(f"    ⚠ Permission not available in this Fineract version: {permission_code}")
+                    failed_permissions.append((row['task_name'], permission_code, "not available"))
+                elif 'already enabled' in error_str:
+                    logger.info(f"    ⊙ Already enabled: {permission_code}")
+                    successful_count += 1
+                else:
+                    logger.warning(f"    ⚠ Failed: {str(e)}")
+                    failed_permissions.append((row['task_name'], permission_code, "error"))
+
+        # Summary
+        logger.info("")
+        logger.info(f"✓ Successfully enabled maker-checker for {successful_count}/{len(df)} operations")
+
+        if failed_permissions:
+            logger.info("")
+            logger.info(f"⚠ {len(failed_permissions)} permission(s) could not be enabled:")
+            for task_name, perm_code, reason in failed_permissions:
+                if reason == "not available":
+                    logger.info(f"  • {task_name} ({perm_code}) - Not available in this Fineract version")
+                else:
+                    logger.info(f"  • {task_name} ({perm_code}) - Configuration error")
+
+        logger.info("")
+        logger.info("NOTE: Maker-Checker has been configured for available operations.")
+        logger.info("      These operations will require dual authorization (maker + checker).")
+        logger.info("      Configure approval thresholds in: Admin → System → Manage Maker Checkers")
+        logger.info("")
+        logger.info("      For unavailable permissions, check:")
+        logger.info("        - Your Fineract version may not support all permission codes")
+        logger.info("        - Some features may require plugins or newer versions")
+        logger.info("        - Manual configuration via Admin UI may be needed")
+
+    def load_loan_provisioning(self):
+        """Create loan provisioning criteria (COBAC standards)"""
+        logger.info("=" * 80)
+        logger.info("LOADING LOAN PROVISIONING CRITERIA")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Loan Provisioning')
+
+        # Create provisioning criteria with all categories
+        provisioning_criteria = []
+
+        for idx, row in df.iterrows():
+            criterion = {
+                'categoryName': row['category_name'],
+                'minAge': int(row['min_days_overdue']),
+                'maxAge': int(row['max_days_overdue']),
+                'provisioningPercentage': float(row['provision_percentage'])
+            }
+            provisioning_criteria.append(criterion)
+
+        # Create the provisioning criteria with all loan products
+        data = {
+            'criteriaName': 'COBAC Provisioning Standards',
+            'loanProducts': list(self.client.created_loan_products.values()),
+            'definitions': provisioning_criteria
+        }
+
+        try:
+            response = self.client.post('/provisioningcriteria', data)
+            criteria_id = response.get('resourceId')
+
+            logger.info(f"✓ Created provisioning criteria: COBAC Provisioning Standards (ID: {criteria_id})")
+            logger.info(f"  Applied to {len(data['loanProducts'])} loan products")
+
+            for criterion in provisioning_criteria:
+                logger.info(f"  • {criterion['categoryName']}: {criterion['minAge']}-{criterion['maxAge']} days, "
+                          f"{criterion['provisioningPercentage']}% provision")
+
+            time.sleep(0.5)
+
+        except Exception as e:
+            logger.error(f"✗ Failed to create loan provisioning criteria: {str(e)}")
+
+    def load_collateral_types(self):
+        """Create collateral types"""
+        logger.info("=" * 80)
+        logger.info("LOADING COLLATERAL TYPES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Collateral Types')
+
+        for idx, row in df.iterrows():
+            try:
+                data = {
+                    'name': row['collateral_type'],
+                    'quality': 'EXCELLENT',  # Default quality
+                    'basePrice': 100.0,  # Default base price
+                    'pctToBase': 100.0,  # 100% of base price
+                    'unitType': 'UNIT',  # Unit type
+                    'currency': 'XAF',
+                    'locale': 'en'
+                }
+
+                response = self.client.post('/collateral-management', data)
+                collateral_id = response.get('resourceId')
+
+                logger.info(f"✓ Created collateral type: {row['collateral_type']} (ID: {collateral_id})")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create collateral type {row['collateral_type']}: {str(e)}")
+
+    def load_teller_accounting_rules(self):
+        """Create accounting rules for teller cash shortage and overage"""
+        logger.info("=" * 80)
+        logger.info("LOADING TELLER ACCOUNTING RULES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Teller Cashier Mapping')
+
+        rules_created = 0
+
+        for idx, row in df.iterrows():
+            office_name = row['office_name']
+            teller_name = row['teller_name']
+
+            # Get office ID
+            office_id = self.client.created_offices.get(office_name)
+            if not office_id:
+                logger.warning(f"  ⚠ Office not found: {office_name}, skipping rules for {teller_name}")
+                continue
+
+            # Get GL account IDs
+            cash_gl_id = self.client.created_gl_accounts.get(str(row['cash_gl_code']))
+            shortage_gl_id = self.client.created_gl_accounts.get(str(row['shortage_gl_code']))
+            overage_gl_id = self.client.created_gl_accounts.get(str(row['overage_gl_code']))
+
+            if not all([cash_gl_id, shortage_gl_id, overage_gl_id]):
+                logger.warning(f"  ⚠ Some GL accounts not found for {teller_name}, skipping rules")
+                logger.debug(f"    Cash GL: {cash_gl_id}, Shortage GL: {shortage_gl_id}, Overage GL: {overage_gl_id}")
+                continue
+
+            try:
+                # Rule 1: Cash Shortage (Debit: Shortage Expense, Credit: Cash)
+                shortage_rule_data = {
+                    'name': f'Cash Shortage - {teller_name}',
+                    'officeId': office_id,
+                    'accountToDebit': shortage_gl_id,
+                    'accountToCredit': cash_gl_id,
+                    'description': f'Record cash shortage at {teller_name} in {office_name}'
+                }
+
+                response = self.client.post('/accountingrules', shortage_rule_data)
+                shortage_rule_id = response.get('resourceId')
+                logger.info(f"✓ Created shortage rule: {shortage_rule_data['name']} (ID: {shortage_rule_id})")
+                logger.info(f"  Debit: GL {row['shortage_gl_code']}, Credit: GL {row['cash_gl_code']}")
+                time.sleep(0.3)
+                rules_created += 1
+
+                # Rule 2: Cash Overage (Debit: Cash, Credit: Overage Income)
+                overage_rule_data = {
+                    'name': f'Cash Overage - {teller_name}',
+                    'officeId': office_id,
+                    'accountToDebit': cash_gl_id,
+                    'accountToCredit': overage_gl_id,
+                    'description': f'Record cash overage at {teller_name} in {office_name}'
+                }
+
+                response = self.client.post('/accountingrules', overage_rule_data)
+                overage_rule_id = response.get('resourceId')
+                logger.info(f"✓ Created overage rule: {overage_rule_data['name']} (ID: {overage_rule_id})")
+                logger.info(f"  Debit: GL {row['cash_gl_code']}, Credit: GL {row['overage_gl_code']}")
+                time.sleep(0.3)
+                rules_created += 1
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create accounting rules for {teller_name}: {str(e)}")
+
+        logger.info("")
+        logger.info(f"✓ Created {rules_created} accounting rules for teller cash management")
+        logger.info("  Cashiers can use these rules to record cash shortages/overages")
+        logger.info("  Access: Admin → Accounting → Frequent Postings → Accounting Rules")

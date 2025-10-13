@@ -24,19 +24,19 @@ class FineractDemoDataGenerator:
         """Create offices/branches data"""
         data = [
             {
-                'office_name': 'Head Office Yaounde',
-                'parent_office': '',
-                'opening_date': '2024-01-01',
-                'external_id': 'HO-YDE-001',
+                'office_name': 'Yaounde Branch',
+                'parent_office': 'Head Office',
+                'opening_date': '2024-01-15',
+                'external_id': 'BR-YDE-001',
                 'address': 'Avenue Kennedy, Quartier Bastos',
                 'city': 'Yaounde',
                 'region': 'Centre',
                 'phone': '+237 222 20 45 67',
-                'email': 'headoffice@mfi.cm'
+                'email': 'yaounde@mfi.cm'
             },
             {
                 'office_name': 'Douala Branch',
-                'parent_office': 'Head Office Yaounde',
+                'parent_office': 'Head Office',
                 'opening_date': '2024-01-15',
                 'external_id': 'BR-DLA-001',
                 'address': 'Boulevard de la Liberte, Akwa',
@@ -47,7 +47,7 @@ class FineractDemoDataGenerator:
             },
             {
                 'office_name': 'Bafoussam Branch',
-                'parent_office': 'Head Office Yaounde',
+                'parent_office': 'Head Office',
                 'opening_date': '2024-02-01',
                 'external_id': 'BR-BAF-001',
                 'address': 'Marche A, Centre Ville',
@@ -58,7 +58,7 @@ class FineractDemoDataGenerator:
             },
             {
                 'office_name': 'Bamenda Branch',
-                'parent_office': 'Head Office Yaounde',
+                'parent_office': 'Head Office',
                 'opening_date': '2024-02-15',
                 'external_id': 'BR-BAM-001',
                 'address': 'Commercial Avenue, Nkwen',
@@ -73,18 +73,18 @@ class FineractDemoDataGenerator:
     def create_staff_sheet(self):
         """Create staff members with role assignments"""
         data = [
-            # Head Office Staff
-            {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Head Office Yaounde', 'role': 'Branch Manager',
+            # Yaounde Branch Staff
+            {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
              'username': 'manager.yaounde', 'email': 'j.mbarga@mfi.cm', 'mobile': '+237 677 12 34 56',
-             'joining_date': '2024-01-01', 'external_id': 'STF-001'},
+             'joining_date': '2024-01-15', 'external_id': 'STF-001'},
 
-            {'firstname': 'Marie', 'lastname': 'Ngo Balla', 'office': 'Head Office Yaounde', 'role': 'Loan Officer',
+            {'firstname': 'Marie', 'lastname': 'Ngo Balla', 'office': 'Yaounde Branch', 'role': 'Loan Officer',
              'username': 'loan.yaounde', 'email': 'm.ngoballa@mfi.cm', 'mobile': '+237 677 23 45 67',
-             'joining_date': '2024-01-05', 'external_id': 'STF-002'},
+             'joining_date': '2024-01-20', 'external_id': 'STF-002'},
 
-            {'firstname': 'Paul', 'lastname': 'Atangana', 'office': 'Head Office Yaounde', 'role': 'Cashier',
+            {'firstname': 'Paul', 'lastname': 'Atangana', 'office': 'Yaounde Branch', 'role': 'Cashier',
              'username': 'cashier.yaounde', 'email': 'p.atangana@mfi.cm', 'mobile': '+237 677 34 56 78',
-             'joining_date': '2024-01-05', 'external_id': 'STF-003'},
+             'joining_date': '2024-01-20', 'external_id': 'STF-003'},
 
             # Douala Branch Staff
             {'firstname': 'Grace', 'lastname': 'Douala', 'office': 'Douala Branch', 'role': 'Branch Manager',
@@ -211,7 +211,7 @@ class FineractDemoDataGenerator:
              'monthly_income': 140000, 'risk_rating': 'B'},
 
             {'firstname': 'Agnes', 'lastname': 'Fon', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
-             'gender': 'Female', 'mobile': '+237 690 12 34 56', 'email': 'a.fon@gmail.com',
+             'gender': 'Female', 'mobile': '+237 691 12 34 56', 'email': 'a.fon@gmail.com',
              'date_of_birth': '1991-10-05', 'client_type': 'Individual', 'client_classification': 'Active',
              'external_id': 'CLI-011', 'activation_date': '2024-03-15', 'national_id': 'CM1234567891',
              'address': 'Ntarikon, Junction', 'city': 'Bamenda', 'marital_status': 'Single',
@@ -219,7 +219,7 @@ class FineractDemoDataGenerator:
              'monthly_income': 110000, 'risk_rating': 'C'},
 
             {'firstname': 'Robert', 'lastname': 'Essomba', 'office': 'Douala Branch', 'staff': 'loan.douala',
-             'gender': 'Male', 'mobile': '+237 690 23 45 67', 'email': 'r.essomba@yahoo.fr',
+             'gender': 'Male', 'mobile': '+237 691 23 45 67', 'email': 'r.essomba@yahoo.fr',
              'date_of_birth': '1979-01-17', 'client_type': 'Individual', 'client_classification': 'Active',
              'external_id': 'CLI-012', 'activation_date': '2024-03-20', 'national_id': 'CM2345678902',
              'address': 'Akwa, Boulevard de la Republique', 'city': 'Douala', 'marital_status': 'Married',
@@ -560,32 +560,32 @@ class FineractDemoDataGenerator:
     def create_loan_accounts_sheet(self):
         """Create sample loan accounts"""
         data = [
-            {'client_external_id': 'CLI-001', 'product': 'MICRO-SOL', 'submitted_on': '2024-02-01',
-             'approved_on': '2024-02-05', 'disbursed_on': '2024-02-10', 'principal': 200000,
+            {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2024-02-01',
+             'approved_on': '2024-02-05', 'disbursed_on': '2024-02-09', 'principal': 200000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-001'},
 
-            {'client_external_id': 'CLI-002', 'product': 'SME-BIZ', 'submitted_on': '2024-02-05',
+            {'client_external_id': 'CLI-002', 'product': 'SBIZ', 'submitted_on': '2024-02-05',
              'approved_on': '2024-02-08', 'disbursed_on': '2024-02-12', 'principal': 2000000,
              'loan_term': 12, 'interest_rate': 20.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002'},
 
-            {'client_external_id': 'CLI-003', 'product': 'MICRO-SOL', 'submitted_on': '2024-02-10',
+            {'client_external_id': 'CLI-003', 'product': 'MSOL', 'submitted_on': '2024-02-10',
              'approved_on': '2024-02-12', 'disbursed_on': '2024-02-15', 'principal': 150000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-003'},
 
-            {'client_external_id': 'CLI-004', 'product': 'AGRI-SEASON', 'submitted_on': '2024-02-12',
-             'approved_on': '2024-02-15', 'disbursed_on': '2024-02-18', 'principal': 500000,
+            {'client_external_id': 'CLI-004', 'product': 'ASEA', 'submitted_on': '2024-02-12',
+             'approved_on': '2024-02-15', 'disbursed_on': '2024-02-19', 'principal': 500000,
              'loan_term': 6, 'interest_rate': 18.0, 'loan_officer': 'loan.bafoussam',
              'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004'},
 
-            {'client_external_id': 'CLI-005', 'product': 'MICRO-SOL', 'submitted_on': '2024-02-15',
+            {'client_external_id': 'CLI-005', 'product': 'MSOL', 'submitted_on': '2024-02-15',
              'approved_on': '2024-02-18', 'disbursed_on': '2024-02-20', 'principal': 180000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-005'},
 
-            {'client_external_id': 'CLI-006', 'product': 'SME-BIZ', 'submitted_on': '2024-02-18',
+            {'client_external_id': 'CLI-006', 'product': 'SBIZ', 'submitted_on': '2024-02-18',
              'approved_on': '2024-02-20', 'disbursed_on': '2024-02-25', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006'},
@@ -671,18 +671,18 @@ class FineractDemoDataGenerator:
     def create_holidays_sheet(self):
         """Create Cameroon public holidays"""
         data = [
-            {'holiday_name': "New Year's Day", 'date': '2024-01-01', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Youth Day', 'date': '2024-02-11', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Labour Day', 'date': '2024-05-01', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'National Day', 'date': '2024-05-20', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Assumption Day', 'date': '2024-08-15', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Christmas Day', 'date': '2024-12-25', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': "New Year's Day", 'date': '2025-01-01', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Youth Day', 'date': '2025-02-11', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Labour Day', 'date': '2025-05-01', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'National Day', 'date': '2025-05-20', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Assumption Day', 'date': '2025-08-15', 'repayment_scheduling': 'Move to Next Working Day'},
-            {'holiday_name': 'Christmas Day', 'date': '2025-12-25', 'repayment_scheduling': 'Move to Next Working Day'},
+            {'holiday_name': "New Year's Day", 'date': '2024-01-01', 'rescheduled_to': '2024-01-02', 'description': 'New Year Holiday'},
+            {'holiday_name': 'Youth Day', 'date': '2024-02-11', 'rescheduled_to': '2024-02-12', 'description': 'Youth Day Holiday'},
+            {'holiday_name': 'Labour Day', 'date': '2024-05-01', 'rescheduled_to': '2024-05-02', 'description': 'International Labour Day'},
+            {'holiday_name': 'National Day', 'date': '2024-05-20', 'rescheduled_to': '2024-05-21', 'description': 'Cameroon National Day'},
+            {'holiday_name': 'Assumption Day', 'date': '2024-08-15', 'rescheduled_to': '2024-08-16', 'description': 'Assumption of Mary'},
+            {'holiday_name': 'Christmas Day', 'date': '2024-12-25', 'rescheduled_to': '2024-12-26', 'description': 'Christmas Holiday'},
+            {'holiday_name': "New Year's Day", 'date': '2025-01-01', 'rescheduled_to': '2025-01-02', 'description': 'New Year Holiday'},
+            {'holiday_name': 'Youth Day', 'date': '2025-02-11', 'rescheduled_to': '2025-02-12', 'description': 'Youth Day Holiday'},
+            {'holiday_name': 'Labour Day', 'date': '2025-05-01', 'rescheduled_to': '2025-05-02', 'description': 'International Labour Day'},
+            {'holiday_name': 'National Day', 'date': '2025-05-20', 'rescheduled_to': '2025-05-21', 'description': 'Cameroon National Day'},
+            {'holiday_name': 'Assumption Day', 'date': '2025-08-15', 'rescheduled_to': '2025-08-18', 'description': 'Assumption of Mary'},
+            {'holiday_name': 'Christmas Day', 'date': '2025-12-25', 'rescheduled_to': '2025-12-26', 'description': 'Christmas Holiday'},
         ]
         return pd.DataFrame(data)
 
@@ -812,12 +812,12 @@ class FineractDemoDataGenerator:
         for product in savings_products:
             mappings = [
                 {'product_short_name': product['short_name'], 'mapping_type': 'Savings Reference',
-                 'gl_code': product['liability_gl'], 'gl_name': f"GL Code {product['liability_gl']}",
-                 'description': 'Customer deposits liability'},
+                 'gl_code': '42', 'gl_name': 'Cash on Hand',
+                 'description': 'Asset account - where customer deposits are held'},
 
                 {'product_short_name': product['short_name'], 'mapping_type': 'Savings Control',
                  'gl_code': product['liability_gl'], 'gl_name': f"GL Code {product['liability_gl']}",
-                 'description': 'Savings control account'},
+                 'description': 'Liability account - obligation to customers'},
 
                 {'product_short_name': product['short_name'], 'mapping_type': 'Interest on Savings',
                  'gl_code': '91', 'gl_name': 'Interest Expense on Savings', 'description': 'Interest expense'},
@@ -903,11 +903,11 @@ class FineractDemoDataGenerator:
     def create_teller_cashier_mappings_sheet(self):
         """Create teller/cashier GL account mappings per office"""
         data = [
-            # Head Office Yaounde
-            {'office_name': 'Head Office Yaounde', 'teller_name': 'Teller - Yaounde',
+            # Yaounde Branch
+            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller - Yaounde',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
-             'description': 'Head office teller and vault configuration'},
+             'description': 'Yaounde branch teller and vault configuration'},
 
             # Douala Branch
             {'office_name': 'Douala Branch', 'teller_name': 'Teller - Douala',
@@ -932,28 +932,28 @@ class FineractDemoDataGenerator:
     def create_tellers_sheet(self):
         """Create tellers (cash counters) for each branch"""
         data = [
-            # Head Office Yaounde
-            {'office_name': 'Head Office Yaounde', 'teller_name': 'Teller 1 - Yaounde',
-             'description': 'Main teller counter at head office',
-             'start_date': '2024-01-01', 'end_date': '2030-12-31',
+            # Yaounde Branch
+            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller 1 - Yaounde',
+             'description': 'Main teller counter at Yaounde branch',
+             'start_date': '2024-01-15', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Douala Branch
             {'office_name': 'Douala Branch', 'teller_name': 'Teller 1 - Douala',
              'description': 'Main teller counter at Douala branch',
-             'start_date': '2024-01-01', 'end_date': '2030-12-31',
+             'start_date': '2024-01-15', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Bafoussam Branch
             {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller 1 - Bafoussam',
              'description': 'Main teller counter at Bafoussam branch',
-             'start_date': '2024-01-01', 'end_date': '2030-12-31',
+             'start_date': '2024-02-01', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Bamenda Branch
             {'office_name': 'Bamenda Branch', 'teller_name': 'Teller 1 - Bamenda',
              'description': 'Main teller counter at Bamenda branch',
-             'start_date': '2024-01-01', 'end_date': '2030-12-31',
+             'start_date': '2024-02-15', 'end_date': '2030-12-31',
              'status': 'Active'},
         ]
         return pd.DataFrame(data)
@@ -1016,9 +1016,12 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_maker_checker_config_sheet(self):
-        """Create Maker-Checker (4-eyes principle) configuration for critical operations"""
+        """Create Maker-Checker (4-eyes principle) configuration for critical operations
+
+        All permission codes verified against Fineract source code (@CommandType annotations).
+        """
         data = [
-            # Loan-related maker-checker tasks
+            # Loan operations
             {'task_name': 'Loan Approval', 'entity': 'Loan', 'action': 'APPROVE',
              'threshold_amount': 2000000, 'threshold_currency': 'XAF',
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
@@ -1034,52 +1037,47 @@ class FineractDemoDataGenerator:
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'All loan write-offs require manager approval (any amount)'},
 
-            {'task_name': 'Loan Reschedule', 'entity': 'Loan', 'action': 'RESCHEDULE',
+            {'task_name': 'Create Loan Reschedule Request', 'entity': 'RESCHEDULELOAN', 'action': 'CREATE',
              'threshold_amount': 1000000, 'threshold_currency': 'XAF',
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'Loan rescheduling above 1M XAF requires manager approval'},
 
-            # Savings withdrawal maker-checker
-            {'task_name': 'Savings Withdrawal', 'entity': 'Savings', 'action': 'WITHDRAWAL',
-             'threshold_amount': 1000000, 'threshold_currency': 'XAF',
-             'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
-             'description': 'Withdrawals above 1M XAF require manager approval'},
-
-            {'task_name': 'Savings Account Closure', 'entity': 'Savings', 'action': 'CLOSE',
+            # Savings operations
+            {'task_name': 'Close Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'CLOSE',
              'threshold_amount': 500000, 'threshold_currency': 'XAF',
              'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
              'description': 'Account closures with balance above 500K XAF require manager approval'},
 
-            # Client-related maker-checker
+            # Client operations
             {'task_name': 'Client Activation', 'entity': 'Client', 'action': 'ACTIVATE',
              'threshold_amount': 0, 'threshold_currency': 'XAF',
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'New client activation requires manager approval'},
 
-            {'task_name': 'Client Transfer', 'entity': 'Client', 'action': 'TRANSFER',
+            {'task_name': 'Propose Client Transfer', 'entity': 'Client', 'action': 'PROPOSETRANSFER',
              'threshold_amount': 0, 'threshold_currency': 'XAF',
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'Client office transfer requires manager approval'},
 
-            # Accounting-related maker-checker
-            {'task_name': 'Manual Journal Entry', 'entity': 'Accounting', 'action': 'CREATE_JOURNAL',
+            # Accounting operations
+            {'task_name': 'Create Manual Journal Entry', 'entity': 'JOURNALENTRY', 'action': 'CREATE',
              'threshold_amount': 500000, 'threshold_currency': 'XAF',
-             'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
+             'maker_role': 'Accountant', 'checker_role': 'Branch Manager',
              'description': 'Manual journal entries above 500K XAF require manager approval'},
 
-            # User/System changes
+            # User/System operations
             {'task_name': 'Create User', 'entity': 'User', 'action': 'CREATE',
              'threshold_amount': 0, 'threshold_currency': 'XAF',
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
              'description': 'Creating new system users requires head office approval'},
 
-            {'task_name': 'Update User Roles', 'entity': 'User', 'action': 'UPDATE_ROLE',
+            {'task_name': 'Update User', 'entity': 'User', 'action': 'UPDATE',
              'threshold_amount': 0, 'threshold_currency': 'XAF',
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Changing user roles requires head office approval'},
+             'description': 'Updating user details requires head office approval'},
 
-            # Fund transfers
-            {'task_name': 'Inter-Office Transfer', 'entity': 'Office', 'action': 'TRANSFER_FUNDS',
+            # Office/Fund transfers
+            {'task_name': 'Create Office Transaction', 'entity': 'OFFICETRANSACTION', 'action': 'CREATE',
              'threshold_amount': 3000000, 'threshold_currency': 'XAF',
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
              'description': 'Inter-branch fund transfers above 3M XAF require head office approval'},
@@ -1170,7 +1168,7 @@ class FineractDemoDataGenerator:
              'description': 'Secondary education'},
             {'code_name': 'EducationLevel', 'code_value': 'University', 'code_position': 3, 'is_active': 'Yes',
              'description': 'University degree'},
-            {'code_name': 'EducationLevel', 'code_value': 'None', 'code_position': 4, 'is_active': 'Yes',
+            {'code_name': 'EducationLevel', 'code_value': 'No Formal Education', 'code_position': 4, 'is_active': 'Yes',
              'description': 'No formal education'},
 
             # Loan Purpose
@@ -1224,17 +1222,33 @@ class FineractDemoDataGenerator:
              'description': 'Transport services'},
             {'code_name': 'BusinessType', 'code_value': 'Food Services', 'code_position': 7, 'is_active': 'Yes',
              'description': 'Restaurant/catering'},
+
+            # Guarantor Relationship (Note: Spouse already exists in Fineract by default)
+            {'code_name': 'GuarantorRelationship', 'code_value': 'Family Member', 'code_position': 1, 'is_active': 'Yes',
+             'description': 'Family member (parent, sibling, child)'},
+            {'code_name': 'GuarantorRelationship', 'code_value': 'Employer', 'code_position': 2, 'is_active': 'Yes',
+             'description': 'Employer guarantee for salaried clients'},
+            {'code_name': 'GuarantorRelationship', 'code_value': 'Business Partner', 'code_position': 3, 'is_active': 'Yes',
+             'description': 'Business partner or associate'},
+            {'code_name': 'GuarantorRelationship', 'code_value': 'Group Member', 'code_position': 4, 'is_active': 'Yes',
+             'description': 'Fellow group member in solidarity lending'},
+            {'code_name': 'GuarantorRelationship', 'code_value': 'Community Leader', 'code_position': 5, 'is_active': 'Yes',
+             'description': 'Village chief or community leader'},
         ]
         return pd.DataFrame(data)
 
     def create_scheduler_jobs_sheet(self):
-        """Create scheduler job configurations"""
+        """Create scheduler job configurations
+
+        All job names verified against Fineract source code (JobName.java enum).
+        """
         data = [
+            # Core savings and loan jobs
             {'job_name': 'Post Interest For Savings', 'display_name': 'Post Interest For Savings',
              'cron_expression': '0 0 0 1/1 * ? *', 'active': 'Yes',
              'description': 'Post interest to savings accounts daily at midnight'},
 
-            {'job_name': 'Transfer Fee For Loans From Savings', 'display_name': 'Transfer Loan Fees From Savings',
+            {'job_name': 'Transfer Fee For Loans From Savings', 'display_name': 'Transfer Fee For Loans From Savings',
              'cron_expression': '0 0 1 * * ?', 'active': 'Yes',
              'description': 'Auto-deduct loan fees from linked savings accounts daily at 1 AM'},
 
@@ -1250,25 +1264,28 @@ class FineractDemoDataGenerator:
              'cron_expression': '0 0 0 1 1 ? *', 'active': 'Yes',
              'description': 'Apply annual savings account fees on January 1st'},
 
-            {'job_name': 'Apply Charges To Overdue Loans', 'display_name': 'Apply Charges To Overdue Loans',
+            # Penalty and charges
+            {'job_name': 'Apply penalty to overdue loans', 'display_name': 'Apply penalty to overdue loans',
              'cron_expression': '0 0 3 * * ?', 'active': 'Yes',
              'description': 'Apply penalty charges to overdue loans daily at 3 AM'},
 
-            {'job_name': 'Update Savings Dormancy Flags', 'display_name': 'Update Savings Dormancy Flags',
+            # Savings dormancy
+            {'job_name': 'Update Savings Dormant Accounts', 'display_name': 'Update Savings Dormant Accounts',
              'cron_expression': '0 0 0 1/1 * ? *', 'active': 'Yes',
              'description': 'Mark savings accounts as inactive/dormant based on activity'},
 
-            {'job_name': 'Execute Standing Instructions', 'display_name': 'Execute Standing Instructions',
+            # Standing instructions (recurring payments)
+            {'job_name': 'Execute Standing Instruction', 'display_name': 'Execute Standing Instruction',
              'cron_expression': '0 0 0 1/1 * ? *', 'active': 'Yes',
              'description': 'Execute standing instructions (recurring payments) daily'},
 
-            {'job_name': 'Add Periodic Accrual Entries', 'display_name': 'Add Periodic Accrual Entries',
+            # Periodic accruals
+            {'job_name': 'Add Periodic Accrual Transactions', 'display_name': 'Add Periodic Accrual Transactions',
              'cron_expression': '0 0 0 1 * ? *', 'active': 'Yes',
              'description': 'Add monthly accrual entries on the 1st of each month'},
 
-            {'job_name': 'Update Loan Paid In Advance', 'display_name': 'Update Loan Paid In Advance',
-             'cron_expression': '0 0 4 * * ?', 'active': 'Yes',
-             'description': 'Update loans paid in advance status daily at 4 AM'},
+            # NOTE: "Update Loan Paid In Advance" job does not exist in Fineract source code
+            # This functionality may have been removed or renamed in newer versions
         ]
         return pd.DataFrame(data)
 
@@ -1454,7 +1471,7 @@ class FineractDemoDataGenerator:
              'subject': '', 'message_body': 'Hello {clientName}, your account has been activated at {officeName}. Welcome to {institutionName}! Your account number is {accountNumber}.',
              'is_active': 'Yes', 'description': 'Sent when client account is activated'},
 
-            {'template_name': 'Client Activation', 'channel': 'Email', 'event_trigger': 'Client Activated',
+            {'template_name': 'Client Activation Email', 'channel': 'Email', 'event_trigger': 'Client Activated',
              'subject': 'Welcome to {institutionName}',
              'message_body': 'Dear {clientName},\n\nYour account has been successfully activated at {officeName}.\n\nAccount Number: {accountNumber}\nActivation Date: {activationDate}\n\nThank you for choosing {institutionName}.\n\nBest regards,\n{institutionName} Team',
              'is_active': 'Yes', 'description': 'Email sent when client account is activated'},
@@ -2005,11 +2022,11 @@ class FineractDemoDataGenerator:
         print(f" 21. Teller Cashier Mapping (4 GL account mappings per office)")
         print(f" 22. Tellers (4 tellers - 1 per office)")
         print(f" 23. Roles Permissions (3 roles with granular permissions)")
-        print(f" 24. Maker Checker Config (12 dual-authorization rules)")
+        print(f" 24. Maker Checker Config (11 dual-authorization rules)")
         print(f" 25. Currency Config (1 currency - XAF)")
         print(f" 26. Working Days (7 days configuration)")
         print(f" 27. Account Number Preferences (5 entity types)")
-        print(f" 28. Codes and Values (43 dropdown values across 9 code categories)")
+        print(f" 28. Codes and Values (48 dropdown values across 10 code categories)")
         print(f" 29. Scheduler Jobs (10 automated jobs)")
         print(f" 30. Global Configuration (23 global settings)")
         print(f" 31. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
