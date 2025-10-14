@@ -73,6 +73,15 @@ class FineractDemoDataGenerator:
     def create_staff_sheet(self):
         """Create staff members with role assignments"""
         data = [
+            # Head Office Staff - Administrative
+            {'firstname': 'Thomas', 'lastname': 'Ndongo', 'office': 'Head Office', 'role': 'System Administrator',
+             'username': 'admin.system', 'email': 't.ndongo@mfi.cm', 'mobile': '+237 677 11 11 11',
+             'joining_date': '2024-01-02', 'external_id': 'STF-101'},
+
+            {'firstname': 'Christine', 'lastname': 'Biaka', 'office': 'Head Office', 'role': 'Accountant',
+             'username': 'accountant', 'email': 'c.biaka@mfi.cm', 'mobile': '+237 677 22 22 22',
+             'joining_date': '2024-01-02', 'external_id': 'STF-102'},
+
             # Yaounde Branch Staff
             {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
              'username': 'manager.yaounde', 'email': 'j.mbarga@mfi.cm', 'mobile': '+237 677 12 34 56',
@@ -770,8 +779,8 @@ class FineractDemoDataGenerator:
                 {'product_short_name': product, 'mapping_type': 'Penalties Receivable', 'gl_code': '54',
                  'gl_name': 'Loans to Clients - Penalties Receivable', 'description': 'Penalties receivable'},
 
-                {'product_short_name': product, 'mapping_type': 'Transfer in Suspense', 'gl_code': '42',
-                 'gl_name': 'Cash on Hand', 'description': 'Suspense account for transfers'},
+                {'product_short_name': product, 'mapping_type': 'Transfer in Suspense', 'gl_code': '122',
+                 'gl_name': 'Due from Other Branches (Receivable)', 'description': 'Suspense account for transfers'},
 
                 {'product_short_name': product, 'mapping_type': 'Interest Income', 'gl_code': '81',
                  'gl_name': 'Interest Income on Loans', 'description': 'Interest income recognition'},
@@ -845,7 +854,7 @@ class FineractDemoDataGenerator:
                  'gl_code': '141', 'gl_name': 'Tax Payable - WHT', 'description': 'Withholding tax payable'},
 
                 {'product_short_name': product['short_name'], 'mapping_type': 'Transfer in Suspense',
-                 'gl_code': '42', 'gl_name': 'Cash on Hand', 'description': 'Transfer suspense account'},
+                 'gl_code': '122', 'gl_name': 'Due from Other Branches (Receivable)', 'description': 'Transfer suspense account'},
             ]
             data.extend(mappings)
 
@@ -976,8 +985,10 @@ class FineractDemoDataGenerator:
              'description': 'View office information'},
             {'role_name': 'Branch Manager', 'permission_group': 'Staff', 'permission': 'READ',
              'description': 'View staff information'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Accounting', 'permission': 'READ',
-             'description': 'View accounting entries'},
+            {'role_name': 'Branch Manager', 'permission_group': 'Accounting', 'permission': 'CREATE_READ',
+             'description': 'Record shortage/overage journal entries and view accounting'},
+            {'role_name': 'Branch Manager', 'permission_group': 'Teller', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Manage teller cash allocation and settlement'},
             {'role_name': 'Branch Manager', 'permission_group': 'Maker-Checker', 'permission': 'APPROVE',
              'description': 'Can approve maker-checker tasks (checker role)'},
 
@@ -986,10 +997,12 @@ class FineractDemoDataGenerator:
              'description': 'Create and update clients'},
             {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'CREATE_UPDATE_READ',
              'description': 'Create and manage loans (approval requires manager)'},
+            {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'DISBURSE_REPAYMENT',
+             'description': 'Disburse approved loans and process repayments'},
             {'role_name': 'Loan Officer', 'permission_group': 'Savings', 'permission': 'CREATE_UPDATE_READ',
              'description': 'Create and manage savings accounts'},
             {'role_name': 'Loan Officer', 'permission_group': 'Transaction', 'permission': 'CREATE_READ',
-             'description': 'Process transactions (deposits, repayments)'},
+             'description': 'Process and view transactions'},
             {'role_name': 'Loan Officer', 'permission_group': 'Report', 'permission': 'READ',
              'description': 'View operational reports'},
             {'role_name': 'Loan Officer', 'permission_group': 'Office', 'permission': 'READ',
@@ -1002,16 +1015,54 @@ class FineractDemoDataGenerator:
              'description': 'View client information only'},
             {'role_name': 'Cashier', 'permission_group': 'Loan', 'permission': 'READ',
              'description': 'View loan information only'},
-            {'role_name': 'Cashier', 'permission_group': 'Savings', 'permission': 'READ',
-             'description': 'View savings information only'},
+            {'role_name': 'Cashier', 'permission_group': 'Savings', 'permission': 'TRANSACTION',
+             'description': 'Process deposits and withdrawals on savings accounts'},
             {'role_name': 'Cashier', 'permission_group': 'Transaction', 'permission': 'CREATE_READ',
-             'description': 'Process deposits, withdrawals, repayments'},
-            {'role_name': 'Cashier', 'permission_group': 'Teller', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Full teller/cashier operations'},
+             'description': 'Process transactions and repayments'},
             {'role_name': 'Cashier', 'permission_group': 'Report', 'permission': 'READ',
              'description': 'View transaction reports'},
             {'role_name': 'Cashier', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
              'description': 'Can create maker-checker tasks (maker role)'},
+
+            # System Administrator Role - System configuration and setup
+            {'role_name': 'System Administrator', 'permission_group': 'Office', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage offices/branches'},
+            {'role_name': 'System Administrator', 'permission_group': 'Staff', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage staff members'},
+            {'role_name': 'System Administrator', 'permission_group': 'Loan Product', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage loan products'},
+            {'role_name': 'System Administrator', 'permission_group': 'Savings Product', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage savings products'},
+            {'role_name': 'System Administrator', 'permission_group': 'Charge', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage charges/fees'},
+            {'role_name': 'System Administrator', 'permission_group': 'Client', 'permission': 'CREATE_UPDATE_READ',
+             'description': 'Create and update clients (not delete)'},
+            {'role_name': 'System Administrator', 'permission_group': 'Loan', 'permission': 'READ',
+             'description': 'View loan accounts'},
+            {'role_name': 'System Administrator', 'permission_group': 'Savings', 'permission': 'READ',
+             'description': 'View savings accounts'},
+            {'role_name': 'System Administrator', 'permission_group': 'Report', 'permission': 'READ',
+             'description': 'View all reports'},
+            {'role_name': 'System Administrator', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
+             'description': 'Can create maker-checker tasks (maker role)'},
+
+            # Accountant Role - Accounting and financial management
+            {'role_name': 'Accountant', 'permission_group': 'Accounting', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Create and manage GL accounts and journal entries'},
+            {'role_name': 'Accountant', 'permission_group': 'Client', 'permission': 'READ',
+             'description': 'View client information'},
+            {'role_name': 'Accountant', 'permission_group': 'Loan', 'permission': 'READ',
+             'description': 'View loan accounts and transactions'},
+            {'role_name': 'Accountant', 'permission_group': 'Savings', 'permission': 'READ',
+             'description': 'View savings accounts and transactions'},
+            {'role_name': 'Accountant', 'permission_group': 'Transaction', 'permission': 'READ',
+             'description': 'View all transactions'},
+            {'role_name': 'Accountant', 'permission_group': 'Report', 'permission': 'READ',
+             'description': 'View financial reports'},
+            {'role_name': 'Accountant', 'permission_group': 'Office', 'permission': 'READ',
+             'description': 'View office information'},
+            {'role_name': 'Accountant', 'permission_group': 'Maker-Checker', 'permission': 'APPROVE',
+             'description': 'Can approve accounting maker-checker tasks (checker role)'},
         ]
         return pd.DataFrame(data)
 

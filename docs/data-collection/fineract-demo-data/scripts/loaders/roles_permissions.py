@@ -80,7 +80,10 @@ class RolesPermissionsLoader:
             'Staff': 'STAFF',
             'Accounting': 'JOURNALENTRY',
             'Teller': 'TELLER',
-            'Maker-Checker': 'CHECKER'
+            'Maker-Checker': 'CHECKER',
+            'Loan Product': 'LOANPRODUCT',
+            'Savings Product': 'SAVINGSPRODUCT',
+            'Charge': 'CHARGE'
         }
 
         entity_name = entity_mapping.get(permission_group)
@@ -103,6 +106,12 @@ class RolesPermissionsLoader:
             actions = ['APPROVE', 'APPROVALMATRIX']
         elif permission_level == 'CREATE':
             actions = ['CREATE']
+        elif permission_level == 'TRANSACTION':
+            # Specific transaction operations (deposits, withdrawals)
+            actions = ['DEPOSIT', 'WITHDRAWAL']
+        elif permission_level == 'DISBURSE_REPAYMENT':
+            # Loan disbursement and repayment operations
+            actions = ['DISBURSE', 'REPAYMENT', 'DISBURSETOSAVINGS', 'DISBURSEWITHOUTAUTODOWNPAYMENT']
         else:
             logger.warning(f"Unknown permission level: {permission_level}")
             return permissions

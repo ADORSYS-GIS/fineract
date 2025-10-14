@@ -591,6 +591,12 @@ class ProductLoader:
         logger.info("LOADING LOAN PROVISIONING CRITERIA")
         logger.info("=" * 80)
 
+        # Check if any loan products were created
+        if not self.client.created_loan_products:
+            logger.warning("⚠ No loan products found. Skipping loan provisioning criteria.")
+            logger.warning("  Loan provisioning requires at least one loan product to be created first.")
+            return
+
         df = self._read_excel_sheet('Loan Provisioning')
 
         # Create provisioning criteria with all categories
@@ -606,11 +612,15 @@ class ProductLoader:
             provisioning_criteria.append(criterion)
 
         # Create the provisioning criteria with all loan products
+        loan_product_ids = list(self.client.created_loan_products.values())
         data = {
             'criteriaName': 'COBAC Provisioning Standards',
-            'loanProducts': list(self.client.created_loan_products.values()),
+            'loanProducts': loan_product_ids,
             'definitions': provisioning_criteria
         }
+
+        logger.info(f"Attempting to create provisioning criteria for {len(loan_product_ids)} loan products")
+        logger.info(f"Loan product IDs: {loan_product_ids}")
 
         try:
             response = self.client.post('/provisioningcriteria', data)
@@ -627,6 +637,7 @@ class ProductLoader:
 
         except Exception as e:
             logger.error(f"✗ Failed to create loan provisioning criteria: {str(e)}")
+            logger.error(f"  Payload sent: {data}")
 
     def load_collateral_types(self):
         """Create collateral types"""

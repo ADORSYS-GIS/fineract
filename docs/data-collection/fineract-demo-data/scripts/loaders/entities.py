@@ -137,13 +137,9 @@ class EntityLoader:
     def _create_user_account(self, staff_row, staff_id: int, office_id: int):
         """Create user account for staff member"""
         try:
-            role_name_mapping = {
-                'Branch Manager': 'Super user',
-                'Loan Officer': 'Super user',
-                'Cashier': 'Super user'
-            }
-
-            fineract_role_name = role_name_mapping.get(staff_row['role'], 'Super user')
+            # Use the actual role name from Excel data
+            # This will match the custom roles created by the Roles Permissions loader
+            fineract_role_name = staff_row['role']
 
             # Get available roles from Fineract
             if not hasattr(self.client, 'available_roles'):
@@ -154,8 +150,18 @@ class EntityLoader:
             role_id = self.client.available_roles.get(fineract_role_name)
 
             if not role_id:
-                logger.warning(f"Role '{fineract_role_name}' not found. Using first available role.")
-                role_id = list(self.client.available_roles.values())[0] if self.client.available_roles else 1
+                logger.warning(f"  ⚠ Role '{fineract_role_name}' not found for user {staff_row['username']}")
+                logger.warning(f"    Available roles: {list(self.client.available_roles.keys())}")
+                # Fallback to 'Super user' role if custom role not found
+                role_id = self.client.available_roles.get('Super user')
+                if not role_id:
+                    # If 'Super user' also not found, use first available role
+                    logger.warning(f"    'Super user' role not found either. Using first available role.")
+                    role_id = list(self.client.available_roles.values())[0] if self.client.available_roles else 1
+                else:
+                    logger.info(f"    Using fallback 'Super user' role (ID: {role_id})")
+            else:
+                logger.info(f"  ✓ Assigning role '{fineract_role_name}' (ID: {role_id}) to user {staff_row['username']}")
 
             secure_password = self.config.get('default_password', 'Fineract@Pas1234')
 

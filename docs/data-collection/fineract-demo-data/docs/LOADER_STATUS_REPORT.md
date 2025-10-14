@@ -70,13 +70,13 @@ All loaders have been successfully implemented and tested. No errors or missing 
 7. `load_notification_templates()` - SMS/Email templates
 8. `load_data_tables()` - Custom fields
 
-### Phase 2: Organizational Entities (3 loaders)
-9. `load_offices()` - Branch hierarchy
-10. `load_staff()` - Staff members
-11. `load_tellers()` - Teller counters
+### Phase 2: Security & Permissions (1 loader) **[MUST RUN BEFORE STAFF]**
+9. `load_roles_permissions()` - User roles with granular permissions
 
-### Phase 3: Security & Permissions (1 loader)
-12. `load_roles_permissions()` - User roles with granular permissions
+### Phase 3: Organizational Entities (3 loaders)
+10. `load_offices()` - Branch hierarchy
+11. `load_staff()` - Staff members (requires roles from Phase 2)
+12. `load_tellers()` - Teller counters
 
 ### Phase 4: Financial Products & Configuration (13 loaders)
 13. `load_gl_accounts()` - Chart of accounts
@@ -85,7 +85,7 @@ All loaders have been successfully implemented and tested. No errors or missing 
 16. `load_payment_types()` - Payment methods
 17. `load_holidays()` - Holiday calendar
 18. `load_financial_activity_mappings()` - Financial activity GL mappings
-19. `load_teller_accounting_rules()` - **NEW**: Cash shortage/overage rules
+19. `load_teller_accounting_rules()` - Cash shortage/overage rules
 20. `enable_maker_checker()` - Dual authorization
 21. `load_scheduler_jobs()` - Automated jobs
 22. `load_loan_products()` - Loan products + accounting

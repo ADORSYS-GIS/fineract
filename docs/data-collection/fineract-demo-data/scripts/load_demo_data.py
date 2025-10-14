@@ -81,13 +81,13 @@ class FineractDemoDataLoader:
             self.system_config_loader.load_notification_templates()
             self.system_config_loader.load_data_tables()
 
+            # Load roles and permissions FIRST (before staff so users can be assigned to custom roles)
+            self.roles_permissions_loader.load_roles_permissions()
+
             # Load entities
             self.entity_loader.load_offices()
             self.entity_loader.load_staff()
             self.entity_loader.load_tellers()
-
-            # Load roles and permissions (after staff so users can be assigned to roles)
-            self.roles_permissions_loader.load_roles_permissions()
 
             # Load products and configurations
             self.product_loader.load_gl_accounts()
