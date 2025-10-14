@@ -128,14 +128,22 @@ class SystemConfigLoader:
                     if config:
                         config_id = config['id']
 
+                        # Check if this is a boolean-only config or a string/value config
+                        is_boolean_only = config.get('enabled') is not None and config.get('value') is None
+
                         # Update configuration
                         update_data = {
                             'enabled': row['enabled'] == 'Yes'
                         }
 
-                        # Add value if it's a value-based config
-                        if row['value'] and row['value'] not in ['true', 'false']:
-                            update_data['value'] = row['value']
+                        # Add value if it's a value-based config (not just boolean)
+                        if not is_boolean_only and row['value'] and pd.notna(row['value']):
+                            # For string-type configurations, the value should be sent
+                            if row['value'] not in ['true', 'false']:
+                                update_data['value'] = str(row['value'])
+                            # For numeric configurations, convert to number
+                            elif row['value'].isdigit():
+                                update_data['value'] = int(row['value'])
 
                         self.client.put(f'/configurations/{config_id}', update_data)
                         logger.info(f"✓ Configured: {row['config_name']} = {row['value']} (enabled: {row['enabled']})")

@@ -70,7 +70,7 @@ class ProductLoader:
                 logger.error(f"✗ Failed to create GL account {row['gl_code']}: {str(e)}")
 
     def load_charges(self):
-        """Create charges/fees"""
+        """Create charges/fees with fee frequency support"""
         logger.info("=" * 80)
         logger.info("LOADING CHARGES")
         logger.info("=" * 80)
@@ -93,12 +93,7 @@ class ProductLoader:
             'Withdrawal': 5,
             'Withdrawal Fee': 5,
             'ATM Fee': 5,
-            'Annual': 6,
-            'Annual Fee': 6,
-            'Monthly': 7,
-            'Monthly Fee': 7,
             'Overdraft Fee': 10,
-            'Weekly Fee': 11,
             'Saving No Activity Fee': 16,
             'Share Account Activate': 13,
             'Share Purchase': 14,
@@ -107,7 +102,15 @@ class ProductLoader:
             'On Demand': 2
         }
 
-        savings_valid_charge_times = {2, 3, 5, 6, 7, 10, 11, 16}
+        # Fee frequency mapping
+        fee_frequency_type = {
+            'Weekly': 1,       # WEEKS
+            'Monthly': 4,      # MONTHS
+            'Yearly': 3,       # YEARS
+            'Daily': 0         # DAYS (if needed)
+        }
+
+        savings_valid_charge_times = {2, 3, 5, 10, 16}  # Specified Due Date, Activation, Withdrawal, Overdraft Fee, No Activity Fee
 
         charge_calculation_type = {
             'Flat': 1,
@@ -139,20 +142,41 @@ class ProductLoader:
                     'locale': 'en'
                 }
 
+                # Handle penalty flag
                 if 'Penalty' in row['charge_name'] and row['charge_time'] == 'Overdue Installment':
                     data['penalty'] = True
 
-                if row['charge_time'] in ['Monthly', 'Monthly Fee']:
-                    data['feeOnMonthDay'] = [1]
-                    data['feeInterval'] = 1
+                # Handle fee frequency for recurring charges
+                fee_frequency = row.get('fee_frequency')
+                if fee_frequency and pd.notna(fee_frequency):
+                    frequency_val = fee_frequency_type.get(fee_frequency)
+                    if frequency_val is not None:
+                        data['feeFrequency'] = frequency_val
 
-                if row['charge_time'] in ['Annual', 'Annual Fee']:
-                    data['feeOnMonthDay'] = [1, 1]
-                    data['feeInterval'] = 1
+                        # Add fee interval
+                        fee_interval = row.get('fee_interval')
+                        if fee_interval and pd.notna(fee_interval):
+                            data['feeInterval'] = int(fee_interval)
 
-                if row['charge_time'] in ['Weekly', 'Weekly Fee']:
-                    data['feeOnMonthDay'] = [1]
-                    data['feeInterval'] = 1
+                        # Add feeOnMonthDay based on frequency type
+                        if fee_frequency == 'Monthly':
+                            # Monthly: [day] (e.g., [1] for 1st of month)
+                            fee_on_day = row.get('fee_on_day')
+                            if fee_on_day and pd.notna(fee_on_day):
+                                data['feeOnMonthDay'] = [int(fee_on_day)]
+
+                        elif fee_frequency == 'Yearly':
+                            # Yearly: [month, day] (e.g., [1, 1] for January 1st)
+                            fee_on_month = row.get('fee_on_month')
+                            fee_on_day = row.get('fee_on_day')
+                            if fee_on_month and pd.notna(fee_on_month) and fee_on_day and pd.notna(fee_on_day):
+                                data['feeOnMonthDay'] = [int(fee_on_month), int(fee_on_day)]
+
+                        elif fee_frequency == 'Weekly':
+                            # Weekly: [day of week] (e.g., [1] for Monday)
+                            fee_on_day = row.get('fee_on_day')
+                            if fee_on_day and pd.notna(fee_on_day):
+                                data['feeOnMonthDay'] = [int(fee_on_day)]
 
                 response = self.client.post('/charges', data)
                 charge_id = response.get('resourceId') or response.get('chargeId')
@@ -738,3 +762,189 @@ class ProductLoader:
         logger.info(f"✓ Created {rules_created} accounting rules for teller cash management")
         logger.info("  Cashiers can use these rules to record cash shortages/overages")
         logger.info("  Access: Admin → Accounting → Frequent Postings → Accounting Rules")
+
+    def load_floating_rates(self):
+        """Create floating interest rates"""
+        logger.info("=" * 80)
+        logger.info("LOADING FLOATING RATES")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Floating Rates')
+
+        for idx, row in df.iterrows():
+            try:
+                # Create floating rate
+                rate_data = {
+                    'name': row['rate_name'],
+                    'isBaseLendingRate': row['is_base_rate'] == 'Yes',
+                    'isActive': row['is_active'] == 'Yes'
+                }
+
+                response = self.client.post('/floatingrates', rate_data)
+                rate_id = response.get('resourceId')
+
+                logger.info(f"✓ Created floating rate: {row['rate_name']} (ID: {rate_id})")
+
+                # Create rate period
+                period_data = {
+                    'fromDate': row['from_date'],
+                    'interestRate': float(row['rate_value']),
+                    'isDifferentialToBaseLendingRate': False,
+                    'isActive': True,
+                    'dateFormat': 'yyyy-MM-dd',
+                    'locale': 'en'
+                }
+
+                self.client.post(f'/floatingrates/{rate_id}/floatingrateperiods', period_data)
+                logger.info(f"  Added rate period: {row['rate_value']}% from {row['from_date']}")
+
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create floating rate {row['rate_name']}: {str(e)}")
+
+    def load_delinquency_buckets(self):
+        """Create delinquency buckets for arrears classification"""
+        logger.info("=" * 80)
+        logger.info("LOADING DELINQUENCY BUCKETS")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Delinquency Buckets')
+
+        # Group all ranges into one bucket configuration
+        bucket_name = "Loan Arrears Classification"
+        ranges = []
+
+        for idx, row in df.iterrows():
+            ranges.append({
+                'classification': row['classification'],
+                'minAgeDays': int(row['min_days_overdue']),
+                'maxAgeDays': int(row['max_days_overdue'])
+            })
+
+        try:
+            bucket_data = {
+                'name': bucket_name,
+                'ranges': ranges
+            }
+
+            response = self.client.post('/delinquency/buckets', bucket_data)
+            bucket_id = response.get('resourceId')
+
+            # Store bucket ID for later mapping to loan products
+            self.client.created_delinquency_bucket_id = bucket_id
+
+            logger.info(f"✓ Created delinquency bucket: {bucket_name} (ID: {bucket_id})")
+            logger.info(f"  Ranges configured: {len(ranges)}")
+            for r in ranges:
+                logger.info(f"    • {r['classification']}: {r['minAgeDays']}-{r['maxAgeDays']} days")
+
+            # Now map this bucket to all existing loan products
+            if self.client.created_loan_products:
+                logger.info(f"\nMapping delinquency bucket to {len(self.client.created_loan_products)} loan products...")
+                for product_name, product_id in self.client.created_loan_products.items():
+                    try:
+                        # Update loan product with delinquency bucket
+                        update_data = {
+                            'delinquencyBucketId': bucket_id,
+                            'locale': 'en'
+                        }
+                        self.client.put(f'/loanproducts/{product_id}', update_data)
+                        logger.info(f"  ✓ Mapped to loan product: {product_name}")
+                        time.sleep(0.2)
+                    except Exception as e:
+                        logger.warning(f"  ⚠ Failed to map to {product_name}: {str(e)}")
+            else:
+                logger.warning("  ⚠ No loan products found to map delinquency bucket")
+
+        except Exception as e:
+            logger.error(f"✗ Failed to create delinquency bucket: {str(e)}")
+
+    def load_tax_groups(self):
+        """Create tax groups and tax components"""
+        logger.info("=" * 80)
+        logger.info("LOADING TAX GROUPS")
+        logger.info("=" * 80)
+
+        df = self._read_excel_sheet('Tax Groups')
+
+        # Group by tax_group_name
+        tax_groups = df.groupby('tax_group_name')
+
+        # Store tax group IDs by type for later mapping
+        if not hasattr(self.client, 'created_tax_groups'):
+            self.client.created_tax_groups = {}
+
+        for group_name, group_data in tax_groups:
+            try:
+                # Get credit GL account
+                first_row = group_data.iloc[0]
+                credit_gl_code = str(first_row['credit_gl_code'])
+                credit_gl_id = self.client.created_gl_accounts.get(credit_gl_code)
+
+                if not credit_gl_id:
+                    logger.warning(f"  ⚠ GL account not found: {credit_gl_code}, skipping tax group {group_name}")
+                    continue
+
+                # Create tax components first
+                tax_component_ids = []
+                for _, row in group_data.iterrows():
+                    component_data = {
+                        'name': row['tax_component_name'],
+                        'percentage': float(row['tax_percentage']),
+                        'startDate': row['start_date'],
+                        'creditAccountType': row['credit_account_type'],
+                        'creditAcountId': credit_gl_id,  # Note: Fineract API typo
+                        'dateFormat': 'yyyy-MM-dd',
+                        'locale': 'en'
+                    }
+
+                    comp_response = self.client.post('/taxes/component', component_data)
+                    comp_id = comp_response.get('resourceId')
+                    tax_component_ids.append(comp_id)
+                    logger.info(f"  ✓ Created tax component: {row['tax_component_name']} ({row['tax_percentage']}%)")
+
+                # Create tax group with components
+                group_data_payload = {
+                    'name': group_name,
+                    'taxComponents': tax_component_ids,
+                    'locale': 'en'
+                }
+
+                group_response = self.client.post('/taxes/group', group_data_payload)
+                group_id = group_response.get('resourceId')
+
+                # Store tax group ID by tax type
+                tax_type = first_row['tax_type']
+                self.client.created_tax_groups[tax_type] = group_id
+
+                logger.info(f"✓ Created tax group: {group_name} (ID: {group_id})")
+                logger.info(f"  Type: {tax_type}")
+                logger.info(f"  Components: {len(tax_component_ids)}")
+
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"✗ Failed to create tax group {group_name}: {str(e)}")
+
+        # Map Savings Interest Tax to all savings products
+        savings_tax_id = self.client.created_tax_groups.get('Savings Interest')
+        if savings_tax_id and self.client.created_savings_products:
+            logger.info(f"\nMapping Savings Interest Tax to {len(self.client.created_savings_products)} savings products...")
+            for product_name, product_id in self.client.created_savings_products.items():
+                try:
+                    # Update savings product with tax group
+                    update_data = {
+                        'withHoldTax': True,
+                        'taxGroupId': savings_tax_id,
+                        'locale': 'en'
+                    }
+                    self.client.put(f'/savingsproducts/{product_id}', update_data)
+                    logger.info(f"  ✓ Enabled 15% WHT on: {product_name}")
+                    time.sleep(0.2)
+                except Exception as e:
+                    logger.warning(f"  ⚠ Failed to map tax to {product_name}: {str(e)}")
+        elif not savings_tax_id:
+            logger.warning("  ⚠ Savings Interest Tax group not found")
+        elif not self.client.created_savings_products:
+            logger.warning("  ⚠ No savings products found to map tax group")

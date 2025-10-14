@@ -26,6 +26,9 @@ This toolkit provides a two-step process to populate a Fineract instance with co
 - **5 Loan Provisioning Categories**: COBAC-compliant (0%, 25%, 50%, 75%, 100%)
 - **6 Collateral Types**: Land, vehicles, household goods, equipment, etc.
 - **6 Guarantor Types**: Spouse, family, employer, business partner, etc.
+- **3 Floating Rates**: BEAC Base Rate (3.5%), Prime Lending (7.5%), SME Lending (9.5%)
+- **5 Delinquency Buckets**: Arrears classification from 1-30 days to 180+ days
+- **2 Tax Groups**: Savings Interest WHT (15%), Loan Interest WHT (5.5%)
 - **Sample Accounts**: 6 active loan accounts + 12 savings accounts
 - **Role-Based Access Control**: 3 roles with granular permissions (Branch Manager, Loan Officer, Cashier)
 - **Maker-Checker Configuration**: 12 dual-authorization rules for critical operations
@@ -56,21 +59,45 @@ This toolkit provides a two-step process to populate a Fineract instance with co
 
 ```
 fineract-demo-data/
+├── README.md                         # Quick start guide (this file)
+├── DOCUMENTATION.md                  # Technical documentation and troubleshooting
 ├── config/
 │   └── fineract_config.json          # Fineract API connection settings
 ├── scripts/
 │   ├── generate_excel_template.py    # Excel generator script
-│   └── load_demo_data.py             # API loader script
-├── templates/
-│   └── (optional custom templates)
+│   ├── load_demo_data.py             # API loader script
+│   ├── fineract_client.py            # API client wrapper
+│   └── loaders/                      # Specialized loader modules
+│       ├── system_config.py
+│       ├── entities.py
+│       ├── products.py
+│       ├── accounts.py
+│       └── roles_permissions.py
 ├── output/
 │   └── fineract_demo_data_*.xlsx     # Generated Excel files
-├── logs/
-│   └── load_demo_data.log            # Execution logs
-├── docs/
-│   └── (additional documentation)
-└── README.md
+└── logs/
+    └── load_demo_data.log            # Execution logs
 ```
+
+## Documentation
+
+- **README.md** (this file): Quick start guide with usage instructions
+- **DOCUMENTATION.md**: Comprehensive technical documentation including:
+  - Architecture and loader implementation details
+  - Complete Excel sheets reference (36 sheets)
+  - Loading sequence and dependencies
+  - Recent enhancements and fixes
+  - Configuration options
+  - Troubleshooting guide
+  - API reference
+- **STAFF_TRAINING_GUIDE.md**: End-user training manual for microfinance staff including:
+  - Role-specific guides (Branch Manager, Loan Officer, Cashier)
+  - Daily workflows and procedures
+  - Step-by-step transaction processing
+  - Maker-Checker approval workflows
+  - Inter-branch transaction handling
+  - Security best practices and fraud prevention
+  - Common troubleshooting scenarios
 
 ## Prerequisites
 
@@ -1827,6 +1854,19 @@ Contributions are welcome:
 This toolkit is provided as-is for use with Apache Fineract.
 
 ## Changelog
+
+### Version 2.0.0 (2025-10-14)
+- **NEW**: Expanded to 36 Excel sheets (was 33)
+- **NEW**: Floating Rates - Variable interest rates linked to BEAC base rate (3 rates)
+- **NEW**: Delinquency Buckets - Loan arrears classification ranges (5 buckets)
+- **NEW**: Tax Groups - Withholding tax configuration with tax components (2 groups)
+- **FIXED**: Staff role assignment - Staff now correctly assigned to custom roles from Excel
+- **FIXED**: Charge frequency implementation - Replaced hardcoded Annual/Monthly with dynamic fee frequency
+- **FIXED**: Transfer in Suspense account type - Changed from GL 131 (LIABILITY) to GL 122 (ASSET)
+- **FIXED**: Execution order - Roles now loaded BEFORE staff for proper assignment
+- **ENHANCED**: Documentation restructured - Consolidated into 2 files (README.md + DOCUMENTATION.md)
+- Comprehensive error handling and validation
+- Production-ready with all fixes verified
 
 ### Version 1.3.0 (2024-10-10)
 - **NEW**: Expanded to 33 Excel sheets (was 32)

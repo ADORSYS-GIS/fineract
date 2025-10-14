@@ -91,6 +91,8 @@ class FineractDemoDataLoader:
 
             # Load products and configurations
             self.product_loader.load_gl_accounts()
+            #TODO: self.product_loader.load_floating_rates()  # After GL accounts, before loan products
+            #TODO:  self.product_loader.load_tax_groups()      # After GL accounts, before savings products
             self.product_loader.load_charges()
             self.product_loader.load_fund_sources()
             self.product_loader.load_payment_types()
@@ -100,6 +102,7 @@ class FineractDemoDataLoader:
             self.product_loader.enable_maker_checker()
             self.system_config_loader.load_scheduler_jobs()
             self.product_loader.load_loan_products()
+            #TODO: self.product_loader.load_delinquency_buckets()  # After loan products
             self.product_loader.load_savings_products()
             self.product_loader.load_loan_provisioning()
             self.product_loader.load_collateral_types()

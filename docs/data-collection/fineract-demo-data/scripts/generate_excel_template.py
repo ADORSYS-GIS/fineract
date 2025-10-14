@@ -388,42 +388,52 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_charges_sheet(self):
-        """Create fees and charges"""
+        """Create fees and charges with fee frequency support"""
         data = [
             {'charge_name': 'Loan Processing Fee', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 2.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'active': 'Yes'},
+             'amount': 2.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Late Payment Penalty', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 5.0, 'currency': 'XAF', 'charge_time': 'Overdue Installment', 'active': 'Yes'},
+             'amount': 5.0, 'currency': 'XAF', 'charge_time': 'Overdue Installment', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Loan Insurance', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 1.5, 'currency': 'XAF', 'charge_time': 'Disbursement', 'active': 'Yes'},
+             'amount': 1.5, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Account Opening Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 1000, 'currency': 'XAF', 'charge_time': 'Activation', 'active': 'Yes'},
+             'amount': 1000, 'currency': 'XAF', 'charge_time': 'Activation', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Monthly Account Maintenance', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 500, 'currency': 'XAF', 'charge_time': 'Monthly', 'active': 'Yes'},
+             'amount': 500, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Monthly',
+             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Withdrawal Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 200, 'currency': 'XAF', 'charge_time': 'Withdrawal', 'active': 'Yes'},
+             'amount': 200, 'currency': 'XAF', 'charge_time': 'Withdrawal', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'ATM Card Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 5000, 'currency': 'XAF', 'charge_time': 'Annual', 'active': 'Yes'},
+             'amount': 5000, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Yearly',
+             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': 1, 'active': 'Yes'},
 
-            # Note: 'On Demand' charge time type is not valid for Savings charges in Fineract
-            # Valid charge time types for savings: Activation, Withdrawal, Annual, Monthly, etc.
-            # {'charge_name': 'Account Statement Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-            #  'amount': 1000, 'currency': 'XAF', 'charge_time': 'On Demand', 'active': 'Yes'},
+            # Note: Weekly fee example
+            {'charge_name': 'Weekly Service Charge', 'charge_type': 'Savings', 'calculation_type': 'Flat',
+             'amount': 100, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Weekly',
+             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Loan Restructuring Fee', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 1.0, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'active': 'Yes'},
+             'amount': 1.0, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Early Repayment Penalty', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 3.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'active': 'No'},
+             'amount': 3.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'No'},
 
             {'charge_name': 'Dormant Account Reactivation', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 2000, 'currency': 'XAF', 'charge_time': 'Activation', 'active': 'Yes'},
+             'amount': 2000, 'currency': 'XAF', 'charge_time': 'Activation', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
         ]
         return pd.DataFrame(data)
 
@@ -595,7 +605,7 @@ class FineractDemoDataGenerator:
              'fund_source': 'Own Capital', 'external_id': 'LOAN-005'},
 
             {'client_external_id': 'CLI-006', 'product': 'SBIZ', 'submitted_on': '2024-02-18',
-             'approved_on': '2024-02-20', 'disbursed_on': '2024-02-25', 'principal': 3000000,
+             'approved_on': '2024-02-20', 'disbursed_on': '2024-02-26', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006'},
         ]
@@ -727,6 +737,70 @@ class FineractDemoDataGenerator:
             {'guarantor_type': 'Business Partner', 'description': 'Business partner or associate'},
             {'guarantor_type': 'Group Member', 'description': 'Fellow group member in solidarity lending'},
             {'guarantor_type': 'Community Leader', 'description': 'Village chief or community leader'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_floating_rates_sheet(self):
+        """Create floating interest rates"""
+        data = [
+            {'rate_name': 'BEAC Base Rate', 'is_base_rate': 'Yes', 'is_active': 'Yes',
+             'rate_value': 3.50, 'from_date': '2024-01-01',
+             'description': 'Central African Bank (BEAC) reference rate'},
+
+            {'rate_name': 'Prime Lending Rate', 'is_base_rate': 'No', 'is_active': 'Yes',
+             'rate_value': 7.50, 'from_date': '2024-01-01',
+             'description': 'Prime rate for best customers (BEAC + 4%)'},
+
+            {'rate_name': 'SME Lending Rate', 'is_base_rate': 'No', 'is_active': 'Yes',
+             'rate_value': 9.50, 'from_date': '2024-01-01',
+             'description': 'Rate for SME loans (BEAC + 6%)'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_delinquency_buckets_sheet(self):
+        """Create delinquency/arrears classification buckets"""
+        data = [
+            # Bucket 1: Early Stage (1-30 days)
+            {'bucket_name': 'Early Stage Delinquency', 'classification': 'Early Stage',
+             'min_days_overdue': 1, 'max_days_overdue': 30, 'color_code': '#FFA500',
+             'description': 'Loans 1-30 days past due'},
+
+            # Bucket 2: Moderate (31-60 days)
+            {'bucket_name': 'Moderate Delinquency', 'classification': 'Moderate',
+             'min_days_overdue': 31, 'max_days_overdue': 60, 'color_code': '#FF6347',
+             'description': 'Loans 31-60 days past due'},
+
+            # Bucket 3: High Risk (61-90 days)
+            {'bucket_name': 'High Risk Delinquency', 'classification': 'High Risk',
+             'min_days_overdue': 61, 'max_days_overdue': 90, 'color_code': '#DC143C',
+             'description': 'Loans 61-90 days past due'},
+
+            # Bucket 4: Very High Risk (91-180 days)
+            {'bucket_name': 'Very High Risk Delinquency', 'classification': 'Very High Risk',
+             'min_days_overdue': 91, 'max_days_overdue': 180, 'color_code': '#8B0000',
+             'description': 'Loans 91-180 days past due'},
+
+            # Bucket 5: Default (180+ days)
+            {'bucket_name': 'Default', 'classification': 'Default',
+             'min_days_overdue': 181, 'max_days_overdue': 9999, 'color_code': '#000000',
+             'description': 'Loans over 180 days past due'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_tax_groups_sheet(self):
+        """Create tax groups and tax components"""
+        data = [
+            # Tax Group 1: Savings Interest WHT
+            {'tax_group_name': 'Savings Interest Tax', 'tax_component_name': 'Withholding Tax on Interest',
+             'tax_type': 'Savings Interest', 'tax_percentage': 15.0, 'start_date': '2024-01-01',
+             'credit_account_type': 'Liability', 'credit_gl_code': '141', 'credit_gl_name': 'Tax Payable - WHT',
+             'description': '15% WHT on savings interest (Cameroon tax law)'},
+
+            # Tax Group 2: Loan Interest WHT (if applicable)
+            {'tax_group_name': 'Loan Interest Tax', 'tax_component_name': 'Withholding Tax on Loan Interest',
+             'tax_type': 'Loan Interest', 'tax_percentage': 5.5, 'start_date': '2024-01-01',
+             'credit_account_type': 'Liability', 'credit_gl_code': '141', 'credit_gl_name': 'Tax Payable - WHT',
+             'description': '5.5% WHT on interest income from loans'},
         ]
         return pd.DataFrame(data)
 
@@ -1363,9 +1437,9 @@ class FineractDemoDataGenerator:
             {'config_name': 'allow-transactions-on-holiday', 'enabled': 'No', 'value': 'false',
              'description': 'Block transactions on public holidays'},
 
-            # Savings Interest Posting
-            {'config_name': 'savings-interest-posting-current-period-end', 'enabled': 'Yes', 'value': 'per_period',
-             'description': 'Post savings interest at period end'},
+            # Savings Interest Posting (may not be supported in all Fineract versions)
+            # {'config_name': 'savings-interest-posting-current-period-end', 'enabled': 'Yes', 'value': 'per_period',
+            #  'description': 'Post savings interest at period end'},
 
             # Financial Year Beginning
             {'config_name': 'financial-year-beginning-month', 'enabled': 'Yes', 'value': '1',
@@ -1407,9 +1481,9 @@ class FineractDemoDataGenerator:
             {'config_name': 'days-in-month-type', 'enabled': 'Yes', 'value': '30',
              'description': 'Days in month for interest calculations: 30 or Actual'},
 
-            # Charge Accrual Date
-            {'config_name': 'charge-accrual-date', 'enabled': 'Yes', 'value': 'due-date',
-             'description': 'When to accrue charges: due-date or submitted-date'},
+            # Charge Accrual Date (may not be supported in all Fineract versions)
+            # {'config_name': 'charge-accrual-date', 'enabled': 'Yes', 'value': 'due-date',
+            #  'description': 'When to accrue charges: due-date or submitted-date'},
 
             # Enable Business Date
             {'config_name': 'enable_business_date', 'enabled': 'Yes', 'value': 'false',
@@ -1990,6 +2064,15 @@ class FineractDemoDataGenerator:
             print("  Creating Guarantor Types sheet...")
             self.create_guarantor_types_sheet().to_excel(writer, sheet_name='Guarantor Types', index=False)
 
+            print("  Creating Floating Rates sheet...")
+            self.create_floating_rates_sheet().to_excel(writer, sheet_name='Floating Rates', index=False)
+
+            print("  Creating Delinquency Buckets sheet...")
+            self.create_delinquency_buckets_sheet().to_excel(writer, sheet_name='Delinquency Buckets', index=False)
+
+            print("  Creating Tax Groups sheet...")
+            self.create_tax_groups_sheet().to_excel(writer, sheet_name='Tax Groups', index=False)
+
             print("  Creating Configuration sheet...")
             self.create_config_sheet().to_excel(writer, sheet_name='Configuration', index=False)
 
@@ -2049,7 +2132,7 @@ class FineractDemoDataGenerator:
         self.format_excel(self.filename)
 
         print(f"\n✓ Excel template generated successfully: {self.filename}")
-        print(f"\nSheets created: 33")
+        print(f"\nSheets created: 36")
         print(f"  1. Offices (4 branches)")
         print(f"  2. Staff (12 members)")
         print(f"  3. Clients (12 clients)")
@@ -2065,24 +2148,27 @@ class FineractDemoDataGenerator:
         print(f" 13. Loan Provisioning (5 COBAC categories)")
         print(f" 14. Collateral Types (6 types)")
         print(f" 15. Guarantor Types (6 types)")
-        print(f" 16. Configuration (19 system settings)")
-        print(f" 17. Loan Product Accounting (39 mappings - 13 per product)")
-        print(f" 18. Savings Product Accounting (33 mappings - 11 per product)")
-        print(f" 19. Payment Type Accounting (5 mappings)")
-        print(f" 20. Financial Activity Mapping (6 mappings - inter-branch support)")
-        print(f" 21. Teller Cashier Mapping (4 GL account mappings per office)")
-        print(f" 22. Tellers (4 tellers - 1 per office)")
-        print(f" 23. Roles Permissions (3 roles with granular permissions)")
-        print(f" 24. Maker Checker Config (11 dual-authorization rules)")
-        print(f" 25. Currency Config (1 currency - XAF)")
-        print(f" 26. Working Days (7 days configuration)")
-        print(f" 27. Account Number Preferences (5 entity types)")
-        print(f" 28. Codes and Values (48 dropdown values across 10 code categories)")
-        print(f" 29. Scheduler Jobs (10 automated jobs)")
-        print(f" 30. Global Configuration (23 global settings)")
-        print(f" 31. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
-        print(f" 32. Notification Templates (16 templates - SMS/Email for all events)")
-        print(f" 33. Data Tables (24 custom fields - Client, Loan, Savings)")
+        print(f" 16. Floating Rates (3 rates - BEAC, Prime, SME)")
+        print(f" 17. Delinquency Buckets (5 buckets for arrears classification)")
+        print(f" 18. Tax Groups (2 groups - Savings WHT, Loan WHT)")
+        print(f" 19. Configuration (19 system settings)")
+        print(f" 20. Loan Product Accounting (39 mappings - 13 per product)")
+        print(f" 21. Savings Product Accounting (33 mappings - 11 per product)")
+        print(f" 22. Payment Type Accounting (5 mappings)")
+        print(f" 23. Financial Activity Mapping (6 mappings - inter-branch support)")
+        print(f" 24. Teller Cashier Mapping (4 GL account mappings per office)")
+        print(f" 25. Tellers (4 tellers - 1 per office)")
+        print(f" 26. Roles Permissions (3 roles with granular permissions)")
+        print(f" 27. Maker Checker Config (11 dual-authorization rules)")
+        print(f" 28. Currency Config (1 currency - XAF)")
+        print(f" 29. Working Days (7 days configuration)")
+        print(f" 30. Account Number Preferences (5 entity types)")
+        print(f" 31. Codes and Values (48 dropdown values across 10 code categories)")
+        print(f" 32. Scheduler Jobs (10 automated jobs)")
+        print(f" 33. Global Configuration (23 global settings)")
+        print(f" 34. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
+        print(f" 35. Notification Templates (16 templates - SMS/Email for all events)")
+        print(f" 36. Data Tables (24 custom fields - Client, Loan, Savings)")
 
         return self.filename
 
