@@ -928,7 +928,7 @@ class FineractDemoDataGenerator:
                  'gl_code': '141', 'gl_name': 'Tax Payable - WHT', 'description': 'Withholding tax payable'},
 
                 {'product_short_name': product['short_name'], 'mapping_type': 'Transfer in Suspense',
-                 'gl_code': '122', 'gl_name': 'Due from Other Branches (Receivable)', 'description': 'Transfer suspense account'},
+                 'gl_code': '131', 'gl_name': 'Due to Other Branches (Payable)', 'description': 'Transfer suspense account'},
             ]
             data.extend(mappings)
 

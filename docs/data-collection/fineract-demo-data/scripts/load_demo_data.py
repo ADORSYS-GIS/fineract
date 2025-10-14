@@ -102,7 +102,7 @@ class FineractDemoDataLoader:
             self.product_loader.enable_maker_checker()
             self.system_config_loader.load_scheduler_jobs()
             self.product_loader.load_loan_products()
-            #TODO: self.product_loader.load_delinquency_buckets()  # After loan products
+            self.product_loader.load_delinquency_buckets()  # After loan products
             self.product_loader.load_savings_products()
             self.product_loader.load_loan_provisioning()
             self.product_loader.load_collateral_types()
