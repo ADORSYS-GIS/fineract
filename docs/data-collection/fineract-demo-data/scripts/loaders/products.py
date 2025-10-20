@@ -610,7 +610,7 @@ class ProductLoader:
         logger.info("        - Manual configuration via Admin UI may be needed")
 
     def load_loan_provisioning(self):
-        """Create loan provisioning criteria (COBAC standards)"""
+        """Create loan provisioning criteria (COBAC standards) using existing Fineract categories"""
         logger.info("=" * 80)
         logger.info("LOADING LOAN PROVISIONING CRITERIA")
         logger.info("=" * 80)
@@ -623,35 +623,75 @@ class ProductLoader:
 
         df = self._read_excel_sheet('Loan Provisioning')
 
-        # Create provisioning criteria with all categories
-        provisioning_criteria = []
+        # Fineract comes with 4 pre-existing provisioning categories: STANDARD, SUB-STANDARD, DOUBTFUL, LOSS
+        # We use these existing categories instead of creating new ones
+        logger.info("Using Fineract's pre-existing provisioning categories:")
+        logger.info("  • STANDARD (ID: 1)")
+        logger.info("  • SUB-STANDARD (ID: 2)")
+        logger.info("  • DOUBTFUL (ID: 3)")
+        logger.info("  • LOSS (ID: 4)")
+        logger.info("")
 
+        # Build provisioning criteria definitions
+        provisioning_criteria = []
         for idx, row in df.iterrows():
+            # Get GL account IDs from the Excel sheet
+            liability_gl_code = str(row['liability_gl_code'])
+            expense_gl_code = str(row['expense_gl_code'])
+
+            liability_account_id = self.client.created_gl_accounts.get(liability_gl_code)
+            expense_account_id = self.client.created_gl_accounts.get(expense_gl_code)
+
+            if not liability_account_id or not expense_account_id:
+                logger.warning(f"  ⚠ Skipping {row['category_name']}: GL accounts not found")
+                logger.warning(f"    Liability GL {liability_gl_code}: {liability_account_id}")
+                logger.warning(f"    Expense GL {expense_gl_code}: {expense_account_id}")
+                continue
+
             criterion = {
+                'categoryId': int(row['category_id']),
                 'categoryName': row['category_name'],
                 'minAge': int(row['min_days_overdue']),
                 'maxAge': int(row['max_days_overdue']),
-                'provisioningPercentage': float(row['provision_percentage'])
+                'provisioningPercentage': float(row['provision_percentage']),
+                'liabilityAccount': liability_account_id,
+                'expenseAccount': expense_account_id
             }
             provisioning_criteria.append(criterion)
 
-        # Create the provisioning criteria with all loan products
-        loan_product_ids = list(self.client.created_loan_products.values())
+        if not provisioning_criteria:
+            logger.error("✗ No provisioning criteria definitions created. Cannot proceed.")
+            return
+
+        # Format loan products as required by API
+        loan_products = []
+        for product_name, product_id in self.client.created_loan_products.items():
+            loan_products.append({
+                'id': product_id,
+                'name': product_name,
+                'includeInBorrowerCycle': False
+            })
+
+        # Create the provisioning criteria
         data = {
             'criteriaName': 'COBAC Provisioning Standards',
-            'loanProducts': loan_product_ids,
-            'definitions': provisioning_criteria
+            'loanProducts': loan_products,
+            'definitions': provisioning_criteria,
+            'locale': 'en'
         }
 
-        logger.info(f"Attempting to create provisioning criteria for {len(loan_product_ids)} loan products")
-        logger.info(f"Loan product IDs: {loan_product_ids}")
+        logger.info(f"Creating provisioning criteria for {len(loan_products)} loan products")
+        logger.info(f"Loan product IDs: {[p['id'] for p in loan_products]}")
+        logger.info(f"Definitions: {len(provisioning_criteria)} categories")
+        logger.info("")
 
         try:
             response = self.client.post('/provisioningcriteria', data)
             criteria_id = response.get('resourceId')
 
             logger.info(f"✓ Created provisioning criteria: COBAC Provisioning Standards (ID: {criteria_id})")
-            logger.info(f"  Applied to {len(data['loanProducts'])} loan products")
+            logger.info(f"  Applied to {len(loan_products)} loan products")
+            logger.info("")
 
             for criterion in provisioning_criteria:
                 logger.info(f"  • {criterion['categoryName']}: {criterion['minAge']}-{criterion['maxAge']} days, "
@@ -671,6 +711,10 @@ class ProductLoader:
 
         df = self._read_excel_sheet('Collateral Types')
 
+        # Initialize storage for collateral type IDs
+        if not hasattr(self.client, 'created_collateral_types'):
+            self.client.created_collateral_types = {}
+
         for idx, row in df.iterrows():
             try:
                 data = {
@@ -685,6 +729,9 @@ class ProductLoader:
 
                 response = self.client.post('/collateral-management', data)
                 collateral_id = response.get('resourceId')
+
+                # Store the collateral type ID for later use
+                self.client.created_collateral_types[row['collateral_type']] = collateral_id
 
                 logger.info(f"✓ Created collateral type: {row['collateral_type']} (ID: {collateral_id})")
                 time.sleep(0.3)
@@ -811,23 +858,43 @@ class ProductLoader:
 
         df = self._read_excel_sheet('Delinquency Buckets')
 
-        # Group all ranges into one bucket configuration
-        bucket_name = "Loan Arrears Classification"
-        ranges = []
+        # Step 1: Create delinquency ranges first
+        range_ids = []
+        logger.info("Creating delinquency ranges...")
 
         for idx, row in df.iterrows():
-            ranges.append({
-                'classification': row['classification'],
-                'minAgeDays': int(row['min_days_overdue']),
-                'maxAgeDays': int(row['max_days_overdue'])
-            })
+            try:
+                range_data = {
+                    'classification': row['classification'],
+                    'minimumAgeDays': int(row['min_days_overdue']),
+                    'maximumAgeDays': int(row['max_days_overdue']),
+                    'locale': 'en'
+                }
 
+                response = self.client.post('/delinquency/ranges', range_data)
+                range_id = response.get('resourceId')
+                range_ids.append(range_id)
+
+                logger.info(f"  ✓ Created delinquency range: {row['classification']} "
+                          f"({row['min_days_overdue']}-{row['max_days_overdue']} days, ID: {range_id})")
+                time.sleep(0.2)
+
+            except Exception as e:
+                logger.error(f"  ✗ Failed to create delinquency range {row['classification']}: {str(e)}")
+
+        if not range_ids:
+            logger.error("✗ No delinquency ranges were created. Cannot create bucket.")
+            return
+
+        # Step 2: Create the delinquency bucket with the range IDs
         try:
+            bucket_name = "Loan Arrears Classification"
             bucket_data = {
                 'name': bucket_name,
-                'ranges': ranges
+                'ranges': range_ids  # Array of range IDs, not range objects
             }
 
+            logger.info(f"\nCreating delinquency bucket with {len(range_ids)} ranges...")
             response = self.client.post('/delinquency/buckets', bucket_data)
             bucket_id = response.get('resourceId')
 
@@ -835,9 +902,7 @@ class ProductLoader:
             self.client.created_delinquency_bucket_id = bucket_id
 
             logger.info(f"✓ Created delinquency bucket: {bucket_name} (ID: {bucket_id})")
-            logger.info(f"  Ranges configured: {len(ranges)}")
-            for r in ranges:
-                logger.info(f"    • {r['classification']}: {r['minAgeDays']}-{r['maxAgeDays']} days")
+            logger.info(f"  Configured with {len(range_ids)} delinquency ranges")
 
             # Now map this bucket to all existing loan products
             if self.client.created_loan_products:

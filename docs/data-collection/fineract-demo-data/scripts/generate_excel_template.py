@@ -706,13 +706,17 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_loan_provisioning_sheet(self):
-        """Create COBAC loan provisioning criteria"""
+        """Create COBAC loan provisioning criteria using Fineract's existing categories"""
+        # Map to Fineract's 4 existing provisioning categories: STANDARD, SUB-STANDARD, DOUBTFUL, LOSS
         data = [
-            {'category_name': 'Performing', 'min_days_overdue': 0, 'max_days_overdue': 0, 'provision_percentage': 0},
-            {'category_name': 'Watch', 'min_days_overdue': 1, 'max_days_overdue': 30, 'provision_percentage': 25},
-            {'category_name': 'Substandard', 'min_days_overdue': 31, 'max_days_overdue': 90, 'provision_percentage': 50},
-            {'category_name': 'Doubtful', 'min_days_overdue': 91, 'max_days_overdue': 180, 'provision_percentage': 75},
-            {'category_name': 'Loss', 'min_days_overdue': 181, 'max_days_overdue': 9999, 'provision_percentage': 100},
+            {'category_name': 'STANDARD', 'category_id': 1, 'min_days_overdue': 0, 'max_days_overdue': 30,
+             'provision_percentage': 0, 'liability_gl_code': '62', 'expense_gl_code': '92'},
+            {'category_name': 'SUB-STANDARD', 'category_id': 2, 'min_days_overdue': 31, 'max_days_overdue': 90,
+             'provision_percentage': 25, 'liability_gl_code': '62', 'expense_gl_code': '92'},
+            {'category_name': 'DOUBTFUL', 'category_id': 3, 'min_days_overdue': 91, 'max_days_overdue': 180,
+             'provision_percentage': 50, 'liability_gl_code': '62', 'expense_gl_code': '92'},
+            {'category_name': 'LOSS', 'category_id': 4, 'min_days_overdue': 181, 'max_days_overdue': 9999,
+             'provision_percentage': 100, 'liability_gl_code': '62', 'expense_gl_code': '92'},
         ]
         return pd.DataFrame(data)
 
@@ -2010,6 +2014,595 @@ class FineractDemoDataGenerator:
             }
         }
 
+    def create_savings_deposits_sheet(self):
+        """Create sample savings deposit transactions"""
+        data = [
+            # Regular deposits (using actual account external IDs)
+            {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
+             'transaction_date': '2024-03-01', 'transaction_amount': 50000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-001',
+             'note': 'Monthly deposit', 'office': 'Douala Branch'},
+
+            {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
+             'transaction_date': '2024-03-05', 'transaction_amount': 25000,
+             'payment_type': 'Bank Transfer', 'receipt_number': 'RCP-002',
+             'note': 'Monthly savings', 'office': 'Douala Branch'},
+
+            {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
+             'transaction_date': '2024-03-02', 'transaction_amount': 30000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-003',
+             'note': 'Weekly deposit', 'office': 'Yaounde Branch'},
+
+            {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
+             'transaction_date': '2024-03-10', 'transaction_amount': 15000,
+             'payment_type': 'MTN Mobile Money', 'receipt_number': 'RCP-004',
+             'note': 'Mobile money deposit', 'office': 'Bafoussam Branch'},
+
+            {'client_name': 'François Nkomo', 'savings_account_number': 'SAV-006',
+             'transaction_date': '2024-03-03', 'transaction_amount': 40000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-005',
+             'note': 'Business savings', 'office': 'Douala Branch'},
+
+            {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-007',
+             'transaction_date': '2024-03-12', 'transaction_amount': 35000,
+             'payment_type': 'Cheque', 'receipt_number': 'RCP-006',
+             'note': 'Farm income deposit', 'office': 'Yaounde Branch'},
+
+            # Inter-branch deposits (Client from Branch A deposits at Branch B)
+            {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
+             'transaction_date': '2024-03-20', 'transaction_amount': 35000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-007',
+             'note': 'Cross-branch deposit - Douala client depositing at Yaounde',
+             'office': 'Yaounde Branch'},
+
+            {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
+             'transaction_date': '2024-03-22', 'transaction_amount': 20000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-008',
+             'note': 'Cross-branch deposit - Yaounde client depositing at Douala',
+             'office': 'Douala Branch'},
+
+            {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
+             'transaction_date': '2024-03-25', 'transaction_amount': 20000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-009',
+             'note': 'Cross-branch deposit - Douala client depositing at Bafoussam',
+             'office': 'Bafoussam Branch'},
+
+            {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
+             'transaction_date': '2024-03-28', 'transaction_amount': 25000,
+             'payment_type': 'Cash', 'receipt_number': 'RCP-010',
+             'note': 'Cross-branch deposit - Bafoussam client depositing at Yaounde',
+             'office': 'Yaounde Branch'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_savings_withdrawals_sheet(self):
+        """Create sample savings withdrawal transactions"""
+        data = [
+            # Withdrawals for Yaounde clients
+            {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
+             'transaction_date': '2024-03-15', 'transaction_amount': 20000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-001',
+             'note': 'Emergency withdrawal', 'office': 'Yaounde Branch'},
+
+            {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
+             'transaction_date': '2024-03-18', 'transaction_amount': 10000,
+             'payment_type': 'ATM', 'receipt_number': 'WDL-002',
+             'note': 'Cash withdrawal', 'office': 'Yaounde Branch'},
+
+            # Withdrawals for Douala clients
+            {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
+             'transaction_date': '2024-03-16', 'transaction_amount': 30000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-003',
+             'note': 'Personal expense', 'office': 'Douala Branch'},
+
+            {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
+             'transaction_date': '2024-03-20', 'transaction_amount': 25000,
+             'payment_type': 'Bank Transfer', 'receipt_number': 'WDL-004',
+             'note': 'Supplier payment', 'office': 'Douala Branch'},
+
+            # Withdrawals for Bafoussam clients
+            {'client_name': 'Pierre Tchuente', 'savings_account_number': 'SAV-011',
+             'transaction_date': '2024-03-17', 'transaction_amount': 15000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-005',
+             'note': 'School fees', 'office': 'Bafoussam Branch'},
+
+            {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-012',
+             'transaction_date': '2024-03-22', 'transaction_amount': 20000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-006',
+             'note': 'Medical expenses', 'office': 'Bafoussam Branch'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_loan_repayments_sheet(self):
+        """Create sample loan repayment transactions"""
+        data = [
+            # Repayments for Yaounde clients
+            {'client_name': 'Jean Dupont', 'loan_account_number': 'LOAN-001',
+             'transaction_date': '2024-03-15', 'principal_amount': 20000, 'interest_amount': 5000,
+             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
+             'receipt_number': 'REP-001', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
+
+            {'client_name': 'Marie Kamga', 'loan_account_number': 'LOAN-002',
+             'transaction_date': '2024-03-20', 'principal_amount': 40000, 'interest_amount': 12000,
+             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Bank Transfer',
+             'receipt_number': 'REP-002', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
+
+            # Repayments for Douala clients
+            {'client_name': 'Paul Ekambi', 'loan_account_number': 'LOAN-003',
+             'transaction_date': '2024-03-18', 'principal_amount': 30000, 'interest_amount': 8000,
+             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
+             'receipt_number': 'REP-003', 'note': 'Monthly repayment', 'office': 'Douala Branch'},
+
+            {'client_name': 'Grace Fotso', 'loan_account_number': 'LOAN-004',
+             'transaction_date': '2024-03-25', 'principal_amount': 80000, 'interest_amount': 20000,
+             'fee_amount': 0, 'penalty_amount': 2000, 'payment_type': 'Bank Transfer',
+             'receipt_number': 'REP-004', 'note': 'Late payment with penalty', 'office': 'Douala Branch'},
+
+            # Repayments for Bafoussam clients
+            {'client_name': 'Pierre Tchuente', 'loan_account_number': 'LOAN-005',
+             'transaction_date': '2024-03-22', 'principal_amount': 25000, 'interest_amount': 6500,
+             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
+             'receipt_number': 'REP-005', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
+
+            {'client_name': 'Justine Moukouri', 'loan_account_number': 'LOAN-006',
+             'transaction_date': '2024-03-29', 'principal_amount': 35000, 'interest_amount': 9000,
+             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Mobile Money',
+             'receipt_number': 'REP-006', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_loan_collateral_sheet(self):
+        """Create loan collateral assignments"""
+        data = [
+            # Collateral for Yaounde loans
+            {'loan_account_number': 'LOAN-001', 'client_name': 'Jean Dupont',
+             'collateral_type': 'Land Title', 'collateral_value': 1000000,
+             'description': 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001',
+             'location': 'Bastos, Yaounde', 'condition': 'Good',
+             'valuation_date': '2024-01-15', 'valuation_by': 'Licensed Appraiser',
+             'ownership_status': 'Owned', 'insurance': 'Yes'},
+
+            {'loan_account_number': 'LOAN-002', 'client_name': 'Marie Kamga',
+             'collateral_type': 'Business Equipment', 'collateral_value': 1500000,
+             'description': 'Commercial sewing machines (5 units) and industrial pressing equipment',
+             'location': 'Shop at Mokolo Market, Yaounde', 'condition': 'Excellent',
+             'valuation_date': '2024-01-20', 'valuation_by': 'Equipment Assessor',
+             'ownership_status': 'Owned', 'insurance': 'Yes'},
+
+            # Collateral for Douala loans
+            {'loan_account_number': 'LOAN-003', 'client_name': 'Paul Ekambi',
+             'collateral_type': 'Vehicle', 'collateral_value': 1200000,
+             'description': 'Toyota Hilux 2020 - Registration DLA-4567-AB',
+             'location': 'Akwa, Douala', 'condition': 'Very Good',
+             'valuation_date': '2024-01-18', 'valuation_by': 'Auto Valuer',
+             'ownership_status': 'Owned', 'insurance': 'Yes'},
+
+            {'loan_account_number': 'LOAN-004', 'client_name': 'Grace Fotso',
+             'collateral_type': 'Commercial Property', 'collateral_value': 3000000,
+             'description': 'Commercial building with 3 shops - Title deed #DLA-2022-089',
+             'location': 'Bonaberi, Douala', 'condition': 'Good',
+             'valuation_date': '2024-01-25', 'valuation_by': 'Real Estate Appraiser',
+             'ownership_status': 'Owned', 'insurance': 'Yes'},
+
+            # Collateral for Bafoussam loans
+            {'loan_account_number': 'LOAN-005', 'client_name': 'Pierre Tchuente',
+             'collateral_type': 'Agricultural Land', 'collateral_value': 800000,
+             'description': '2 hectares farmland with coffee plantation',
+             'location': 'Baleng, Bafoussam', 'condition': 'Good',
+             'valuation_date': '2024-01-22', 'valuation_by': 'Agricultural Assessor',
+             'ownership_status': 'Owned', 'insurance': 'No'},
+
+            {'loan_account_number': 'LOAN-006', 'client_name': 'Justine Moukouri',
+             'collateral_type': 'Farm Equipment', 'collateral_value': 1000000,
+             'description': 'Tractor and farming implements',
+             'location': 'Farm in Dschang Road', 'condition': 'Good',
+             'valuation_date': '2024-02-01', 'valuation_by': 'Equipment Assessor',
+             'ownership_status': 'Owned', 'insurance': 'Yes'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_loan_guarantors_sheet(self):
+        """Create loan guarantor assignments"""
+        data = [
+            # Guarantors for Yaounde loans
+            {'loan_account_number': 'LOAN-001', 'borrower_name': 'Jean Dupont',
+             'guarantor_type': 'Individual', 'guarantor_name': 'Thomas Mbele',
+             'guarantor_id': 'ID-12345678', 'guarantor_phone': '+237 677 88 99 00',
+             'guarantor_address': 'Mvan, Yaounde', 'relationship': 'Brother',
+             'guaranteed_amount': 250000, 'guarantee_date': '2024-02-10',
+             'employment': 'Civil Servant - Ministry of Education',
+             'employer_name': 'Government of Cameroon', 'monthly_income': 350000},
+
+            {'loan_account_number': 'LOAN-002', 'borrower_name': 'Marie Kamga',
+             'guarantor_type': 'Individual', 'guarantor_name': 'Christine Biaka',
+             'guarantor_id': 'ID-23456789', 'guarantor_phone': '+237 677 11 22 33',
+             'guarantor_address': 'Bastos, Yaounde', 'relationship': 'Business Partner',
+             'guaranteed_amount': 500000, 'guarantee_date': '2024-02-15',
+             'employment': 'Accountant - Private Sector',
+             'employer_name': 'ECOBANK Cameroun', 'monthly_income': 450000},
+
+            # Guarantors for Douala loans
+            {'loan_account_number': 'LOAN-003', 'borrower_name': 'Paul Ekambi',
+             'guarantor_type': 'Individual', 'guarantor_name': 'Samuel Nkolo',
+             'guarantor_id': 'ID-34567890', 'guarantor_phone': '+237 677 22 33 44',
+             'guarantor_address': 'Bonapriso, Douala', 'relationship': 'Friend',
+             'guaranteed_amount': 375000, 'guarantee_date': '2024-02-12',
+             'employment': 'Business Owner - Import/Export',
+             'employer_name': 'Self-employed', 'monthly_income': 800000},
+
+            {'loan_account_number': 'LOAN-004', 'borrower_name': 'Grace Fotso',
+             'guarantor_type': 'Corporate', 'guarantor_name': 'Fotso Family Business Ltd',
+             'guarantor_id': 'RC-DLA-2020-1234', 'guarantor_phone': '+237 233 44 55 66',
+             'guarantor_address': 'Akwa, Douala', 'relationship': 'Family Business',
+             'guaranteed_amount': 1000000, 'guarantee_date': '2024-02-20',
+             'employment': 'Corporate Entity',
+             'employer_name': 'N/A', 'monthly_income': 0},
+
+            # Guarantors for Bafoussam loans
+            {'loan_account_number': 'LOAN-005', 'borrower_name': 'Pierre Tchuente',
+             'guarantor_type': 'Individual', 'guarantor_name': 'Jean Kemayou',
+             'guarantor_id': 'ID-45678901', 'guarantor_phone': '+237 677 33 44 55',
+             'guarantor_address': 'Centre Ville, Bafoussam', 'relationship': 'Cousin',
+             'guaranteed_amount': 300000, 'guarantee_date': '2024-02-18',
+             'employment': 'Teacher - Secondary School',
+             'employer_name': 'Lycee de Bafoussam', 'monthly_income': 280000},
+
+            {'loan_account_number': 'LOAN-006', 'borrower_name': 'Justine Moukouri',
+             'guarantor_type': 'Individual', 'guarantor_name': 'Marie Fotso',
+             'guarantor_id': 'ID-56789012', 'guarantor_phone': '+237 677 44 55 66',
+             'guarantor_address': 'Djeleng, Bafoussam', 'relationship': 'Sister',
+             'guaranteed_amount': 400000, 'guarantee_date': '2024-02-25',
+             'employment': 'Nurse - Public Hospital',
+             'employer_name': 'Bafoussam Regional Hospital', 'monthly_income': 320000},
+        ]
+        return pd.DataFrame(data)
+
+    def create_inter_branch_transfers_sheet(self):
+        """Create sample inter-branch transfer transactions"""
+        data = [
+            # Transfer 1: Yaounde to Douala
+            {'transfer_date': '2024-03-10', 'from_office': 'Yaounde Branch', 'to_office': 'Douala Branch',
+             'transfer_amount': 5000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-001', 'initiated_by': 'Jean Mbarga',
+             'description': 'Branch liquidity management - Cash transfer to Douala',
+             'status': 'Completed'},
+
+            # Transfer 2: Douala to Bafoussam
+            {'transfer_date': '2024-03-12', 'from_office': 'Douala Branch', 'to_office': 'Bafoussam Branch',
+             'transfer_amount': 3000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-002', 'initiated_by': 'Grace Douala',
+             'description': 'Weekly cash replenishment to Bafoussam branch',
+             'status': 'Completed'},
+
+            # Transfer 3: Bafoussam to Bamenda
+            {'transfer_date': '2024-03-15', 'from_office': 'Bafoussam Branch', 'to_office': 'Bamenda Branch',
+             'transfer_amount': 2000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-003', 'initiated_by': 'Samuel Kenmogne',
+             'description': 'Opening cash allocation for Bamenda branch',
+             'status': 'Completed'},
+
+            # Transfer 4: Douala to Yaounde (reverse flow)
+            {'transfer_date': '2024-03-18', 'from_office': 'Douala Branch', 'to_office': 'Yaounde Branch',
+             'transfer_amount': 4000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-004', 'initiated_by': 'Grace Douala',
+             'description': 'Excess liquidity transfer to Head Office region',
+             'status': 'Completed'},
+
+            # Transfer 5: Yaounde to Bafoussam
+            {'transfer_date': '2024-03-20', 'from_office': 'Yaounde Branch', 'to_office': 'Bafoussam Branch',
+             'transfer_amount': 2500000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-005', 'initiated_by': 'Jean Mbarga',
+             'description': 'Agricultural season loan disbursement support',
+             'status': 'Completed'},
+
+            # Transfer 6: Bamenda to Douala
+            {'transfer_date': '2024-03-22', 'from_office': 'Bamenda Branch', 'to_office': 'Douala Branch',
+             'transfer_amount': 1500000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
+             'reference_number': 'IBT-006', 'initiated_by': 'David Tanko',
+             'description': 'Deposit surplus transfer to main vault',
+             'status': 'Completed'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_financial_reports_sheet(self):
+        """Create Financial Overview Reports (to be registered in Fineract)"""
+        data = [
+            # Income Statement Report
+            {'report_name': 'Income Statement (Profit & Loss)',
+             'report_category': 'Financial',
+             'report_type': 'Table',
+             'description': 'Revenue, expenses, and net profit analysis',
+             'sql_query': '''
+SELECT
+    'REVENUE' as category,
+    'Interest Income' as line_item,
+    SUM(l.interest_charged_derived) as amount
+FROM m_loan l
+WHERE l.loan_status_id = 300
+UNION ALL
+SELECT
+    'REVENUE' as category,
+    'Fee Income' as line_item,
+    SUM(l.fee_charges_charged_derived) as amount
+FROM m_loan l
+WHERE l.loan_status_id = 300
+UNION ALL
+SELECT
+    'EXPENSES' as category,
+    'Loan Loss Provision' as line_item,
+    SUM(CASE
+        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived) > 180 THEN l.principal_outstanding_derived * 1.0
+        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived) > 90 THEN l.principal_outstanding_derived * 0.75
+        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived) > 30 THEN l.principal_outstanding_derived * 0.50
+        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived) > 0 THEN l.principal_outstanding_derived * 0.25
+        ELSE 0
+    END) as amount
+FROM m_loan l
+WHERE l.loan_status_id = 300
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Balance Sheet Report
+            {'report_name': 'Balance Sheet',
+             'report_category': 'Financial',
+             'report_type': 'Table',
+             'description': 'Assets, liabilities, and equity position',
+             'sql_query': '''
+SELECT
+    'ASSETS' as section,
+    'Gross Loan Portfolio' as line_item,
+    SUM(l.principal_outstanding_derived) as amount
+FROM m_loan l
+WHERE l.loan_status_id = 300
+UNION ALL
+SELECT
+    'ASSETS' as section,
+    'Cash and Bank Balances' as line_item,
+    SUM(gl.amount) as amount
+FROM acc_gl_journal_entry gl
+JOIN acc_gl_account a ON gl.account_id = a.id
+WHERE a.classification_enum = 1
+UNION ALL
+SELECT
+    'LIABILITIES' as section,
+    'Savings Deposits' as line_item,
+    SUM(s.account_balance_derived) as amount
+FROM m_savings_account s
+WHERE s.status_enum = 300
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Portfolio Performance Report
+            {'report_name': 'Portfolio Performance Statistics',
+             'report_category': 'Portfolio',
+             'report_type': 'Table',
+             'description': 'Loan portfolio performance metrics and statistics',
+             'sql_query': '''
+SELECT
+    COUNT(DISTINCT l.id) as total_loans,
+    COUNT(DISTINCT CASE WHEN l.loan_status_id = 300 THEN l.id END) as active_loans,
+    SUM(l.principal_disbursed_derived) as total_disbursed,
+    SUM(l.principal_outstanding_derived) as total_outstanding,
+    SUM(l.principal_repaid_derived) as total_repaid,
+    AVG(l.principal_amount) as avg_loan_size,
+    (SUM(l.principal_repaid_derived) / SUM(l.principal_disbursed_derived) * 100) as repayment_rate,
+    p.name as product_name
+FROM m_loan l
+JOIN m_product_loan p ON l.product_id = p.id
+GROUP BY p.name
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Portfolio by Product Report
+            {'report_name': 'Portfolio Analysis by Product',
+             'report_category': 'Portfolio',
+             'report_type': 'Table',
+             'description': 'Loan portfolio breakdown by product',
+             'sql_query': '''
+SELECT
+    p.name as product_name,
+    COUNT(l.id) as loan_count,
+    SUM(l.principal_amount) as total_principal,
+    SUM(l.principal_outstanding_derived) as outstanding,
+    SUM(l.principal_repaid_derived) as repaid,
+    AVG(l.annual_nominal_interest_rate) as avg_interest_rate
+FROM m_loan l
+JOIN m_product_loan p ON l.product_id = p.id
+WHERE l.loan_status_id IN (200, 300)
+GROUP BY p.name
+ORDER BY total_principal DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Portfolio by Branch Report
+            {'report_name': 'Portfolio Analysis by Branch',
+             'report_category': 'Portfolio',
+             'report_type': 'Table',
+             'description': 'Loan portfolio breakdown by office/branch',
+             'sql_query': '''
+SELECT
+    o.name as office_name,
+    COUNT(l.id) as loan_count,
+    SUM(l.principal_amount) as total_principal,
+    SUM(l.principal_outstanding_derived) as outstanding,
+    SUM(l.principal_repaid_derived) as repaid,
+    COUNT(DISTINCT l.client_id) as unique_clients
+FROM m_loan l
+JOIN m_office o ON l.office_id = o.id
+WHERE l.loan_status_id IN (200, 300)
+GROUP BY o.name
+ORDER BY total_principal DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Active Clients Report
+            {'report_name': 'Active Clients Summary',
+             'report_category': 'Client',
+             'report_type': 'Table',
+             'description': 'Summary of active clients with account balances',
+             'sql_query': '''
+SELECT
+    c.display_name as client_name,
+    c.account_no as client_account,
+    o.name as office_name,
+    COUNT(DISTINCT l.id) as total_loans,
+    SUM(l.principal_outstanding_derived) as loan_balance,
+    COUNT(DISTINCT s.id) as total_savings,
+    SUM(s.account_balance_derived) as savings_balance
+FROM m_client c
+LEFT JOIN m_loan l ON c.id = l.client_id AND l.loan_status_id = 300
+LEFT JOIN m_savings_account s ON c.id = s.client_id AND s.status_enum = 300
+JOIN m_office o ON c.office_id = o.id
+WHERE c.status_enum = 300
+GROUP BY c.id, c.display_name, c.account_no, o.name
+ORDER BY loan_balance DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Savings Account Summary Report
+            {'report_name': 'Savings Accounts Summary',
+             'report_category': 'Savings',
+             'report_type': 'Table',
+             'description': 'Summary of all savings accounts by product',
+             'sql_query': '''
+SELECT
+    p.name as product_name,
+    COUNT(s.id) as account_count,
+    SUM(s.account_balance_derived) as total_balance,
+    AVG(s.account_balance_derived) as avg_balance,
+    SUM(s.total_deposits_derived) as total_deposits,
+    SUM(s.total_withdrawals_derived) as total_withdrawals
+FROM m_savings_account s
+JOIN m_savings_product p ON s.product_id = p.id
+WHERE s.status_enum = 300
+GROUP BY p.name
+ORDER BY total_balance DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Loan Repayment Collection Report
+            {'report_name': 'Loan Repayment Collections',
+             'report_category': 'Transaction',
+             'report_type': 'Table',
+             'description': 'Daily/monthly loan repayment collections',
+             'sql_query': '''
+SELECT
+    DATE(t.transaction_date) as collection_date,
+    pt.value as payment_type,
+    COUNT(t.id) as transaction_count,
+    SUM(t.amount) as total_collected,
+    SUM(t.principal_portion_derived) as principal_collected,
+    SUM(t.interest_portion_derived) as interest_collected
+FROM m_loan_transaction t
+LEFT JOIN m_payment_type pt ON t.payment_detail_id = pt.id
+WHERE t.transaction_type_enum = 2
+    AND t.is_reversed = 0
+    AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+GROUP BY DATE(t.transaction_date), pt.value
+ORDER BY collection_date DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            # Overdue Loans Report
+            {'report_name': 'Overdue Loans Report',
+             'report_category': 'Collection',
+             'report_type': 'Table',
+             'description': 'List of all overdue loans with days past due',
+             'sql_query': '''
+SELECT
+    c.display_name as client_name,
+    c.account_no as client_account,
+    l.account_no as loan_account,
+    p.name as product_name,
+    o.name as office_name,
+    l.principal_outstanding_derived as outstanding_principal,
+    l.interest_outstanding_derived as outstanding_interest,
+    DATEDIFF(CURDATE(), l.overdue_since_date_derived) as days_overdue,
+    s.display_name as loan_officer
+FROM m_loan l
+JOIN m_client c ON l.client_id = c.id
+JOIN m_product_loan p ON l.product_id = p.id
+JOIN m_office o ON l.office_id = o.id
+LEFT JOIN m_staff s ON l.loan_officer_id = s.id
+WHERE l.loan_status_id = 300
+    AND l.overdue_since_date_derived IS NOT NULL
+ORDER BY days_overdue DESC, outstanding_principal DESC
+''',
+             'parameters': None,
+             'use_report': 'Yes'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_cobac_report_config_sheet(self):
+        """Create COBAC reporting configuration"""
+        data = [
+            # Portfolio Quality Reports
+            {'report_name': 'COBAC R01 - Portfolio Quality', 'report_type': 'Regulatory',
+             'frequency': 'Monthly', 'due_day': 15, 'report_format': 'Excel',
+             'description': 'Loan portfolio classification by risk category (Performing, Watch, Substandard, Doubtful, Loss)',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            {'report_name': 'COBAC R02 - Loan Provisioning', 'report_type': 'Regulatory',
+             'frequency': 'Monthly', 'due_day': 15, 'report_format': 'Excel',
+             'description': 'Loan loss provisions by category with aging analysis',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Capital Adequacy Reports
+            {'report_name': 'COBAC R03 - Capital Adequacy', 'report_type': 'Regulatory',
+             'frequency': 'Quarterly', 'due_day': 30, 'report_format': 'Excel',
+             'description': 'Risk-weighted assets and capital adequacy ratio (minimum 8%)',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Liquidity Reports
+            {'report_name': 'COBAC R04 - Liquidity Position', 'report_type': 'Regulatory',
+             'frequency': 'Monthly', 'due_day': 10, 'report_format': 'Excel',
+             'description': 'Cash and liquid assets position, liquidity ratios',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Large Exposures
+            {'report_name': 'COBAC R05 - Large Exposures', 'report_type': 'Regulatory',
+             'frequency': 'Quarterly', 'due_day': 30, 'report_format': 'Excel',
+             'description': 'Exposures exceeding 10% of capital (risk concentration)',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Financial Statements
+            {'report_name': 'COBAC R06 - Balance Sheet', 'report_type': 'Financial Statement',
+             'frequency': 'Quarterly', 'due_day': 45, 'report_format': 'Excel',
+             'description': 'OHADA-compliant balance sheet (SYSCOHADA format)',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            {'report_name': 'COBAC R07 - Income Statement', 'report_type': 'Financial Statement',
+             'frequency': 'Quarterly', 'due_day': 45, 'report_format': 'Excel',
+             'description': 'OHADA-compliant profit & loss statement',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Operational Reports
+            {'report_name': 'COBAC R08 - Arrears Report', 'report_type': 'Operational',
+             'frequency': 'Monthly', 'due_day': 10, 'report_format': 'Excel',
+             'description': 'Detailed arrears analysis by product, branch, and age',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            {'report_name': 'COBAC R09 - Portfolio at Risk', 'report_type': 'Operational',
+             'frequency': 'Monthly', 'due_day': 10, 'report_format': 'Excel',
+             'description': 'PAR>30, PAR>90, PAR>180 ratios by product and branch',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+
+            # Governance Reports
+            {'report_name': 'COBAC R10 - Related Party Transactions', 'report_type': 'Governance',
+             'frequency': 'Quarterly', 'due_day': 30, 'report_format': 'Excel',
+             'description': 'Loans and transactions with related parties (directors, shareholders)',
+             'regulatory_body': 'COBAC', 'mandatory': 'Yes'},
+        ]
+        return pd.DataFrame(data)
+
     def generate(self):
         """Generate complete Excel template"""
         os.makedirs(self.output_dir, exist_ok=True)
@@ -2127,12 +2720,39 @@ class FineractDemoDataGenerator:
             print("  Creating Data Tables (Custom Fields) sheet...")
             self.create_data_tables_sheet().to_excel(writer, sheet_name='Data Tables', index=False)
 
+            # Transaction sheets
+            print("  Creating Savings Deposits sheet...")
+            self.create_savings_deposits_sheet().to_excel(writer, sheet_name='Savings Deposits', index=False)
+
+            print("  Creating Savings Withdrawals sheet...")
+            self.create_savings_withdrawals_sheet().to_excel(writer, sheet_name='Savings Withdrawals', index=False)
+
+            print("  Creating Loan Repayments sheet...")
+            self.create_loan_repayments_sheet().to_excel(writer, sheet_name='Loan Repayments', index=False)
+
+            print("  Creating Loan Collateral sheet...")
+            self.create_loan_collateral_sheet().to_excel(writer, sheet_name='Loan Collateral', index=False)
+
+            print("  Creating Loan Guarantors sheet...")
+            self.create_loan_guarantors_sheet().to_excel(writer, sheet_name='Loan Guarantors', index=False)
+
+            print("  Creating Inter-Branch Transfers sheet...")
+            self.create_inter_branch_transfers_sheet().to_excel(writer, sheet_name='Inter-Branch Transfers', index=False)
+
+            # Financial Reports (to be registered in Fineract)
+            print("  Creating Financial Reports sheet...")
+            self.create_financial_reports_sheet().to_excel(writer, sheet_name='Financial Reports', index=False)
+
+            # COBAC Reporting
+            print("  Creating COBAC Report Configuration sheet...")
+            self.create_cobac_report_config_sheet().to_excel(writer, sheet_name='COBAC Reports', index=False)
+
         # Apply formatting
         print("  Applying formatting...")
         self.format_excel(self.filename)
 
         print(f"\n✓ Excel template generated successfully: {self.filename}")
-        print(f"\nSheets created: 36")
+        print(f"\nSheets created: 44")
         print(f"  1. Offices (4 branches)")
         print(f"  2. Staff (12 members)")
         print(f"  3. Clients (12 clients)")
@@ -2169,6 +2789,14 @@ class FineractDemoDataGenerator:
         print(f" 34. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
         print(f" 35. Notification Templates (16 templates - SMS/Email for all events)")
         print(f" 36. Data Tables (24 custom fields - Client, Loan, Savings)")
+        print(f" 37. Savings Deposits (6 sample deposit transactions)")
+        print(f" 38. Savings Withdrawals (6 sample withdrawal transactions)")
+        print(f" 39. Loan Disbursements (6 sample disbursements)")
+        print(f" 40. Loan Repayments (6 sample repayment transactions)")
+        print(f" 41. Loan Collateral (6 collateral assignments - Land, Equipment, Vehicles)")
+        print(f" 42. Loan Guarantors (6 guarantor assignments - Individual & Corporate)")
+        print(f" 43. Inter-Branch Transfers (6 sample inter-branch cash transfers)")
+        print(f" 44. COBAC Reports (10 regulatory reports configuration)")
 
         return self.filename
 

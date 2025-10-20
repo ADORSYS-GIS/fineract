@@ -17,6 +17,7 @@ from loaders.entities import EntityLoader
 from loaders.products import ProductLoader
 from loaders.accounts import AccountLoader
 from loaders.roles_permissions import RolesPermissionsLoader
+from loaders.reports import ReportsLoader
 
 # Setup logging
 logging.basicConfig(
@@ -52,6 +53,7 @@ class FineractDemoDataLoader:
         self.product_loader = ProductLoader(self.client, excel_file, self.config)
         self.account_loader = AccountLoader(self.client, excel_file, self.config)
         self.roles_permissions_loader = RolesPermissionsLoader(self.client, excel_file, self.config)
+        self.reports_loader = ReportsLoader(self.client, excel_file, self.config)
 
     def _load_config(self):
         """Load configuration from JSON file"""
@@ -111,6 +113,19 @@ class FineractDemoDataLoader:
             self.entity_loader.load_clients()
             self.account_loader.load_savings_accounts()
             self.account_loader.load_loan_accounts()
+
+            # Assign collateral and guarantors to loans
+            self.account_loader.load_loan_collateral()
+            self.account_loader.load_loan_guarantors()
+
+            # Load transactions
+            self.account_loader.load_savings_deposits()
+            self.account_loader.load_savings_withdrawals()
+            self.account_loader.load_loan_repayments()
+            self.account_loader.load_inter_branch_transfers()
+
+            # Note: Reports are skipped - they are just views of existing data
+            # Users can generate reports on-demand from Fineract UI: Reports → Run Reports
 
             elapsed_time = time.time() - start_time
 
