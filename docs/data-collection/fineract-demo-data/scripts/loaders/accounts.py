@@ -92,6 +92,51 @@ class AccountLoader:
 
                 self.client.created_savings_accounts[row['external_id']] = savings_id
 
+                # Add data table entries if savings_additional_info exists
+                try:
+                    datatable_data = {}
+
+                    # Map Excel fields to data table fields
+                    if row.get('savings_goal'):
+                        datatable_data['savings_goal'] = str(row['savings_goal'])
+
+                    if row.get('target_amount') is not None:
+                        datatable_data['target_amount'] = float(row['target_amount'])
+
+                    if row.get('target_date'):
+                        datatable_data['target_date'] = str(row['target_date'])
+
+                    if row.get('monthly_commitment') is not None:
+                        datatable_data['monthly_commitment'] = float(row['monthly_commitment'])
+
+                    if row.get('preferred_transaction_channel'):
+                        datatable_data['preferred_transaction_channel'] = str(row['preferred_transaction_channel'])
+
+                    # Only post if we have data to add
+                    if datatable_data:
+                        datatable_data['dateFormat'] = 'yyyy-MM-dd'
+                        datatable_data['locale'] = 'en'
+
+                        # For single-row datatables, need to check if row exists first
+                        try:
+                            # Try to get existing data
+                            existing = self.client.get(f'/datatables/savings_additional_info/{savings_id}')
+                            if existing and len(existing) > 0:
+                                # Update existing row
+                                self.client.put(f'/datatables/savings_additional_info/{savings_id}', datatable_data)
+                            else:
+                                # Create new row
+                                self.client.post(f'/datatables/savings_additional_info/{savings_id}', datatable_data)
+                        except:
+                            # If GET fails, try POST (table might not have any data yet)
+                            self.client.post(f'/datatables/savings_additional_info/{savings_id}', datatable_data)
+
+                        logger.info(f"  ✓ Added savings additional info: Goal={row.get('savings_goal', 'N/A')[:30]}..., "
+                                  f"Target={row.get('target_amount', 'N/A')}")
+                except Exception as dt_error:
+                    # Data table might not exist or fields might not match - this is optional
+                    logger.debug(f"  ⓘ Could not add savings data table info: {str(dt_error)}")
+
                 logger.info(f"✓ Created savings account: {row['external_id']} (ID: {savings_id})")
                 time.sleep(0.7)
 
@@ -168,6 +213,48 @@ class AccountLoader:
                 self.client.post(f'/loans/{loan_id}?command=disburse', disburse_data)
 
                 self.client.created_loan_accounts[row['external_id']] = loan_id
+
+                # Add data table entries if loan_additional_info exists
+                try:
+                    datatable_data = {}
+
+                    # Map Excel fields to data table fields
+                    if row.get('loan_purpose_detail'):
+                        datatable_data['loan_purpose_detail'] = str(row['loan_purpose_detail'])
+
+                    if row.get('repayment_source'):
+                        datatable_data['repayment_source'] = str(row['repayment_source'])
+
+                    if row.get('credit_score') is not None:
+                        datatable_data['credit_score'] = int(row['credit_score'])
+
+                    if row.get('previous_loan_history'):
+                        datatable_data['previous_loan_history'] = str(row['previous_loan_history'])
+
+                    # Only post if we have data to add
+                    if datatable_data:
+                        datatable_data['dateFormat'] = 'yyyy-MM-dd'
+                        datatable_data['locale'] = 'en'
+
+                        # For single-row datatables, need to check if row exists first
+                        try:
+                            # Try to get existing data
+                            existing = self.client.get(f'/datatables/loan_additional_info/{loan_id}')
+                            if existing and len(existing) > 0:
+                                # Update existing row
+                                self.client.put(f'/datatables/loan_additional_info/{loan_id}', datatable_data)
+                            else:
+                                # Create new row
+                                self.client.post(f'/datatables/loan_additional_info/{loan_id}', datatable_data)
+                        except:
+                            # If GET fails, try POST (table might not have any data yet)
+                            self.client.post(f'/datatables/loan_additional_info/{loan_id}', datatable_data)
+
+                        logger.info(f"  ✓ Added loan additional info: Purpose={row.get('loan_purpose_detail', 'N/A')[:30]}..., "
+                                  f"Score={row.get('credit_score', 'N/A')}")
+                except Exception as dt_error:
+                    # Data table might not exist or fields might not match - this is optional
+                    logger.debug(f"  ⓘ Could not add loan data table info: {str(dt_error)}")
 
                 logger.info(f"✓ Created loan account: {row['external_id']} (ID: {loan_id})")
                 time.sleep(0.7)
@@ -391,27 +478,46 @@ class AccountLoader:
 
         df = self._read_excel_sheet('Loan Collateral')
 
-        logger.info("NOTE: Loan collateral management requires additional configuration:")
-        logger.info("      1. Collateral must be set up as Code Values under 'LoanCollateral' code")
-        logger.info("      2. Or use the Collateral Management module (if enabled)")
-        logger.info("")
-        logger.info(f"      Skipping {len(df)} collateral assignments for now.")
-        logger.info("      Collateral can be manually added via: Loans → Loan Account → Collateral Tab")
-        logger.info("")
-        logger.info("      To enable collateral, configure code values:")
-        logger.info("      Admin → System → Manage Codes → LoanCollateral → Add Code Value")
-        logger.info("")
-
-        # Log the collateral data for reference
-        logger.info("Collateral assignments in demo data:")
         for idx, row in df.iterrows():
-            logger.info(f"  • {row['loan_account_number']} ({row['client_name']})")
-            logger.info(f"    {row['collateral_type']}: {row['collateral_value']:,.0f} XAF")
-            logger.info(f"    {row['description']}")
+            try:
+                # Find loan account ID
+                loan_id = self.client.created_loan_accounts.get(row['loan_account_number'])
 
-        logger.info("")
-        logger.info("✓ Collateral loading skipped (requires manual configuration)")
-        logger.info("  View documentation for collateral setup instructions")
+                if not loan_id:
+                    logger.warning(f"  ⚠ Loan account not found: {row['loan_account_number']}")
+                    continue
+
+                # Find collateral type ID
+                collateral_type_id = self.client.created_collateral_types.get(row['collateral_type'])
+
+                if not collateral_type_id:
+                    logger.warning(f"  ⚠ Collateral type not found: {row['collateral_type']}")
+                    continue
+
+                # Create collateral data payload
+                collateral_data = {
+                    'collateralTypeId': collateral_type_id,
+                    'value': float(row['collateral_value']),
+                    'description': row['description'],
+                    'locale': 'en'
+                }
+
+                # Post collateral assignment to loan
+                response = self.client.post(f'/loans/{loan_id}/collaterals', collateral_data)
+                collateral_id = response.get('resourceId')
+
+                logger.info(f"  ✓ Collateral assigned to {row['loan_account_number']} ({row['client_name']})")
+                logger.info(f"    Type: {row['collateral_type']} | Value: {row['collateral_value']:,.0f} XAF")
+                logger.info(f"    Location: {row['location']} | Condition: {row['condition']}")
+                logger.info(f"    Description: {row['description']}")
+                logger.info(f"    Collateral ID: {collateral_id}")
+                time.sleep(0.3)
+
+            except Exception as e:
+                logger.error(f"  ✗ Failed to assign collateral for {row.get('loan_account_number', 'unknown')}: {str(e)}")
+
+        logger.info(f"\n✓ Completed loading {len(df)} collateral assignments")
+        logger.info("      View: Loans → Loan Account → Collateral Tab")
 
     def load_loan_guarantors(self):
         """Assign guarantors to loans from Excel"""

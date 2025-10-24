@@ -192,6 +192,23 @@ class EntityLoader:
 
         df = self._read_excel_sheet('Clients')
 
+        # Fetch code values for Gender, ClientType, and ClientClassification
+        logger.info("Fetching code values for client attributes...")
+        code_values_map = {}
+
+        for code_name in ['Gender', 'ClientType', 'ClientClassification']:
+            try:
+                codes_list = self.client.get('/codes')
+                code_obj = next((c for c in codes_list if c['name'] == code_name), None)
+                if code_obj:
+                    code_id = code_obj['id']
+                    values_list = self.client.get(f'/codes/{code_id}/codevalues')
+                    code_values_map[code_name] = {v['name']: v['id'] for v in values_list}
+                    logger.info(f"  ✓ Loaded {len(code_values_map[code_name])} values for {code_name}")
+            except Exception as e:
+                logger.warning(f"  ⚠ Could not load code values for {code_name}: {str(e)}")
+                code_values_map[code_name] = {}
+
         for idx, row in df.iterrows():
             try:
                 office_id = self.client.created_offices.get(row['office'])
@@ -201,6 +218,7 @@ class EntityLoader:
                     logger.warning(f"Office not found: {row['office']}")
                     continue
 
+                # Build basic client data
                 data = {
                     'officeId': office_id,
                     'firstname': row['firstname'],
@@ -214,18 +232,95 @@ class EntityLoader:
                     'legalFormId': 1  # 1=PERSON, 2=ENTITY
                 }
 
+                # Add staff if available
                 if staff_id:
                     data['staffId'] = staff_id
 
+                # Add date of birth
                 if row['date_of_birth']:
                     data['dateOfBirth'] = row['date_of_birth']
+
+                # Add email
+                if row.get('email'):
+                    data['emailAddress'] = row['email']
+
+                # Add gender (code value ID)
+                if row.get('gender') and row['gender'] in code_values_map.get('Gender', {}):
+                    data['genderId'] = code_values_map['Gender'][row['gender']]
+
+                # Add client type (code value ID)
+                if row.get('client_type') and row['client_type'] in code_values_map.get('ClientType', {}):
+                    data['clientTypeId'] = code_values_map['ClientType'][row['client_type']]
+
+                # Add client classification (code value ID)
+                if row.get('client_classification') and row['client_classification'] in code_values_map.get('ClientClassification', {}):
+                    data['clientClassificationId'] = code_values_map['ClientClassification'][row['client_classification']]
 
                 response = self.client.post('/clients', data)
                 client_id = response.get('resourceId') or response.get('clientId')
 
                 self.client.created_clients[row['external_id']] = client_id
 
+                # Add data table entries if client_additional_info exists
+                try:
+                    datatable_data = {}
+
+                    # Map Excel fields to data table fields
+                    if row.get('national_id'):
+                        datatable_data['id_number'] = str(row['national_id'])
+                        datatable_data['id_type'] = 'National ID'  # Default
+
+                    if row.get('address'):
+                        datatable_data['address'] = str(row['address'])
+
+                    if row.get('city'):
+                        datatable_data['city'] = str(row['city'])
+
+                    if row.get('marital_status'):
+                        datatable_data['marital_status'] = str(row['marital_status'])
+
+                    if row.get('number_of_dependents') is not None:
+                        datatable_data['number_of_dependents'] = int(row['number_of_dependents'])
+
+                    if row.get('occupation'):
+                        datatable_data['occupation'] = str(row['occupation'])
+
+                    if row.get('business_type'):
+                        datatable_data['business_type'] = str(row['business_type'])
+
+                    if row.get('monthly_income') is not None:
+                        datatable_data['monthly_income'] = float(row['monthly_income'])
+
+                    if row.get('risk_rating'):
+                        datatable_data['risk_rating'] = str(row['risk_rating'])
+
+                    # Only post if we have data to add
+                    if datatable_data:
+                        datatable_data['dateFormat'] = 'yyyy-MM-dd'
+                        datatable_data['locale'] = 'en'
+
+                        # For single-row datatables, need to check if row exists first
+                        try:
+                            # Try to get existing data
+                            existing = self.client.get(f'/datatables/client_additional_info/{client_id}')
+                            if existing and len(existing) > 0:
+                                # Update existing row
+                                self.client.put(f'/datatables/client_additional_info/{client_id}', datatable_data)
+                            else:
+                                # Create new row
+                                self.client.post(f'/datatables/client_additional_info/{client_id}', datatable_data)
+                        except:
+                            # If GET fails, try POST (table might not have any data yet)
+                            self.client.post(f'/datatables/client_additional_info/{client_id}', datatable_data)
+
+                        logger.info(f"  ✓ Added additional info: Address={row.get('city', 'N/A')}, "
+                                  f"Income={row.get('monthly_income', 'N/A')}, Rating={row.get('risk_rating', 'N/A')}")
+                except Exception as dt_error:
+                    # Data table might not exist or fields might not match - this is optional
+                    logger.debug(f"  ⓘ Could not add data table info: {str(dt_error)}")
+
                 logger.info(f"✓ Created client: {row['firstname']} {row['lastname']} (ID: {client_id})")
+                logger.info(f"  Gender: {row.get('gender', 'N/A')} | Type: {row.get('client_type', 'N/A')} | Email: {row.get('email', 'N/A')}")
                 time.sleep(0.5)
 
             except Exception as e:

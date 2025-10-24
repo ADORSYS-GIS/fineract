@@ -582,32 +582,50 @@ class FineractDemoDataGenerator:
             {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2024-02-01',
              'approved_on': '2024-02-05', 'disbursed_on': '2024-02-09', 'principal': 200000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
-             'fund_source': 'Own Capital', 'external_id': 'LOAN-001'},
+             'fund_source': 'Own Capital', 'external_id': 'LOAN-001',
+             'loan_purpose_detail': 'Purchase additional stock for retail shop',
+             'repayment_source': 'Business Income', 'credit_score': 72,
+             'previous_loan_history': 'Good History'},
 
             {'client_external_id': 'CLI-002', 'product': 'SBIZ', 'submitted_on': '2024-02-05',
              'approved_on': '2024-02-08', 'disbursed_on': '2024-02-12', 'principal': 2000000,
              'loan_term': 12, 'interest_rate': 20.0, 'loan_officer': 'loan.douala',
-             'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002'},
+             'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002',
+             'loan_purpose_detail': 'Expand transport business - purchase second vehicle',
+             'repayment_source': 'Business Income', 'credit_score': 85,
+             'previous_loan_history': 'First Loan'},
 
             {'client_external_id': 'CLI-003', 'product': 'MSOL', 'submitted_on': '2024-02-10',
              'approved_on': '2024-02-12', 'disbursed_on': '2024-02-15', 'principal': 150000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.yaounde',
-             'fund_source': 'Own Capital', 'external_id': 'LOAN-003'},
+             'fund_source': 'Own Capital', 'external_id': 'LOAN-003',
+             'loan_purpose_detail': 'Renovate salon and purchase new equipment',
+             'repayment_source': 'Business Income', 'credit_score': 68,
+             'previous_loan_history': 'First Loan'},
 
             {'client_external_id': 'CLI-004', 'product': 'ASEA', 'submitted_on': '2024-02-12',
              'approved_on': '2024-02-15', 'disbursed_on': '2024-02-19', 'principal': 500000,
              'loan_term': 6, 'interest_rate': 18.0, 'loan_officer': 'loan.bafoussam',
-             'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004'},
+             'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004',
+             'loan_purpose_detail': 'Purchase fertilizer and seeds for planting season',
+             'repayment_source': 'Business Income', 'credit_score': 75,
+             'previous_loan_history': 'Good History'},
 
             {'client_external_id': 'CLI-005', 'product': 'MSOL', 'submitted_on': '2024-02-15',
              'approved_on': '2024-02-18', 'disbursed_on': '2024-02-20', 'principal': 180000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
-             'fund_source': 'Own Capital', 'external_id': 'LOAN-005'},
+             'fund_source': 'Own Capital', 'external_id': 'LOAN-005',
+             'loan_purpose_detail': 'Expand restaurant seating and buy cooking equipment',
+             'repayment_source': 'Business Income', 'credit_score': 70,
+             'previous_loan_history': 'Some Delays'},
 
             {'client_external_id': 'CLI-006', 'product': 'SBIZ', 'submitted_on': '2024-02-18',
              'approved_on': '2024-02-20', 'disbursed_on': '2024-02-26', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
-             'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006'},
+             'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006',
+             'loan_purpose_detail': 'Stock wholesale shop with imported goods',
+             'repayment_source': 'Business Income', 'credit_score': 90,
+             'previous_loan_history': 'Good History'},
         ]
         return pd.DataFrame(data)
 
@@ -616,51 +634,87 @@ class FineractDemoDataGenerator:
         data = [
             {'client_external_id': 'CLI-001', 'product': 'VSAV', 'submitted_on': '2024-01-20',
              'approved_on': '2024-01-20', 'activated_on': '2024-01-20', 'initial_deposit': 25000,
-             'field_officer': 'loan.douala', 'external_id': 'SAV-001'},
+             'field_officer': 'loan.douala', 'external_id': 'SAV-001',
+             'savings_goal': 'School fees for children', 'target_amount': 500000,
+             'target_date': '2024-09-01', 'monthly_commitment': 50000,
+             'preferred_transaction_channel': 'Branch'},
 
             {'client_external_id': 'CLI-002', 'product': 'VSAV', 'submitted_on': '2024-01-25',
              'approved_on': '2024-01-25', 'activated_on': '2024-01-25', 'initial_deposit': 50000,
-             'field_officer': 'loan.douala', 'external_id': 'SAV-002'},
+             'field_officer': 'loan.douala', 'external_id': 'SAV-002',
+             'savings_goal': 'Emergency fund', 'target_amount': 1000000,
+             'target_date': '2024-12-31', 'monthly_commitment': 100000,
+             'preferred_transaction_channel': 'Mobile Money'},
 
             {'client_external_id': 'CLI-002', 'product': 'FDEP', 'submitted_on': '2024-02-01',
              'approved_on': '2024-02-01', 'activated_on': '2024-02-01', 'initial_deposit': 100000,
-             'field_officer': 'loan.douala', 'external_id': 'SAV-003'},
+             'field_officer': 'loan.douala', 'external_id': 'SAV-003',
+             'savings_goal': 'Business expansion capital', 'target_amount': 5000000,
+             'target_date': '2025-02-01', 'monthly_commitment': 200000,
+             'preferred_transaction_channel': 'Bank Transfer'},
 
             {'client_external_id': 'CLI-003', 'product': 'VSAV', 'submitted_on': '2024-02-01',
              'approved_on': '2024-02-01', 'activated_on': '2024-02-01', 'initial_deposit': 15000,
-             'field_officer': 'loan.yaounde', 'external_id': 'SAV-004'},
+             'field_officer': 'loan.yaounde', 'external_id': 'SAV-004',
+             'savings_goal': 'Buy salon equipment', 'target_amount': 300000,
+             'target_date': '2024-08-01', 'monthly_commitment': 40000,
+             'preferred_transaction_channel': 'Branch'},
 
             {'client_external_id': 'CLI-004', 'product': 'VSAV', 'submitted_on': '2024-02-05',
              'approved_on': '2024-02-05', 'activated_on': '2024-02-05', 'initial_deposit': 20000,
-             'field_officer': 'loan.bafoussam', 'external_id': 'SAV-005'},
+             'field_officer': 'loan.bafoussam', 'external_id': 'SAV-005',
+             'savings_goal': 'Purchase farm inputs', 'target_amount': 400000,
+             'target_date': '2024-10-01', 'monthly_commitment': 50000,
+             'preferred_transaction_channel': 'Agent'},
 
             {'client_external_id': 'CLI-005', 'product': 'VSAV', 'submitted_on': '2024-02-10',
              'approved_on': '2024-02-10', 'activated_on': '2024-02-10', 'initial_deposit': 18000,
-             'field_officer': 'loan.douala', 'external_id': 'SAV-006'},
+             'field_officer': 'loan.douala', 'external_id': 'SAV-006',
+             'savings_goal': 'Home renovation', 'target_amount': 600000,
+             'target_date': '2024-12-31', 'monthly_commitment': 60000,
+             'preferred_transaction_channel': 'Mobile Money'},
 
             {'client_external_id': 'CLI-006', 'product': 'VSAV', 'submitted_on': '2024-02-15',
              'approved_on': '2024-02-15', 'activated_on': '2024-02-15', 'initial_deposit': 75000,
-             'field_officer': 'loan.yaounde', 'external_id': 'SAV-007'},
+             'field_officer': 'loan.yaounde', 'external_id': 'SAV-007',
+             'savings_goal': 'Business inventory buffer', 'target_amount': 2000000,
+             'target_date': '2025-02-15', 'monthly_commitment': 150000,
+             'preferred_transaction_channel': 'Bank Transfer'},
 
             {'client_external_id': 'CLI-006', 'product': 'FDEP', 'submitted_on': '2024-02-20',
              'approved_on': '2024-02-20', 'activated_on': '2024-02-20', 'initial_deposit': 200000,
-             'field_officer': 'loan.yaounde', 'external_id': 'SAV-008'},
+             'field_officer': 'loan.yaounde', 'external_id': 'SAV-008',
+             'savings_goal': 'Fixed investment for returns', 'target_amount': 10000000,
+             'target_date': '2026-02-20', 'monthly_commitment': 300000,
+             'preferred_transaction_channel': 'Branch'},
 
             {'client_external_id': 'CLI-007', 'product': 'VSAV', 'submitted_on': '2024-02-20',
              'approved_on': '2024-02-20', 'activated_on': '2024-02-20', 'initial_deposit': 12000,
-             'field_officer': 'loan.bamenda', 'external_id': 'SAV-009'},
+             'field_officer': 'loan.bamenda', 'external_id': 'SAV-009',
+             'savings_goal': 'Wedding expenses', 'target_amount': 800000,
+             'target_date': '2024-12-01', 'monthly_commitment': 80000,
+             'preferred_transaction_channel': 'Mobile Money'},
 
             {'client_external_id': 'CLI-008', 'product': 'VSAV', 'submitted_on': '2024-03-01',
              'approved_on': '2024-03-01', 'activated_on': '2024-03-01', 'initial_deposit': 16000,
-             'field_officer': 'loan.douala', 'external_id': 'SAV-010'},
+             'field_officer': 'loan.douala', 'external_id': 'SAV-010',
+             'savings_goal': 'Tools and equipment', 'target_amount': 350000,
+             'target_date': '2024-10-01', 'monthly_commitment': 45000,
+             'preferred_transaction_channel': 'Agent'},
 
             {'client_external_id': 'CLI-009', 'product': 'VSAV', 'submitted_on': '2024-03-05',
              'approved_on': '2024-03-05', 'activated_on': '2024-03-05', 'initial_deposit': 10000,
-             'field_officer': 'loan.bafoussam', 'external_id': 'SAV-011'},
+             'field_officer': 'loan.bafoussam', 'external_id': 'SAV-011',
+             'savings_goal': 'Market stall expansion', 'target_amount': 250000,
+             'target_date': '2024-09-01', 'monthly_commitment': 35000,
+             'preferred_transaction_channel': 'Branch'},
 
             {'client_external_id': 'CLI-010', 'product': 'VSAV', 'submitted_on': '2024-03-10',
              'approved_on': '2024-03-10', 'activated_on': '2024-03-10', 'initial_deposit': 14000,
-             'field_officer': 'loan.yaounde', 'external_id': 'SAV-012'},
+             'field_officer': 'loan.yaounde', 'external_id': 'SAV-012',
+             'savings_goal': 'Buy woodworking tools', 'target_amount': 400000,
+             'target_date': '2024-11-01', 'monthly_commitment': 50000,
+             'preferred_transaction_channel': 'Mobile Money'},
         ]
         return pd.DataFrame(data)
 
@@ -1449,6 +1503,10 @@ class FineractDemoDataGenerator:
             {'config_name': 'financial-year-beginning-month', 'enabled': 'Yes', 'value': '1',
              'description': 'Financial year starts in January'},
 
+            # Organisation Start Date - DISABLED: Causes 500 error in some Fineract versions
+            # {'config_name': 'organisation-start-date', 'enabled': 'Yes', 'value': '01 January 2020',
+            #  'description': 'Date when the organization started operations (cutoff for historical transactions)'},
+
             # Min/Max days between repayments
             {'config_name': 'min-days-between-disbursal-and-first-repayment', 'enabled': 'Yes', 'value': '1',
              'description': 'Minimum days between disbursement and first repayment'},
@@ -1719,6 +1777,39 @@ class FineractDemoDataGenerator:
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'disability_status',
              'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'None,Physical,Visual,Hearing,Other',
              'description': 'Disability status (for inclusive finance)'},
+
+            # Additional client fields from Clients sheet
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'address',
+             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Residential address'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'city',
+             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'City of residence'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'marital_status',
+             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Single,Married,Divorced,Widow,Widower',
+             'description': 'Marital status'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'number_of_dependents',
+             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Number of dependents'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'occupation',
+             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Client occupation or profession'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'business_type',
+             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Type of business activity'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'monthly_income',
+             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Estimated monthly income (XAF)'},
+
+            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'risk_rating',
+             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'A,B,C,D',
+             'description': 'Client risk rating (A=Low, D=High)'},
 
             # Loan Custom Fields
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'loan_purpose_detail',

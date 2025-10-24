@@ -711,9 +711,28 @@ class ProductLoader:
 
         df = self._read_excel_sheet('Collateral Types')
 
-        # Initialize storage for collateral type IDs
+        # Initialize storage for collateral type IDs (for code values, used by loan collateral API)
         if not hasattr(self.client, 'created_collateral_types'):
             self.client.created_collateral_types = {}
+
+        # Also store collateral management IDs separately if needed
+        if not hasattr(self.client, 'created_collateral_management_ids'):
+            self.client.created_collateral_management_ids = {}
+
+        # First, ensure LoanCollateral code exists
+        try:
+            codes_list = self.client.get('/codes')
+            loan_collateral_code = next((c for c in codes_list if c['name'] == 'LoanCollateral'), None)
+            if not loan_collateral_code:
+                code_response = self.client.post('/codes', {'name': 'LoanCollateral'})
+                loan_collateral_code_id = code_response.get('resourceId')
+                logger.info(f"✓ Created LoanCollateral code (ID: {loan_collateral_code_id})")
+            else:
+                loan_collateral_code_id = loan_collateral_code['id']
+                logger.info(f"⊙ LoanCollateral code already exists (ID: {loan_collateral_code_id})")
+        except Exception as e:
+            logger.error(f"✗ Failed to create/get LoanCollateral code: {str(e)}")
+            loan_collateral_code_id = None
 
         for idx, row in df.iterrows():
             try:
@@ -728,12 +747,44 @@ class ProductLoader:
                 }
 
                 response = self.client.post('/collateral-management', data)
-                collateral_id = response.get('resourceId')
+                collateral_mgmt_id = response.get('resourceId')
 
-                # Store the collateral type ID for later use
-                self.client.created_collateral_types[row['collateral_type']] = collateral_id
+                # Store the collateral management ID separately
+                self.client.created_collateral_management_ids[row['collateral_type']] = collateral_mgmt_id
 
-                logger.info(f"✓ Created collateral type: {row['collateral_type']} (ID: {collateral_id})")
+                # Also create as code value under LoanCollateral (this is what the loan collateral API uses)
+                if loan_collateral_code_id:
+                    try:
+                        code_value_data = {
+                            'name': row['collateral_type'],
+                            'position': idx + 1,
+                            'isActive': True,
+                            'description': row.get('description', '')
+                        }
+                        cv_response = self.client.post(f'/codes/{loan_collateral_code_id}/codevalues', code_value_data)
+                        code_value_id = cv_response.get('resourceId')
+
+                        # Store the CODE VALUE ID - this is what the loan collateral API uses
+                        self.client.created_collateral_types[row['collateral_type']] = code_value_id
+
+                        logger.info(f"✓ Created collateral type: {row['collateral_type']} (Code Value ID: {code_value_id}, Mgmt ID: {collateral_mgmt_id})")
+                    except Exception as cv_error:
+                        if 'already exists' in str(cv_error).lower():
+                            # Try to get the existing code value ID
+                            try:
+                                code_values = self.client.get(f'/codes/{loan_collateral_code_id}/codevalues')
+                                existing_cv = next((cv for cv in code_values if cv['name'] == row['collateral_type']), None)
+                                if existing_cv:
+                                    self.client.created_collateral_types[row['collateral_type']] = existing_cv['id']
+                                    logger.info(f"✓ Collateral type exists: {row['collateral_type']} (Code Value ID: {existing_cv['id']})")
+                            except:
+                                logger.warning(f"  ⚠ Could not get existing code value ID for: {row['collateral_type']}")
+                        else:
+                            logger.warning(f"  ⚠ Could not create code value: {str(cv_error)}")
+                            logger.info(f"✓ Created collateral type (mgmt only): {row['collateral_type']} (ID: {collateral_mgmt_id})")
+                else:
+                    logger.warning(f"  ⚠ LoanCollateral code not available, created mgmt type only: {row['collateral_type']}")
+
                 time.sleep(0.3)
 
             except Exception as e:

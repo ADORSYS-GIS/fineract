@@ -589,7 +589,39 @@ class SystemConfigLoader:
 
                 except Exception as e:
                     if 'already exists' in str(e).lower() or '403' in str(e):
-                        logger.info(f"  ⚠ Data table already exists: {table_name}")
+                        logger.info(f"  ⊙ Data table already exists: {table_name}")
+
+                        # Try to add missing columns to existing table
+                        try:
+                            # Get existing table structure
+                            existing_table = self.client.get(f'/datatables/{table_name}')
+                            existing_columns = {col['columnName'] for col in existing_table.get('columnHeaderData', [])}
+
+                            # Find columns that need to be added
+                            new_columns = [col for col in columns if col['name'] not in existing_columns]
+
+                            if new_columns:
+                                logger.info(f"  → Adding {len(new_columns)} new columns to existing table...")
+                                for col in new_columns:
+                                    try:
+                                        # Add column to existing table
+                                        add_column_data = {
+                                            'datatableName': table_name,
+                                            'apptableName': app_table_name,
+                                            'addColumns': [col]
+                                        }
+                                        if entity_type == 'Client':
+                                            add_column_data['entitySubType'] = 'PERSON'
+
+                                        self.client.put(f'/datatables/{table_name}', add_column_data)
+                                        logger.info(f"    ✓ Added column: {col['name']}")
+                                        time.sleep(0.2)
+                                    except Exception as col_error:
+                                        logger.warning(f"    ⚠ Could not add column {col['name']}: {str(col_error)}")
+                            else:
+                                logger.info(f"  ✓ Table structure is up to date")
+                        except Exception as update_error:
+                            logger.debug(f"  ⓘ Could not update table structure: {str(update_error)}")
                     else:
                         raise
 
@@ -601,3 +633,6 @@ class SystemConfigLoader:
         logger.info("  - Client forms (additional_info tab)")
         logger.info("  - Loan application forms")
         logger.info("  - Savings account forms")
+        logger.info("")
+        logger.info("⏱ Waiting 5 seconds for Fineract to refresh data table schema cache...")
+        time.sleep(5)
