@@ -94,7 +94,28 @@ services:
     depends_on:
       - fineract
       - keycloak
+      - cashier-app
+      - branchmanager-app
+      - accountmanager-app
     ports:
       - "80:80"
     volumes:
       - ./config/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+
+  cashier-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/cashier-app:980a945bb7ab4c60ad6113e14539a2a7d59c889b
+    container_name: cashier_app_test
+    ports:
+      - "5173:80"
+
+  branchmanager-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/branchmanager-app:52ebf3e9d062e3e8a83569304be939fd80be2496
+    container_name: branchmanager_app_test
+    ports:
+      - "5174:80"
+
+  accountmanager-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/account-manager-app:3c6f9fc78d3ddd5a096cad84d34b1181625f9ea4
+    container_name: accountmanager_app_test
+    ports:
+      - "5175:80"
