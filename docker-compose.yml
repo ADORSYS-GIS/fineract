@@ -24,6 +24,8 @@ services:
     extends:
       file: ./config/docker/compose/mariadb.yml
       service: mariadb
+    networks:
+      - fineract-network
 
   fineract:
     extends:
@@ -41,6 +43,8 @@ services:
       - ./config/docker/env/fineract-common.env
       - ./config/docker/env/fineract-mariadb.env
       - ./config/docker/env/fineract-keycloak.env
+    networks:
+      - fineract-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
@@ -66,6 +70,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 60s
+    networks:
+      - fineract-network
 
   keycloak-config-cli:
       image: adorsys/keycloak-config-cli:latest
@@ -79,6 +85,8 @@ services:
         - IMPORT_FILES_LOCATIONS=/config/*
       volumes:
         - ./keycloak-config:/config
+      networks:
+        - fineract-network
 
   keycloak-setup:
     build:
@@ -87,6 +95,8 @@ services:
     depends_on:
       keycloak-config-cli:
         condition: service_completed_successfully
+    networks:
+      - fineract-network
 
   apache-proxy:
     build:
@@ -94,28 +104,59 @@ services:
     depends_on:
       - fineract
       - keycloak
+      # - admin-app  # Commented out - image not available in registry
       - cashier-app
       - branchmanager-app
       - accountmanager-app
+      # - mifos-app  # Commented out - image not available in registry
     ports:
       - "80:80"
     volumes:
       - ./config/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      - fineract-network
+
+  admin-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/admin-app:latest
+    container_name: admin_app_test
+    ports:
+      - "5172:80"
+    networks:
+      - fineract-network
 
   cashier-app:
-    image: ghcr.io/adorsys-gis/fineract-apps/cashier-app:980a945bb7ab4c60ad6113e14539a2a7d59c889b
+    image: ghcr.io/adorsys-gis/fineract-apps/cashier-app:latest
     container_name: cashier_app_test
     ports:
       - "5173:80"
+    networks:
+      - fineract-network
 
   branchmanager-app:
-    image: ghcr.io/adorsys-gis/fineract-apps/branchmanager-app:52ebf3e9d062e3e8a83569304be939fd80be2496
+    image: ghcr.io/adorsys-gis/fineract-apps/branchmanager-app:latest
     container_name: branchmanager_app_test
     ports:
       - "5174:80"
+    networks:
+      - fineract-network
 
   accountmanager-app:
-    image: ghcr.io/adorsys-gis/fineract-apps/account-manager-app:3c6f9fc78d3ddd5a096cad84d34b1181625f9ea4
+    image: ghcr.io/adorsys-gis/fineract-apps/account-manager-app:latest
     container_name: accountmanager_app_test
     ports:
       - "5175:80"
+    networks:
+      - fineract-network
+
+  mifos-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/mifos-app:latest
+    container_name: mifos_app_test
+    ports:
+      - "5176:80"
+    networks:
+      - fineract-network
+
+networks:
+  fineract-network:
+    driver: bridge
+    name: fineract-dev-network
