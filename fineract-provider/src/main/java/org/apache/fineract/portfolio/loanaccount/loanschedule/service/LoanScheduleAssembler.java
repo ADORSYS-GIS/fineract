@@ -219,6 +219,20 @@ public class LoanScheduleAssembler {
         BigDecimal fixedPrincipalPercentagePerInstallment = this.fromApiJsonHelper
                 .extractBigDecimalWithLocaleNamed(LoanApiConstants.fixedPrincipalPercentagePerInstallmentParamName, element);
 
+        /**
+         * Interest recalculation settings copy from product definition
+         */
+        final DaysInMonthType daysInMonthType = loanProduct.fetchDaysInMonthType();
+
+        DaysInYearType daysInYearType = null;
+        final Integer daysInYearTypeIntFromApplication = this.fromApiJsonHelper
+                .extractIntegerNamed(LoanApiConstants.daysInYearTypeParameterName, element, Locale.getDefault());
+        if (daysInYearTypeIntFromApplication != null) {
+            daysInYearType = DaysInYearType.fromInt(daysInYearTypeIntFromApplication);
+        } else {
+            daysInYearType = loanProduct.fetchDaysInYearType();
+        }
+
         // interest terms
         final Integer interestType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("interestType", element);
         final InterestMethod interestMethod = allowOverridingInterestMethod ? InterestMethod.fromInt(interestType)
@@ -246,7 +260,7 @@ public class LoanScheduleAssembler {
         BigDecimal annualNominalInterestRate = BigDecimal.ZERO;
         if (interestRatePerPeriod != null) {
             annualNominalInterestRate = this.aprCalculator.calculateFrom(interestRatePeriodFrequencyType, interestRatePerPeriod,
-                    numberOfRepayments, repaymentEvery, repaymentPeriodFrequencyType);
+                    numberOfRepayments, repaymentEvery, repaymentPeriodFrequencyType, daysInYearType);
         }
 
         // disbursement details
@@ -364,20 +378,6 @@ public class LoanScheduleAssembler {
                 .extractBigDecimalWithLocaleNamed(LoanApiConstants.maxOutstandingBalanceParameterName, element);
 
         final List<DisbursementData> disbursementDatas = fetchDisbursementData(element.getAsJsonObject());
-
-        /**
-         * Interest recalculation settings copy from product definition
-         */
-        final DaysInMonthType daysInMonthType = loanProduct.fetchDaysInMonthType();
-
-        DaysInYearType daysInYearType = null;
-        final Integer daysInYearTypeIntFromApplication = this.fromApiJsonHelper
-                .extractIntegerNamed(LoanApiConstants.daysInYearTypeParameterName, element, Locale.getDefault());
-        if (daysInYearTypeIntFromApplication != null) {
-            daysInYearType = DaysInYearType.fromInt(daysInYearTypeIntFromApplication);
-        } else {
-            daysInYearType = loanProduct.fetchDaysInYearType();
-        }
 
         final boolean isInterestRecalculationEnabled = loanProduct.isInterestRecalculationEnabled();
         RecalculationFrequencyType recalculationFrequencyType = null;
@@ -554,7 +554,8 @@ public class LoanScheduleAssembler {
                 loanProduct.getLoanProductRelatedDetail().isEnableBuyDownFee(),
                 loanProduct.getLoanProductRelatedDetail().getBuyDownFeeCalculationType(),
                 loanProduct.getLoanProductRelatedDetail().getBuyDownFeeStrategy(),
-                loanProduct.getLoanProductRelatedDetail().getBuyDownFeeIncomeType());
+                loanProduct.getLoanProductRelatedDetail().getBuyDownFeeIncomeType(),
+                loanProduct.getLoanProductRelatedDetail().isMerchantBuyDownFee());
     }
 
     private CalendarInstance createCalendarForSameAsRepayment(final Integer repaymentEvery,
@@ -636,8 +637,8 @@ public class LoanScheduleAssembler {
                                 .getAsBigDecimal();
                     }
                     BigDecimal waivedChargeAmount = null;
-                    disbursementDatas.add(new DisbursementData(null, expectedDisbursementDate, null, principal, netDisbursalAmount, null,
-                            null, waivedChargeAmount));
+                    disbursementDatas.add(new DisbursementData(null, null, expectedDisbursementDate, null, principal, netDisbursalAmount,
+                            null, null, waivedChargeAmount));
                     i++;
                 } while (i < disbursementDataArray.size());
             }
@@ -973,7 +974,7 @@ public class LoanScheduleAssembler {
         final LocalDate recalculateFrom = null;
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
         loanScheduleService.regenerateRepaymentSchedule(loan, scheduleGeneratorDTO);
-        loanAccrualsProcessingService.reprocessExistingAccruals(loan);
+        loanAccrualsProcessingService.reprocessExistingAccruals(loan, false);
 
     }
 
@@ -1552,7 +1553,7 @@ public class LoanScheduleAssembler {
             if (actualChanges.containsKey(LoanApiConstants.approvedLoanAmountParameterName)
                     || actualChanges.containsKey("recalculateLoanSchedule") || actualChanges.containsKey("expectedDisbursementDate")) {
                 loanScheduleService.regenerateRepaymentSchedule(loan, loanUtilService.buildScheduleGeneratorDTO(loan, null));
-                loanAccrualsProcessingService.reprocessExistingAccruals(loan);
+                loanAccrualsProcessingService.reprocessExistingAccruals(loan, false);
             }
         }
 

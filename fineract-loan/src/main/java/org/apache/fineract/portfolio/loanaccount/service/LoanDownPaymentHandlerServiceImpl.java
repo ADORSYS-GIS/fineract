@@ -63,6 +63,7 @@ public class LoanDownPaymentHandlerServiceImpl implements LoanDownPaymentHandler
     private final LoanLifecycleStateMachine loanLifecycleStateMachine;
     private final LoanBalanceService loanBalanceService;
     private final LoanTransactionService loanTransactionService;
+    private final LoanJournalEntryPoster journalEntryPoster;
 
     @Override
     public LoanTransaction handleDownPayment(ScheduleGeneratorDTO scheduleGeneratorDTO, JsonCommand command,
@@ -71,6 +72,7 @@ public class LoanDownPaymentHandlerServiceImpl implements LoanDownPaymentHandler
         LoanTransaction downPaymentTransaction = handleDownPayment(loan, disbursementTransaction, command, scheduleGeneratorDTO);
         if (downPaymentTransaction != null) {
             downPaymentTransaction = loanTransactionRepository.saveAndFlush(downPaymentTransaction);
+            journalEntryPoster.postJournalEntriesForLoanTransaction(downPaymentTransaction, false, false);
             businessEventNotifierService.notifyPostBusinessEvent(new LoanTransactionDownPaymentPostBusinessEvent(downPaymentTransaction));
         }
         return downPaymentTransaction;
@@ -155,7 +157,8 @@ public class LoanDownPaymentHandlerServiceImpl implements LoanDownPaymentHandler
             if (loan.isCumulativeSchedule() && loan.isInterestBearingAndInterestRecalculationEnabled()) {
                 loanScheduleService.regenerateRepaymentScheduleWithInterestRecalculation(loan, scheduleGeneratorDTO);
             } else if (loan.isProgressiveSchedule() && ((loan.hasChargeOffTransaction() && loan.hasAccelerateChargeOffStrategy())
-                    || loan.hasContractTerminationTransaction())) {
+                    || loan.hasContractTerminationTransaction()
+                    || (loan.isInterestRecalculationEnabled() && loan.hasReAgingTransaction()))) {
                 loanScheduleService.regenerateRepaymentSchedule(loan, scheduleGeneratorDTO);
             }
             reprocessLoanTransactionsService.reprocessTransactions(loan);

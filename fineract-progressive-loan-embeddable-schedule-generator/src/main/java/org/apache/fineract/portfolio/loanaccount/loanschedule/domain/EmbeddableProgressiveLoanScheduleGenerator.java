@@ -34,12 +34,10 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanProductMinimumRepaym
 public class EmbeddableProgressiveLoanScheduleGenerator {
 
     private final ProgressiveLoanScheduleGenerator scheduleGenerator;
-    private final ScheduledDateGenerator scheduledDateGenerator;
-    private final EMICalculator emiCalculator;
 
     public EmbeddableProgressiveLoanScheduleGenerator() {
-        this.emiCalculator = new ProgressiveEMICalculator();
-        this.scheduledDateGenerator = new DefaultScheduledDateGenerator();
+        final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
+        final EMICalculator emiCalculator = new ProgressiveEMICalculator(scheduledDateGenerator);
         this.scheduleGenerator = new ProgressiveLoanScheduleGenerator(scheduledDateGenerator, emiCalculator,
                 new NoopInterestScheduleModelRepositoryWrapper());
     }
@@ -52,6 +50,11 @@ public class EmbeddableProgressiveLoanScheduleGenerator {
 
         @Override
         public Optional<ProgressiveLoanModel> findOneByLoanId(Long loanId) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<ProgressiveLoanModel> findOneByLoan(Loan loan) {
             return Optional.empty();
         }
 
