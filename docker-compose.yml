@@ -43,6 +43,8 @@ services:
       - ./config/docker/env/fineract-common.env
       - ./config/docker/env/fineract-mariadb.env
       - ./config/docker/env/fineract-keycloak.env
+    extra_hosts:
+      - "keycloak.local:172.21.0.1"
     networks:
       - fineract-network
 
@@ -54,11 +56,15 @@ services:
       --spi-theme-static-max-age=-1
       --spi-theme-cache-themes=false
       --spi-theme-cache-templates=false
+      --hostname-strict=false
+      --http-enabled=true
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
       KC_THEME_DEFAULT: adorsys-tm-01
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
     ports:
       - "9000:8080"
       - "8180:9000"
@@ -116,13 +122,13 @@ services:
     networks:
       - fineract-network
 
-  admin-app:
-    image: ghcr.io/adorsys-gis/fineract-apps/admin-app:latest
-    container_name: admin_app_test
-    ports:
-      - "5172:80"
-    networks:
-      - fineract-network
+  # admin-app:
+  #   image: ghcr.io/adorsys-gis/fineract-apps/admin-app:latest
+  #   container_name: admin_app_test
+  #   ports:
+  #     - "5172:80"
+  #   networks:
+  #     - fineract-network
 
   cashier-app:
     image: ghcr.io/adorsys-gis/fineract-apps/cashier-app:latest
@@ -148,13 +154,13 @@ services:
     networks:
       - fineract-network
 
-  mifos-app:
-    image: ghcr.io/adorsys-gis/fineract-apps/mifos-app:latest
-    container_name: mifos_app_test
-    ports:
-      - "5176:80"
-    networks:
-      - fineract-network
+  # mifos-app:
+  #   image: ghcr.io/adorsys-gis/fineract-apps/mifos-app:latest
+  #   container_name: mifos_app_test
+  #   ports:
+  #     - "5176:80"
+  #   networks:
+  #     - fineract-network
 
 networks:
   fineract-network:
