@@ -3,7 +3,7 @@ name: Build and Push Fineract Image
 on:
   push:
     branches:
-      - main   # build whenever you push to main
+      - 9-create-and-publish-apache-fineract-docker-image
   workflow_dispatch:   # allow manual runs from the Actions tab
 
 jobs:
