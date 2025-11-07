@@ -95,7 +95,10 @@ class RolesPermissionsLoader:
         if permission_level == 'ALL_FUNCTIONS':
             # Include all CRUD operations
             actions = ['CREATE', 'READ', 'UPDATE', 'DELETE', 'APPROVE', 'DISBURSE', 'ACTIVATE',
-                      'WITHDRAW', 'REJECT', 'SAVEORUPDATE']
+                      'WITHDRAW', 'REJECT', 'SAVEORUPDATE', 'REMOVE']
+        elif permission_level == 'DELETE_FUNCTIONS':
+            # Include delete-specific operations
+            actions = ['DELETE', 'REMOVE', 'WITHDRAW']
         elif permission_level == 'CREATE_UPDATE_READ':
             actions = ['CREATE', 'READ', 'UPDATE', 'SAVEORUPDATE']
         elif permission_level == 'CREATE_READ':
