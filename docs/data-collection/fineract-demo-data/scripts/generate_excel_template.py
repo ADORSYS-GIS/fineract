@@ -1155,6 +1155,8 @@ class FineractDemoDataGenerator:
              'description': 'Process transactions and repayments'},
             {'role_name': 'Cashier', 'permission_group': 'Report', 'permission': 'READ',
              'description': 'View transaction reports'},
+            {'role_name': 'Cashier', 'permission_group': 'PaymentType', 'permission': 'READ',
+             'description': 'Read payment types'},
             {'role_name': 'Cashier', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
              'description': 'Can create maker-checker tasks (maker role)'},
 

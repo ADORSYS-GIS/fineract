@@ -83,7 +83,8 @@ class RolesPermissionsLoader:
             'Maker-Checker': 'CHECKER',
             'Loan Product': 'LOANPRODUCT',
             'Savings Product': 'SAVINGSPRODUCT',
-            'Charge': 'CHARGE'
+            'Charge': 'CHARGE',
+            'PaymentType': 'PAYMENTTYPE'
         }
 
         entity_name = entity_mapping.get(permission_group)
