@@ -132,6 +132,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepayment
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.domain.reaging.LoanReAgeInterestHandlingType;
+import org.apache.fineract.portfolio.loanaccount.domain.reamortization.LoanReAmortizationInterestHandlingType;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanTransactionNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
@@ -187,7 +188,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
     private final ConfigurationDomainService configurationDomainService;
     private final AccountDetailsReadPlatformService accountDetailsReadPlatformService;
     private final ColumnValidator columnValidator;
-    private final DatabaseSpecificSQLGenerator sqlGenerator;
+    protected final DatabaseSpecificSQLGenerator sqlGenerator;
     private final DelinquencyReadPlatformService delinquencyReadPlatformService;
     private final LoanTransactionRepository loanTransactionRepository;
     private final LoanChargePaidByReadService loanChargePaidByReadService;
@@ -299,7 +300,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
         try {
             this.context.authenticatedUser();
 
-            final LoanTransactionsMapper rm = new LoanTransactionsMapper(sqlGenerator);
+            final LoanTransactionsMapper rm = createLoanTransactionsMapper();
 
             // retrieve all loan transactions that are not invalid and have not
             // been 'contra'ed by another transaction
@@ -329,6 +330,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
         } catch (final EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    protected LoanTransactionsMapper createLoanTransactionsMapper() {
+        return new LoanTransactionsMapper(sqlGenerator);
     }
 
     @Override
@@ -703,7 +708,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
     public LoanTransactionData retrieveLoanTransaction(final Long loanId, final Long transactionId) {
         this.context.authenticatedUser();
         try {
-            final LoanTransactionsMapper rm = new LoanTransactionsMapper(sqlGenerator);
+            final LoanTransactionsMapper rm = createLoanTransactionsMapper();
             final String sql = "select " + rm.loanPaymentsSchema() + " where l.id = ? and tr.id = ? ";
             LoanTransactionData loanTransactionData = this.jdbcTemplate.queryForObject(sql, rm, loanId, transactionId); // NOSONAR
             loanTransactionData.setTransactionRelations(
@@ -1701,11 +1706,11 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
 
     }
 
-    private static final class LoanTransactionsMapper implements RowMapper<LoanTransactionData> {
+    protected static class LoanTransactionsMapper implements RowMapper<LoanTransactionData> {
 
         private final DatabaseSpecificSQLGenerator sqlGenerator;
 
-        LoanTransactionsMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
+        protected LoanTransactionsMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
             this.sqlGenerator = sqlGenerator;
         }
 
@@ -2115,6 +2120,19 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                 .externalLoanId(loan.getExternalId()).periodFrequencyOptions(CommonEnumerations.BASIC_PERIOD_FREQUENCY_TYPES)
                 .reAgeReasonOptions(reAgeReasonOptions)
                 .reAgeInterestHandlingOptions(LoanReAgeInterestHandlingType.getValuesAsEnumOptionDataList()).build();
+    }
+
+    @Override
+    public LoanTransactionData retrieveLoanReAmortizationTemplate(final Long loanId) {
+        final LoanAccountData loan = this.retrieveOne(loanId);
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.REAMORTIZE);
+        final BigDecimal totalOutstanding = loan.getSummary() != null ? loan.getSummary().getTotalOutstanding() : null;
+        final List<CodeValueData> reAmortizationReasonOptions = new ArrayList<>(
+                codeValueReadPlatformService.retrieveCodeValuesByCode(LoanApiConstants.REAMORTIZATION_REASONS));
+        return LoanTransactionData.builder().type(transactionType).currency(loan.getCurrency()).date(DateUtils.getBusinessLocalDate())
+                .amount(totalOutstanding).netDisbursalAmount(loan.getNetDisbursalAmount()).loanId(loanId)
+                .externalLoanId(loan.getExternalId()).reAmortizationReasonOptions(reAmortizationReasonOptions)
+                .reAmortizationInterestHandlingOptions(LoanReAmortizationInterestHandlingType.getValuesAsEnumOptionDataList()).build();
     }
 
     @Override

@@ -41,7 +41,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepositor
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.domain.reaging.LoanReAgeInterestHandlingType;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.AdvancedPaymentScheduleTransactionProcessor;
-import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.ChangeOperation;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType;
 import org.springframework.stereotype.Component;
 
@@ -132,6 +131,18 @@ public class LoanReAgingValidator {
             throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.reage.transaction.already.present.for.today",
                     "Loan reaging can only be done once a day. There has already been a reaging done for today", loan.getId());
         }
+
+        // validate loan is not charged-off
+        if (loan.isChargedOff()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.not.allowed.on.charged.off",
+                    "Loan re-aging is not allowed on charged-off loan.", loan.getId());
+        }
+
+        // validate loan is not contract terminated
+        if (loan.isContractTermination()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.not.allowed.on.contract.terminated",
+                    "Loan re-aging is not allowed on contract terminated loan.", loan.getId());
+        }
     }
 
     public void validateUndoReAge(Loan loan, JsonCommand command) {
@@ -146,14 +157,6 @@ public class LoanReAgingValidator {
             throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.reaging.transaction.missing",
                     "Undoing a reaging can only be done if there was a reaging already", loan.getId());
         }
-
-        // validate if there's no payment between the reaging and today
-        boolean repaymentExistsAfterReAging = loan.getLoanTransactions().stream()
-                .anyMatch(tx -> tx.getTypeOf().isRepaymentType() && transactionHappenedAfterOther(tx, optionalReAgingTx.get()));
-        if (repaymentExistsAfterReAging) {
-            throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.repayment.exists.after.reaging",
-                    "Undoing a reaging can only be done if there hasn't been any repayment afterwards", loan.getId());
-        }
     }
 
     private void throwExceptionIfValidationErrorsExist(List<ApiParameterError> dataValidationErrors) {
@@ -161,10 +164,6 @@ public class LoanReAgingValidator {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
         }
-    }
-
-    private boolean transactionHappenedAfterOther(LoanTransaction transaction, LoanTransaction otherTransaction) {
-        return new ChangeOperation(transaction).compareTo(new ChangeOperation(otherTransaction)) > 0;
     }
 
     private void validateReAgeOutstandingBalance(final Loan loan, final JsonCommand command) {

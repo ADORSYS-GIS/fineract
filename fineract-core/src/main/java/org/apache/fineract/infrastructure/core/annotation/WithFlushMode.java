@@ -16,14 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.api;
+package org.apache.fineract.infrastructure.core.annotation;
 
-public interface LoanReAmortizationApiConstants {
+import jakarta.persistence.FlushModeType;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    String localeParameterName = "locale";
-    String dateFormatParameterName = "dateFormat";
-    String externalIdParameterName = "externalId";
+/**
+ * Annotation to specify the flush mode for a method or class. When applied to a class, all public methods will use the
+ * specified flush mode. When applied to a method, it overrides any class-level annotation.
+ */
+@Target({ ElementType.METHOD, ElementType.TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface WithFlushMode {
 
-    String reAmortizationInterestHandlingParamName = "reAmortizationInterestHandling";
-    String reasonCodeValueIdParamName = "reasonCodeValueId";
+    /**
+     * The flush mode to be used for the annotated method or class methods.
+     *
+     * @return the flush mode
+     */
+    FlushModeType value() default FlushModeType.AUTO;
 }
