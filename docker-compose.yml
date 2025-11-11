@@ -41,7 +41,8 @@ services:
       - ./config/docker/env/fineract-common.env
       - ./config/docker/env/fineract-mariadb.env
       - ./config/docker/env/fineract-keycloak.env
-
+    environment:
+      - FINERACT_WEB_HOOK_URL=http://sms-gateway:8080/sms/
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
     command: start-dev --health-enabled=true
@@ -79,3 +80,13 @@ services:
     depends_on:
       keycloak-config-cli:
         condition: service_completed_successfully
+
+  sms-gateway:
+    build:
+      context: ./sms-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      fineract:
+        condition: service_healthy
