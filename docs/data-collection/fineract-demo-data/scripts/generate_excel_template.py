@@ -1129,6 +1129,8 @@ class FineractDemoDataGenerator:
              'description': 'Create and update clients'},
             {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'CREATE_UPDATE_READ',
              'description': 'Create and manage loans (approval requires manager)'},
+            {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'DELETE_FUNCTIONS',
+             'description': 'Delete loan accounts (if unapproved or rejected)'},
             {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'DISBURSE_REPAYMENT',
              'description': 'Disburse approved loans and process repayments'},
             {'role_name': 'Loan Officer', 'permission_group': 'Savings', 'permission': 'CREATE_UPDATE_READ',
@@ -1153,6 +1155,8 @@ class FineractDemoDataGenerator:
              'description': 'Process transactions and repayments'},
             {'role_name': 'Cashier', 'permission_group': 'Report', 'permission': 'READ',
              'description': 'View transaction reports'},
+            {'role_name': 'Cashier', 'permission_group': 'PaymentType', 'permission': 'READ',
+             'description': 'Read payment types'},
             {'role_name': 'Cashier', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
              'description': 'Can create maker-checker tasks (maker role)'},
 
