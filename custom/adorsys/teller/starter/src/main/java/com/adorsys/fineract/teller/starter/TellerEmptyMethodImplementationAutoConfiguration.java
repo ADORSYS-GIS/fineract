@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.myorg.fineract.teller.starter;
+package com.adorsys.fineract.teller.starter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +25,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 
 @AutoConfiguration
-@ComponentScan("com.myorg.fineract.teller.service")
-@ConditionalOnProperty("my-org.teller.extended.enabled")
+@ComponentScan("com.adorsys.fineract.teller.service")
+@ConditionalOnProperty("adorsys.teller.extended.enabled")
 public class TellerEmptyMethodImplementationAutoConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(TellerEmptyMethodImplementationAutoConfiguration.class);

@@ -20,12 +20,12 @@ plugins {
     id 'org.springframework.boot'
 }
 
-description = 'MyOrg Fineract Teller Starter'
+description = 'adorsys Fineract Teller Starter'
 
-group = 'com.myorg.fineract'
+group = 'com.adorsys.fineract'
 
 base {
-    archivesName = 'myorg-fineract-teller-starter'
+    archivesName = 'adorsys-fineract-teller-starter'
 }
 
 apply from: 'dependencies.gradle'
