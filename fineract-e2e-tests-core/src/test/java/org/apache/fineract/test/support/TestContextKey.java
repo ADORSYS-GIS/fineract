@@ -48,6 +48,7 @@ public abstract class TestContextKey {
     public static final String LOAN_REFUND_RESPONSE = "loanRefundResponse";
     public static final String LOAN_REAGING_RESPONSE = "loanReAgingResponse";
     public static final String LOAN_REAGING_UNDO_RESPONSE = "loanReAgingUndoResponse";
+    public static final String LOAN_REAGING_PREVIEW_RESPONSE = "loanReAgingPreviewResponse";
     public static final String LOAN_REAMORTIZATION_RESPONSE = "loanReAmortizationResponse";
     public static final String LOAN_REAMORTIZATION_UNDO_RESPONSE = "loanReAmortizationUndoResponse";
     public static final String BUSINESS_DATE_RESPONSE = "businessDateResponse";
@@ -258,6 +259,7 @@ public abstract class TestContextKey {
     public static final String LOAN_INTEREST_REFUND_RESPONSE = "loanInterestRefundResponse";
     public static final String INTEREST_PAUSE_VARIATION_ID = "interestPauseVariationId";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_INTEREST_RECALCULATION_CONTRACT_TERMINATION = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyInterestRecalculationContractTermination";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_INTEREST_RECALCULATION_CONTRACT_TERMINATION_INT_RECOGNITION = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyInterestRecalculationContractTerminationIntRecognition";
     public static final String LOAN_CONTRACT_TERMINATION_RESPONSE = "loanContractTerminationResponse";
     public static final String LOAN_UNDO_CONTRACT_TERMINATION_RESPONSE = "loanUndoContractTerminationResponse";
     public static final String LOAN_BUY_DOWN_FEE_RESPONSE = "loanBuyDownFeeResponse";
