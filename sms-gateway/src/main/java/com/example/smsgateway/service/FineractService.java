@@ -27,10 +27,13 @@ public class FineractService {
     @Value("${fineract.api.url}")
     private String fineractApiUrl;
 
+    @Value("${fineract.api.tenant}")
+    private String tenantId;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String getClientPhoneNumber(Long clientId) {
-        String url = fineractApiUrl + "/clients/" + clientId + "?tenantIdentifier=default";
+        String url = fineractApiUrl + "/clients/" + clientId;
         logger.info("Fetching client phone number from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String clientJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
@@ -39,7 +42,7 @@ public class FineractService {
     }
 
     public String getSmsTemplate(Long templateId) {
-        String url = fineractApiUrl + "/templates/" + templateId + "?tenantIdentifier=default";
+        String url = fineractApiUrl + "/templates/" + templateId;
         logger.info("Fetching SMS template from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String templateJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
@@ -48,7 +51,7 @@ public class FineractService {
     }
 
     public String getAccountBalance(Long savingsId) {
-        String url = fineractApiUrl + "/savingsaccounts/" + savingsId + "?tenantIdentifier=default";
+        String url = fineractApiUrl + "/savingsaccounts/" + savingsId;
         logger.info("Fetching account balance from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String accountJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
@@ -63,7 +66,7 @@ public class FineractService {
         } else {
             headers.set("Authorization", "Basic " + fineractAuthService.getAuthToken());
         }
-        headers.set("Fineract-Platform-TenantId", "default");
+        headers.set("Fineract-Platform-TenantId", tenantId);
         return headers;
     }
 

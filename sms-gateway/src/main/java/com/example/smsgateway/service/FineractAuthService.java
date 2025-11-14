@@ -23,6 +23,7 @@ public class FineractAuthService {
     private final String fineractApiUrl;
     private final String fineractUser;
     private final String fineractPassword;
+    private final String tenantId;
     private String authToken;
 
     @Value("${fineract.auth.type}")
@@ -34,11 +35,13 @@ public class FineractAuthService {
     public FineractAuthService(RestTemplate restTemplate,
                                @Value("${fineract.api.url}") String fineractApiUrl,
                                @Value("${fineract.api.user}") String fineractUser,
-                               @Value("${fineract.api.password}") String fineractPassword) {
+                               @Value("${fineract.api.password}") String fineractPassword,
+                               @Value("${fineract.api.tenant}") String tenantId) {
         this.restTemplate = restTemplate;
         this.fineractApiUrl = fineractApiUrl;
         this.fineractUser = fineractUser;
         this.fineractPassword = fineractPassword;
+        this.tenantId = tenantId;
     }
 
     public String getAuthToken() {
@@ -60,7 +63,7 @@ public class FineractAuthService {
     private void login() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Fineract-Platform-TenantId", "default");
+        headers.set("Fineract-Platform-TenantId", tenantId);
 
         String loginUrl = fineractApiUrl + "/authentication";
         String requestBody = String.format("{\"username\": \"%s\", \"password\": \"%s\"}", fineractUser, fineractPassword);
