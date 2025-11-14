@@ -1,0 +1,12 @@
+description = 'Fineract Cash Settlement'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+dependencies {
+    implementation project(':fineract-provider')
+    implementation project(':fineract-accounting')
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
