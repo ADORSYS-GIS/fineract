@@ -35,3 +35,23 @@ gradleExp/
 .java-version
 
 .windsurf/
+
+# Python
+*.pyc
+__pycache__/
+.Python
+venv/
+env/
+
+# Java/Gradle
+.gradle/
+build/
+out/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS generated files
+.DS_Store
+.localized
