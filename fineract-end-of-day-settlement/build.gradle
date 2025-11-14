@@ -1,4 +1,4 @@
-description = 'Fineract Cash Settlement'
+description = 'Fineract End of Day Settlement'
 
 apply plugin: 'java'
 apply plugin: 'eclipse'

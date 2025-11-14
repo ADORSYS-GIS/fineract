@@ -1,11 +1,13 @@
-package org.apache.fineract.cashsettlement;
+package org.apache.fineract.endofdaysettlement;
 
+import org.apache.fineract.accounting.common.AccountingConstants;
+import org.apache.fineract.accounting.financialactivityaccount.domain.FinancialActivityAccount;
+import org.apache.fineract.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
 import org.apache.fineract.accounting.gl.domain.GLAccount;
-import org.apache.fineract.accounting.gl.domain.GLAccountRepository;
 import org.apache.fineract.accounting.gl.domain.GLJournalEntry;
 import org.apache.fineract.accounting.gl.domain.GLJournalEntryRepository;
 import org.apache.fineract.accounting.journalentry.domain.JournalEntryType;
-import org.apache.fineract.cashsettlement.config.CashSettlementProperties;
+import org.apache.fineract.endofdaysettlement.config.EndOfDaySettlementProperties;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
@@ -20,35 +22,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 
 @Service
-public class CashSettlementService {
+public class EndOfDaySettlementService {
 
-    private static final Logger log = LoggerFactory.getLogger(CashSettlementService.class);
+    private static final Logger log = LoggerFactory.getLogger(EndOfDaySettlementService.class);
 
     private final CashierRepository cashierRepository;
     private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
     private final TellerWritePlatformService tellerWritePlatformService;
     private final GLJournalEntryRepository glJournalEntryRepository;
-    private final GLAccountRepository glAccountRepository;
+    private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final ExternalIdFactory externalIdFactory;
-    private final CashSettlementProperties properties;
+    private final EndOfDaySettlementProperties properties;
 
     @Autowired
-    public CashSettlementService(CashierRepository cashierRepository, TellerManagementReadPlatformService tellerManagementReadPlatformService, TellerWritePlatformService tellerWritePlatformService, GLJournalEntryRepository glJournalEntryRepository, GLAccountRepository glAccountRepository, ExternalIdFactory externalIdFactory, CashSettlementProperties properties) {
+    public EndOfDaySettlementService(CashierRepository cashierRepository, TellerManagementReadPlatformService tellerManagementReadPlatformService, TellerWritePlatformService tellerWritePlatformService, GLJournalEntryRepository glJournalEntryRepository, FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper, ExternalIdFactory externalIdFactory, EndOfDaySettlementProperties properties) {
         this.cashierRepository = cashierRepository;
         this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
         this.tellerWritePlatformService = tellerWritePlatformService;
         this.glJournalEntryRepository = glJournalEntryRepository;
-        this.glAccountRepository = glAccountRepository;
+        this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.externalIdFactory = externalIdFactory;
         this.properties = properties;
     }
 
+    @Transactional
     public CommandProcessingResult settle(final Long cashierId, final JsonCommand command) {
         final Cashier cashier = this.cashierRepository.findById(cashierId)
                 .orElseThrow(() -> new CashierNotFoundException(cashierId));
@@ -65,18 +69,17 @@ public class CashSettlementService {
 
         final BigDecimal discrepancy = actualSettlementAmount.subtract(expectedSettlementAmount);
 
+        if (discrepancy.compareTo(BigDecimal.ZERO) != 0) {
+            createJournalEntryForDiscrepancy(cashier, discrepancy, command);
+        }
+
         if (discrepancy.compareTo(BigDecimal.ZERO) > 0) {
             // Overage
-            createJournalEntryForDiscrepancy(cashier, discrepancy, command);
             JsonCommand newCommand = new JsonCommand().fromJson(command.json());
             newCommand.addProperty("amount", expectedSettlementAmount);
             return this.tellerWritePlatformService.settleCashFromCashier(cashierId, newCommand);
-        } else if (discrepancy.compareTo(BigDecimal.ZERO) < 0) {
-            // Shortage
-            createJournalEntryForDiscrepancy(cashier, discrepancy, command);
-            return this.tellerWritePlatformService.settleCashFromCashier(cashierId, command);
         } else {
-            // No discrepancy
+            // Shortage or no discrepancy
             return this.tellerWritePlatformService.settleCashFromCashier(cashierId, command);
         }
     }
@@ -93,19 +96,24 @@ public class CashSettlementService {
             return;
         }
 
+        final FinancialActivityAccount tellerFinancialActivityAccount = this.financialActivityAccountRepositoryWrapper
+                .findByFinancialActivityTypeWithNotFoundDetection(AccountingConstants.FinancialActivity.CASH_AT_TELLER.getValue());
+        final GLAccount tellerGLAccount = tellerFinancialActivityAccount.getGlAccount();
+
+
         final GLAccount creditAccount;
         final GLAccount debitAccount;
 
         if (discrepancy.compareTo(BigDecimal.ZERO) > 0) {
             // Overage
             log.info("Cashier id: {}. Creating journal entry for overage of: {}", cashier.getId(), discrepancy);
-            creditAccount = glAccountRepository.getReferenceById(cashOverageAccountId);
-            debitAccount = cashier.getTeller().getDebitAccount();
+            creditAccount = glJournalEntryRepository.getAccount(cashOverageAccountId);
+            debitAccount = tellerGLAccount;
         } else {
             // Shortage
             log.info("Cashier id: {}. Creating journal entry for shortage of: {}", cashier.getId(), discrepancy.abs());
-            creditAccount = cashier.getTeller().getCreditAccount();
-            debitAccount = glAccountRepository.getReferenceById(cashShortageAccountId);
+            creditAccount = tellerGLAccount;
+            debitAccount = glJournalEntryRepository.getAccount(cashShortageAccountId);
         }
 
         final GLJournalEntry journalEntry = GLJournalEntry.createNew(office, null, transactionDate, command.stringValueOfParameterNamed("currencyCode"),

@@ -1,9 +1,9 @@
-package org.apache.fineract.cashsettlement.config;
+package org.apache.fineract.endofdaysettlement.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "fineract.cash-settlement")
-public class CashSettlementProperties {
+@ConfigurationProperties(prefix = "fineract.end-of-day-settlement")
+public class EndOfDaySettlementProperties {
 
     private Long cashOverageAccountId;
     private Long cashShortageAccountId;
