@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Iterator;
 
 @Service
 public class EndOfDaySettlementService {
@@ -70,7 +71,7 @@ public class EndOfDaySettlementService {
         final BigDecimal discrepancy = actualSettlementAmount.subtract(expectedSettlementAmount);
 
         if (discrepancy.compareTo(BigDecimal.ZERO) != 0) {
-            createJournalEntryForDiscrepancy(cashier, discrepancy, command);
+            createJournalEntryForDiscrepancy(cashier, discrepancy, command, cashierTransactions);
         }
 
         if (discrepancy.compareTo(BigDecimal.ZERO) > 0) {
@@ -84,9 +85,24 @@ public class EndOfDaySettlementService {
         }
     }
 
-    private void createJournalEntryForDiscrepancy(Cashier cashier, BigDecimal discrepancy, JsonCommand command) {
+    private void createJournalEntryForDiscrepancy(Cashier cashier, BigDecimal discrepancy, JsonCommand command, Collection<CashierTransactionData> cashierTransactions) {
         final Office office = cashier.getTeller().getOffice();
-        final LocalDate transactionDate = command.localDateValueOfParameterNamed("txnDate");
+        final LocalDate transactionDate = LocalDate.now();
+        
+        String currencyCode = null;
+        if (!cashierTransactions.isEmpty()) {
+            Iterator<CashierTransactionData> iterator = cashierTransactions.iterator();
+            if (iterator.hasNext()) {
+                CashierTransactionData firstTransaction = iterator.next();
+                if (firstTransaction.getCurrencyOptions() != null && !firstTransaction.getCurrencyOptions().isEmpty()) {
+                    currencyCode = firstTransaction.getCurrencyOptions().iterator().next().getCode();
+                }
+            }
+        }
+
+        if (currencyCode == null) {
+            throw new IllegalStateException("Could not determine currency code for cashier " + cashier.getId() + ". No transactions found or currency options are empty.");
+        }
 
         final Long cashOverageAccountId = properties.getCashOverageAccountId();
         final Long cashShortageAccountId = properties.getCashShortageAccountId();
@@ -104,20 +120,26 @@ public class EndOfDaySettlementService {
         final GLAccount creditAccount;
         final GLAccount debitAccount;
 
+        String comment = "Cash settlement discrepancy for Cashier: " + cashier.getStaff().getDisplayName()
+                + " and Teller: " + cashier.getTeller().getName();
+
+
         if (discrepancy.compareTo(BigDecimal.ZERO) > 0) {
             // Overage
             log.info("Cashier id: {}. Creating journal entry for overage of: {}", cashier.getId(), discrepancy);
             creditAccount = glJournalEntryRepository.getAccount(cashOverageAccountId);
             debitAccount = tellerGLAccount;
+            comment += " - Overage";
         } else {
             // Shortage
             log.info("Cashier id: {}. Creating journal entry for shortage of: {}", cashier.getId(), discrepancy.abs());
             creditAccount = tellerGLAccount;
             debitAccount = glJournalEntryRepository.getAccount(cashShortageAccountId);
+            comment += " - Shortage";
         }
 
-        final GLJournalEntry journalEntry = GLJournalEntry.createNew(office, null, transactionDate, command.stringValueOfParameterNamed("currencyCode"),
-                "CASH_SETTLEMENT_DISCREPANCY", JournalEntryType.DEBIT.getValue().longValue(), discrepancy.abs(), "Cash settlement discrepancy",
+        final GLJournalEntry journalEntry = GLJournalEntry.createNew(office, null, transactionDate, currencyCode,
+                "CASH_SETTLEMENT_DISCREPANCY", JournalEntryType.DEBIT.getValue().longValue(), discrepancy.abs(), comment,
                 externalIdFactory.create(), cashier.getId(), null);
 
         journalEntry.addCreditEntry(creditAccount, discrepancy.abs());
