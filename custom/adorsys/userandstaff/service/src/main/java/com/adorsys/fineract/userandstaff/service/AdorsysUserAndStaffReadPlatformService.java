@@ -16,12 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-description = 'adorsys Fineract Teller Service'
+package com.adorsys.fineract.userandstaff.service;
 
-group = 'com.adorsys.fineract'
+import com.adorsys.fineract.userandstaff.data.EmployeeData;
 
-base {
-    archivesName = 'adorsys-fineract-teller-service'
+public interface AdorsysUserAndStaffReadPlatformService {
+
+    EmployeeData retrieveEmployee(Long userId);
 }
-
-apply from: 'dependencies.gradle'

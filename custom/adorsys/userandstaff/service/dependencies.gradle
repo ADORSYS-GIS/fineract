@@ -1,0 +1,12 @@
+dependencies {
+    implementation(project(':fineract-core'))
+    implementation(project(':custom:adorsys:userandstaff:data'))
+    implementation('com.google.code.gson:gson')
+    implementation(project(':fineract-provider'))
+    implementation(project(':fineract-branch'))
+    implementation('org.springframework.boot:spring-boot-starter-jdbc')
+    implementation('org.springframework.boot:spring-boot-starter-data-jpa')
+    implementation('org.springframework.boot:spring-boot-starter-security')
+    implementation('org.eclipse.persistence:org.eclipse.persistence.jpa')
+    compileOnly('org.springframework.boot:spring-boot-autoconfigure')
+}

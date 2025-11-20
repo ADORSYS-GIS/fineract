@@ -16,12 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-description = 'adorsys Fineract Teller Service'
+package com.adorsys.fineract.userandstaff.service;
 
-group = 'com.adorsys.fineract'
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
-base {
-    archivesName = 'adorsys-fineract-teller-service'
+public interface AdorsysUserAndStaffWritePlatformService {
+
+    CommandProcessingResult createEmployee(JsonCommand command);
+
+    CommandProcessingResult updateEmployee(Long userId, JsonCommand command);
 }
-
-apply from: 'dependencies.gradle'
