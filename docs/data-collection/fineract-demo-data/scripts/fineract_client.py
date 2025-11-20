@@ -93,3 +93,62 @@ class FineractAPIClient:
     def delete(self, endpoint: str) -> Dict:
         """DELETE request"""
         return self._request('DELETE', endpoint)
+
+    def upsert(self, endpoint: str, data: Dict, search_field: str, search_value: str) -> Dict:
+        """
+        Update entity if exists, create if not (upsert operation)
+
+        Args:
+            endpoint: API endpoint (e.g., '/loanproducts')
+            data: Payload to create/update
+            search_field: Field to search by (e.g., 'shortName', 'externalId', 'name', 'glCode')
+            search_value: Value to search for
+
+        Returns:
+            API response from PUT (update) or POST (create)
+        """
+        try:
+            # Search for existing entity
+            logger.debug(f"Searching for existing entity: {search_field}={search_value}")
+
+            # Try to find existing entity
+            try:
+                # For most endpoints, we can search with query params
+                search_params = {search_field: search_value}
+                existing_list = self.get(endpoint, params=search_params)
+
+                # Handle different response formats
+                if isinstance(existing_list, list) and len(existing_list) > 0:
+                    existing = existing_list[0]
+                elif isinstance(existing_list, dict):
+                    # Some endpoints return dict with data array
+                    if 'pageItems' in existing_list and len(existing_list['pageItems']) > 0:
+                        existing = existing_list['pageItems'][0]
+                    elif search_field in existing_list:
+                        existing = existing_list
+                    else:
+                        existing = None
+                else:
+                    existing = None
+
+            except Exception as search_error:
+                logger.debug(f"Search failed: {search_error}. Will attempt to create.")
+                existing = None
+
+            if existing:
+                # Update existing entity
+                entity_id = existing.get('id')
+                if entity_id:
+                    logger.info(f"→ Updating existing entity: {search_value} (ID: {entity_id})")
+                    return self.put(f'{endpoint}/{entity_id}', data)
+                else:
+                    logger.warning(f"Found entity but no ID field. Creating new entity.")
+                    return self.post(endpoint, data)
+            else:
+                # Create new entity
+                logger.info(f"→ Creating new entity: {search_value}")
+                return self.post(endpoint, data)
+
+        except Exception as e:
+            logger.error(f"Upsert failed for {search_field}={search_value}: {str(e)}")
+            raise

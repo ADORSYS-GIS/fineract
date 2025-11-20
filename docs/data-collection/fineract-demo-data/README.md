@@ -1981,4 +1981,169 @@ The default template includes:
 
 ---
 
-**Happy Data Loading!**
+## 🎉 What's New in Version 2.0 (Major Refactoring)
+
+### ✨ Idempotent Loading
+
+**Re-run the loader safely without creating duplicates!**
+
+Configuration entities are now **updatable**:
+- ✅ **GL Accounts** - Updated by `glCode`
+- ✅ **Loan Products** - Updated by `shortName`
+- ✅ **Savings Products** - Updated by `shortName`
+- ✅ **Charges** - Updated by `name`
+
+**Example Use Case**: Changed interest rate for a product? Just update the Excel and re-run the loader - it will UPDATE the existing product instead of creating a duplicate!
+
+```bash
+# Before v2.0: Creates duplicate product ❌
+# After v2.0: Updates existing product ✅
+python3 load_demo_data.py --config config.yml
+```
+
+### 🔐 Maker-Checker Improvements
+
+**BREAKING CHANGE**: Removed amount-based thresholds (not supported by Fineract)
+
+**Maker Checker Config Sheet Changes**:
+- ❌ **REMOVED**: `threshold_amount` and `threshold_currency` columns
+- ✅ **ADDED**: `enabled` column (boolean: True/False)
+
+**Key Clarification**: Fineract's maker-checker is **boolean-only**:
+- When enabled, **ALL** operations of that type require approval
+- No native support for amount-based thresholds
+- This is a Fineract limitation, not a loader limitation
+
+**New Feature**: Auto-assign maker-checker permissions to roles:
+- Maker roles automatically get base permissions (e.g., `APPROVE_LOAN`)
+- Checker roles automatically get checker permissions (e.g., `CHECKER_APPROVE_LOAN`)
+- No manual permission configuration required!
+
+### 🔀 Loan Workflow States
+
+**NEW FEATURE**: Demonstrate maker-checker approval workflows
+
+**Loan Accounts Sheet - New Column**: `workflow_state`
+
+| Value | Behavior | Use Case |
+|-------|----------|----------|
+| `active` | Auto-approve + auto-disburse | Normal loans (default) |
+| `pending_approval` | Create only, requires checker approval | Test approval workflow |
+| `pending_disbursal` | Approve only, requires checker disbursal | Test disbursal workflow |
+
+**Demo Data**:
+- **LOAN-002** (2M XAF): `pending_approval` - Requires Branch Manager to approve
+- **LOAN-006** (3M XAF): `pending_disbursal` - Requires Branch Manager to disburse
+- **All others**: `active` - Fully disbursed
+
+**Test Workflow**:
+1. Run loader → LOAN-002 created but not approved
+2. Login as Branch Manager
+3. View Maker-Checker inbox
+4. Approve LOAN-002
+5. Loan becomes active!
+
+### ✅ Validation Script
+
+**NEW**: Pre-flight checks before loading
+
+```bash
+python3 validate_excel.py ../output/fineract_demo_data_YYYYMMDD.xlsx
+```
+
+**Validates**:
+- ✓ Required columns present
+- ✓ No forbidden columns (threshold_amount, threshold_currency)
+- ✓ Valid workflow_state values
+- ✓ External ID uniqueness
+- ✓ Cross-sheet references (client IDs, product names, etc.)
+- ✓ Maker-checker configuration completeness
+
+**Output**:
+```
+================================================================================
+VALIDATION RESULTS
+================================================================================
+✅ VALIDATION PASSED (No errors or warnings)
+================================================================================
+```
+
+### 📝 Comprehensive Documentation
+
+**NEW Files**:
+- `CHANGELOG.md` - Detailed change history, migration guide, usage examples
+- `validate_excel.py` - Validation script with 15+ checks
+- Updated `README.md` - This section!
+
+### 🔧 Technical Improvements
+
+**API Client (`fineract_client.py`)**:
+- Added `upsert()` method with intelligent search-and-update logic
+- Handles multiple Fineract response formats
+- Better error handling and logging
+
+**Products Loader (`loaders/products.py`)**:
+- GL Accounts, Loan Products, Savings Products, Charges now use upsert
+- Fixed maker-checker enablement to respect `enabled` flag
+- Removed misleading threshold logging
+
+**Roles & Permissions Loader (`loaders/roles_permissions.py`)**:
+- New `_get_maker_checker_permissions()` method
+- Auto-merges maker-checker permissions into roles
+- Supports roles defined only in Maker Checker Config sheet
+
+**Accounts Loader (`loaders/accounts.py`)**:
+- Implements loan workflow states
+- Clear logging for pending loans
+- Shows next actions for approvals
+
+### 🚀 Quick Migration to v2.0
+
+1. **Regenerate Excel template**:
+   ```bash
+   python3 generate_excel_template.py
+   ```
+
+2. **Review Maker-Checker Config**:
+   - Set `enabled=True` only for permissions you want to activate
+   - Default: Only `APPROVE_LOAN` and `DISBURSE_LOAN` enabled
+
+3. **Test in Development**:
+   ```bash
+   # Validate first
+   python3 validate_excel.py ../output/fineract_demo_data_*.xlsx
+
+   # Load data
+   python3 load_demo_data.py --config config.yml
+   ```
+
+4. **Verify Idempotency**:
+   ```bash
+   # Run twice - should not create duplicates
+   python3 load_demo_data.py --config config.yml
+   python3 load_demo_data.py --config config.yml
+   ```
+
+### ⚠️ Breaking Changes
+
+1. **Maker Checker Config sheet structure changed**:
+   - Must regenerate Excel template
+   - Cannot use old templates with v2.0 loader
+
+2. **Loan workflow behavior changed**:
+   - Some loans may be in pending state (as designed)
+   - To preserve old behavior: Set all loans to `workflow_state=active`
+
+3. **Products are now updateable**:
+   - Re-running loader updates configuration
+   - If you want multiple versions, use different `shortName` values
+
+### 📖 Additional Resources
+
+- **CHANGELOG.md**: Complete change history with code examples
+- **validate_excel.py --help**: Validation script usage
+- **Fineract Docs**: https://fineract.apache.org/
+
+---
+
+**Happy Data Loading! 🎉**

@@ -237,6 +237,53 @@ class FineractDemoDataGenerator:
         ]
         return pd.DataFrame(data)
 
+    def create_groups_sheet(self):
+        """Create sample groups (solidarity groups)"""
+        data = [
+            {'group_name': 'Femmes Solidaires Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'GRP-001', 'activation_date': '2024-01-15', 'submitted_on_date': '2024-01-10',
+             'active': 'Yes', 'center_name': 'Centre Commercial Douala',
+             'client_external_ids': 'CLI-001,CLI-005,CLI-008'},
+
+            {'group_name': 'Commercants Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
+             'external_id': 'GRP-002', 'activation_date': '2024-01-22', 'submitted_on_date': '2024-01-18',
+             'active': 'Yes', 'center_name': 'Centre Melen Yaounde',
+             'client_external_ids': 'CLI-003,CLI-006,CLI-010'},
+
+            {'group_name': 'Agriculteurs Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
+             'external_id': 'GRP-003', 'activation_date': '2024-02-01', 'submitted_on_date': '2024-01-25',
+             'active': 'Yes', 'center_name': '',
+             'client_external_ids': 'CLI-004,CLI-009'},
+
+            {'group_name': 'Artisans Bamenda', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
+             'external_id': 'GRP-004', 'activation_date': '2024-02-10', 'submitted_on_date': '2024-02-05',
+             'active': 'Yes', 'center_name': '',
+             'client_external_ids': 'CLI-007,CLI-011'},
+
+            {'group_name': 'Transporteurs Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'GRP-005', 'activation_date': '2024-02-15', 'submitted_on_date': '2024-02-12',
+             'active': 'Yes', 'center_name': 'Centre Commercial Douala',
+             'client_external_ids': 'CLI-002,CLI-012'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_centers_sheet(self):
+        """Create sample centers (collection of groups)"""
+        data = [
+            {'center_name': 'Centre Commercial Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'CTR-001', 'activation_date': '2024-01-10', 'submitted_on_date': '2024-01-05',
+             'active': 'Yes'},
+
+            {'center_name': 'Centre Melen Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
+             'external_id': 'CTR-002', 'activation_date': '2024-01-15', 'submitted_on_date': '2024-01-12',
+             'active': 'Yes'},
+
+            {'center_name': 'Centre Tamdja Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
+             'external_id': 'CTR-003', 'activation_date': '2024-01-20', 'submitted_on_date': '2024-01-18',
+             'active': 'Yes'},
+        ]
+        return pd.DataFrame(data)
+
     def create_loan_products_sheet(self):
         """Create loan products configuration"""
         data = [
@@ -577,12 +624,19 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_loan_accounts_sheet(self):
-        """Create sample loan accounts"""
+        """Create sample loan accounts
+
+        workflow_state values:
+        - 'active': Auto-approve and auto-disburse (normal flow)
+        - 'pending_approval': Create loan, stop at approval (demonstrates maker-checker)
+        - 'pending_disbursal': Create and approve loan, stop at disbursal (demonstrates maker-checker)
+        """
         data = [
             {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2024-02-01',
              'approved_on': '2024-02-05', 'disbursed_on': '2024-02-09', 'principal': 200000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-001',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Purchase additional stock for retail shop',
              'repayment_source': 'Business Income', 'credit_score': 72,
              'previous_loan_history': 'Good History'},
@@ -591,7 +645,8 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-08', 'disbursed_on': '2024-02-12', 'principal': 2000000,
              'loan_term': 12, 'interest_rate': 20.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002',
-             'loan_purpose_detail': 'Expand transport business - purchase second vehicle',
+             'workflow_state': 'pending_approval',
+             'loan_purpose_detail': 'Expand transport business - purchase second vehicle (PENDING APPROVAL)',
              'repayment_source': 'Business Income', 'credit_score': 85,
              'previous_loan_history': 'First Loan'},
 
@@ -599,6 +654,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-12', 'disbursed_on': '2024-02-15', 'principal': 150000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-003',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Renovate salon and purchase new equipment',
              'repayment_source': 'Business Income', 'credit_score': 68,
              'previous_loan_history': 'First Loan'},
@@ -607,6 +663,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-15', 'disbursed_on': '2024-02-19', 'principal': 500000,
              'loan_term': 6, 'interest_rate': 18.0, 'loan_officer': 'loan.bafoussam',
              'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Purchase fertilizer and seeds for planting season',
              'repayment_source': 'Business Income', 'credit_score': 75,
              'previous_loan_history': 'Good History'},
@@ -615,6 +672,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-18', 'disbursed_on': '2024-02-20', 'principal': 180000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-005',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Expand restaurant seating and buy cooking equipment',
              'repayment_source': 'Business Income', 'credit_score': 70,
              'previous_loan_history': 'Some Delays'},
@@ -623,7 +681,8 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-20', 'disbursed_on': '2024-02-26', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006',
-             'loan_purpose_detail': 'Stock wholesale shop with imported goods',
+             'workflow_state': 'pending_disbursal',
+             'loan_purpose_detail': 'Stock wholesale shop with imported goods (PENDING DISBURSAL)',
              'repayment_source': 'Business Income', 'credit_score': 90,
              'previous_loan_history': 'Good History'},
         ]
@@ -1206,68 +1265,72 @@ class FineractDemoDataGenerator:
         """Create Maker-Checker (4-eyes principle) configuration for critical operations
 
         All permission codes verified against Fineract source code (@CommandType annotations).
+
+        NOTE: Fineract's maker-checker is boolean-only (enabled/disabled).
+        Amount-based thresholds are NOT supported by the native Fineract API.
+        When enabled, ALL operations of that type will require approval.
         """
         data = [
             # Loan operations
             {'task_name': 'Loan Approval', 'entity': 'Loan', 'action': 'APPROVE',
-             'threshold_amount': 2000000, 'threshold_currency': 'XAF',
+             'enabled': True,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Loans above 2M XAF require manager approval'},
+             'description': 'All loan approvals require manager authorization (demonstrates workflow)'},
 
             {'task_name': 'Loan Disbursement', 'entity': 'Loan', 'action': 'DISBURSE',
-             'threshold_amount': 5000000, 'threshold_currency': 'XAF',
+             'enabled': True,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Disbursements above 5M XAF require manager approval'},
+             'description': 'All loan disbursements require manager authorization (demonstrates workflow)'},
 
             {'task_name': 'Loan Write-off', 'entity': 'Loan', 'action': 'WRITEOFF',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'All loan write-offs require manager approval (any amount)'},
+             'description': 'Loan write-offs require manager approval (disabled by default)'},
 
             {'task_name': 'Create Loan Reschedule Request', 'entity': 'RESCHEDULELOAN', 'action': 'CREATE',
-             'threshold_amount': 1000000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Loan rescheduling above 1M XAF requires manager approval'},
+             'description': 'Loan rescheduling requires manager approval (disabled by default)'},
 
             # Savings operations
             {'task_name': 'Close Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'CLOSE',
-             'threshold_amount': 500000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
-             'description': 'Account closures with balance above 500K XAF require manager approval'},
+             'description': 'Savings account closures require manager approval (disabled by default)'},
 
             # Client operations
             {'task_name': 'Client Activation', 'entity': 'Client', 'action': 'ACTIVATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'New client activation requires manager approval'},
+             'description': 'New client activation requires manager approval (disabled by default)'},
 
             {'task_name': 'Propose Client Transfer', 'entity': 'Client', 'action': 'PROPOSETRANSFER',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Client office transfer requires manager approval'},
+             'description': 'Client office transfer requires manager approval (disabled by default)'},
 
             # Accounting operations
             {'task_name': 'Create Manual Journal Entry', 'entity': 'JOURNALENTRY', 'action': 'CREATE',
-             'threshold_amount': 500000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Accountant', 'checker_role': 'Branch Manager',
-             'description': 'Manual journal entries above 500K XAF require manager approval'},
+             'description': 'Manual journal entries require manager approval (disabled by default)'},
 
             # User/System operations
             {'task_name': 'Create User', 'entity': 'User', 'action': 'CREATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Creating new system users requires head office approval'},
+             'description': 'Creating new system users requires head office approval (disabled by default)'},
 
             {'task_name': 'Update User', 'entity': 'User', 'action': 'UPDATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Updating user details requires head office approval'},
+             'description': 'Updating user details requires head office approval (disabled by default)'},
 
             # Office/Fund transfers
             {'task_name': 'Create Office Transaction', 'entity': 'OFFICETRANSACTION', 'action': 'CREATE',
-             'threshold_amount': 3000000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Inter-branch fund transfers above 3M XAF require head office approval'},
+             'description': 'Inter-branch fund transfers require head office approval (disabled by default)'},
         ]
         return pd.DataFrame(data)
 
@@ -2106,6 +2169,26 @@ class FineractDemoDataGenerator:
                     'description': 'Whether this field is required',
                     'allowed_values': ['Yes', 'No']
                 }
+            },
+            'Maker Checker Config': {
+                'entity': {
+                    'description': 'Entity type for maker-checker. Common values: Loan, SAVINGSACCOUNT, Client, JOURNALENTRY, User, RESCHEDULELOAN, OFFICETRANSACTION',
+                    'allowed_values': ['Loan', 'SAVINGSACCOUNT', 'Client', 'JOURNALENTRY', 'User', 'RESCHEDULELOAN', 'OFFICETRANSACTION']
+                },
+                'action': {
+                    'description': 'Action type for maker-checker. Common values: APPROVE, DISBURSE, WRITEOFF, CREATE, ACTIVATE, UPDATE, CLOSE, PROPOSETRANSFER',
+                    'allowed_values': ['APPROVE', 'DISBURSE', 'WRITEOFF', 'CREATE', 'ACTIVATE', 'UPDATE', 'CLOSE', 'PROPOSETRANSFER']
+                },
+                'enabled': {
+                    'description': 'Enable this maker-checker permission. When enabled, ALL operations of this type require approval (Fineract does NOT support amount-based thresholds)',
+                    'allowed_values': ['True', 'False']
+                }
+            },
+            'Loan Accounts': {
+                'workflow_state': {
+                    'description': 'Loan workflow state:\n- active: Auto-approve and auto-disburse (normal flow)\n- pending_approval: Create loan, stop at approval (demonstrates maker-checker)\n- pending_disbursal: Create and approve loan, stop at disbursal (demonstrates maker-checker)',
+                    'allowed_values': ['active', 'pending_approval', 'pending_disbursal']
+                }
             }
         }
 
@@ -2716,6 +2799,12 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
             print("  Creating Clients sheet...")
             self.create_clients_sheet().to_excel(writer, sheet_name='Clients', index=False)
 
+            print("  Creating Groups sheet...")
+            self.create_groups_sheet().to_excel(writer, sheet_name='Groups', index=False)
+
+            print("  Creating Centers sheet...")
+            self.create_centers_sheet().to_excel(writer, sheet_name='Centers', index=False)
+
             print("  Creating Loan Products sheet...")
             self.create_loan_products_sheet().to_excel(writer, sheet_name='Loan Products', index=False)
 
@@ -2847,51 +2936,53 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
         self.format_excel(self.filename)
 
         print(f"\n✓ Excel template generated successfully: {self.filename}")
-        print(f"\nSheets created: 44")
+        print(f"\nSheets created: 46")
         print(f"  1. Offices (4 branches)")
         print(f"  2. Staff (12 members)")
         print(f"  3. Clients (12 clients)")
-        print(f"  4. Loan Products (3 products)")
-        print(f"  5. Savings Products (3 products)")
-        print(f"  6. Charges (11 fees)")
-        print(f"  7. Chart of Accounts (30 GL accounts)")
-        print(f"  8. Loan Accounts (6 sample loans)")
-        print(f"  9. Savings Accounts (12 sample accounts)")
-        print(f" 10. Fund Sources (6 sources)")
-        print(f" 11. Payment Types (5 channels)")
-        print(f" 12. Holidays (12 public holidays)")
-        print(f" 13. Loan Provisioning (5 COBAC categories)")
-        print(f" 14. Collateral Types (6 types)")
-        print(f" 15. Guarantor Types (6 types)")
-        print(f" 16. Floating Rates (3 rates - BEAC, Prime, SME)")
-        print(f" 17. Delinquency Buckets (5 buckets for arrears classification)")
-        print(f" 18. Tax Groups (2 groups - Savings WHT, Loan WHT)")
-        print(f" 19. Configuration (19 system settings)")
-        print(f" 20. Loan Product Accounting (39 mappings - 13 per product)")
-        print(f" 21. Savings Product Accounting (33 mappings - 11 per product)")
-        print(f" 22. Payment Type Accounting (5 mappings)")
-        print(f" 23. Financial Activity Mapping (6 mappings - inter-branch support)")
-        print(f" 24. Teller Cashier Mapping (4 GL account mappings per office)")
-        print(f" 25. Tellers (4 tellers - 1 per office)")
-        print(f" 26. Roles Permissions (3 roles with granular permissions)")
-        print(f" 27. Maker Checker Config (11 dual-authorization rules)")
-        print(f" 28. Currency Config (1 currency - XAF)")
-        print(f" 29. Working Days (7 days configuration)")
-        print(f" 30. Account Number Preferences (5 entity types)")
-        print(f" 31. Codes and Values (48 dropdown values across 10 code categories)")
-        print(f" 32. Scheduler Jobs (10 automated jobs)")
-        print(f" 33. Global Configuration (23 global settings)")
-        print(f" 34. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
-        print(f" 35. Notification Templates (16 templates - SMS/Email for all events)")
-        print(f" 36. Data Tables (24 custom fields - Client, Loan, Savings)")
-        print(f" 37. Savings Deposits (6 sample deposit transactions)")
-        print(f" 38. Savings Withdrawals (6 sample withdrawal transactions)")
-        print(f" 39. Loan Disbursements (6 sample disbursements)")
-        print(f" 40. Loan Repayments (6 sample repayment transactions)")
-        print(f" 41. Loan Collateral (6 collateral assignments - Land, Equipment, Vehicles)")
-        print(f" 42. Loan Guarantors (6 guarantor assignments - Individual & Corporate)")
-        print(f" 43. Inter-Branch Transfers (6 sample inter-branch cash transfers)")
-        print(f" 44. COBAC Reports (10 regulatory reports configuration)")
+        print(f"  4. Groups (5 solidarity groups)")
+        print(f"  5. Centers (3 centers)")
+        print(f"  6. Loan Products (3 products)")
+        print(f"  7. Savings Products (3 products)")
+        print(f"  8. Charges (11 fees)")
+        print(f"  9. Chart of Accounts (30 GL accounts)")
+        print(f" 10. Loan Accounts (6 sample loans)")
+        print(f" 11. Savings Accounts (12 sample accounts)")
+        print(f" 12. Fund Sources (6 sources)")
+        print(f" 13. Payment Types (5 channels)")
+        print(f" 14. Holidays (12 public holidays)")
+        print(f" 15. Loan Provisioning (5 COBAC categories)")
+        print(f" 16. Collateral Types (6 types)")
+        print(f" 17. Guarantor Types (6 types)")
+        print(f" 18. Floating Rates (3 rates - BEAC, Prime, SME)")
+        print(f" 19. Delinquency Buckets (5 buckets for arrears classification)")
+        print(f" 20. Tax Groups (2 groups - Savings WHT, Loan WHT)")
+        print(f" 21. Configuration (19 system settings)")
+        print(f" 22. Loan Product Accounting (39 mappings - 13 per product)")
+        print(f" 23. Savings Product Accounting (33 mappings - 11 per product)")
+        print(f" 24. Payment Type Accounting (5 mappings)")
+        print(f" 25. Financial Activity Mapping (6 mappings - inter-branch support)")
+        print(f" 26. Teller Cashier Mapping (4 GL account mappings per office)")
+        print(f" 27. Tellers (4 tellers - 1 per office)")
+        print(f" 28. Roles Permissions (3 roles with granular permissions)")
+        print(f" 29. Maker Checker Config (11 dual-authorization rules)")
+        print(f" 30. Currency Config (1 currency - XAF)")
+        print(f" 31. Working Days (7 days configuration)")
+        print(f" 32. Account Number Preferences (5 entity types)")
+        print(f" 33. Codes and Values (48 dropdown values across 10 code categories)")
+        print(f" 34. Scheduler Jobs (10 automated jobs)")
+        print(f" 35. Global Configuration (23 global settings)")
+        print(f" 36. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
+        print(f" 37. Notification Templates (16 templates - SMS/Email for all events)")
+        print(f" 38. Data Tables (24 custom fields - Client, Loan, Savings)")
+        print(f" 39. Savings Deposits (6 sample deposit transactions)")
+        print(f" 40. Savings Withdrawals (6 sample withdrawal transactions)")
+        print(f" 41. Loan Disbursements (6 sample disbursements)")
+        print(f" 42. Loan Repayments (6 sample repayment transactions)")
+        print(f" 43. Loan Collateral (6 collateral assignments - Land, Equipment, Vehicles)")
+        print(f" 44. Loan Guarantors (6 guarantor assignments - Individual & Corporate)")
+        print(f" 45. Inter-Branch Transfers (6 sample inter-branch cash transfers)")
+        print(f" 46. COBAC Reports (10 regulatory reports configuration)")
 
         return self.filename
 

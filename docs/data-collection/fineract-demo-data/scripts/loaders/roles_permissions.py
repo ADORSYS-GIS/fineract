@@ -142,13 +142,71 @@ class RolesPermissionsLoader:
 
         return list(set(permissions))  # Remove duplicates
 
+    def _get_maker_checker_permissions(self) -> Dict[str, List[str]]:
+        """
+        Parse Maker Checker Config sheet and build permission map for roles.
+
+        Returns:
+            Dict mapping role name to list of permission codes to add
+        """
+        try:
+            df = self._read_excel_sheet('Maker Checker Config')
+
+            # Filter only enabled permissions
+            enabled_df = df[df['enabled'] == True]
+
+            maker_permissions = {}  # role → [permissions]
+            checker_permissions = {}  # role → [checker permissions]
+
+            for idx, row in enabled_df.iterrows():
+                entity = row['entity'].upper()
+                action = row['action'].upper()
+                permission_code = f"{action}_{entity}"
+                checker_permission_code = f"CHECKER_{permission_code}"
+
+                maker_role = row['maker_role']
+                checker_role = row['checker_role']
+
+                # Add base permission to maker role
+                if maker_role:
+                    if maker_role not in maker_permissions:
+                        maker_permissions[maker_role] = []
+                    maker_permissions[maker_role].append(permission_code)
+
+                # Add checker permission to checker role
+                if checker_role:
+                    if checker_role not in checker_permissions:
+                        checker_permissions[checker_role] = []
+                    checker_permissions[checker_role].append(checker_permission_code)
+
+            logger.info(f"Loaded maker-checker permissions for {len(maker_permissions)} maker roles and {len(checker_permissions)} checker roles")
+
+            # Merge the two dicts
+            all_permissions = {}
+            for role, perms in maker_permissions.items():
+                all_permissions[role] = perms
+            for role, perms in checker_permissions.items():
+                if role in all_permissions:
+                    all_permissions[role].extend(perms)
+                else:
+                    all_permissions[role] = perms
+
+            return all_permissions
+
+        except Exception as e:
+            logger.warning(f"Could not load maker-checker permissions: {str(e)}")
+            return {}
+
     def load_roles_permissions(self):
-        """Create roles with custom permissions"""
+        """Create roles with custom permissions, including maker-checker permissions"""
         logger.info("=" * 80)
         logger.info("LOADING ROLES AND PERMISSIONS")
         logger.info("=" * 80)
 
         df = self._read_excel_sheet('Roles Permissions')
+
+        # Get maker-checker permissions to merge
+        maker_checker_perms = self._get_maker_checker_permissions()
 
         # Get existing roles
         try:
@@ -181,7 +239,25 @@ class RolesPermissionsLoader:
             if permission_codes:
                 logger.info(f"  Mapped {row['permission_group']}.{row['permission']} → {len(permission_codes)} permissions")
 
+        # Merge maker-checker permissions into roles
+        logger.info("")
+        logger.info("Merging maker-checker permissions from Maker Checker Config sheet...")
+        for role_name, mc_permissions in maker_checker_perms.items():
+            if role_name not in roles_data:
+                # Role doesn't exist in Roles Permissions sheet, create it
+                roles_data[role_name] = {
+                    'name': role_name,
+                    'description': f"{role_name} with maker-checker permissions",
+                    'permissions': []
+                }
+                logger.info(f"  + Created role entry for: {role_name}")
+
+            # Add maker-checker permissions
+            roles_data[role_name]['permissions'].extend(mc_permissions)
+            logger.info(f"  + Added {len(mc_permissions)} maker-checker permissions to {role_name}")
+
         # Create or update roles
+        logger.info("")
         for role_name, role_data in roles_data.items():
             try:
                 # Remove duplicates from permissions
