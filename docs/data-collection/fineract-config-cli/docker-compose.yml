@@ -141,6 +141,22 @@ services:
 
     restart: unless-stopped
 
+  # Mifos Community Web App
+  community-app:
+    image: openmf/web-app:master
+    container_name: mifos-web-app
+    restart: always
+    ports:
+      - "4200:80"
+    environment:
+      - FINERACT_API_URL=http://fineract:8080/fineract-provider
+      - FINERACT_API_URLS=http://fineract:8080/fineract-provider
+    networks:
+      - fineract-network
+    depends_on:
+      fineract:
+        condition: service_healthy
+
 networks:
   fineract-network:
     driver: bridge
