@@ -68,14 +68,14 @@ To publish to ghcr.io instead of DockerHub:
 **Changes:**
 1. **Workflow Name**: Changed from "Fineract Publish to DockerHub" to "Fineract Publish to GitHub Container Registry"
 2. **Permissions**: Added `packages: write` permission required for publishing to ghcr.io
-3. **Image Registry**: Changed `-Djib.to.image` from `apache/fineract` to `ghcr.io/${{ github.repository_owner }}/fineract`
-4. **Authentication**: Removed DockerHub authentication parameters (`-Djib.to.auth.username` and `-Djib.to.auth.password`) as Jib automatically uses `GITHUB_TOKEN` for ghcr.io
+3. **Image Registry**: Changed `-Djib.to.image` from `apache/fineract` to `ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract`
+4. **Authentication**: Added GHCR-specific authentication using `github.actor` and `secrets.GITHUB_TOKEN`
 5. **Develocity**: Removed `DEVELOCITY_ACCESS_KEY` environment variable since it's not used in our setup
 
 **Why these changes:**
 - **packages: write**: Required by GitHub Actions to publish packages to GitHub Container Registry
 - **ghcr.io registry**: Allows our organization to host and control our own Docker images instead of depending on Apache's DockerHub images
-- **GITHUB_TOKEN auth**: Simplifies authentication by using the built-in token, eliminating the need for separate DockerHub credentials
+- **GHCR authentication**: Uses `github.actor` as username and `secrets.GITHUB_TOKEN` as password for proper authentication to GitHub Container Registry
 - **Dynamic owner**: Uses `${{ steps.git_hashes.outputs.owner_lowercase }}` to automatically use the correct organization/user name in lowercase (required for Docker image references)
 - **Removed Develocity**: Since we don't use Develocity build acceleration, removed the unnecessary environment variable to avoid potential secret requirements
 
