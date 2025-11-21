@@ -24,7 +24,8 @@ RUN ls -lh target/ && \
     test -f target/fineract-config-cli.jar || (echo "JAR file not found!" && exit 1)
 
 # Stage 2: Create the runtime image
-FROM eclipse-temurin:17-jre-alpine
+# Using Debian-based image for multi-platform support (amd64 and arm64)
+FROM eclipse-temurin:17-jre-jammy
 
 LABEL maintainer="Fineract Config CLI Team"
 LABEL description="Fineract Config CLI - Configuration-as-Code tool for Apache Fineract"
@@ -34,14 +35,15 @@ LABEL org.opencontainers.image.documentation="https://github.com/apache/fineract
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 # Install additional tools for debugging (optional)
-RUN apk add --no-cache \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     bash \
     curl \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
-RUN addgroup -g 1000 fineract && \
-    adduser -D -u 1000 -G fineract fineract
+RUN groupadd -g 1000 fineract && \
+    useradd -r -u 1000 -g fineract fineract
 
 # Set working directory
 WORKDIR /app
