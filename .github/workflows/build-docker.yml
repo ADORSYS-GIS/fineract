@@ -22,7 +22,6 @@ jobs:
             check_worker_health: false
 
     env:
-      DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
       IMAGE_NAME: fineract
 
     steps:

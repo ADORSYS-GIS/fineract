@@ -1,18 +1,16 @@
-name: Fineract Publish to DockerHub
+name: Fineract Publish to GitHub Container Registry
 on:
   push:
     branches:
       - develop
-    tags:
-      - 1.*
+      - 66-write-a-docker-image-and-cicd-workflow-to-deploy-fineract-with-all-our-plugins-such-as-pentaho-and-sms-and-extensions
 permissions:
   contents: read
+  packages: write
 jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    env:
-      DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -41,8 +39,6 @@ jobs:
             TAGS="$TAGS,${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
           fi
           ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
-            -Djib.to.auth.username=${{secrets.DOCKERHUB_USER}} \
-            -Djib.to.auth.password=${{secrets.DOCKERHUB_TOKEN}} \
             -Djib.from.platforms=linux/amd64,linux/arm64 \
-            -Djib.to.image=apache/fineract \
+            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/fineract \
             -Djib.to.tags=$TAGS
