@@ -3,6 +3,8 @@ package org.apache.fineract.config.model.systemconfig;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.fineract.config.model.security.MakerCheckerConfig;
+
 import lombok.Data;
 
 /**
@@ -21,4 +23,8 @@ public class SystemConfig {
   private NotificationConfig notificationConfig;
   private List<NotificationTemplate> notificationTemplates = new ArrayList<>();
   private List<DataTable> dataTables = new ArrayList<>();
+  private List<SchedulerJob> schedulerJobs = new ArrayList<>();
+  private List<SmsEmailConfig> smsEmailConfig = new ArrayList<>();
+  private List<Holiday> holidays = new ArrayList<>();
+  private List<MakerCheckerConfig> makerCheckerConfig = new ArrayList<>();
 }
