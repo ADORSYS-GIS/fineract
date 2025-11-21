@@ -3,6 +3,29 @@ package org.apache.fineract.config.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.fineract.config.model.account.LoanAccount;
+import org.apache.fineract.config.model.account.SavingsAccount;
+import org.apache.fineract.config.model.accounting.FinancialActivityMapping;
+import org.apache.fineract.config.model.accounting.GLAccount;
+import org.apache.fineract.config.model.client.Center;
+import org.apache.fineract.config.model.client.Client;
+import org.apache.fineract.config.model.client.Group;
+import org.apache.fineract.config.model.product.Charge;
+import org.apache.fineract.config.model.product.CollateralType;
+import org.apache.fineract.config.model.product.DelinquencyBucket;
+import org.apache.fineract.config.model.product.FloatingRate;
+import org.apache.fineract.config.model.product.FundSource;
+import org.apache.fineract.config.model.product.LoanProduct;
+import org.apache.fineract.config.model.product.PaymentType;
+import org.apache.fineract.config.model.product.SavingsProduct;
+import org.apache.fineract.config.model.product.TaxGroup;
+import org.apache.fineract.config.model.security.Office;
+import org.apache.fineract.config.model.security.Role;
+import org.apache.fineract.config.model.security.Staff;
+import org.apache.fineract.config.model.security.Teller;
+import org.apache.fineract.config.model.security.User;
+import org.apache.fineract.config.model.systemconfig.Holiday;
+import org.apache.fineract.config.model.systemconfig.SchedulerJob;
 import org.apache.fineract.config.model.systemconfig.SystemConfig;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -39,92 +62,111 @@ public class FineractConfig {
   private SystemConfig systemConfig;
 
   /** Phase 2: Offices */
-  private List<Object> offices = new ArrayList<>();
+  private List<Office> offices = new ArrayList<>();
 
   /** Phase 2: Roles & Permissions */
-  private List<Object> roles = new ArrayList<>();
+  private List<Role> roles = new ArrayList<>();
 
   /** Phase 2: Users */
-  private List<Object> users = new ArrayList<>();
+  private List<User> users = new ArrayList<>();
 
   /** Phase 2: Staff */
-  private List<Object> staff = new ArrayList<>();
+  private List<Staff> staff = new ArrayList<>();
 
   /** Phase 2: Tellers */
-  private List<Object> tellers = new ArrayList<>();
+  private List<Teller> tellers = new ArrayList<>();
 
   /** Phase 3: Chart of Accounts */
-  private List<Object> chartOfAccounts = new ArrayList<>();
+  private List<GLAccount> chartOfAccounts = new ArrayList<>();
 
   /** Phase 3: Financial Activity Mappings */
-  private List<Object> financialActivityMappings = new ArrayList<>();
+  private List<FinancialActivityMapping> financialActivityMappings = new ArrayList<>();
 
   /** Phase 3: Teller Accounting Rules */
-  private List<Object> tellerAccountingRules = new ArrayList<>();
+  private List<Object> tellerAccountingRules =
+      new ArrayList<>(); // TODO: Create TellerAccountingRule model
 
   /** Phase 3: Maker-Checker Configuration */
-  private List<Object> makerCheckerConfig = new ArrayList<>();
+  private List<Object> makerCheckerConfig =
+      new ArrayList<>(); // TODO: Create MakerCheckerConfig model
 
   /** Phase 3: Scheduler Jobs */
-  private List<Object> schedulerJobs = new ArrayList<>();
+  private List<SchedulerJob> schedulerJobs = new ArrayList<>();
 
   /** Phase 3: Loan Provisioning Criteria */
-  private List<Object> loanProvisioningCriteria = new ArrayList<>();
+  private List<Object> loanProvisioningCriteria =
+      new ArrayList<>(); // TODO: Create LoanProvisioningCriteria model
 
   /** Phase 4: Floating Rates */
-  private List<Object> floatingRates = new ArrayList<>();
+  private List<FloatingRate> floatingRates = new ArrayList<>();
 
   /** Phase 4: Tax Groups */
-  private List<Object> taxGroups = new ArrayList<>();
+  private List<TaxGroup> taxGroups = new ArrayList<>();
 
   /** Phase 4: Charges */
-  private List<Object> charges = new ArrayList<>();
+  private List<Charge> charges = new ArrayList<>();
 
   /** Phase 4: Fund Sources */
-  private List<Object> fundSources = new ArrayList<>();
+  private List<FundSource> fundSources = new ArrayList<>();
 
   /** Phase 4: Payment Types */
-  private List<Object> paymentTypes = new ArrayList<>();
+  private List<PaymentType> paymentTypes = new ArrayList<>();
 
   /** Phase 4: Holiday Calendar */
-  private List<Object> holidayCalendar = new ArrayList<>();
+  private List<Holiday> holidayCalendar = new ArrayList<>();
 
   /** Phase 4: Loan Products */
-  private List<Object> loanProducts = new ArrayList<>();
+  private List<LoanProduct> loanProducts = new ArrayList<>();
 
   /** Phase 4: Delinquency Buckets */
-  private List<Object> delinquencyBuckets = new ArrayList<>();
+  private List<DelinquencyBucket> delinquencyBuckets = new ArrayList<>();
 
   /** Phase 4: Savings Products */
-  private List<Object> savingsProducts = new ArrayList<>();
+  private List<SavingsProduct> savingsProducts = new ArrayList<>();
 
   /** Phase 4: Collateral Types */
-  private List<Object> collateralTypes = new ArrayList<>();
+  private List<CollateralType> collateralTypes = new ArrayList<>();
 
   /** Phase 5: Centers */
-  private List<Object> centers = new ArrayList<>();
+  private List<Center> centers = new ArrayList<>();
 
   /** Phase 5: Clients */
-  private List<Object> clients = new ArrayList<>();
+  private List<Client> clients = new ArrayList<>();
 
   /** Phase 5: Groups */
-  private List<Object> groups = new ArrayList<>();
+  private List<Group> groups = new ArrayList<>();
 
   /** Phase 5: Savings Accounts */
-  private List<Object> savingsAccounts = new ArrayList<>();
+  private List<SavingsAccount> savingsAccounts = new ArrayList<>();
 
   /** Phase 5: Loan Accounts */
-  private List<Object> loanAccounts = new ArrayList<>();
+  private List<LoanAccount> loanAccounts = new ArrayList<>();
 
   /** Phase 5: Loan Collateral */
-  private List<Object> loanCollateral = new ArrayList<>();
+  private List<Object> loanCollateral = new ArrayList<>(); // TODO: Create LoanCollateral model
 
   /** Phase 5: Loan Guarantors */
-  private List<Object> loanGuarantors = new ArrayList<>();
+  private List<Object> loanGuarantors = new ArrayList<>(); // TODO: Create LoanGuarantor model
 
   /** Phase 6: Savings Transactions (deposits, withdrawals) */
-  private List<Object> savingsTransactions = new ArrayList<>();
+  private List<Object> savingsTransactions =
+      new ArrayList<>(); // TODO: Create SavingsTransaction model
 
   /** Phase 6: Loan Transactions (repayments, waivers, writeoffs) */
-  private List<Object> loanTransactions = new ArrayList<>();
+  private List<Object> loanTransactions = new ArrayList<>(); // TODO: Create LoanTransaction model
+
+  /**
+   * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when
+   * the YAML contains fields not mapped in the model class.
+   */
+  @com.fasterxml.jackson.annotation.JsonAnySetter
+  public void handleUnknownField(String key, Object value) {
+    org.slf4j.LoggerFactory.getLogger(this.getClass())
+        .warn(
+            "Unknown field '{}' with value '{}' in {} (will be ignored). "
+                + "This may indicate a missing field in the model class.",
+            key,
+            value,
+            this.getClass().getSimpleName());
+  }
 }

@@ -10,6 +10,8 @@ import org.apache.fineract.config.model.ImportContext;
 import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.account.LoanAccount;
 import org.apache.fineract.config.provider.FineractApiClient;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -158,20 +160,15 @@ public class LoanAccountLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(LoanAccount loanAccount, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    RequestBuilder builder = RequestBuilder.forAccount();
 
-    request.put("locale", LOCALE);
-    request.put("dateFormat", DATE_FORMAT);
-
-    if (loanAccount.getExternalId() != null) {
-      request.put("externalId", loanAccount.getExternalId());
-    }
+    builder.putIfNotNull("externalId", loanAccount.getExternalId());
 
     // Resolve product
     if (loanAccount.getProductName() != null) {
       Long productId = context.resolveEntityId("loanProduct", loanAccount.getProductName());
       if (productId != null) {
-        request.put("productId", productId);
+        builder.put("productId", productId);
       } else {
         throw new IllegalStateException(
             "Loan product '" + loanAccount.getProductName() + "' not found");
@@ -182,7 +179,7 @@ public class LoanAccountLoader {
     if (loanAccount.getClientExternalId() != null) {
       Long clientId = context.resolveEntityId("client", loanAccount.getClientExternalId());
       if (clientId != null) {
-        request.put("clientId", clientId);
+        builder.put("clientId", clientId);
       } else {
         throw new IllegalStateException(
             "Client '" + loanAccount.getClientExternalId() + "' not found");
@@ -190,7 +187,7 @@ public class LoanAccountLoader {
     } else if (loanAccount.getGroupName() != null) {
       Long groupId = context.resolveEntityId("group", loanAccount.getGroupName());
       if (groupId != null) {
-        request.put("groupId", groupId);
+        builder.put("groupId", groupId);
       } else {
         throw new IllegalStateException("Group '" + loanAccount.getGroupName() + "' not found");
       }
@@ -203,7 +200,7 @@ public class LoanAccountLoader {
     if (loanAccount.getLoanOfficerName() != null) {
       Long loanOfficerId = context.resolveEntityId("staff", loanAccount.getLoanOfficerName());
       if (loanOfficerId != null) {
-        request.put("loanOfficerId", loanOfficerId);
+        builder.put("loanOfficerId", loanOfficerId);
       }
     }
 
@@ -211,7 +208,7 @@ public class LoanAccountLoader {
     if (loanAccount.getFundSourceName() != null) {
       Long fundId = context.resolveEntityId("fundSource", loanAccount.getFundSourceName());
       if (fundId != null) {
-        request.put("fundId", fundId);
+        builder.put("fundId", fundId);
       }
     }
 
@@ -219,57 +216,51 @@ public class LoanAccountLoader {
     if (loanAccount.getLoanPurposeCode() != null) {
       Long loanPurposeId = context.resolveEntityId("loanPurpose", loanAccount.getLoanPurposeCode());
       if (loanPurposeId != null) {
-        request.put("loanPurposeId", loanPurposeId);
+        builder.put("loanPurposeId", loanPurposeId);
       }
     }
 
     // Submitted date
     if (loanAccount.getSubmittedOnDate() != null) {
-      request.put("submittedOnDate", loanAccount.getSubmittedOnDate().format(DATE_FORMATTER));
+      builder.put("submittedOnDate", loanAccount.getSubmittedOnDate().format(DATE_FORMATTER));
     }
 
     // Expected disbursement date
     if (loanAccount.getExpectedDisbursementDate() != null) {
-      request.put(
+      builder.put(
           "expectedDisbursementDate",
           loanAccount.getExpectedDisbursementDate().format(DATE_FORMATTER));
     }
 
     // Loan terms (overrides)
-    if (loanAccount.getPrincipal() != null) {
-      request.put("principal", loanAccount.getPrincipal());
-    }
-
-    if (loanAccount.getNumberOfRepayments() != null) {
-      request.put("numberOfRepayments", loanAccount.getNumberOfRepayments());
-    }
-
-    if (loanAccount.getRepaymentEvery() != null) {
-      request.put("repaymentEvery", loanAccount.getRepaymentEvery());
-    }
+    builder.putIfNotNull("principal", loanAccount.getPrincipal());
+    builder.putIfNotNull("numberOfRepayments", loanAccount.getNumberOfRepayments());
+    builder.putIfNotNull("repaymentEvery", loanAccount.getRepaymentEvery());
 
     if (loanAccount.getRepaymentFrequencyType() != null) {
-      request.put(
+      builder.put(
           "repaymentFrequencyType",
-          mapRepaymentFrequencyType(loanAccount.getRepaymentFrequencyType()));
+          FineractEnumMapper.mapRepaymentFrequencyType(loanAccount.getRepaymentFrequencyType()));
     }
 
-    if (loanAccount.getInterestRatePerPeriod() != null) {
-      request.put("interestRatePerPeriod", loanAccount.getInterestRatePerPeriod());
-    }
+    builder.putIfNotNull("interestRatePerPeriod", loanAccount.getInterestRatePerPeriod());
 
     if (loanAccount.getInterestType() != null) {
-      request.put("interestType", mapInterestType(loanAccount.getInterestType()));
+      builder.put(
+          "interestType", FineractEnumMapper.mapInterestType(loanAccount.getInterestType()));
     }
 
     if (loanAccount.getInterestCalculationPeriodType() != null) {
-      request.put(
+      builder.put(
           "interestCalculationPeriodType",
-          mapInterestCalculationPeriodType(loanAccount.getInterestCalculationPeriodType()));
+          FineractEnumMapper.mapInterestCalculationPeriodType(
+              loanAccount.getInterestCalculationPeriodType()));
     }
 
     if (loanAccount.getAmortizationType() != null) {
-      request.put("amortizationType", mapAmortizationType(loanAccount.getAmortizationType()));
+      builder.put(
+          "amortizationType",
+          FineractEnumMapper.mapAmortizationType(loanAccount.getAmortizationType()));
     }
 
     // Charges
@@ -289,14 +280,14 @@ public class LoanAccountLoader {
         }
       }
       if (!charges.isEmpty()) {
-        request.put("charges", charges);
+        builder.put("charges", charges);
       }
     }
 
     // Transaction processing strategy (use mifos-standard-strategy)
-    request.put("transactionProcessingStrategyId", 1);
+    builder.put("transactionProcessingStrategyId", 1);
 
-    return request;
+    return builder.build();
   }
 
   /**
@@ -347,42 +338,5 @@ public class LoanAccountLoader {
     } catch (Exception ex) {
       log.warn("Failed to disburse loan {}: {}", loanId, ex.getMessage());
     }
-  }
-
-  private Integer mapRepaymentFrequencyType(String frequencyType) {
-    return switch (frequencyType.toUpperCase()) {
-      case "DAYS" -> 0;
-      case "WEEKS" -> 1;
-      case "MONTHS" -> 2;
-      case "YEARS" -> 3;
-      default -> throw new IllegalArgumentException(
-          "Invalid repayment frequency type: " + frequencyType);
-    };
-  }
-
-  private Integer mapInterestType(String interestType) {
-    return switch (interestType.toUpperCase()) {
-      case "DECLINING_BALANCE" -> 0;
-      case "FLAT" -> 1;
-      default -> throw new IllegalArgumentException("Invalid interest type: " + interestType);
-    };
-  }
-
-  private Integer mapInterestCalculationPeriodType(String calculationType) {
-    return switch (calculationType.toUpperCase()) {
-      case "DAILY" -> 0;
-      case "SAME_AS_REPAYMENT_PERIOD" -> 1;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest calculation period type: " + calculationType);
-    };
-  }
-
-  private Integer mapAmortizationType(String amortizationType) {
-    return switch (amortizationType.toUpperCase()) {
-      case "EQUAL_INSTALLMENTS" -> 1;
-      case "EQUAL_PRINCIPAL" -> 0;
-      default -> throw new IllegalArgumentException(
-          "Invalid amortization type: " + amortizationType);
-    };
   }
 }

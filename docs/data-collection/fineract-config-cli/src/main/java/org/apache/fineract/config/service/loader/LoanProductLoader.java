@@ -1,7 +1,6 @@
 package org.apache.fineract.config.service.loader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +9,8 @@ import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.product.LoanProduct;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.UpsertService;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -105,79 +106,69 @@ public class LoanProductLoader {
   }
 
   /**
-   * Builds API request for loan product.
+   * Builds API request for loan product using centralized utilities.
    *
    * @param loanProduct loan product
    * @param context import context
    * @return request map
    */
   private Map<String, Object> buildRequest(LoanProduct loanProduct, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    // Build request using RequestBuilder (loan products need locale for numeric fields)
+    RequestBuilder builder = RequestBuilder.forProduct();
 
     // Basic information
-    request.put("name", loanProduct.getName());
-    request.put("shortName", loanProduct.getShortName());
-    request.put("currencyCode", loanProduct.getCurrencyCode());
-    request.put("digitsAfterDecimal", loanProduct.getDigitsAfterDecimal());
-    request.put("inMultiplesOf", 0);
+    builder
+        .put("name", loanProduct.getName())
+        .put("shortName", loanProduct.getShortName())
+        .put("currencyCode", loanProduct.getCurrencyCode())
+        .put("digitsAfterDecimal", loanProduct.getDigitsAfterDecimal())
+        .put("inMultiplesOf", 0)
+        .putIfNotNull("description", loanProduct.getDescription());
 
-    if (loanProduct.getDescription() != null) {
-      request.put("description", loanProduct.getDescription());
-    }
-
-    // Resolve fund source
+    // Resolve fund source reference
     if (loanProduct.getFundSourceName() != null) {
       Long fundId = context.resolveEntityId("fundSource", loanProduct.getFundSourceName());
-      if (fundId != null) {
-        request.put("fundId", fundId);
-      }
+      builder.putIfNotNull("fundId", fundId);
     }
 
     // Principal limits
-    request.put("principal", loanProduct.getPrincipal());
-    if (loanProduct.getMinPrincipal() != null) {
-      request.put("minPrincipal", loanProduct.getMinPrincipal());
-    }
-    if (loanProduct.getMaxPrincipal() != null) {
-      request.put("maxPrincipal", loanProduct.getMaxPrincipal());
-    }
+    builder
+        .put("principal", loanProduct.getPrincipal())
+        .putIfNotNull("minPrincipal", loanProduct.getMinPrincipal())
+        .putIfNotNull("maxPrincipal", loanProduct.getMaxPrincipal());
 
     // Loan term
-    request.put("numberOfRepayments", loanProduct.getNumberOfRepayments());
-    if (loanProduct.getMinNumberOfRepayments() != null) {
-      request.put("minNumberOfRepayments", loanProduct.getMinNumberOfRepayments());
-    }
-    if (loanProduct.getMaxNumberOfRepayments() != null) {
-      request.put("maxNumberOfRepayments", loanProduct.getMaxNumberOfRepayments());
-    }
+    builder
+        .put("numberOfRepayments", loanProduct.getNumberOfRepayments())
+        .putIfNotNull("minNumberOfRepayments", loanProduct.getMinNumberOfRepayments())
+        .putIfNotNull("maxNumberOfRepayments", loanProduct.getMaxNumberOfRepayments())
+        .put("repaymentEvery", loanProduct.getRepaymentEvery())
+        .put(
+            "repaymentFrequencyType",
+            FineractEnumMapper.mapRepaymentFrequencyType(loanProduct.getRepaymentFrequencyType()));
 
-    request.put("repaymentEvery", loanProduct.getRepaymentEvery());
-    request.put(
-        "repaymentFrequencyType",
-        mapRepaymentFrequencyType(loanProduct.getRepaymentFrequencyType()));
-
-    // Interest configuration
-    request.put("interestRatePerPeriod", loanProduct.getInterestRatePerPeriod());
-    if (loanProduct.getMinInterestRatePerPeriod() != null) {
-      request.put("minInterestRatePerPeriod", loanProduct.getMinInterestRatePerPeriod());
-    }
-    if (loanProduct.getMaxInterestRatePerPeriod() != null) {
-      request.put("maxInterestRatePerPeriod", loanProduct.getMaxInterestRatePerPeriod());
-    }
-
-    request.put(
-        "interestRateFrequencyType",
-        mapInterestRateFrequencyType(loanProduct.getInterestRateFrequencyType()));
-    request.put("interestType", mapInterestType(loanProduct.getInterestType()));
-    request.put(
-        "interestCalculationPeriodType",
-        mapInterestCalculationPeriodType(loanProduct.getInterestCalculationPeriodType()));
-    request.put("amortizationType", mapAmortizationType(loanProduct.getAmortizationType()));
+    // Interest configuration using FineractEnumMapper
+    builder
+        .put("interestRatePerPeriod", loanProduct.getInterestRatePerPeriod())
+        .putIfNotNull("minInterestRatePerPeriod", loanProduct.getMinInterestRatePerPeriod())
+        .putIfNotNull("maxInterestRatePerPeriod", loanProduct.getMaxInterestRatePerPeriod())
+        .put(
+            "interestRateFrequencyType",
+            FineractEnumMapper.mapInterestRateFrequencyType(
+                loanProduct.getInterestRateFrequencyType()))
+        .put("interestType", FineractEnumMapper.mapInterestType(loanProduct.getInterestType()))
+        .put(
+            "interestCalculationPeriodType",
+            FineractEnumMapper.mapInterestCalculationPeriodType(
+                loanProduct.getInterestCalculationPeriodType()))
+        .put(
+            "amortizationType",
+            FineractEnumMapper.mapAmortizationType(loanProduct.getAmortizationType()));
 
     // Transaction processing strategy (mifos-standard-strategy is most common)
-    request.put("transactionProcessingStrategyId", 1);
+    builder.put("transactionProcessingStrategyId", 1);
 
-    // Charges
+    // Resolve charge references
     if (loanProduct.getChargeNames() != null && !loanProduct.getChargeNames().isEmpty()) {
       List<Long> chargeIds = new ArrayList<>();
       for (String chargeName : loanProduct.getChargeNames()) {
@@ -189,146 +180,71 @@ public class LoanProductLoader {
               "Charge '{}' not found for loan product '{}'", chargeName, loanProduct.getName());
         }
       }
-      request.put("charges", chargeIds);
+      builder.put("charges", chargeIds);
     }
 
-    // Accounting
-    request.put("accountingRule", mapAccountingRule(loanProduct.getAccountingRule()));
+    // Accounting using FineractEnumMapper
+    builder.put(
+        "accountingRule", FineractEnumMapper.mapAccountingRule(loanProduct.getAccountingRule()));
 
     if (!"NONE".equals(loanProduct.getAccountingRule())) {
-      addAccountingMappings(request, loanProduct, context);
+      addAccountingMappings(builder, loanProduct, context);
     }
 
-    // Settings
-    if (loanProduct.getIncludeInBorrowerCycle() != null) {
-      request.put("includeInBorrowerCycle", loanProduct.getIncludeInBorrowerCycle());
-    }
-    if (loanProduct.getUseBorrowerCycle() != null) {
-      request.put("useBorrowerCycle", loanProduct.getUseBorrowerCycle());
-    }
-    if (loanProduct.getMultiDisburseLoan() != null) {
-      request.put("multiDisburseLoan", loanProduct.getMultiDisburseLoan());
-    }
-    if (loanProduct.getMaxTrancheCount() != null) {
-      request.put("maxTrancheCount", loanProduct.getMaxTrancheCount());
-    }
-    if (loanProduct.getOutstandingLoanBalance() != null) {
-      request.put("outstandingLoanBalance", loanProduct.getOutstandingLoanBalance());
-    }
+    // Optional settings
+    builder
+        .putIfNotNull("includeInBorrowerCycle", loanProduct.getIncludeInBorrowerCycle())
+        .putIfNotNull("useBorrowerCycle", loanProduct.getUseBorrowerCycle())
+        .putIfNotNull("multiDisburseLoan", loanProduct.getMultiDisburseLoan())
+        .putIfNotNull("maxTrancheCount", loanProduct.getMaxTrancheCount())
+        .putIfNotNull("outstandingLoanBalance", loanProduct.getOutstandingLoanBalance());
 
-    return request;
+    return builder.build();
   }
 
   /**
-   * Adds accounting mappings to request.
+   * Adds accounting mappings to request builder.
    *
-   * @param request request map
+   * @param builder request builder
    * @param loanProduct loan product
    * @param context import context
    */
   private void addAccountingMappings(
-      Map<String, Object> request, LoanProduct loanProduct, ImportContext context) {
+      RequestBuilder builder, LoanProduct loanProduct, ImportContext context) {
 
+    // Resolve all GL account references
     if (loanProduct.getFundSourceAccountCode() != null) {
       Long accountId = context.resolveEntityId("glAccount", loanProduct.getFundSourceAccountCode());
-      if (accountId != null) {
-        request.put("fundSourceAccountId", accountId);
-      }
+      builder.putIfNotNull("fundSourceAccountId", accountId);
     }
 
     if (loanProduct.getLoanPortfolioAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", loanProduct.getLoanPortfolioAccountCode());
-      if (accountId != null) {
-        request.put("loanPortfolioAccountId", accountId);
-      }
+      builder.putIfNotNull("loanPortfolioAccountId", accountId);
     }
 
     if (loanProduct.getInterestOnLoansAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", loanProduct.getInterestOnLoansAccountCode());
-      if (accountId != null) {
-        request.put("interestOnLoanAccountId", accountId);
-      }
+      builder.putIfNotNull("interestOnLoanAccountId", accountId);
     }
 
     if (loanProduct.getIncomeFromFeesAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", loanProduct.getIncomeFromFeesAccountCode());
-      if (accountId != null) {
-        request.put("incomeFromFeeAccountId", accountId);
-      }
+      builder.putIfNotNull("incomeFromFeeAccountId", accountId);
     }
 
     if (loanProduct.getIncomeFromPenaltiesAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", loanProduct.getIncomeFromPenaltiesAccountCode());
-      if (accountId != null) {
-        request.put("incomeFromPenaltyAccountId", accountId);
-      }
+      builder.putIfNotNull("incomeFromPenaltyAccountId", accountId);
     }
 
     if (loanProduct.getWriteOffAccountCode() != null) {
       Long accountId = context.resolveEntityId("glAccount", loanProduct.getWriteOffAccountCode());
-      if (accountId != null) {
-        request.put("writeOffAccountId", accountId);
-      }
+      builder.putIfNotNull("writeOffAccountId", accountId);
     }
-  }
-
-  private Integer mapRepaymentFrequencyType(String frequencyType) {
-    return switch (frequencyType.toUpperCase()) {
-      case "DAYS" -> 0;
-      case "WEEKS" -> 1;
-      case "MONTHS" -> 2;
-      case "YEARS" -> 3;
-      default -> throw new IllegalArgumentException(
-          "Invalid repayment frequency type: " + frequencyType);
-    };
-  }
-
-  private Integer mapInterestRateFrequencyType(String frequencyType) {
-    return switch (frequencyType.toUpperCase()) {
-      case "MONTH" -> 2;
-      case "YEAR" -> 3;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest rate frequency type: " + frequencyType);
-    };
-  }
-
-  private Integer mapInterestType(String interestType) {
-    return switch (interestType.toUpperCase()) {
-      case "DECLINING_BALANCE" -> 0;
-      case "FLAT" -> 1;
-      default -> throw new IllegalArgumentException("Invalid interest type: " + interestType);
-    };
-  }
-
-  private Integer mapInterestCalculationPeriodType(String calculationType) {
-    return switch (calculationType.toUpperCase()) {
-      case "DAILY" -> 0;
-      case "SAME_AS_REPAYMENT_PERIOD" -> 1;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest calculation period type: " + calculationType);
-    };
-  }
-
-  private Integer mapAmortizationType(String amortizationType) {
-    return switch (amortizationType.toUpperCase()) {
-      case "EQUAL_INSTALLMENTS" -> 1;
-      case "EQUAL_PRINCIPAL" -> 0;
-      default -> throw new IllegalArgumentException(
-          "Invalid amortization type: " + amortizationType);
-    };
-  }
-
-  private Integer mapAccountingRule(String accountingRule) {
-    return switch (accountingRule.toUpperCase()) {
-      case "NONE" -> 1;
-      case "CASH_BASED" -> 2;
-      case "ACCRUAL_PERIODIC" -> 3;
-      case "ACCRUAL_UPFRONT" -> 4;
-      default -> throw new IllegalArgumentException("Invalid accounting rule: " + accountingRule);
-    };
   }
 }

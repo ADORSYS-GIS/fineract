@@ -321,4 +321,19 @@ public class ImportContext {
       puts.clear();
     }
   }
+
+  /**
+   * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when
+   * the YAML contains fields not mapped in the model class.
+   */
+  @com.fasterxml.jackson.annotation.JsonAnySetter
+  public void handleUnknownField(String key, Object value) {
+    org.slf4j.LoggerFactory.getLogger(this.getClass())
+        .warn(
+            "Unknown field '{}' with value '{}' in {} (will be ignored). "
+                + "This may indicate a missing field in the model class.",
+            key,
+            value,
+            this.getClass().getSimpleName());
+  }
 }

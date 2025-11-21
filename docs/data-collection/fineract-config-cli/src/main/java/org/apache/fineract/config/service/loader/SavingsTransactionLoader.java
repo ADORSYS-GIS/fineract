@@ -1,7 +1,6 @@
 package org.apache.fineract.config.service.loader;
 
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +8,8 @@ import org.apache.fineract.config.model.ImportContext;
 import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.transaction.SavingsTransaction;
 import org.apache.fineract.config.provider.FineractApiClient;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,6 @@ public class SavingsTransactionLoader {
 
   private static final DateTimeFormatter DATE_FORMATTER =
       DateTimeFormatter.ofPattern("dd MMMM yyyy");
-  private static final String LOCALE = "en";
-  private static final String DATE_FORMAT = "dd MMMM yyyy";
 
   private final FineractApiClient apiClient;
 
@@ -83,7 +82,8 @@ public class SavingsTransactionLoader {
     Map<String, Object> request = buildRequest(transaction, context);
 
     // Determine transaction command
-    String command = mapTransactionTypeToCommand(transaction.getTransactionType());
+    String command =
+        FineractEnumMapper.mapSavingsTransactionTypeToCommand(transaction.getTransactionType());
 
     // Post transaction
     String endpoint = "/api/v1/savingsaccounts/" + accountId + "/transactions?command=" + command;
@@ -106,41 +106,17 @@ public class SavingsTransactionLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(SavingsTransaction transaction, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
-
-    request.put("locale", LOCALE);
-    request.put("dateFormat", DATE_FORMAT);
-    request.put("transactionDate", transaction.getTransactionDate().format(DATE_FORMATTER));
-    request.put("transactionAmount", transaction.getAmount());
-
     // Resolve payment type
+    Long paymentTypeId = null;
     if (transaction.getPaymentTypeName() != null) {
-      Long paymentTypeId = context.resolveEntityId("paymentType", transaction.getPaymentTypeName());
-      if (paymentTypeId != null) {
-        request.put("paymentTypeId", paymentTypeId);
-      }
+      paymentTypeId = context.resolveEntityId("paymentType", transaction.getPaymentTypeName());
     }
 
-    // Add note
-    if (transaction.getNote() != null) {
-      request.put("note", transaction.getNote());
-    }
-
-    return request;
-  }
-
-  /**
-   * Maps transaction type to Fineract API command.
-   *
-   * @param transactionType transaction type
-   * @return API command
-   */
-  private String mapTransactionTypeToCommand(String transactionType) {
-    return switch (transactionType.toUpperCase()) {
-      case "DEPOSIT" -> "deposit";
-      case "WITHDRAWAL" -> "withdrawal";
-      default -> throw new IllegalArgumentException(
-          "Invalid savings transaction type: " + transactionType);
-    };
+    return RequestBuilder.forTransaction()
+        .put("transactionDate", transaction.getTransactionDate().format(DATE_FORMATTER))
+        .put("transactionAmount", transaction.getAmount())
+        .putIfNotNull("paymentTypeId", paymentTypeId)
+        .putIfNotNull("note", transaction.getNote())
+        .build();
   }
 }

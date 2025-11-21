@@ -1,6 +1,5 @@
 package org.apache.fineract.config.service.loader;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +7,8 @@ import org.apache.fineract.config.model.ImportContext;
 import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.accounting.FinancialActivityMapping;
 import org.apache.fineract.config.provider.FineractApiClient;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +69,7 @@ public class FinancialActivityMappingLoader {
     List<Map<String, Object>> existingMappings =
         apiClient.get("/api/v1/financialactivityaccounts", List.class);
 
-    Integer activityId = mapFinancialActivity(mapping.getFinancialActivity());
+    Integer activityId = FineractEnumMapper.mapFinancialActivity(mapping.getFinancialActivity());
 
     Map<String, Object> existingMapping =
         existingMappings.stream()
@@ -93,8 +94,8 @@ public class FinancialActivityMappingLoader {
     if (existingMapping != null) {
       // Update existing mapping
       Long mappingId = ((Number) existingMapping.get("id")).longValue();
-      Map<String, Object> request = new HashMap<>();
-      request.put("glAccountId", glAccountId);
+      Map<String, Object> request =
+          RequestBuilder.forConfig().put("glAccountId", glAccountId).build();
 
       apiClient.put("/api/v1/financialactivityaccounts/" + mappingId, request, Map.class);
 
@@ -105,9 +106,11 @@ public class FinancialActivityMappingLoader {
       result.recordEntity("financialActivityMapping", ImportResult.EntityAction.UPDATED);
     } else {
       // Create new mapping
-      Map<String, Object> request = new HashMap<>();
-      request.put("financialActivityId", activityId);
-      request.put("glAccountId", glAccountId);
+      Map<String, Object> request =
+          RequestBuilder.forConfig()
+              .put("financialActivityId", activityId)
+              .put("glAccountId", glAccountId)
+              .build();
 
       apiClient.post("/api/v1/financialactivityaccounts", request, Map.class);
 
@@ -117,25 +120,5 @@ public class FinancialActivityMappingLoader {
           mapping.getGlAccountCode());
       result.recordEntity("financialActivityMapping", ImportResult.EntityAction.CREATED);
     }
-  }
-
-  /**
-   * Maps financial activity name to Fineract activity ID.
-   *
-   * @param activityName activity name
-   * @return activity ID
-   */
-  private Integer mapFinancialActivity(String activityName) {
-    // Fineract financial activity IDs
-    return switch (activityName.toUpperCase()) {
-      case "ASSET_FUND_SOURCE" -> 100;
-      case "LIABILITY_FUND_SOURCE" -> 101;
-      case "ASSET_TRANSFER" -> 200;
-      case "LIABILITY_TRANSFER" -> 201;
-      case "OPENING_BALANCES_TRANSFER_CONTRA" -> 202;
-      case "CASH_AT_MAINVAULT" -> 300;
-      case "CASH_AT_TELLER" -> 301;
-      default -> throw new IllegalArgumentException("Unknown financial activity: " + activityName);
-    };
   }
 }

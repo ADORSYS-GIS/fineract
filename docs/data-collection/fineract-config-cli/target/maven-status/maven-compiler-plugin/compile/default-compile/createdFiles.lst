@@ -51,13 +51,16 @@ org/apache/fineract/config/service/loader/CodesLoader.class
 org/apache/fineract/config/model/security/MakerCheckerConfig.class
 org/apache/fineract/config/service/loader/WorkingDaysLoader.class
 META-INF/spring-configuration-metadata.json
+org/apache/fineract/config/util/DateArrayDeserializer.class
 org/apache/fineract/config/service/StateService.class
 org/apache/fineract/config/service/loader/SavingsTransactionLoader.class
 org/apache/fineract/config/provider/auth/BasicAuthProvider.class
 org/apache/fineract/config/model/systemconfig/DataTable.class
+org/apache/fineract/config/model/product/DelinquencyRange.class
 org/apache/fineract/config/cli/FineractConfigCommands.class
 org/apache/fineract/config/model/ExportOptions$ExportOptionsBuilder.class
 org/apache/fineract/config/model/systemconfig/NotificationConfig.class
+org/apache/fineract/config/util/FineractEnumMapper.class
 org/apache/fineract/config/model/transaction/SavingsTransaction.class
 org/apache/fineract/config/FineractConfigCliApplication.class
 org/apache/fineract/config/properties/ImportProperties$RemoteStateProperties.class
@@ -92,6 +95,8 @@ org/apache/fineract/config/util/InputValidator.class
 org/apache/fineract/config/model/PlannedChange.class
 org/apache/fineract/config/cli/FineractConfigCommands$1.class
 org/apache/fineract/config/properties/ImportProperties$VarSubstitutionProperties.class
+org/apache/fineract/config/properties/ImportProperties$StartupProperties.class
+org/apache/fineract/config/model/product/RatePeriod.class
 org/apache/fineract/config/model/systemconfig/SystemConfig.class
 org/apache/fineract/config/model/security/Role.class
 org/apache/fineract/config/model/systemconfig/NotificationConfig$EmailConfig.class
@@ -99,6 +104,7 @@ org/apache/fineract/config/model/client/Center.class
 org/apache/fineract/config/model/systemconfig/SchedulerJob.class
 org/apache/fineract/config/service/ExportService.class
 org/apache/fineract/config/exception/ValidationException.class
+org/apache/fineract/config/startup/AutoImportRunner.class
 org/apache/fineract/config/model/transaction/LoanTransaction.class
 org/apache/fineract/config/model/PlannedChange$1.class
 org/apache/fineract/config/exception/FineractApiException.class
@@ -109,6 +115,7 @@ org/apache/fineract/config/service/loader/FundSourceLoader.class
 org/apache/fineract/config/model/systemconfig/SmsEmailConfig.class
 org/apache/fineract/config/properties/ImportProperties$FilesProperties.class
 org/apache/fineract/config/service/loader/GlobalConfigLoader.class
+org/apache/fineract/config/util/RequestBuilder.class
 org/apache/fineract/config/model/PlannedChange$FieldChange$FieldChangeBuilder.class
 org/apache/fineract/config/util/InputValidator$ValidationResult.class
 org/apache/fineract/config/model/security/Teller.class

@@ -76,6 +76,9 @@ public class ImportProperties {
   /** Parallel processing configuration */
   private ParallelProperties parallelConfig = new ParallelProperties();
 
+  /** Startup auto-import configuration */
+  private StartupProperties startup = new StartupProperties();
+
   /** File location properties */
   @Data
   public static class FilesProperties {
@@ -131,6 +134,35 @@ public class ImportProperties {
 
     /** Maximum wait time in seconds (default: 300) */
     private int maxWaitSeconds = 300;
+  }
+
+  /** Startup auto-import properties */
+  @Data
+  public static class StartupProperties {
+    /**
+     * Enable automatic import on application startup (default: true).
+     *
+     * <p>When enabled, the application will automatically detect and import YAML configuration
+     * files from the configured locations on startup.
+     */
+    private boolean autoImportEnabled = true;
+
+    /**
+     * Exit application after successful import (default: true).
+     *
+     * <p>When true, the application exits after successful import, making it suitable for use as a
+     * one-time job or init container. When false, the application continues to the interactive
+     * Spring Shell.
+     */
+    private boolean exitAfterImport = true;
+
+    /**
+     * Exit with error code on import failure (default: false).
+     *
+     * <p>When true, the application exits with code 1 on import failure. When false, the
+     * application logs the error and continues to interactive shell for troubleshooting.
+     */
+    private boolean failOnError = false;
   }
 
   /** Managed resource mode enum */

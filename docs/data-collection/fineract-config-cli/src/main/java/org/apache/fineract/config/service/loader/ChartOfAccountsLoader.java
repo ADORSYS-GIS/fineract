@@ -1,6 +1,5 @@
 package org.apache.fineract.config.service.loader;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +8,8 @@ import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.accounting.GLAccount;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.UpsertService;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -111,26 +112,21 @@ public class ChartOfAccountsLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(GLAccount account, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    RequestBuilder builder = RequestBuilder.create();
 
-    request.put("name", account.getName());
-    request.put("glCode", account.getGlCode());
-    request.put("type", mapAccountType(account.getType()));
-    request.put("usage", mapAccountUsage(account.getUsage()));
+    builder.put("name", account.getName());
+    builder.put("glCode", account.getGlCode());
+    builder.put("type", FineractEnumMapper.mapGLAccountType(account.getType()));
+    builder.put("usage", FineractEnumMapper.mapGLAccountUsage(account.getUsage()));
 
-    if (account.getDescription() != null) {
-      request.put("description", account.getDescription());
-    }
-
-    if (account.getManualEntriesAllowed() != null) {
-      request.put("manualEntriesAllowed", account.getManualEntriesAllowed());
-    }
+    builder.putIfNotNull("description", account.getDescription());
+    builder.putIfNotNull("manualEntriesAllowed", account.getManualEntriesAllowed());
 
     // Resolve parent account if specified
     if (account.getParentGLCode() != null) {
       Long parentId = context.resolveEntityId("glAccount", account.getParentGLCode());
       if (parentId != null) {
-        request.put("parentId", parentId);
+        builder.put("parentId", parentId);
       } else {
         log.warn(
             "Parent GL account '{}' not found for account '{}'",
@@ -143,43 +139,10 @@ public class ChartOfAccountsLoader {
     if (account.getTagName() != null) {
       Long tagId = context.resolveEntityId("accountTag", account.getTagName());
       if (tagId != null) {
-        request.put("tagId", tagId);
+        builder.put("tagId", tagId);
       }
     }
 
-    return request;
-  }
-
-  /**
-   * Maps account type string to Fineract type ID.
-   *
-   * @param type account type
-   * @return type ID
-   */
-  private Integer mapAccountType(String type) {
-    // Fineract GL account types: 1=ASSET, 2=LIABILITY, 3=EQUITY, 4=INCOME, 5=EXPENSE
-    return switch (type.toUpperCase()) {
-      case "ASSET" -> 1;
-      case "LIABILITY" -> 2;
-      case "EQUITY" -> 3;
-      case "INCOME" -> 4;
-      case "EXPENSE" -> 5;
-      default -> throw new IllegalArgumentException("Invalid GL account type: " + type);
-    };
-  }
-
-  /**
-   * Maps account usage string to Fineract usage ID.
-   *
-   * @param usage account usage
-   * @return usage ID
-   */
-  private Integer mapAccountUsage(String usage) {
-    // Fineract GL account usage: 1=DETAIL, 2=HEADER
-    return switch (usage.toUpperCase()) {
-      case "DETAIL" -> 1;
-      case "HEADER" -> 2;
-      default -> throw new IllegalArgumentException("Invalid GL account usage: " + usage);
-    };
+    return builder.build();
   }
 }

@@ -1,6 +1,5 @@
 package org.apache.fineract.config.service.loader;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +8,8 @@ import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.product.Charge;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.UpsertService;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -85,104 +86,57 @@ public class ChargeLoader {
   }
 
   /**
-   * Builds API request for charge.
+   * Builds API request for charge using centralized utilities.
    *
    * @param charge charge
    * @param context import context
    * @return request map
    */
   private Map<String, Object> buildRequest(Charge charge, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    // Build base request using RequestBuilder
+    RequestBuilder builder = RequestBuilder.create();
 
-    request.put("name", charge.getName());
-    request.put("currencyCode", charge.getCurrencyCode());
-    request.put("amount", charge.getAmount());
-    request.put("chargeAppliesTo", mapChargeAppliesTo(charge.getChargeAppliesTo()));
-    request.put("chargeTimeType", mapChargeTimeType(charge.getChargeTimeType()));
-    request.put(
-        "chargeCalculationType", mapChargeCalculationType(charge.getChargeCalculationType()));
+    // Basic fields
+    builder
+        .put("name", charge.getName())
+        .put("currencyCode", charge.getCurrencyCode())
+        .put("amount", charge.getAmount());
 
+    // Enum fields using FineractEnumMapper
+    builder
+        .put("chargeAppliesTo", FineractEnumMapper.mapChargeAppliesTo(charge.getChargeAppliesTo()))
+        .put("chargeTimeType", FineractEnumMapper.mapChargeTimeType(charge.getChargeTimeType()))
+        .put(
+            "chargeCalculationType",
+            FineractEnumMapper.mapChargeCalculationType(charge.getChargeCalculationType()));
+
+    // chargePaymentMode is mandatory for loan charges (0=REGULAR, 1=ACCOUNT_TRANSFER)
+    // Default to 0 (REGULAR) if not specified
     if (charge.getChargePaymentMode() != null) {
-      request.put("chargePaymentMode", mapChargePaymentMode(charge.getChargePaymentMode()));
+      builder.put(
+          "chargePaymentMode",
+          FineractEnumMapper.mapChargePaymentMode(charge.getChargePaymentMode()));
+    } else {
+      // Default to REGULAR payment mode (0) for loan charges
+      builder.put("chargePaymentMode", 0);
     }
 
-    if (charge.getActive() != null) {
-      request.put("active", charge.getActive());
-    }
+    // Optional boolean fields
+    builder.putIfNotNull("active", charge.getActive()).putIfNotNull("penalty", charge.getPenalty());
 
-    if (charge.getPenalty() != null) {
-      request.put("penalty", charge.getPenalty());
-    }
-
-    // Resolve income account
+    // Resolve income account reference
     if (charge.getIncomeAccountCode() != null) {
       Long incomeAccountId = context.resolveEntityId("glAccount", charge.getIncomeAccountCode());
-      if (incomeAccountId != null) {
-        request.put("incomeAccountId", incomeAccountId);
-      }
+      builder.putIfNotNull("incomeAccountId", incomeAccountId);
     }
 
     // Fee frequency for recurring charges
     if (charge.getFeeFrequency() != null && charge.getFeeInterval() != null) {
-      request.put("feeFrequency", charge.getFeeFrequency());
-      request.put("feeInterval", mapFeeInterval(charge.getFeeInterval()));
+      builder
+          .put("feeFrequency", charge.getFeeFrequency())
+          .put("feeInterval", FineractEnumMapper.mapFeeInterval(charge.getFeeInterval()));
     }
 
-    return request;
-  }
-
-  private Integer mapChargeAppliesTo(String appliesTo) {
-    return switch (appliesTo.toUpperCase()) {
-      case "LOAN" -> 1;
-      case "SAVINGS" -> 2;
-      case "CLIENT" -> 3;
-      case "SHARES" -> 4;
-      default -> throw new IllegalArgumentException("Invalid charge applies to: " + appliesTo);
-    };
-  }
-
-  private Integer mapChargeTimeType(String timeType) {
-    return switch (timeType.toUpperCase()) {
-      case "DISBURSEMENT" -> 1;
-      case "SPECIFIED_DUE_DATE" -> 2;
-      case "INSTALMENT_FEE" -> 3;
-      case "OVERDUE_INSTALLMENT" -> 4;
-      case "SAVINGS_ACTIVATION" -> 5;
-      case "WITHDRAWAL_FEE" -> 6;
-      case "ANNUAL_FEE" -> 7;
-      case "MONTHLY_FEE" -> 8;
-      case "WEEKLY_FEE" -> 9;
-      default -> throw new IllegalArgumentException("Invalid charge time type: " + timeType);
-    };
-  }
-
-  private Integer mapChargeCalculationType(String calculationType) {
-    return switch (calculationType.toUpperCase()) {
-      case "FLAT" -> 1;
-      case "PERCENT_OF_AMOUNT" -> 2;
-      case "PERCENT_OF_AMOUNT_AND_INTEREST" -> 3;
-      case "PERCENT_OF_INTEREST" -> 4;
-      case "PERCENT_OF_DISBURSEMENT_AMOUNT" -> 5;
-      default -> throw new IllegalArgumentException(
-          "Invalid charge calculation type: " + calculationType);
-    };
-  }
-
-  private Integer mapChargePaymentMode(String paymentMode) {
-    return switch (paymentMode.toUpperCase()) {
-      case "REGULAR" -> 0;
-      case "ACCOUNT_TRANSFER" -> 1;
-      default -> throw new IllegalArgumentException("Invalid charge payment mode: " + paymentMode);
-    };
-  }
-
-  private Integer mapFeeInterval(String interval) {
-    return switch (interval.toUpperCase()) {
-      case "DAYS" -> 0;
-      case "WEEKS" -> 1;
-      case "MONTHS" -> 2;
-      case "YEARS" -> 3;
-      default -> throw new IllegalArgumentException("Invalid fee interval: " + interval);
-    };
+    return builder.build();
   }
 }

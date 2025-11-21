@@ -71,6 +71,12 @@ import:
     thread-pool-size: ${IMPORT_PARALLEL_THREAD_POOL_SIZE:4}
     max-wait-seconds: ${IMPORT_PARALLEL_MAX_WAIT_SECONDS:300}
 
+  # Startup auto-import configuration
+  startup:
+    auto-import-enabled: ${IMPORT_AUTO_IMPORT_ENABLED:true}
+    exit-after-import: ${IMPORT_EXIT_AFTER_IMPORT:true}
+    fail-on-error: ${IMPORT_FAIL_ON_ERROR:false}
+
 # Logging Configuration
 logging:
   level:

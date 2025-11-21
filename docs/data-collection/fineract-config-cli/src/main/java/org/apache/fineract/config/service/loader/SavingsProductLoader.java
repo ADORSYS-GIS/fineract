@@ -1,7 +1,6 @@
 package org.apache.fineract.config.service.loader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +9,8 @@ import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.product.SavingsProduct;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.UpsertService;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -108,67 +109,59 @@ public class SavingsProductLoader {
   }
 
   /**
-   * Builds API request for savings product.
+   * Builds API request for savings product using centralized utilities.
    *
    * @param savingsProduct savings product
    * @param context import context
    * @return request map
    */
   private Map<String, Object> buildRequest(SavingsProduct savingsProduct, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    // Build request using RequestBuilder
+    RequestBuilder builder = RequestBuilder.forProduct();
 
     // Basic information
-    request.put("name", savingsProduct.getName());
-    request.put("shortName", savingsProduct.getShortName());
-    request.put("currencyCode", savingsProduct.getCurrencyCode());
-    request.put("digitsAfterDecimal", savingsProduct.getDigitsAfterDecimal());
-    request.put("inMultiplesOf", 0);
+    builder
+        .put("name", savingsProduct.getName())
+        .put("shortName", savingsProduct.getShortName())
+        .put("currencyCode", savingsProduct.getCurrencyCode())
+        .put("digitsAfterDecimal", savingsProduct.getDigitsAfterDecimal())
+        .put("inMultiplesOf", 0)
+        .putIfNotNull("description", savingsProduct.getDescription());
 
-    if (savingsProduct.getDescription() != null) {
-      request.put("description", savingsProduct.getDescription());
-    }
-
-    // Interest configuration
-    request.put("nominalAnnualInterestRate", savingsProduct.getNominalAnnualInterestRate());
-    request.put(
-        "interestCompoundingPeriodType",
-        mapInterestCompoundingPeriodType(savingsProduct.getInterestCompoundingPeriodType()));
-    request.put(
-        "interestPostingPeriodType",
-        mapInterestPostingPeriodType(savingsProduct.getInterestPostingPeriodType()));
-    request.put(
-        "interestCalculationType",
-        mapInterestCalculationType(savingsProduct.getInterestCalculationType()));
-    request.put(
-        "interestCalculationDaysInYearType",
-        mapInterestCalculationDaysInYearType(
-            savingsProduct.getInterestCalculationDaysInYearType()));
+    // Interest configuration using FineractEnumMapper
+    builder
+        .put("nominalAnnualInterestRate", savingsProduct.getNominalAnnualInterestRate())
+        .put(
+            "interestCompoundingPeriodType",
+            FineractEnumMapper.mapInterestCompoundingPeriodType(
+                savingsProduct.getInterestCompoundingPeriodType()))
+        .put(
+            "interestPostingPeriodType",
+            FineractEnumMapper.mapInterestPostingPeriodType(
+                savingsProduct.getInterestPostingPeriodType()))
+        .put(
+            "interestCalculationType",
+            FineractEnumMapper.mapInterestCalculationType(
+                savingsProduct.getInterestCalculationType()))
+        .put(
+            "interestCalculationDaysInYearType",
+            FineractEnumMapper.mapInterestCalculationDaysInYearType(
+                savingsProduct.getInterestCalculationDaysInYearType()));
 
     // Balance requirements
-    if (savingsProduct.getMinRequiredOpeningBalance() != null) {
-      request.put("minRequiredOpeningBalance", savingsProduct.getMinRequiredOpeningBalance());
-    }
-    if (savingsProduct.getMinBalanceForInterestCalculation() != null) {
-      request.put(
-          "minBalanceForInterestCalculation", savingsProduct.getMinBalanceForInterestCalculation());
-    }
-    if (savingsProduct.getEnforceMinRequiredBalance() != null) {
-      request.put("enforceMinRequiredBalance", savingsProduct.getEnforceMinRequiredBalance());
-    }
-    if (savingsProduct.getMinRequiredBalance() != null) {
-      request.put("minRequiredBalance", savingsProduct.getMinRequiredBalance());
-    }
+    builder
+        .putIfNotNull("minRequiredOpeningBalance", savingsProduct.getMinRequiredOpeningBalance())
+        .putIfNotNull(
+            "minBalanceForInterestCalculation",
+            savingsProduct.getMinBalanceForInterestCalculation())
+        .putIfNotNull("enforceMinRequiredBalance", savingsProduct.getEnforceMinRequiredBalance())
+        .putIfNotNull("minRequiredBalance", savingsProduct.getMinRequiredBalance());
 
     // Withdrawal settings
-    if (savingsProduct.getWithdrawalFeeForTransfers() != null) {
-      request.put("withdrawalFeeForTransfers", savingsProduct.getWithdrawalFeeForTransfers());
-    }
-    if (savingsProduct.getAllowOverdraft() != null) {
-      request.put("allowOverdraft", savingsProduct.getAllowOverdraft());
-    }
-    if (savingsProduct.getOverdraftLimit() != null) {
-      request.put("overdraftLimit", savingsProduct.getOverdraftLimit());
-    }
+    builder
+        .putIfNotNull("withdrawalFeeForTransfers", savingsProduct.getWithdrawalFeeForTransfers())
+        .putIfNotNull("allowOverdraft", savingsProduct.getAllowOverdraft())
+        .putIfNotNull("overdraftLimit", savingsProduct.getOverdraftLimit());
 
     // Charges
     if (savingsProduct.getChargeNames() != null && !savingsProduct.getChargeNames().isEmpty()) {
@@ -184,141 +177,78 @@ public class SavingsProductLoader {
               savingsProduct.getName());
         }
       }
-      request.put("charges", chargeIds);
+      builder.put("charges", chargeIds);
     }
 
-    // Accounting
-    request.put("accountingRule", mapAccountingRule(savingsProduct.getAccountingRule()));
+    // Accounting using FineractEnumMapper
+    builder.put(
+        "accountingRule", FineractEnumMapper.mapAccountingRule(savingsProduct.getAccountingRule()));
 
     if (!"NONE".equals(savingsProduct.getAccountingRule())) {
-      addAccountingMappings(request, savingsProduct, context);
+      addAccountingMappings(builder, savingsProduct, context);
     }
 
-    return request;
+    return builder.build();
   }
 
   /**
-   * Adds accounting mappings to request.
+   * Adds accounting mappings to request builder.
    *
-   * @param request request map
+   * @param builder request builder
    * @param savingsProduct savings product
    * @param context import context
    */
   private void addAccountingMappings(
-      Map<String, Object> request, SavingsProduct savingsProduct, ImportContext context) {
+      RequestBuilder builder, SavingsProduct savingsProduct, ImportContext context) {
 
+    // Resolve all GL account references
     if (savingsProduct.getSavingsReferenceAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getSavingsReferenceAccountCode());
-      if (accountId != null) {
-        request.put("savingsReferenceAccountId", accountId);
-      }
+      builder.putIfNotNull("savingsReferenceAccountId", accountId);
     }
 
     if (savingsProduct.getSavingsControlAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getSavingsControlAccountCode());
-      if (accountId != null) {
-        request.put("savingsControlAccountId", accountId);
-      }
+      builder.putIfNotNull("savingsControlAccountId", accountId);
     }
 
     if (savingsProduct.getTransfersInSuspenseAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getTransfersInSuspenseAccountCode());
-      if (accountId != null) {
-        request.put("transfersInSuspenseAccountId", accountId);
-      }
+      builder.putIfNotNull("transfersInSuspenseAccountId", accountId);
     }
 
     if (savingsProduct.getInterestOnSavingsAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getInterestOnSavingsAccountCode());
-      if (accountId != null) {
-        request.put("interestOnSavingsAccountId", accountId);
-      }
+      builder.putIfNotNull("interestOnSavingsAccountId", accountId);
     }
 
     if (savingsProduct.getIncomeFromFeesAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getIncomeFromFeesAccountCode());
-      if (accountId != null) {
-        request.put("incomeFromFeeAccountId", accountId);
-      }
+      builder.putIfNotNull("incomeFromFeeAccountId", accountId);
     }
 
     if (savingsProduct.getIncomeFromPenaltiesAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getIncomeFromPenaltiesAccountCode());
-      if (accountId != null) {
-        request.put("incomeFromPenaltyAccountId", accountId);
-      }
+      builder.putIfNotNull("incomeFromPenaltyAccountId", accountId);
     }
 
     if (savingsProduct.getOverdraftPortfolioControlAccountCode() != null) {
       Long accountId =
           context.resolveEntityId(
               "glAccount", savingsProduct.getOverdraftPortfolioControlAccountCode());
-      if (accountId != null) {
-        request.put("overdraftPortfolioControlId", accountId);
-      }
+      builder.putIfNotNull("overdraftPortfolioControlId", accountId);
     }
 
     if (savingsProduct.getIncomeFromInterestAccountCode() != null) {
       Long accountId =
           context.resolveEntityId("glAccount", savingsProduct.getIncomeFromInterestAccountCode());
-      if (accountId != null) {
-        request.put("incomeFromInterestId", accountId);
-      }
+      builder.putIfNotNull("incomeFromInterestId", accountId);
     }
-  }
-
-  private Integer mapInterestCompoundingPeriodType(String periodType) {
-    return switch (periodType.toUpperCase()) {
-      case "DAILY" -> 1;
-      case "MONTHLY" -> 4;
-      case "QUARTERLY" -> 5;
-      case "SEMI_ANNUAL" -> 6;
-      case "ANNUAL" -> 7;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest compounding period type: " + periodType);
-    };
-  }
-
-  private Integer mapInterestPostingPeriodType(String periodType) {
-    return switch (periodType.toUpperCase()) {
-      case "MONTHLY" -> 4;
-      case "QUARTERLY" -> 5;
-      case "BIANNUAL" -> 6;
-      case "ANNUAL" -> 7;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest posting period type: " + periodType);
-    };
-  }
-
-  private Integer mapInterestCalculationType(String calculationType) {
-    return switch (calculationType.toUpperCase()) {
-      case "DAILY_BALANCE" -> 1;
-      case "AVERAGE_DAILY_BALANCE" -> 2;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest calculation type: " + calculationType);
-    };
-  }
-
-  private Integer mapInterestCalculationDaysInYearType(String daysInYearType) {
-    return switch (daysInYearType.toUpperCase()) {
-      case "DAYS_360" -> 360;
-      case "DAYS_365" -> 365;
-      default -> throw new IllegalArgumentException(
-          "Invalid interest calculation days in year type: " + daysInYearType);
-    };
-  }
-
-  private Integer mapAccountingRule(String accountingRule) {
-    return switch (accountingRule.toUpperCase()) {
-      case "NONE" -> 1;
-      case "CASH_BASED" -> 2;
-      default -> throw new IllegalArgumentException("Invalid accounting rule: " + accountingRule);
-    };
   }
 }

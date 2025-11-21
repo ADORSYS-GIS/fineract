@@ -41,6 +41,12 @@
       "sourceMethod": "getRemoteState()"
     },
     {
+      "name": "import.startup",
+      "type": "org.apache.fineract.config.properties.ImportProperties$StartupProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceMethod": "getStartup()"
+    },
+    {
       "name": "import.var-substitution",
       "type": "org.apache.fineract.config.properties.ImportProperties$VarSubstitutionProperties",
       "sourceType": "org.apache.fineract.config.properties.ImportProperties",
@@ -200,6 +206,27 @@
       "type": "java.lang.String",
       "description": "Encryption key for state storage (optional)",
       "sourceType": "org.apache.fineract.config.properties.ImportProperties$RemoteStateProperties"
+    },
+    {
+      "name": "import.startup.auto-import-enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable automatic import on application startup (default: true). <p>When enabled, the application will automatically detect and import YAML configuration files from the configured locations on startup.",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$StartupProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "import.startup.exit-after-import",
+      "type": "java.lang.Boolean",
+      "description": "Exit application after successful import (default: true). <p>When true, the application exits after successful import, making it suitable for use as a one-time job or init container. When false, the application continues to the interactive Spring Shell.",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$StartupProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "import.startup.fail-on-error",
+      "type": "java.lang.Boolean",
+      "description": "Exit with error code on import failure (default: false). <p>When true, the application exits with code 1 on import failure. When false, the application logs the error and continues to interactive shell for troubleshooting.",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$StartupProperties",
+      "defaultValue": false
     },
     {
       "name": "import.validate",

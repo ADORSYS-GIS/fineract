@@ -53,6 +53,9 @@ public class OfficeLoader {
       List<Office> offices, ImportContext context, ImportResult result, boolean dryRun) {
     log.debug("Loading {} offices (dry-run: {})", offices.size(), dryRun);
 
+    // Pre-register existing offices (especially Head Office) for parent resolution
+    registerExistingOffices(context);
+
     // Load offices in hierarchical order (parents before children)
     for (Office office : offices) {
       try {
@@ -244,5 +247,34 @@ public class OfficeLoader {
     }
 
     return changes;
+  }
+
+  /**
+   * Pre-registers existing offices in the ImportContext to enable parent resolution.
+   *
+   * <p>This is crucial for resolving parentName references (e.g., "Head Office") when creating new
+   * branch offices. Without this, parentId cannot be determined and office creation fails with 403
+   * FORBIDDEN.
+   *
+   * @param context import context to register offices into
+   */
+  private void registerExistingOffices(ImportContext context) {
+    try {
+      List<Map<String, Object>> existingOffices = apiClient.get("/api/v1/offices", List.class);
+
+      for (Map<String, Object> office : existingOffices) {
+        String name = (String) office.get("name");
+        Long id = ((Number) office.get("id")).longValue();
+
+        context.registerEntity("office", name, id);
+        log.debug("Pre-registered existing office: {} (ID: {})", name, id);
+      }
+
+      log.info(
+          "Pre-registered {} existing office(s) for parent resolution", existingOffices.size());
+    } catch (Exception ex) {
+      log.warn("Failed to pre-register existing offices: {}", ex.getMessage());
+      // Continue anyway - existing offices in YAML will be registered as they're processed
+    }
   }
 }

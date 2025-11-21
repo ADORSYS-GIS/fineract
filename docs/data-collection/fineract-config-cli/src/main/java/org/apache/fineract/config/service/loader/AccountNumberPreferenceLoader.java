@@ -109,14 +109,34 @@ public class AccountNumberPreferenceLoader {
   private Map<String, Object> buildRequest(AccountNumberPreference preference) {
     Map<String, Object> request = new HashMap<>();
 
-    // Account type (CLIENT, LOAN, SAVINGS, etc.)
-    request.put("accountType", preference.getAccountType());
+    // Account type must be integer: 1=CLIENT, 2=LOAN, 3=SAVINGS, 4=GROUPS, 5=CENTERS
+    request.put("accountType", convertAccountTypeToId(preference.getAccountType()));
 
-    // Prefix type (1=None, 2=Office, 3=Client, etc.)
+    // Prefix type (1=None, 101=Office, 102=Client, etc.) - already Integer in model
     if (preference.getPrefixType() != null) {
       request.put("prefixType", preference.getPrefixType());
     }
 
     return request;
+  }
+
+  /**
+   * Converts account type string to Fineract account type ID.
+   *
+   * @param accountType account type string (CLIENT, LOAN, SAVINGS, etc.)
+   * @return account type ID
+   */
+  private Integer convertAccountTypeToId(String accountType) {
+    if (accountType == null) {
+      return null;
+    }
+    return switch (accountType.toUpperCase()) {
+      case "CLIENT" -> 1;
+      case "LOAN" -> 2;
+      case "SAVINGS" -> 3;
+      case "GROUPS", "GROUP" -> 4;
+      case "CENTERS", "CENTER" -> 5;
+      default -> throw new IllegalArgumentException("Unknown account type: " + accountType);
+    };
   }
 }

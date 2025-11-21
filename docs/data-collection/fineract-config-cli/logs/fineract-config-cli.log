@@ -89,3 +89,45 @@ org.springframework.shell.CommandNotFound: No command found for '--dry-run --imp
 	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:53) ~[fineract-config-cli.jar:1.0.0-SNAPSHOT]
 	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:58) ~[fineract-config-cli.jar:1.0.0-SNAPSHOT]
 
+2025-11-21 03:21:35.741 - INFO --- [main] o.a.f.c.FineractConfigCliApplication     : Starting FineractConfigCliApplication using Java 17.0.17 with PID 78315 (/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/target/fineract-config-cli.jar started by guymoyo in /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli)
+2025-11-21 03:21:35.746 -DEBUG --- [main] o.a.f.c.FineractConfigCliApplication     : Running with Spring Boot v3.2.1, Spring v6.1.2
+2025-11-21 03:21:35.747 - INFO --- [main] o.a.f.c.FineractConfigCliApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-11-21 03:21:36.921 -DEBUG --- [main] o.a.f.c.provider.auth.BasicAuthProvider  : BasicAuthProvider initialized for user: mifos
+2025-11-21 03:21:37.340 - INFO --- [main] o.a.f.config.provider.FineractApiClient  : FineractApiClient initialized: url=http://localhost:8080/fineract-provider, tenant=default, sslVerify=true
+2025-11-21 03:21:37.639 - WARN --- [main] org.jline                                : Unable to create a system terminal, creating a dumb terminal (enable debug logging for more information)
+2025-11-21 03:21:37.914 - INFO --- [main] o.a.f.c.FineractConfigCliApplication     : Started FineractConfigCliApplication in 2.779 seconds (process running for 3.281)
+2025-11-21 03:21:37.943 -ERROR --- [main] o.s.boot.SpringApplication               : Application run failed
+
+org.springframework.shell.CommandNotFound: No command found for '--version'
+	at org.springframework.shell.Shell.evaluate(Shell.java:207) ~[spring-shell-core-3.2.0.jar!/:3.2.0]
+	at org.springframework.shell.Shell.run(Shell.java:159) ~[spring-shell-core-3.2.0.jar!/:3.2.0]
+	at org.springframework.shell.jline.NonInteractiveShellRunner.run(NonInteractiveShellRunner.java:146) ~[spring-shell-core-3.2.0.jar!/:3.2.0]
+	at org.springframework.shell.DefaultShellApplicationRunner.run(DefaultShellApplicationRunner.java:65) ~[spring-shell-core-3.2.0.jar!/:3.2.0]
+	at org.springframework.boot.SpringApplication.lambda$callRunner$4(SpringApplication.java:794) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.util.function.ThrowingConsumer$1.acceptWithException(ThrowingConsumer.java:83) ~[spring-core-6.1.2.jar!/:6.1.2]
+	at org.springframework.util.function.ThrowingConsumer.accept(ThrowingConsumer.java:60) ~[spring-core-6.1.2.jar!/:6.1.2]
+	at org.springframework.util.function.ThrowingConsumer$1.accept(ThrowingConsumer.java:88) ~[spring-core-6.1.2.jar!/:6.1.2]
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:806) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:794) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.boot.SpringApplication.lambda$callRunners$3(SpringApplication.java:782) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:510) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:782) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1358) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1347) ~[spring-boot-3.2.1.jar!/:3.2.1]
+	at org.apache.fineract.config.FineractConfigCliApplication.main(FineractConfigCliApplication.java:63) ~[!/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:91) ~[fineract-config-cli.jar:1.0.0-SNAPSHOT]
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:53) ~[fineract-config-cli.jar:1.0.0-SNAPSHOT]
+	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:58) ~[fineract-config-cli.jar:1.0.0-SNAPSHOT]
+

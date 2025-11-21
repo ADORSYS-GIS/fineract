@@ -1,7 +1,6 @@
 package org.apache.fineract.config.service.loader;
 
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +10,8 @@ import org.apache.fineract.config.model.PlannedChange;
 import org.apache.fineract.config.model.client.Client;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.ChangeDetectionService;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -146,27 +147,19 @@ public class ClientLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(Client client, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    RequestBuilder builder = RequestBuilder.create().withLocaleDateFormat();
 
     // Basic information
-    request.put("firstname", client.getFirstName());
-    request.put("lastname", client.getLastName());
-    request.put("locale", LOCALE);
-    request.put("dateFormat", DATE_FORMAT);
+    builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
 
-    if (client.getMiddleName() != null) {
-      request.put("middlename", client.getMiddleName());
-    }
-
-    if (client.getExternalId() != null) {
-      request.put("externalId", client.getExternalId());
-    }
+    builder.putIfNotNull("middlename", client.getMiddleName());
+    builder.putIfNotNull("externalId", client.getExternalId());
 
     // Resolve office
     if (client.getOfficeName() != null) {
       Long officeId = context.resolveEntityId("office", client.getOfficeName());
       if (officeId != null) {
-        request.put("officeId", officeId);
+        builder.put("officeId", officeId);
       } else {
         throw new IllegalStateException(
             "Office '" + client.getOfficeName() + "' not found for client");
@@ -177,63 +170,47 @@ public class ClientLoader {
     if (client.getStaffName() != null) {
       Long staffId = context.resolveEntityId("staff", client.getStaffName());
       if (staffId != null) {
-        request.put("staffId", staffId);
+        builder.put("staffId", staffId);
       }
     }
 
     // Personal details
     if (client.getDateOfBirth() != null) {
-      request.put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
+      builder.put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
     }
 
     if (client.getGender() != null) {
-      request.put("genderId", mapGender(client.getGender()));
+      builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
     }
 
-    if (client.getMobileNo() != null) {
-      request.put("mobileNo", client.getMobileNo());
-    }
-
-    if (client.getEmailAddress() != null) {
-      request.put("emailAddress", client.getEmailAddress());
-    }
+    builder.putIfNotNull("mobileNo", client.getMobileNo());
+    builder.putIfNotNull("emailAddress", client.getEmailAddress());
 
     // Active flag determines if we activate immediately or just submit
-    request.put("active", Boolean.TRUE.equals(client.getActive()));
+    builder.put("active", Boolean.TRUE.equals(client.getActive()));
 
     if (Boolean.TRUE.equals(client.getActive()) && client.getActivationDate() != null) {
-      request.put("activationDate", client.getActivationDate().format(DATE_FORMATTER));
+      builder.put("activationDate", client.getActivationDate().format(DATE_FORMATTER));
     }
 
     // Address information
     if (client.getAddressLine1() != null
         || client.getAddressLine2() != null
         || client.getCity() != null) {
-      Map<String, Object> address = new HashMap<>();
+      Map<String, Object> address =
+          RequestBuilder.create()
+              .putIfNotNull("addressLine1", client.getAddressLine1())
+              .putIfNotNull("addressLine2", client.getAddressLine2())
+              .putIfNotNull("city", client.getCity())
+              .putIfNotNull("stateProvince", client.getStateProvince())
+              .putIfNotNull("countryCode", client.getCountryCode())
+              .putIfNotNull("postalCode", client.getPostalCode())
+              .build();
 
-      if (client.getAddressLine1() != null) {
-        address.put("addressLine1", client.getAddressLine1());
-      }
-      if (client.getAddressLine2() != null) {
-        address.put("addressLine2", client.getAddressLine2());
-      }
-      if (client.getCity() != null) {
-        address.put("city", client.getCity());
-      }
-      if (client.getStateProvince() != null) {
-        address.put("stateProvince", client.getStateProvince());
-      }
-      if (client.getCountryCode() != null) {
-        address.put("countryCode", client.getCountryCode());
-      }
-      if (client.getPostalCode() != null) {
-        address.put("postalCode", client.getPostalCode());
-      }
-
-      request.put("address", address);
+      builder.put("address", address);
     }
 
-    return request;
+    return builder.build();
   }
 
   /**
@@ -248,8 +225,6 @@ public class ClientLoader {
    */
   private Map<String, Object> buildUpdateRequest(
       Client client, ImportContext context, Map<String, Object> existingClient) {
-    Map<String, Object> request = new HashMap<>();
-
     // Check if client is active
     Object statusObj = existingClient.get("status");
     boolean isActive = false;
@@ -259,6 +234,8 @@ public class ClientLoader {
       isActive = "Active".equalsIgnoreCase(statusValue);
     }
 
+    RequestBuilder builder = RequestBuilder.create();
+
     if (isActive) {
       // Client is active - only update allowed fields
       // According to ChangeDetectionService: staffId, savingsProductId, genderId, clientTypeId
@@ -267,30 +244,27 @@ public class ClientLoader {
       if (client.getStaffName() != null) {
         Long staffId = context.resolveEntityId("staff", client.getStaffName());
         if (staffId != null) {
-          request.put("staffId", staffId);
+          builder.put("staffId", staffId);
         }
       }
 
       if (client.getGender() != null) {
-        request.put("genderId", mapGender(client.getGender()));
+        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
       }
 
       // Note: savingsProductId and clientTypeId would go here if supported in Client model
     } else {
       // Client not active - can update most fields (excluding immutables)
       // Immutable: id, externalId, accountNo, activationDate
-      request.put("firstname", client.getFirstName());
-      request.put("lastname", client.getLastName());
+      builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
 
-      if (client.getMiddleName() != null) {
-        request.put("middlename", client.getMiddleName());
-      }
+      builder.putIfNotNull("middlename", client.getMiddleName());
 
       // Resolve office
       if (client.getOfficeName() != null) {
         Long officeId = context.resolveEntityId("office", client.getOfficeName());
         if (officeId != null) {
-          request.put("officeId", officeId);
+          builder.put("officeId", officeId);
         }
       }
 
@@ -298,31 +272,26 @@ public class ClientLoader {
       if (client.getStaffName() != null) {
         Long staffId = context.resolveEntityId("staff", client.getStaffName());
         if (staffId != null) {
-          request.put("staffId", staffId);
+          builder.put("staffId", staffId);
         }
       }
 
       // Personal details
       if (client.getDateOfBirth() != null) {
-        request.put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
-        request.put("locale", LOCALE);
-        request.put("dateFormat", DATE_FORMAT);
+        builder
+            .withLocaleDateFormat()
+            .put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
       }
 
       if (client.getGender() != null) {
-        request.put("genderId", mapGender(client.getGender()));
+        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
       }
 
-      if (client.getMobileNo() != null) {
-        request.put("mobileNo", client.getMobileNo());
-      }
-
-      if (client.getEmailAddress() != null) {
-        request.put("emailAddress", client.getEmailAddress());
-      }
+      builder.putIfNotNull("mobileNo", client.getMobileNo());
+      builder.putIfNotNull("emailAddress", client.getEmailAddress());
     }
 
-    return request;
+    return builder.build();
   }
 
   /**
@@ -336,10 +305,11 @@ public class ClientLoader {
   private void activateClient(
       Long clientId, Client client, ImportContext context, ImportResult result) {
     try {
-      Map<String, Object> activationRequest = new HashMap<>();
-      activationRequest.put("locale", LOCALE);
-      activationRequest.put("dateFormat", DATE_FORMAT);
-      activationRequest.put("activationDate", client.getActivationDate().format(DATE_FORMATTER));
+      Map<String, Object> activationRequest =
+          RequestBuilder.create()
+              .withLocaleDateFormat()
+              .put("activationDate", client.getActivationDate().format(DATE_FORMATTER))
+              .build();
 
       apiClient.post(
           "/api/v1/clients/" + clientId + "?command=activate", activationRequest, Map.class);
@@ -348,14 +318,5 @@ public class ClientLoader {
     } catch (Exception ex) {
       log.warn("Failed to activate client {}: {}", clientId, ex.getMessage());
     }
-  }
-
-  private Integer mapGender(String gender) {
-    return switch (gender.toUpperCase()) {
-      case "MALE" -> 22;
-      case "FEMALE" -> 23;
-      case "OTHER" -> 24;
-      default -> throw new IllegalArgumentException("Invalid gender: " + gender);
-    };
   }
 }

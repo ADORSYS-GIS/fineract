@@ -62,7 +62,11 @@ public class GlobalConfigLoader {
     log.debug("Loading global config: {}", item.getName());
 
     // First, get all configurations to find the config ID by name
-    List<Map<String, Object>> configs = apiClient.get("/api/v1/configurations", List.class);
+    // API returns: {"globalConfiguration": [...]}
+    Map<String, Object> response = apiClient.get("/api/v1/configurations", Map.class);
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> configs =
+        (List<Map<String, Object>>) response.get("globalConfiguration");
 
     Map<String, Object> matchingConfig =
         configs.stream()

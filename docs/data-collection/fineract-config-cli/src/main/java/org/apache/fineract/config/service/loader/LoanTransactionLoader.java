@@ -1,7 +1,6 @@
 package org.apache.fineract.config.service.loader;
 
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +8,8 @@ import org.apache.fineract.config.model.ImportContext;
 import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.transaction.LoanTransaction;
 import org.apache.fineract.config.provider.FineractApiClient;
+import org.apache.fineract.config.util.FineractEnumMapper;
+import org.apache.fineract.config.util.RequestBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,6 @@ public class LoanTransactionLoader {
 
   private static final DateTimeFormatter DATE_FORMATTER =
       DateTimeFormatter.ofPattern("dd MMMM yyyy");
-  private static final String LOCALE = "en";
-  private static final String DATE_FORMAT = "dd MMMM yyyy";
 
   private final FineractApiClient apiClient;
 
@@ -80,7 +79,8 @@ public class LoanTransactionLoader {
     Map<String, Object> request = buildRequest(transaction, context);
 
     // Determine transaction command
-    String command = mapTransactionTypeToCommand(transaction.getTransactionType());
+    String command =
+        FineractEnumMapper.mapLoanTransactionTypeToCommand(transaction.getTransactionType());
 
     // Post transaction
     String endpoint = "/api/v1/loans/" + loanId + "/transactions?command=" + command;
@@ -103,47 +103,25 @@ public class LoanTransactionLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(LoanTransaction transaction, ImportContext context) {
-    Map<String, Object> request = new HashMap<>();
+    RequestBuilder builder = RequestBuilder.forTransaction();
 
-    request.put("locale", LOCALE);
-    request.put("dateFormat", DATE_FORMAT);
-    request.put("transactionDate", transaction.getTransactionDate().format(DATE_FORMATTER));
+    builder.put("transactionDate", transaction.getTransactionDate().format(DATE_FORMATTER));
 
     // Amount is only needed for repayments
     if ("REPAYMENT".equalsIgnoreCase(transaction.getTransactionType())
         && transaction.getAmount() != null) {
-      request.put("transactionAmount", transaction.getAmount());
+      builder.put("transactionAmount", transaction.getAmount());
     }
 
     // Resolve payment type
     if (transaction.getPaymentTypeName() != null) {
       Long paymentTypeId = context.resolveEntityId("paymentType", transaction.getPaymentTypeName());
-      if (paymentTypeId != null) {
-        request.put("paymentTypeId", paymentTypeId);
-      }
+      builder.putIfNotNull("paymentTypeId", paymentTypeId);
     }
 
     // Add note
-    if (transaction.getNote() != null) {
-      request.put("note", transaction.getNote());
-    }
+    builder.putIfNotNull("note", transaction.getNote());
 
-    return request;
-  }
-
-  /**
-   * Maps transaction type to Fineract API command.
-   *
-   * @param transactionType transaction type
-   * @return API command
-   */
-  private String mapTransactionTypeToCommand(String transactionType) {
-    return switch (transactionType.toUpperCase()) {
-      case "REPAYMENT" -> "repayment";
-      case "WAIVER" -> "waiveinterest";
-      case "WRITEOFF" -> "writeoff";
-      default -> throw new IllegalArgumentException(
-          "Invalid loan transaction type: " + transactionType);
-    };
+    return builder.build();
   }
 }

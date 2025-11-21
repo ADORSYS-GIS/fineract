@@ -106,10 +106,18 @@ public class CodesLoader {
       Long codeId, List<CodeValue> codeValues, ImportContext context, ImportResult result) {
     log.debug("Loading {} code values for code ID {}", codeValues.size(), codeId);
 
-    // Get existing code values
-    Map<String, Object> codeDetails = apiClient.get("/api/v1/codes/" + codeId, Map.class);
-    List<Map<String, Object>> existingValues =
-        (List<Map<String, Object>>) codeDetails.get("codeValues");
+    // Get existing code values directly from the codevalues endpoint
+    // (the /codes/{id} endpoint doesn't include codeValues in Fineract 1.x)
+    List<Map<String, Object>> existingValues;
+    try {
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> values =
+          apiClient.get("/api/v1/codes/" + codeId + "/codevalues", List.class);
+      existingValues = values != null ? values : new java.util.ArrayList<>();
+    } catch (Exception ex) {
+      log.debug("Could not retrieve existing code values for code {}: {}", codeId, ex.getMessage());
+      existingValues = new java.util.ArrayList<>();
+    }
 
     for (CodeValue codeValue : codeValues) {
       try {
