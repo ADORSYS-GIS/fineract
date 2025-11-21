@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # Fineract Config CLI Service
+  fineract-config-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fineract-config-cli:latest
+    container_name: fineract-config-cli
+    environment:
+      # Fineract connection settings
+      FINERACT_BASE_URL: https://fineract:8443/fineract-provider
+      FINERACT_TENANT: default
+      FINERACT_USERNAME: mifos
+      FINERACT_PASSWORD: password
+      FINERACT_SSL_VERIFY: "false"
+
+      # Java options
+      JAVA_OPTS: -Xmx512m -Xms256m
+
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: dev
+
+      # Import settings (optional)
+      IMPORT_VALIDATE: "true"
+      IMPORT_FORCE: "false"
+      IMPORT_DRY_RUN: "false"
+      IMPORT_PARALLEL: "false"
+
+      # Remote state settings
+      IMPORT_REMOTE_STATE_ENABLED: "true"
+      IMPORT_REMOTE_STATE_CHECKSUM_BEHAVIOR: continue
+
+    volumes:
+      # Mount local config directory for YAML files
+      - ./config:/config
+
+      # Mount data directory for exports
+      - ./data:/data
+
+      # Optional: Mount custom application.yml
+      # - ./application.yml:/app/application.yml
+
+    networks:
+      - fineract-network
+
+    depends_on:
+      fineract:
+        condition: service_healthy
+
+    # Run in interactive mode with TTY
+    stdin_open: true
+    tty: true
+
+    # Restart policy
+    restart: unless-stopped
+
+  # Apache Fineract Service (for local testing)
+  fineract:
+    image: apache/fineract:latest
+    container_name: fineract
+    environment:
+      # Database settings
+      FINERACT_NODE_ID: 1
+      FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.mariadb.jdbc.Driver
+      FINERACT_HIKARI_JDBC_URL: jdbc:mariadb://mysql:3306/fineract_tenants
+      FINERACT_HIKARI_USERNAME: root
+      FINERACT_HIKARI_PASSWORD: skdcnwauicn2ucnaecasdsajdnizucawencascdca
+      FINERACT_HIKARI_MINIMUM_IDLE: 3
+      FINERACT_HIKARI_MAXIMUM_POOL_SIZE: 10
+      FINERACT_HIKARI_IDLE_TIMEOUT: 60000
+      FINERACT_HIKARI_CONNECTION_TIMEOUT: 20000
+      FINERACT_HIKARI_TEST_QUERY: "SELECT 1"
+      FINERACT_HIKARI_AUTO_COMMIT: "true"
+
+      # Tenant database
+      FINERACT_DEFAULT_TENANTDB_HOSTNAME: mysql
+      FINERACT_DEFAULT_TENANTDB_PORT: 3306
+      FINERACT_DEFAULT_TENANTDB_UID: root
+      FINERACT_DEFAULT_TENANTDB_PWD: skdcnwauicn2ucnaecasdsajdnizucawencascdca
+      FINERACT_DEFAULT_TENANTDB_CONN_PARAMS: ""
+      FINERACT_DEFAULT_TENANTDB_TIMEZONE: Asia/Kolkata
+      FINERACT_DEFAULT_TENANTDB_IDENTIFIER: default
+      FINERACT_DEFAULT_TENANTDB_NAME: fineract_default
+      FINERACT_DEFAULT_TENANTDB_DESCRIPTION: "Default Demo Tenant"
+
+      # Server settings
+      FINERACT_SERVER_SSL_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: "-Xmx1G"
+
+    ports:
+      - "8443:8443"
+      - "8080:8080"
+
+    networks:
+      - fineract-network
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -e 'Checking for the availability of Fineract server deployment'; while ! nc -z 'localhost' 8443; do sleep 1; printf '-'; done; echo -e ' >> Fineract server has started';"]
+      interval: 30s
+      timeout: 1s
+      retries: 60
+      start_period: 60s
+
+    restart: unless-stopped
+
+  # MariaDB Database for Fineract
+  mysql:
+    image: mariadb:11.4
+    container_name: fineract-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: skdcnwauicn2ucnaecasdsajdnizucawencascdca
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      # Persist database data
+      - mysql-data:/var/lib/mysql
+
+      # Initialize with database creation scripts
+      - ./config/docker/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:Z,ro
+
+      # MariaDB configuration
+      - ./config/docker/mysql/conf.d/server_collation.cnf:/etc/mysql/conf.d/server_collation.cnf:ro
+
+    networks:
+      - fineract-network
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+    restart: unless-stopped
+
+networks:
+  fineract-network:
+    driver: bridge
+    name: fineract-network
+
+volumes:
+  mysql-data:
+    name: fineract-mysql-data
+    driver: local

@@ -1,0 +1,167 @@
+# Phase 2: Security & Organization Demo
+# This configuration demonstrates Phase 1 + Phase 2 entities
+
+tenant: default
+
+# Phase 1: System Configuration
+systemConfig:
+  currency:
+    code: XAF
+    name: Central African CFA Franc
+    decimalPlaces: 0
+
+  workingDays:
+    recurrence: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+    repaymentReschedulingType: MOVE_TO_NEXT_WORKING_DAY
+    extendTermForDailyRepayments: false
+
+  codes:
+    - name: CustomerType
+      values:
+        - name: Individual
+          position: 1
+          isActive: true
+        - name: Business
+          position: 2
+          isActive: true
+
+# Phase 2: Security & Organization
+
+# 1. Offices (Hierarchical Structure)
+offices:
+  - name: Head Office
+    externalId: HO001
+    openingDate: 2020-01-01
+    # parentName: null (root office)
+
+  - name: Yaoundé Branch
+    externalId: YAO001
+    openingDate: 2020-06-01
+    parentName: Head Office
+
+  - name: Douala Branch
+    externalId: DLA001
+    openingDate: 2020-06-01
+    parentName: Head Office
+
+  - name: Yaoundé North Sub-Branch
+    externalId: YAO-N001
+    openingDate: 2021-01-01
+    parentName: Yaoundé Branch
+
+# 2. Roles & Permissions
+roles:
+  - name: Branch Manager
+    description: Branch manager with full access to branch operations
+    permissions:
+      - READ_OFFICE
+      - CREATE_CLIENT
+      - READ_CLIENT
+      - UPDATE_CLIENT
+      - DELETE_CLIENT
+      - CREATE_LOAN
+      - READ_LOAN
+      - APPROVE_LOAN
+      - DISBURSE_LOAN
+      - REPAY_LOAN
+      - CREATE_SAVINGSACCOUNT
+      - READ_SAVINGSACCOUNT
+      - UPDATE_SAVINGSACCOUNT
+      - DEPOSIT_SAVINGSACCOUNT
+      - WITHDRAWAL_SAVINGSACCOUNT
+
+  - name: Loan Officer
+    description: Loan officer with client and loan management access
+    permissions:
+      - READ_OFFICE
+      - CREATE_CLIENT
+      - READ_CLIENT
+      - UPDATE_CLIENT
+      - CREATE_LOAN
+      - READ_LOAN
+      - REPAY_LOAN
+      - CREATE_SAVINGSACCOUNT
+      - READ_SAVINGSACCOUNT
+      - DEPOSIT_SAVINGSACCOUNT
+
+  - name: Cashier
+    description: Cashier with transaction processing access
+    permissions:
+      - READ_CLIENT
+      - REPAY_LOAN
+      - DEPOSIT_SAVINGSACCOUNT
+      - WITHDRAWAL_SAVINGSACCOUNT
+
+  - name: Accountant
+    description: Accountant with read-only access for reporting
+    disabled: false
+    permissions:
+      - READ_OFFICE
+      - READ_CLIENT
+      - READ_LOAN
+      - READ_SAVINGSACCOUNT
+      - READ_GLJOURNAL ENTRY
+      - READ_GLACCOUNT
+
+  - name: System Administrator
+    description: Full system access including configuration
+    permissions:
+      - ALL_FUNCTIONS
+
+# 3. Users
+users:
+  - username: john.doe
+    firstname: John
+    lastname: Doe
+    email: john.doe@microfinance.cm
+    password: Password123! # Will be hashed by Fineract
+    passwordNeverExpires: false
+    officeName: Head Office
+    roles:
+      - Branch Manager
+      - System Administrator
+    isSelfServiceUser: false
+
+  - username: marie.kamga
+    firstname: Marie
+    lastname: Kamga
+    email: marie.kamga@microfinance.cm
+    password: SecurePass456!
+    passwordNeverExpires: false
+    officeName: Yaoundé Branch
+    roles:
+      - Branch Manager
+    isSelfServiceUser: false
+
+  - username: paul.mbida
+    firstname: Paul
+    lastname: Mbida
+    email: paul.mbida@microfinance.cm
+    password: LoanOfficer789!
+    passwordNeverExpires: false
+    officeName: Yaoundé Branch
+    roles:
+      - Loan Officer
+    isSelfServiceUser: false
+
+  - username: alice.ngo
+    firstname: Alice
+    lastname: Ngo
+    email: alice.ngo@microfinance.cm
+    password: Cashier321!
+    passwordNeverExpires: false
+    officeName: Douala Branch
+    roles:
+      - Cashier
+    isSelfServiceUser: false
+
+  - username: david.fotso
+    firstname: David
+    lastname: Fotso
+    email: david.fotso@microfinance.cm
+    password: Accountant654!
+    passwordNeverExpires: true  # Never expires for system accounts
+    officeName: Head Office
+    roles:
+      - Accountant
+    isSelfServiceUser: false

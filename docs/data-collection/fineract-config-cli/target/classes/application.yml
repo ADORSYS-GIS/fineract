@@ -1,0 +1,94 @@
+# Fineract Config CLI - Default Configuration
+
+spring:
+  application:
+    name: fineract-config-cli
+
+  main:
+    banner-mode: console
+    web-application-type: none
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
+# Fineract Connection Settings
+fineract:
+  url: ${FINERACT_BASE_URL:${FINERACT_URL:http://localhost:8080/fineract-provider}}
+  tenant: ${FINERACT_TENANT:default}
+  user: ${FINERACT_USERNAME:${FINERACT_USER:mifos}}
+  password: ${FINERACT_PASSWORD:password}
+  ssl-verify: ${FINERACT_SSL_VERIFY:true}
+  connection-timeout: ${FINERACT_CONNECTION_TIMEOUT:30}
+  read-timeout: ${FINERACT_READ_TIMEOUT:60}
+
+  auth:
+    type: ${FINERACT_AUTH_TYPE:basic}
+    oauth2:
+      token-url: ${FINERACT_AUTH_OAUTH2_TOKEN_URL:}
+      client-id: ${FINERACT_AUTH_OAUTH2_CLIENT_ID:}
+      client-secret: ${FINERACT_AUTH_OAUTH2_CLIENT_SECRET:}
+      scope: ${FINERACT_AUTH_OAUTH2_SCOPE:}
+
+# Import Configuration
+import:
+  files:
+    locations: ${IMPORT_FILES_LOCATIONS:/config/*.yml}
+
+  validate: ${IMPORT_VALIDATE:true}
+  parallel: ${IMPORT_PARALLEL:false}
+
+  remote-state:
+    enabled: ${IMPORT_REMOTE_STATE_ENABLED:true}
+    encryption-key: ${IMPORT_STATE_ENCRYPTION_KEY:}
+    checksum-behavior: ${IMPORT_CHECKSUM_BEHAVIOR:continue}
+
+  var-substitution:
+    enabled: ${IMPORT_VAR_SUBSTITUTION_ENABLED:true}
+    prefix: ${IMPORT_VAR_SUBSTITUTION_PREFIX:${}
+    suffix: ${IMPORT_VAR_SUBSTITUTION_SUFFIX:}}
+
+  # Managed resource modes (full or no-delete)
+  managed:
+    office: ${IMPORT_MANAGED_OFFICE:full}
+    staff: ${IMPORT_MANAGED_STAFF:full}
+    teller: ${IMPORT_MANAGED_TELLER:full}
+    role: ${IMPORT_MANAGED_ROLE:full}
+    glAccount: ${IMPORT_MANAGED_GLACCOUNT:full}
+    loanProduct: ${IMPORT_MANAGED_LOANPRODUCT:full}
+    savingsProduct: ${IMPORT_MANAGED_SAVINGSPRODUCT:full}
+    charge: ${IMPORT_MANAGED_CHARGE:full}
+    client: ${IMPORT_MANAGED_CLIENT:no-delete}
+    loanAccount: ${IMPORT_MANAGED_LOANACCOUNT:no-delete}
+    savingsAccount: ${IMPORT_MANAGED_SAVINGSACCOUNT:no-delete}
+
+  parallel-config:
+    thread-pool-size: ${IMPORT_PARALLEL_THREAD_POOL_SIZE:4}
+    max-wait-seconds: ${IMPORT_PARALLEL_MAX_WAIT_SECONDS:300}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.apache.fineract.config: DEBUG
+    org.springframework.web: WARN
+    org.springframework.boot: WARN
+
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+  file:
+    name: ${LOGGING_FILE_NAME:logs/fineract-config-cli.log}
+    max-size: ${LOGGING_FILE_MAX_SIZE:10MB}
+    max-history: ${LOGGING_FILE_MAX_HISTORY:10}
+
+# Management / Actuator (disabled for CLI)
+management:
+  endpoints:
+    enabled-by-default: false

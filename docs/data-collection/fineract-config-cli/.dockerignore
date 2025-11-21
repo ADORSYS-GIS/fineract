@@ -1,0 +1,104 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings
+
+# Maven build artifacts
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Docker files (we don't need these in the build context)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Build scripts
+build.sh
+run.sh
+
+# Documentation (not needed in the image)
+*.md
+docs/
+ROADMAP.md
+README.md
+CONTRIBUTING.md
+ARCHITECTURE.md
+USAGE.md
+CONFIGURATION.md
+
+# Configuration files (will be mounted as volumes)
+config/
+data/
+*.yml
+*.yaml
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Test files
+.coverage
+*.gcov
+*.gcda
+*.gcno
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# GitHub files
+.github/
+.git/
+
+# CI/CD files
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# Environment files (may contain sensitive data)
+.env
+.env.local
+.env.*.local
+
+# Spring Boot DevTools
+.spring-boot-devtools.properties
+
+# Application logs
+spring.log
+application.log
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar

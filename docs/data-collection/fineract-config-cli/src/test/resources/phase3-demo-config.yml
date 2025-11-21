@@ -1,0 +1,275 @@
+# Phase 3: Accounting Foundation Demo
+# This configuration demonstrates Phase 1-3 entities
+
+tenant: default
+
+# Phase 1: System Configuration (minimal for demo)
+systemConfig:
+  currency:
+    code: XAF
+    name: Central African CFA Franc
+    decimalPlaces: 0
+
+# Phase 2: Security & Organization (minimal for demo)
+offices:
+  - name: Head Office
+    externalId: HO001
+    openingDate: 2020-01-01
+
+# Phase 3: Accounting Foundation
+
+# 1. Chart of Accounts (GL Accounts)
+chartOfAccounts:
+  # ASSETS
+  - name: Assets
+    glCode: "10000"
+    type: ASSET
+    usage: HEADER
+    description: All assets
+    manualEntriesAllowed: false
+
+  - name: Cash and Cash Equivalents
+    glCode: "10100"
+    type: ASSET
+    usage: HEADER
+    parentGLCode: "10000"
+    manualEntriesAllowed: false
+
+  - name: Cash in Hand
+    glCode: "10101"
+    type: ASSET
+    usage: DETAIL
+    parentGLCode: "10100"
+    description: Physical cash at branches
+    manualEntriesAllowed: true
+
+  - name: Cash at Bank
+    glCode: "10102"
+    type: ASSET
+    usage: DETAIL
+    parentGLCode: "10100"
+    description: Bank account balances
+    manualEntriesAllowed: true
+
+  - name: Loans and Advances
+    glCode: "10200"
+    type: ASSET
+    usage: HEADER
+    parentGLCode: "10000"
+    manualEntriesAllowed: false
+
+  - name: Loans to Clients
+    glCode: "10201"
+    type: ASSET
+    usage: DETAIL
+    parentGLCode: "10200"
+    description: Outstanding loan principal
+    manualEntriesAllowed: false
+
+  - name: Interest Receivable on Loans
+    glCode: "10202"
+    type: ASSET
+    usage: DETAIL
+    parentGLCode: "10200"
+    description: Accrued interest on loans
+    manualEntriesAllowed: false
+
+  # LIABILITIES
+  - name: Liabilities
+    glCode: "20000"
+    type: LIABILITY
+    usage: HEADER
+    description: All liabilities
+    manualEntriesAllowed: false
+
+  - name: Deposits and Savings
+    glCode: "20100"
+    type: LIABILITY
+    usage: HEADER
+    parentGLCode: "20000"
+    manualEntriesAllowed: false
+
+  - name: Client Savings Accounts
+    glCode: "20101"
+    type: LIABILITY
+    usage: DETAIL
+    parentGLCode: "20100"
+    description: Client deposit balances
+    manualEntriesAllowed: false
+
+  - name: Interest Payable on Savings
+    glCode: "20102"
+    type: LIABILITY
+    usage: DETAIL
+    parentGLCode: "20100"
+    description: Accrued interest on savings
+    manualEntriesAllowed: false
+
+  # EQUITY
+  - name: Equity
+    glCode: "30000"
+    type: EQUITY
+    usage: HEADER
+    description: Owner's equity
+    manualEntriesAllowed: false
+
+  - name: Capital
+    glCode: "30100"
+    type: EQUITY
+    usage: DETAIL
+    parentGLCode: "30000"
+    description: Invested capital
+    manualEntriesAllowed: true
+
+  - name: Retained Earnings
+    glCode: "30200"
+    type: EQUITY
+    usage: DETAIL
+    parentGLCode: "30000"
+    description: Accumulated profits
+    manualEntriesAllowed: true
+
+  # INCOME
+  - name: Income
+    glCode: "40000"
+    type: INCOME
+    usage: HEADER
+    description: All income
+    manualEntriesAllowed: false
+
+  - name: Interest Income
+    glCode: "40100"
+    type: INCOME
+    usage: HEADER
+    parentGLCode: "40000"
+    manualEntriesAllowed: false
+
+  - name: Interest on Loans
+    glCode: "40101"
+    type: INCOME
+    usage: DETAIL
+    parentGLCode: "40100"
+    description: Interest earned from loans
+    manualEntriesAllowed: false
+
+  - name: Fees and Charges Income
+    glCode: "40200"
+    type: INCOME
+    usage: HEADER
+    parentGLCode: "40000"
+    manualEntriesAllowed: false
+
+  - name: Loan Processing Fees
+    glCode: "40201"
+    type: INCOME
+    usage: DETAIL
+    parentGLCode: "40200"
+    description: Fees charged for loan processing
+    manualEntriesAllowed: false
+
+  # EXPENSES
+  - name: Expenses
+    glCode: "50000"
+    type: EXPENSE
+    usage: HEADER
+    description: All expenses
+    manualEntriesAllowed: false
+
+  - name: Interest Expense
+    glCode: "50100"
+    type: EXPENSE
+    usage: HEADER
+    parentGLCode: "50000"
+    manualEntriesAllowed: false
+
+  - name: Interest on Deposits
+    glCode: "50101"
+    type: EXPENSE
+    usage: DETAIL
+    parentGLCode: "50100"
+    description: Interest paid to depositors
+    manualEntriesAllowed: false
+
+  - name: Operating Expenses
+    glCode: "50200"
+    type: EXPENSE
+    usage: HEADER
+    parentGLCode: "50000"
+    manualEntriesAllowed: false
+
+  - name: Salaries and Wages
+    glCode: "50201"
+    type: EXPENSE
+    usage: DETAIL
+    parentGLCode: "50200"
+    description: Staff compensation
+    manualEntriesAllowed: true
+
+  - name: Rent
+    glCode: "50202"
+    type: EXPENSE
+    usage: DETAIL
+    parentGLCode: "50200"
+    description: Office rental expenses
+    manualEntriesAllowed: true
+
+# 2. Payment Types
+paymentTypes:
+  - name: Cash
+    description: Cash payment
+    isCashPayment: true
+    position: 1
+
+  - name: Check
+    description: Check payment
+    isCashPayment: false
+    position: 2
+
+  - name: Bank Transfer
+    description: Electronic bank transfer
+    isCashPayment: false
+    position: 3
+
+  - name: Mobile Money
+    description: Mobile money transfer (MTN, Orange Money, etc.)
+    isCashPayment: false
+    position: 4
+
+  - name: Debit Card
+    description: Debit card payment
+    isCashPayment: false
+    position: 5
+
+# 3. Fund Sources
+fundSources:
+  - name: World Bank Grant
+    externalId: WB-2024-001
+
+  - name: Local Government Fund
+    externalId: LGF-2024-001
+
+  - name: Private Investors
+    externalId: PI-2024-001
+
+  - name: Member Savings
+    externalId: MS-2024-001
+
+# 4. Financial Activity Mappings
+financialActivityMappings:
+  - financialActivity: ASSET_FUND_SOURCE
+    glAccountCode: "10201"  # Loans to Clients
+
+  - financialActivity: LIABILITY_FUND_SOURCE
+    glAccountCode: "20101"  # Client Savings Accounts
+
+  - financialActivity: ASSET_TRANSFER
+    glAccountCode: "10101"  # Cash in Hand
+
+  - financialActivity: LIABILITY_TRANSFER
+    glAccountCode: "20101"  # Client Savings Accounts
+
+  - financialActivity: CASH_AT_MAINVAULT
+    glAccountCode: "10101"  # Cash in Hand
+
+  - financialActivity: CASH_AT_TELLER
+    glAccountCode: "10101"  # Cash in Hand

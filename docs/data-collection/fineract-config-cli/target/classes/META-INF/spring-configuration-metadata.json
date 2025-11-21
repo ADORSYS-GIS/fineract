@@ -1,0 +1,234 @@
+{
+  "groups": [
+    {
+      "name": "fineract",
+      "type": "org.apache.fineract.config.properties.FineractProperties",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties"
+    },
+    {
+      "name": "fineract.auth",
+      "type": "org.apache.fineract.config.properties.FineractProperties$AuthProperties",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "sourceMethod": "getAuth()"
+    },
+    {
+      "name": "fineract.auth.oauth2",
+      "type": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$AuthProperties",
+      "sourceMethod": "getOauth2()"
+    },
+    {
+      "name": "import",
+      "type": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties"
+    },
+    {
+      "name": "import.files",
+      "type": "org.apache.fineract.config.properties.ImportProperties$FilesProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceMethod": "getFiles()"
+    },
+    {
+      "name": "import.parallel-config",
+      "type": "org.apache.fineract.config.properties.ImportProperties$ParallelProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceMethod": "getParallelConfig()"
+    },
+    {
+      "name": "import.remote-state",
+      "type": "org.apache.fineract.config.properties.ImportProperties$RemoteStateProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceMethod": "getRemoteState()"
+    },
+    {
+      "name": "import.var-substitution",
+      "type": "org.apache.fineract.config.properties.ImportProperties$VarSubstitutionProperties",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "sourceMethod": "getVarSubstitution()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "fineract.auth.oauth2.client-id",
+      "type": "java.lang.String",
+      "description": "OAuth2 client ID",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties"
+    },
+    {
+      "name": "fineract.auth.oauth2.client-secret",
+      "type": "java.lang.String",
+      "description": "OAuth2 client secret",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties"
+    },
+    {
+      "name": "fineract.auth.oauth2.grant-type",
+      "type": "java.lang.String",
+      "description": "OAuth2 grant type (default: 'password')",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties",
+      "defaultValue": "password"
+    },
+    {
+      "name": "fineract.auth.oauth2.scope",
+      "type": "java.lang.String",
+      "description": "OAuth2 scope (optional)",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties"
+    },
+    {
+      "name": "fineract.auth.oauth2.token-url",
+      "type": "java.lang.String",
+      "description": "OAuth2 token URL",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$OAuth2Properties"
+    },
+    {
+      "name": "fineract.auth.type",
+      "type": "java.lang.String",
+      "description": "Authentication type: 'basic' or 'oauth2' (default: 'basic')",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties$AuthProperties",
+      "defaultValue": "basic"
+    },
+    {
+      "name": "fineract.connection-timeout",
+      "type": "java.lang.Integer",
+      "description": "Connection timeout in seconds (default: 30)",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "defaultValue": 30
+    },
+    {
+      "name": "fineract.password",
+      "type": "java.lang.String",
+      "description": "Password for basic authentication",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties"
+    },
+    {
+      "name": "fineract.read-timeout",
+      "type": "java.lang.Integer",
+      "description": "Read timeout in seconds (default: 60)",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "defaultValue": 60
+    },
+    {
+      "name": "fineract.ssl-verify",
+      "type": "java.lang.Boolean",
+      "description": "Enable SSL certificate verification (default: true)",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "fineract.tenant",
+      "type": "java.lang.String",
+      "description": "Tenant identifier (default: 'default')",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "defaultValue": "default"
+    },
+    {
+      "name": "fineract.url",
+      "type": "java.lang.String",
+      "description": "Fineract base URL (required). Example: http:\/\/localhost:8080\/fineract-provider",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties"
+    },
+    {
+      "name": "fineract.user",
+      "type": "java.lang.String",
+      "description": "Username for basic authentication",
+      "sourceType": "org.apache.fineract.config.properties.FineractProperties",
+      "defaultValue": "mifos"
+    },
+    {
+      "name": "import.dry-run",
+      "type": "java.lang.Boolean",
+      "description": "Dry run mode - preview changes without applying (default: false)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "import.files.locations",
+      "type": "java.lang.String",
+      "description": "Path(s) to configuration files. Supports glob patterns. <p>Examples: <ul>   <li>Single file: \/config\/demo.yml   <li>Multiple files: \/config\/system.yml,\/config\/products.yml   <li>Glob pattern: \/config\/*.yml <\/ul>",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$FilesProperties",
+      "defaultValue": "\/config\/*.yml"
+    },
+    {
+      "name": "import.force",
+      "type": "java.lang.Boolean",
+      "description": "Force import even if checksum unchanged (default: false)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "import.managed",
+      "type": "java.util.Map<java.lang.String,org.apache.fineract.config.properties.ImportProperties$ManagedResourceMode>",
+      "description": "Managed resource modes per entity type. <p>Values: 'full' (delete unmanaged resources) or 'no-delete' (preserve unmanaged resources) <p>Example: <pre> managed:   office: full   staff: full   client: no-delete   loanProduct: full <\/pre>",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties"
+    },
+    {
+      "name": "import.parallel",
+      "type": "java.lang.Boolean",
+      "description": "Enable parallel processing for independent entities (default: false)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "import.parallel-config.max-wait-seconds",
+      "type": "java.lang.Integer",
+      "description": "Maximum wait time in seconds (default: 300)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$ParallelProperties",
+      "defaultValue": 300
+    },
+    {
+      "name": "import.parallel-config.thread-pool-size",
+      "type": "java.lang.Integer",
+      "description": "Thread pool size for parallel imports (default: 4)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$ParallelProperties",
+      "defaultValue": 4
+    },
+    {
+      "name": "import.remote-state.checksum-behavior",
+      "type": "java.lang.String",
+      "description": "Checksum behavior when mismatch detected: 'fail' (abort) or 'continue' (re-import) Default: continue",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$RemoteStateProperties",
+      "defaultValue": "continue"
+    },
+    {
+      "name": "import.remote-state.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable remote state tracking in Fineract database (default: true)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$RemoteStateProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "import.remote-state.encryption-key",
+      "type": "java.lang.String",
+      "description": "Encryption key for state storage (optional)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$RemoteStateProperties"
+    },
+    {
+      "name": "import.validate",
+      "type": "java.lang.Boolean",
+      "description": "Enable validation before import (default: true)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "import.var-substitution.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable variable substitution (default: true)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$VarSubstitutionProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "import.var-substitution.prefix",
+      "type": "java.lang.String",
+      "description": "Variable prefix (default: ${)",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$VarSubstitutionProperties",
+      "defaultValue": "${"
+    },
+    {
+      "name": "import.var-substitution.suffix",
+      "type": "java.lang.String",
+      "description": "Variable suffix (default: })",
+      "sourceType": "org.apache.fineract.config.properties.ImportProperties$VarSubstitutionProperties",
+      "defaultValue": "}"
+    }
+  ],
+  "hints": []
+}
