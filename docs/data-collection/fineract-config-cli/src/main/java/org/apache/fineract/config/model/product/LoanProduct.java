@@ -68,14 +68,23 @@ public class LoanProduct {
   @JsonAlias("minimumGapBetweenInstallments")
   private Integer minimumDaysBetweenDisbursalAndFirstRepayment;
 
-  // Additional accounting fields
-  private Long receivableInterestAccountId;
-  private Long receivableFeeAccountId;
-  private Long receivablePenaltyAccountId;
-  private Long transfersInSuspenseAccountId;
-  private Long goodwillCreditAccountId;
-  private Long incomeFromRecoveryAccountId;
-  private Long overpaymentLiabilityAccountId;
+  // Additional accounting fields (Code suffix for YAML -> resolution by loader)
+  private String receivableInterestAccountCode;
+  private String receivableFeeAccountCode;
+  private String receivablePenaltyAccountCode;
+  private String transfersInSuspenseAccountCode;
+  private String goodwillCreditAccountCode;
+  private String incomeFromRecoveryAccountCode;
+  private String overpaymentLiabilityAccountCode;
+
+  // Alias fields for the old naming (interestOnLoanAccountCode -> interestOnLoansAccountCode)
+  @JsonAlias("interestOnLoanAccountCode")
+  private String interestOnLoansAccountCodeAlias;
+
+  // Days in year/month types (mandatory for Fineract API)
+  private Integer daysInYearType; // 1, 360, 364, 365
+  private Integer daysInMonthType; // 1, 30
+  private Boolean isInterestRecalculationEnabled;
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

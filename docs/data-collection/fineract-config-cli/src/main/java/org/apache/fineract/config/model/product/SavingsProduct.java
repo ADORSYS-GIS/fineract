@@ -63,6 +63,8 @@ public class SavingsProduct {
   private String incomeFromPenaltiesAccountCode;
   private String overdraftPortfolioControlAccountCode;
   private String incomeFromInterestAccountCode;
+  private String writeOffAccountCode;
+  private String incomeFromRecoveryAccountCode;
   private Long escheatLiabilityAccountId;
 
   /**

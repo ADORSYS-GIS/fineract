@@ -108,6 +108,14 @@ public class DataTableLoader {
       request.put("multiRow", dataTable.getMultiRow());
     }
 
+    // entitySubType is required for m_client tables (PERSON or ENTITY)
+    if (dataTable.getEntitySubType() != null) {
+      request.put("entitySubType", dataTable.getEntitySubType());
+    } else if ("m_client".equals(dataTable.getApptableName())) {
+      // Default to PERSON for client tables if not specified
+      request.put("entitySubType", "PERSON");
+    }
+
     // Build columns
     List<Map<String, Object>> columns = new ArrayList<>();
     for (DataTableColumn column : dataTable.getColumns()) {

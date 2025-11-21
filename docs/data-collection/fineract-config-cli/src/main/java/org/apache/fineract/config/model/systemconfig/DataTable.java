@@ -19,6 +19,10 @@ public class DataTable {
   private String apptableName; // Entity type (m_client, m_loan, etc.)
 
   private Boolean multiRow;
+
+  // Required for m_client tables: PERSON or ENTITY
+  private String entitySubType;
+
   private List<DataTableColumn> columns = new ArrayList<>();
 
   /**

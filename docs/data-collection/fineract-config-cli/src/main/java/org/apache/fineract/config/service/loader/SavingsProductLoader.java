@@ -250,5 +250,23 @@ public class SavingsProductLoader {
           context.resolveEntityId("glAccount", savingsProduct.getIncomeFromInterestAccountCode());
       builder.putIfNotNull("incomeFromInterestId", accountId);
     }
+
+    if (savingsProduct.getWriteOffAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", savingsProduct.getWriteOffAccountCode());
+      builder.putIfNotNull("writeOffAccountId", accountId);
+    }
+
+    if (savingsProduct.getIncomeFromRecoveryAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", savingsProduct.getIncomeFromRecoveryAccountCode());
+      builder.putIfNotNull("incomeFromRecoveryAccountId", accountId);
+    }
+
+    // NOTE: escheatLiabilityAccountId is NOT supported by Fineract API
+    // If needed in the future, uncomment the following:
+    // if (savingsProduct.getEscheatLiabilityAccountId() != null) {
+    //   builder.put("escheatLiabilityAccountId", savingsProduct.getEscheatLiabilityAccountId());
+    // }
   }
 }

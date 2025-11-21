@@ -1,5 +1,6 @@
 package org.apache.fineract.config.model.accounting;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import lombok.Data;
@@ -13,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Data
 public class FinancialActivityMapping {
+  @JsonAlias("financialActivityName")
   private String financialActivity; // Activity type (e.g., ASSET_TRANSFER, LIABILITY_TRANSFER)
+
   private String glAccountCode; // GL account code to map to
 
   /**

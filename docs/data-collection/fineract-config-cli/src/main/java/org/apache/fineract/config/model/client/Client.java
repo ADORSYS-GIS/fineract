@@ -24,6 +24,10 @@ public class Client {
   private LocalDate activationDate;
   private String staffName;
 
+  // Legal form - required by Fineract API
+  // 1 = Person (Individual), 2 = Entity (Corporate/Business)
+  private Integer legalFormId;
+
   // Client classification
   private Long clientTypeId;
   private Long clientClassificationId;

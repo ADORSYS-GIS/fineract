@@ -284,8 +284,8 @@ public class LoanAccountLoader {
       }
     }
 
-    // Transaction processing strategy (use mifos-standard-strategy)
-    builder.put("transactionProcessingStrategyId", 1);
+    // Transaction processing strategy (use code instead of ID for Fineract 1.9+)
+    builder.put("transactionProcessingStrategyCode", "mifos-standard-strategy");
 
     return builder.build();
   }

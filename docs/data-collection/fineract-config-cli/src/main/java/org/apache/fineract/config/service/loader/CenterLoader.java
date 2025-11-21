@@ -75,31 +75,19 @@ public class CenterLoader {
     // Check if center already exists by external ID
     if (center.getExternalId() != null) {
       try {
-        // Search endpoint returns a paged response with pageItems array
-        Map<String, Object> searchResult =
-            apiClient.get("/api/v1/centers?externalId=" + center.getExternalId(), Map.class);
+        // Centers search endpoint returns an array directly (not a paged response)
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> searchResults =
+            apiClient.get("/api/v1/centers?externalId=" + center.getExternalId(), List.class);
 
-        // Check if result is a paged response
-        if (searchResult != null && searchResult.containsKey("pageItems")) {
-          @SuppressWarnings("unchecked")
-          List<Map<String, Object>> pageItems =
-              (List<Map<String, Object>>) searchResult.get("pageItems");
-          if (pageItems != null && !pageItems.isEmpty()) {
-            existingCenter = pageItems.get(0);
-            centerId = ((Number) existingCenter.get("id")).longValue();
-          }
-        } else if (searchResult != null && searchResult.containsKey("id")) {
-          // Direct center object returned
-          existingCenter = searchResult;
+        if (searchResults != null && !searchResults.isEmpty()) {
+          existingCenter = searchResults.get(0);
           centerId = ((Number) existingCenter.get("id")).longValue();
-        }
-
-        if (centerId != null) {
           log.debug("Center already exists: {} (ID: {})", center.getName(), centerId);
         }
       } catch (Exception ex) {
         // Center not found, proceed with creation
-        log.debug("Center not found by external ID, will create new center");
+        log.debug("Center not found by external ID, will create new center: {}", ex.getMessage());
       }
     }
 

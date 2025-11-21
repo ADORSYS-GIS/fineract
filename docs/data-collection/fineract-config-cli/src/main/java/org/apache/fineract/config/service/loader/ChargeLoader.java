@@ -93,8 +93,8 @@ public class ChargeLoader {
    * @return request map
    */
   private Map<String, Object> buildRequest(Charge charge, ImportContext context) {
-    // Build base request using RequestBuilder
-    RequestBuilder builder = RequestBuilder.create();
+    // Build base request using RequestBuilder - locale is REQUIRED by Fineract API for charges
+    RequestBuilder builder = RequestBuilder.create().put("locale", "en");
 
     // Basic fields
     builder

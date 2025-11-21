@@ -99,6 +99,14 @@ public class NotificationTemplateLoader {
   /**
    * Builds API request for notification template.
    *
+   * <p>Fineract Template API requires:
+   *
+   * <ul>
+   *   <li>entity - integer (enum index: 0=CLIENT, 1=LOAN, etc.)
+   *   <li>type - integer (0=DOCUMENT, 2=SMS)
+   *   <li>mappers - array (optional)
+   * </ul>
+   *
    * @param template template
    * @return request map
    */
@@ -106,14 +114,69 @@ public class NotificationTemplateLoader {
     Map<String, Object> request = new HashMap<>();
 
     request.put("name", template.getName());
-    request.put("type", template.getType()); // SMS or EMAIL
-    request.put("subject", template.getSubject());
-    request.put("text", template.getText());
 
-    if (template.getEntity() != null) {
-      request.put("entity", template.getEntity());
+    // Map type string to integer (0=DOCUMENT, 2=SMS)
+    String typeStr = template.getType() != null ? template.getType() : template.getChannel();
+    request.put("type", mapTemplateType(typeStr));
+
+    // Map entity string to integer
+    String entityStr = template.getEntity();
+    request.put("entity", mapTemplateEntity(entityStr));
+
+    if (template.getSubject() != null) {
+      request.put("subject", template.getSubject());
     }
 
+    // Use text or messageBody
+    String text = template.getText() != null ? template.getText() : template.getMessageBody();
+    if (text != null) {
+      request.put("text", text);
+    }
+
+    // Mappers array is required by Fineract Template API (can be empty)
+    request.put("mappers", List.of());
+
     return request;
+  }
+
+  /**
+   * Maps template type string to Fineract integer.
+   *
+   * @param type type string (SMS, EMAIL, DOCUMENT)
+   * @return integer code (0=DOCUMENT, 2=SMS)
+   */
+  private Integer mapTemplateType(String type) {
+    if (type == null) {
+      return 0; // Default to DOCUMENT
+    }
+    return switch (type.toUpperCase().trim()) {
+      case "SMS" -> 2;
+      case "EMAIL", "DOCUMENT" -> 0;
+      default -> 0;
+    };
+  }
+
+  /**
+   * Maps entity string to Fineract entity enum index.
+   *
+   * <p>TemplateEntity enum values: CLIENT=0, LOAN=1, etc.
+   *
+   * @param entity entity name
+   * @return entity index
+   */
+  private Integer mapTemplateEntity(String entity) {
+    if (entity == null) {
+      return 0; // Default to CLIENT
+    }
+    return switch (entity.toUpperCase().trim()) {
+      case "CLIENT" -> 0;
+      case "LOAN" -> 1;
+      case "SAVINGS", "SAVING" -> 2;
+      case "GROUP" -> 3;
+      case "CENTER" -> 4;
+      case "OFFICE" -> 5;
+      case "STAFF" -> 6;
+      default -> 0; // Default to CLIENT
+    };
   }
 }

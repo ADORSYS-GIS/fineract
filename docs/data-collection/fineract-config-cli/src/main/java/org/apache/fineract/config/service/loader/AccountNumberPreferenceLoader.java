@@ -81,7 +81,7 @@ public class AccountNumberPreferenceLoader {
     Map<String, Object> request = buildRequest(preference);
 
     if (existingPreference == null) {
-      // Create new preference
+      // Create new preference - include accountType
       Map<String, Object> response =
           apiClient.post("/api/v1/accountnumberformats", request, Map.class);
 
@@ -91,9 +91,13 @@ public class AccountNumberPreferenceLoader {
           preference.getPrefixType());
       result.recordEntity("accountNumberPreference", ImportResult.EntityAction.CREATED);
     } else {
-      // Update existing preference
+      // Update existing preference - only prefixType is allowed (accountType is immutable)
       Long preferenceId = ((Number) existingPreference.get("id")).longValue();
-      apiClient.put("/api/v1/accountnumberformats/" + preferenceId, request, Map.class);
+      Map<String, Object> updateRequest = new HashMap<>();
+      if (preference.getPrefixType() != null) {
+        updateRequest.put("prefixType", preference.getPrefixType());
+      }
+      apiClient.put("/api/v1/accountnumberformats/" + preferenceId, updateRequest, Map.class);
 
       log.info(
           "Account number preference updated: {} ({})",

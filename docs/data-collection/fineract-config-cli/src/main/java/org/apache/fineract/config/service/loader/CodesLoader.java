@@ -90,7 +90,7 @@ public class CodesLoader {
 
     // Load code values
     if (code.getValues() != null && !code.getValues().isEmpty()) {
-      loadCodeValues(codeId, code.getValues(), context, result);
+      loadCodeValues(codeId, code.getName(), code.getValues(), context, result);
     }
   }
 
@@ -98,12 +98,17 @@ public class CodesLoader {
    * Loads code values for a code.
    *
    * @param codeId code ID
+   * @param codeName code name (for qualified lookups)
    * @param codeValues list of code values
    * @param context import context
    * @param result import result
    */
   private void loadCodeValues(
-      Long codeId, List<CodeValue> codeValues, ImportContext context, ImportResult result) {
+      Long codeId,
+      String codeName,
+      List<CodeValue> codeValues,
+      ImportContext context,
+      ImportResult result) {
     log.debug("Loading {} code values for code ID {}", codeValues.size(), codeId);
 
     // Get existing code values directly from the codevalues endpoint
@@ -121,7 +126,7 @@ public class CodesLoader {
 
     for (CodeValue codeValue : codeValues) {
       try {
-        loadSingleCodeValue(codeId, codeValue, existingValues, context, result);
+        loadSingleCodeValue(codeId, codeName, codeValue, existingValues, context, result);
       } catch (Exception ex) {
         log.error("Failed to load code value '{}': {}", codeValue.getName(), ex.getMessage());
         result.recordEntity("codeValue", ImportResult.EntityAction.FAILED);
@@ -135,6 +140,7 @@ public class CodesLoader {
    * <p>Uses upsert logic: updates existing code value if found (by name), creates new if not.
    *
    * @param codeId code ID
+   * @param codeName code name (for qualified lookups)
    * @param codeValue code value to load
    * @param existingValues existing code values
    * @param context import context
@@ -142,6 +148,7 @@ public class CodesLoader {
    */
   private void loadSingleCodeValue(
       Long codeId,
+      String codeName,
       CodeValue codeValue,
       List<Map<String, Object>> existingValues,
       ImportContext context,
@@ -190,7 +197,9 @@ public class CodesLoader {
     }
 
     // Store for reference (important for dependency resolution)
+    // Register with both simple name and qualified name (CodeName:ValueName)
     context.registerEntity("codeValue", codeValue.getName(), codeValueId);
+    context.registerEntity("codeValue", codeName + ":" + codeValue.getName(), codeValueId);
 
     if (created) {
       log.info("  ✓ Created code value: {} (ID: {})", codeValue.getName(), codeValueId);

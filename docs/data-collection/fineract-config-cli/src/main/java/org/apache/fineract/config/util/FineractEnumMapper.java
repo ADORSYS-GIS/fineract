@@ -98,6 +98,8 @@ public class FineractEnumMapper {
       // Not an integer, proceed with enum name mapping
     }
 
+    // Loan charges: 1, 2, 8, 9, 12
+    // Savings charges: 2, 3, 4, 5, 6, 7, 10, 11, 16
     return switch (value.toUpperCase().trim()) {
       case "DISBURSEMENT" -> 1;
       case "SPECIFIED_DUE_DATE", "SPECIFIED DUE DATE" -> 2;
@@ -106,11 +108,15 @@ public class FineractEnumMapper {
           "OVERDUE_INSTALMENT",
           "OVERDUE INSTALLMENT",
           "OVERDUE INSTALMENT" -> 4;
-      case "SAVINGS_ACTIVATION", "SAVINGS ACTIVATION" -> 5;
-      case "WITHDRAWAL_FEE", "WITHDRAWAL FEE" -> 6;
+      case "SAVINGS_ACTIVATION", "SAVINGS ACTIVATION", "ACTIVATION" -> 5;
+      case "WITHDRAWAL_FEE", "WITHDRAWAL FEE", "WITHDRAWAL" -> 6;
       case "ANNUAL_FEE", "ANNUAL FEE" -> 7;
       case "MONTHLY_FEE", "MONTHLY FEE" -> 8;
       case "WEEKLY_FEE", "WEEKLY FEE" -> 9;
+      case "OVERDRAFT_FEE", "OVERDRAFT FEE" -> 10;
+      case "SAVINGS_CLOSURE", "SAVINGS CLOSURE" -> 11;
+      case "TRANCHE_DISBURSEMENT", "TRANCHE DISBURSEMENT" -> 12;
+      case "FDA_PRE_CLOSURE", "FDA PRE CLOSURE" -> 16;
       default -> {
         log.warn("Unknown ChargeTimeType value: '{}', defaulting to DISBURSEMENT (1)", value);
         yield 1;
@@ -391,18 +397,28 @@ public class FineractEnumMapper {
       // Not an integer, proceed with enum name mapping
     }
 
-    return switch (value.toUpperCase().trim()) {
-      case "ASSET_FUND_SOURCE" -> 100;
-      case "LIABILITY_FUND_SOURCE" -> 101;
-      case "ASSET_TRANSFER" -> 200;
-      case "LIABILITY_TRANSFER" -> 201;
-      case "OPENING_BALANCES_TRANSFER_CONTRA" -> 202;
-      case "CASH_AT_MAINVAULT" -> 300;
-      case "CASH_AT_TELLER" -> 301;
+    // Normalize value: convert spaces to underscores, handle common aliases
+    String normalized = value.toUpperCase().trim().replace(" ", "_");
+
+    // Fineract actual financial activity IDs (from /financialactivityaccounts/template):
+    // assetTransfer = 100 (ASSET)
+    // cashAtMainVault = 101 (ASSET)
+    // cashAtTeller = 102 (ASSET)
+    // fundSource = 103 (ASSET)
+    // liabilityTransfer = 200 (LIABILITY)
+    // payableDividends = 201 (LIABILITY)
+    // openingBalancesTransferContra = 300 (EQUITY)
+    return switch (normalized) {
+      case "ASSET_TRANSFER" -> 100;
+      case "CASH_AT_MAINVAULT" -> 101;
+      case "CASH_AT_TELLER" -> 102;
+      case "FUND_SOURCE", "ASSET_FUND_SOURCE" -> 103;
+      case "LIABILITY_TRANSFER" -> 200;
+      case "PAYABLE_DIVIDENDS", "LIABILITY_FUND_SOURCE" -> 201;
+      case "OPENING_BALANCES_TRANSFER_CONTRA", "OPENING_BALANCES_CONTRA" -> 300;
       default -> {
-        log.warn(
-            "Unknown FinancialActivity value: '{}', defaulting to ASSET_FUND_SOURCE (100)", value);
-        yield 100;
+        log.warn("Unknown FinancialActivity value: '{}', defaulting to FUND_SOURCE (103)", value);
+        yield 103;
       }
     };
   }

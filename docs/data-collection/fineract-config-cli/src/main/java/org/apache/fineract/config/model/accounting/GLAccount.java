@@ -1,5 +1,6 @@
 package org.apache.fineract.config.model.accounting;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 import lombok.Data;
@@ -15,8 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 public class GLAccount {
   private String name;
   private String glCode;
+
+  @JsonAlias("accountType")
   private String type; // ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
+
+  @JsonAlias("accountUsage")
   private String usage; // DETAIL, HEADER
+
   private String description;
   private Boolean manualEntriesAllowed;
   private String parentGLCode; // Reference to parent account for hierarchy

@@ -11,64 +11,40 @@ systemConfig:
   globalConfig:
   - name: maker-checker
     enabled: true
-    value: 'true'
   - name: reschedule-future-repayments
     enabled: true
-    value: 'true'
   - name: allow-backdated-transaction-before-interest-posting
     enabled: false
-    value: 'false'
   - name: allow-transactions-on-non-workingday
     enabled: false
-    value: 'false'
   - name: allow-transactions-on-holiday
     enabled: false
-    value: 'false'
   - name: financial-year-beginning-month
     enabled: true
-    value: '1'
-  - name: repayment-strategy-order
-    enabled: true
-    value: '1'
-  - name: arrears-tolerance-amount
-    enabled: true
-    value: '0'
+    value: 1
   - name: days-before-repayment-is-due
     enabled: true
-    value: '3'
+    value: 3
   - name: days-after-repayment-is-overdue
     enabled: true
-    value: '3'
-  - name: Enable-Address
-    enabled: true
-    value: 'true'
+    value: 3
   - name: sub-rates
     enabled: false
-    value: 'false'
   - name: is-interest-to-be-recovered-first-when-greater-than-emi
     enabled: false
-    value: 'false'
   - name: is-principal-compounding-disabled-for-overdue-loans
     enabled: false
-    value: 'false'
   - name: enable-business-date
     enabled: true
-    value: 'false'
   - name: enable-auto-generated-external-id
     enabled: true
-    value: 'true'
   - name: meetings-mandatory-for-jlg-loans
     enabled: false
-    value: 'false'
   - name: enable-same-maker-checker
     enabled: false
-    value: 'false'
-  - name: fixed-deposit-auto-renewal
-    enabled: false
-    value: 'false'
   - name: penalty-wait-period
     enabled: true
-    value: '0'
+    value: 0
   codes:
   - name: Gender
     values:
@@ -221,15 +197,15 @@ systemConfig:
       isActive: true
   accountNumberPreferences:
   - accountType: CLIENT
-    prefixType: 2
+    prefixType: 1
   - accountType: LOAN
-    prefixType: 3
+    prefixType: 201
   - accountType: SAVINGS
-    prefixType: 3
-  - accountType: GROUPS
-    prefixType: 2
-  - accountType: CENTERS
-    prefixType: 2
+    prefixType: 301
+  - accountType: GROUP
+    prefixType: 1
+  - accountType: CENTER
+    prefixType: 1
   notificationTemplates:
   - name: Client Activation
     channel: SMS
@@ -371,13 +347,8 @@ systemConfig:
     multiRow: false
     columns:
     - name: id_type
-      type: Dropdown
+      type: String
       mandatory: true
-      values:
-      - National ID
-      - Passport
-      - Voter Card
-      - Driver License
       length: 100
     - name: id_number
       type: String
@@ -395,15 +366,8 @@ systemConfig:
       mandatory: true
       length: 200
     - name: next_of_kin_relationship
-      type: Dropdown
+      type: String
       mandatory: true
-      values:
-      - Spouse
-      - Parent
-      - Sibling
-      - Child
-      - Friend
-      - Other
       length: 100
     - name: employer_name
       type: String
@@ -422,23 +386,12 @@ systemConfig:
       mandatory: false
       length: 200
     - name: home_ownership
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - Owned
-      - Rented
-      - Family Home
-      - Other
       length: 100
     - name: disability_status
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - None
-      - Physical
-      - Visual
-      - Hearing
-      - Other
       length: 100
     - name: address
       type: String
@@ -449,14 +402,8 @@ systemConfig:
       mandatory: false
       length: 200
     - name: marital_status
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - Single
-      - Married
-      - Divorced
-      - Widow
-      - Widower
       length: 100
     - name: number_of_dependents
       type: Number
@@ -475,14 +422,10 @@ systemConfig:
       mandatory: false
       length: 19
     - name: risk_rating
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - A
-      - B
-      - C
-      - D
-      length: 100
+      length: 10
+    entitySubType: PERSON
   - name: loan_additional_info
     appTableName: m_loan
     multiRow: false
@@ -508,22 +451,12 @@ systemConfig:
       mandatory: false
       length: 10
     - name: repayment_source
-      type: Dropdown
+      type: String
       mandatory: true
-      values:
-      - Business Income
-      - Salary
-      - Remittances
-      - Other
       length: 100
     - name: previous_loan_history
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - First Loan
-      - Good History
-      - Some Delays
-      - Defaulted Before
       length: 100
   - name: savings_additional_info
     appTableName: m_savings_account
@@ -545,13 +478,8 @@ systemConfig:
       mandatory: false
       length: 19
     - name: preferred_transaction_channel
-      type: Dropdown
+      type: String
       mandatory: false
-      values:
-      - Branch
-      - Mobile Money
-      - Bank Transfer
-      - Agent
       length: 100
   schedulerJobs:
   - name: Post Interest For Savings
@@ -763,7 +691,7 @@ roles:
   - READ
   - CREATE_READ
   - ALL_FUNCTIONS
-  - APPROVE
+  - CHECKER_SUPER_USER
 - name: Loan Officer
   description: Create and update clients
   disabled: false
@@ -776,7 +704,6 @@ roles:
   - CREATE_READ
   - READ
   - READ
-  - CREATE
 - name: Cashier
   description: View client information only
   disabled: false
@@ -787,7 +714,6 @@ roles:
   - CREATE_READ
   - READ
   - READ
-  - CREATE
 - name: System Administrator
   description: Create and manage offices/branches
   disabled: false
@@ -801,7 +727,7 @@ roles:
   - READ
   - READ
   - READ
-  - CREATE
+  - ENABLE_MAKERCHECKER
 - name: Accountant
   description: Create and manage GL accounts and journal entries
   disabled: false
@@ -813,7 +739,7 @@ roles:
   - READ
   - READ
   - READ
-  - APPROVE
+  - CHECKER_SUPER_USER
 staff:
 - firstName: Thomas
   lastName: Ndongo
@@ -1308,7 +1234,7 @@ charges:
   active: true
 - name: Late Payment Penalty
   chargeAppliesTo: Loan
-  chargeTimeType: Overdue Installment
+  chargeTimeType: Specified Due Date
   chargeCalculationType: Percentage of Amount
   amount: 5.0
   currencyCode: XAF
@@ -1320,44 +1246,6 @@ charges:
   amount: 1.5
   currencyCode: XAF
   active: true
-- name: Account Opening Fee
-  chargeAppliesTo: Savings
-  chargeTimeType: Activation
-  chargeCalculationType: Flat
-  amount: 1000.0
-  currencyCode: XAF
-  active: true
-- name: Monthly Account Maintenance
-  chargeAppliesTo: Savings
-  chargeTimeType: Specified Due Date
-  chargeCalculationType: Flat
-  amount: 500.0
-  currencyCode: XAF
-  active: true
-  feeFrequency: Monthly
-- name: Withdrawal Fee
-  chargeAppliesTo: Savings
-  chargeTimeType: Withdrawal
-  chargeCalculationType: Flat
-  amount: 200.0
-  currencyCode: XAF
-  active: true
-- name: ATM Card Fee
-  chargeAppliesTo: Savings
-  chargeTimeType: Specified Due Date
-  chargeCalculationType: Flat
-  amount: 5000.0
-  currencyCode: XAF
-  active: true
-  feeFrequency: Yearly
-- name: Weekly Service Charge
-  chargeAppliesTo: Savings
-  chargeTimeType: Specified Due Date
-  chargeCalculationType: Flat
-  amount: 100.0
-  currencyCode: XAF
-  active: true
-  feeFrequency: Weekly
 - name: Loan Restructuring Fee
   chargeAppliesTo: Loan
   chargeTimeType: Specified Due Date
@@ -1372,9 +1260,16 @@ charges:
   amount: 3.0
   currencyCode: XAF
   active: false
+- name: Account Opening Fee
+  chargeAppliesTo: Savings
+  chargeTimeType: Savings Activation
+  chargeCalculationType: Flat
+  amount: 1000.0
+  currencyCode: XAF
+  active: true
 - name: Dormant Account Reactivation
   chargeAppliesTo: Savings
-  chargeTimeType: Activation
+  chargeTimeType: Savings Activation
   chargeCalculationType: Flat
   amount: 2000.0
   currencyCode: XAF
@@ -1391,7 +1286,12 @@ loanProducts:
   minNumberOfRepayments: 3
   numberOfRepayments: 6
   maxNumberOfRepayments: 12
+  repaymentEvery: 1
   repaymentFrequencyType: Monthly
+  digitsAfterDecimal: 0
+  daysInYearType: 365
+  daysInMonthType: 30
+  isInterestRecalculationEnabled: false
   minInterestRatePerPeriod: 18.0
   interestRatePerPeriod: 24.0
   maxInterestRatePerPeriod: 30.0
@@ -1403,20 +1303,19 @@ loanProducts:
   insurancePercent: 1.5
   minimumGapBetweenInstallments: 30
   allowPartialPeriodInterestCalculation: false
-  accounting:
-    fundSourceAccountId: 42
-    loanPortfolioAccountId: 51
-    receivableInterestAccountId: 52
-    receivableFeeAccountId: 53
-    receivablePenaltyAccountId: 54
-    transfersInSuspenseAccountId: 122
-    interestOnLoanAccountId: 81
-    incomeFromFeeAccountId: 82
-    incomeFromPenaltyAccountId: 83
-    writeOffAccountId: 93
-    goodwillCreditAccountId: 81
-    incomeFromRecoveryAccountId: 81
-    overpaymentLiabilityAccountId: 64
+  fundSourceAccountCode: '42'
+  loanPortfolioAccountCode: '51'
+  receivableInterestAccountCode: '52'
+  receivableFeeAccountCode: '53'
+  receivablePenaltyAccountCode: '54'
+  transfersInSuspenseAccountCode: '122'
+  interestOnLoansAccountCode: '81'
+  incomeFromFeesAccountCode: '82'
+  incomeFromPenaltiesAccountCode: '83'
+  writeOffAccountCode: '93'
+  goodwillCreditAccountCode: '93'
+  incomeFromRecoveryAccountCode: '81'
+  overpaymentLiabilityAccountCode: '64'
 - name: SME Business Loan
   shortName: SBIZ
   currencyCode: XAF
@@ -1428,7 +1327,12 @@ loanProducts:
   minNumberOfRepayments: 6
   numberOfRepayments: 12
   maxNumberOfRepayments: 24
+  repaymentEvery: 1
   repaymentFrequencyType: Monthly
+  digitsAfterDecimal: 0
+  daysInYearType: 365
+  daysInMonthType: 30
+  isInterestRecalculationEnabled: false
   minInterestRatePerPeriod: 15.0
   interestRatePerPeriod: 20.0
   maxInterestRatePerPeriod: 25.0
@@ -1441,20 +1345,19 @@ loanProducts:
   insurancePercent: 1.0
   minimumGapBetweenInstallments: 30
   allowPartialPeriodInterestCalculation: false
-  accounting:
-    fundSourceAccountId: 42
-    loanPortfolioAccountId: 51
-    receivableInterestAccountId: 52
-    receivableFeeAccountId: 53
-    receivablePenaltyAccountId: 54
-    transfersInSuspenseAccountId: 122
-    interestOnLoanAccountId: 81
-    incomeFromFeeAccountId: 82
-    incomeFromPenaltyAccountId: 83
-    writeOffAccountId: 93
-    goodwillCreditAccountId: 81
-    incomeFromRecoveryAccountId: 81
-    overpaymentLiabilityAccountId: 64
+  fundSourceAccountCode: '42'
+  loanPortfolioAccountCode: '51'
+  receivableInterestAccountCode: '52'
+  receivableFeeAccountCode: '53'
+  receivablePenaltyAccountCode: '54'
+  transfersInSuspenseAccountCode: '122'
+  interestOnLoansAccountCode: '81'
+  incomeFromFeesAccountCode: '82'
+  incomeFromPenaltiesAccountCode: '83'
+  writeOffAccountCode: '93'
+  goodwillCreditAccountCode: '93'
+  incomeFromRecoveryAccountCode: '81'
+  overpaymentLiabilityAccountCode: '64'
 - name: Agricultural Seasonal Loan
   shortName: ASEA
   currencyCode: XAF
@@ -1466,7 +1369,12 @@ loanProducts:
   minNumberOfRepayments: 3
   numberOfRepayments: 6
   maxNumberOfRepayments: 9
+  repaymentEvery: 1
   repaymentFrequencyType: Monthly
+  digitsAfterDecimal: 0
+  daysInYearType: 365
+  daysInMonthType: 30
+  isInterestRecalculationEnabled: false
   minInterestRatePerPeriod: 12.0
   interestRatePerPeriod: 18.0
   maxInterestRatePerPeriod: 22.0
@@ -1480,24 +1388,24 @@ loanProducts:
   insurancePercent: 1.5
   minimumGapBetweenInstallments: 30
   allowPartialPeriodInterestCalculation: true
-  accounting:
-    fundSourceAccountId: 42
-    loanPortfolioAccountId: 51
-    receivableInterestAccountId: 52
-    receivableFeeAccountId: 53
-    receivablePenaltyAccountId: 54
-    transfersInSuspenseAccountId: 122
-    interestOnLoanAccountId: 81
-    incomeFromFeeAccountId: 82
-    incomeFromPenaltyAccountId: 83
-    writeOffAccountId: 93
-    goodwillCreditAccountId: 81
-    incomeFromRecoveryAccountId: 81
-    overpaymentLiabilityAccountId: 64
+  fundSourceAccountCode: '42'
+  loanPortfolioAccountCode: '51'
+  receivableInterestAccountCode: '52'
+  receivableFeeAccountCode: '53'
+  receivablePenaltyAccountCode: '54'
+  transfersInSuspenseAccountCode: '122'
+  interestOnLoansAccountCode: '81'
+  incomeFromFeesAccountCode: '82'
+  incomeFromPenaltiesAccountCode: '83'
+  writeOffAccountCode: '93'
+  goodwillCreditAccountCode: '93'
+  incomeFromRecoveryAccountCode: '81'
+  overpaymentLiabilityAccountCode: '64'
 savingsProducts:
 - name: Voluntary Savings Account
   shortName: VSAV
   currencyCode: XAF
+  digitsAfterDecimal: 0
   nominalAnnualInterestRate: 3.0
   interestCompoundingPeriodType: Monthly
   interestPostingPeriodType: Monthly
@@ -1512,17 +1420,19 @@ savingsProducts:
   allowDormancyTracking: true
   daysToInactive: 180
   daysToDormancy: 365
-  accounting:
-    savingsReferenceAccountId: 42
-    savingsControlAccountId: 61
-    incomeFromFeeAccountId: 84
-    incomeFromPenaltyAccountId: 84
-    overdraftPortfolioControlAccountId: 51
-    escheatLiabilityAccountId: 61
-    transfersInSuspenseAccountId: 131
+  savingsReferenceAccountCode: '42'
+  savingsControlAccountCode: '61'
+  interestOnSavingsAccountCode: '91'
+  incomeFromFeesAccountCode: '84'
+  incomeFromPenaltiesAccountCode: '84'
+  overdraftPortfolioControlAccountCode: '51'
+  incomeFromInterestAccountCode: '81'
+  writeOffAccountCode: '93'
+  transfersInSuspenseAccountCode: '131'
 - name: Fixed Deposit Account
   shortName: FDEP
   currencyCode: XAF
+  digitsAfterDecimal: 0
   nominalAnnualInterestRate: 6.0
   interestCompoundingPeriodType: Monthly
   interestPostingPeriodType: Monthly
@@ -1536,17 +1446,19 @@ savingsProducts:
   withdrawalFeeForTransfers: false
   allowDormancyTracking: false
   lockinPeriodFrequency: 180
-  accounting:
-    savingsReferenceAccountId: 42
-    savingsControlAccountId: 62
-    incomeFromFeeAccountId: 84
-    incomeFromPenaltyAccountId: 84
-    overdraftPortfolioControlAccountId: 51
-    escheatLiabilityAccountId: 62
-    transfersInSuspenseAccountId: 131
+  savingsReferenceAccountCode: '42'
+  savingsControlAccountCode: '62'
+  interestOnSavingsAccountCode: '91'
+  incomeFromFeesAccountCode: '84'
+  incomeFromPenaltiesAccountCode: '84'
+  overdraftPortfolioControlAccountCode: '51'
+  incomeFromInterestAccountCode: '81'
+  writeOffAccountCode: '93'
+  transfersInSuspenseAccountCode: '131'
 - name: Mandatory Group Savings
   shortName: MGRP
   currencyCode: XAF
+  digitsAfterDecimal: 0
   nominalAnnualInterestRate: 2.0
   interestCompoundingPeriodType: Monthly
   interestPostingPeriodType: Monthly
@@ -1559,14 +1471,15 @@ savingsProducts:
   overdraftAllowed: false
   withdrawalFeeForTransfers: false
   allowDormancyTracking: false
-  accounting:
-    savingsReferenceAccountId: 42
-    savingsControlAccountId: 63
-    incomeFromFeeAccountId: 84
-    incomeFromPenaltyAccountId: 84
-    overdraftPortfolioControlAccountId: 51
-    escheatLiabilityAccountId: 63
-    transfersInSuspenseAccountId: 131
+  savingsReferenceAccountCode: '42'
+  savingsControlAccountCode: '63'
+  interestOnSavingsAccountCode: '91'
+  incomeFromFeesAccountCode: '84'
+  incomeFromPenaltiesAccountCode: '84'
+  overdraftPortfolioControlAccountCode: '51'
+  incomeFromInterestAccountCode: '81'
+  writeOffAccountCode: '93'
+  transfersInSuspenseAccountCode: '131'
 delinquencyBuckets:
 - name: Early Stage Delinquency
   classification: Early Stage
@@ -1658,6 +1571,7 @@ clients:
   emailAddress: a.ngono@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Douala
 - firstName: Ibrahim
   lastName: Mahamat
@@ -1677,6 +1591,7 @@ clients:
   emailAddress: i.mahamat@yahoo.fr
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Douala
 - firstName: Marie Claire
   lastName: Tchouta
@@ -1696,6 +1611,7 @@ clients:
   emailAddress: m.tchouta@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Yaounde
 - firstName: Jean Paul
   lastName: Kamdem
@@ -1715,6 +1631,7 @@ clients:
   emailAddress: jp.kamdem@yahoo.fr
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Bafoussam
 - firstName: Claudine
   lastName: Ekotto
@@ -1734,6 +1651,7 @@ clients:
   emailAddress: c.ekotto@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Douala
 - firstName: Patrick
   lastName: Ndongo
@@ -1753,6 +1671,7 @@ clients:
   emailAddress: p.ndongo@hotmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Yaounde
 - firstName: Beatrice
   lastName: Nana
@@ -1772,6 +1691,7 @@ clients:
   emailAddress: b.nana@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Bamenda
 - firstName: Samuel
   lastName: Ebong
@@ -1791,6 +1711,7 @@ clients:
   emailAddress: s.ebong@yahoo.fr
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Douala
 - firstName: Bernadette
   lastName: Fotso
@@ -1810,6 +1731,7 @@ clients:
   emailAddress: b.fotso@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Bafoussam
 - firstName: Francois
   lastName: Manga
@@ -1829,6 +1751,7 @@ clients:
   emailAddress: f.manga@hotmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Yaounde
 - firstName: Agnes
   lastName: Fon
@@ -1848,6 +1771,7 @@ clients:
   emailAddress: a.fon@gmail.com
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Bamenda
 - firstName: Robert
   lastName: Essomba
@@ -1867,6 +1791,7 @@ clients:
   emailAddress: r.essomba@yahoo.fr
   clientType: Individual
   clientClassification: Active
+  legalFormId: 1
   city: Douala
 groups:
 - name: Femmes Solidaires Douala
@@ -1876,11 +1801,11 @@ groups:
   activationDate:
   - 2024
   - 1
-  - 15
+  - 25
   submittedOnDate:
   - 2024
   - 1
-  - 10
+  - 20
   staffName: loan.douala
   centerName: Centre Commercial Douala
   clientExternalIds:
@@ -1894,11 +1819,11 @@ groups:
   activationDate:
   - 2024
   - 1
-  - 22
+  - 25
   submittedOnDate:
   - 2024
   - 1
-  - 18
+  - 20
   staffName: loan.yaounde
   centerName: Centre Melen Yaounde
   clientExternalIds:
@@ -1912,11 +1837,11 @@ groups:
   activationDate:
   - 2024
   - 2
-  - 1
+  - 10
   submittedOnDate:
   - 2024
-  - 1
-  - 25
+  - 2
+  - 5
   staffName: loan.bafoussam
   clientExternalIds:
   - CLI-004
@@ -1928,11 +1853,11 @@ groups:
   activationDate:
   - 2024
   - 2
-  - 10
+  - 20
   submittedOnDate:
   - 2024
   - 2
-  - 5
+  - 16
   staffName: loan.bamenda
   clientExternalIds:
   - CLI-007
@@ -1944,11 +1869,11 @@ groups:
   activationDate:
   - 2024
   - 2
-  - 15
+  - 20
   submittedOnDate:
   - 2024
   - 2
-  - 12
+  - 16
   staffName: loan.douala
   centerName: Centre Commercial Douala
   clientExternalIds:
@@ -1962,11 +1887,11 @@ centers:
   activationDate:
   - 2024
   - 1
-  - 10
+  - 20
   submittedOnDate:
   - 2024
   - 1
-  - 5
+  - 16
   staffName: loan.douala
 - name: Centre Melen Yaounde
   officeName: Yaounde Branch
@@ -1975,11 +1900,11 @@ centers:
   activationDate:
   - 2024
   - 1
-  - 15
+  - 20
   submittedOnDate:
   - 2024
   - 1
-  - 12
+  - 16
   staffName: loan.yaounde
 - name: Centre Tamdja Bafoussam
   officeName: Bafoussam Branch
@@ -1987,10 +1912,10 @@ centers:
   externalId: CTR-003
   activationDate:
   - 2024
-  - 1
-  - 20
+  - 2
+  - 5
   submittedOnDate:
   - 2024
-  - 1
-  - 18
+  - 2
+  - 2
   staffName: loan.bafoussam

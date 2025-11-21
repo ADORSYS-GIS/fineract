@@ -165,8 +165,21 @@ public class LoanProductLoader {
             "amortizationType",
             FineractEnumMapper.mapAmortizationType(loanProduct.getAmortizationType()));
 
-    // Transaction processing strategy (mifos-standard-strategy is most common)
-    builder.put("transactionProcessingStrategyId", 1);
+    // Days in year/month type (MANDATORY for Fineract API)
+    Integer daysInYearType = loanProduct.getDaysInYearType();
+    builder.put("daysInYearType", daysInYearType != null ? daysInYearType : 365);
+
+    Integer daysInMonthType = loanProduct.getDaysInMonthType();
+    builder.put("daysInMonthType", daysInMonthType != null ? daysInMonthType : 30);
+
+    // Interest recalculation enabled (MANDATORY)
+    Boolean isInterestRecalcEnabled = loanProduct.getIsInterestRecalculationEnabled();
+    builder.put(
+        "isInterestRecalculationEnabled",
+        isInterestRecalcEnabled != null ? isInterestRecalcEnabled : false);
+
+    // Transaction processing strategy (use code instead of ID for Fineract 1.9+)
+    builder.put("transactionProcessingStrategyCode", "mifos-standard-strategy");
 
     // Resolve charge references
     if (loanProduct.getChargeNames() != null && !loanProduct.getChargeNames().isEmpty()) {
@@ -212,7 +225,7 @@ public class LoanProductLoader {
   private void addAccountingMappings(
       RequestBuilder builder, LoanProduct loanProduct, ImportContext context) {
 
-    // Resolve all GL account references
+    // Resolve all GL account references - MANDATORY for ACCRUAL accounting
     if (loanProduct.getFundSourceAccountCode() != null) {
       Long accountId = context.resolveEntityId("glAccount", loanProduct.getFundSourceAccountCode());
       builder.putIfNotNull("fundSourceAccountId", accountId);
@@ -224,9 +237,13 @@ public class LoanProductLoader {
       builder.putIfNotNull("loanPortfolioAccountId", accountId);
     }
 
-    if (loanProduct.getInterestOnLoansAccountCode() != null) {
-      Long accountId =
-          context.resolveEntityId("glAccount", loanProduct.getInterestOnLoansAccountCode());
+    // Interest on loans (handle both naming conventions)
+    String interestOnLoansCode = loanProduct.getInterestOnLoansAccountCode();
+    if (interestOnLoansCode == null) {
+      interestOnLoansCode = loanProduct.getInterestOnLoansAccountCodeAlias();
+    }
+    if (interestOnLoansCode != null) {
+      Long accountId = context.resolveEntityId("glAccount", interestOnLoansCode);
       builder.putIfNotNull("interestOnLoanAccountId", accountId);
     }
 
@@ -245,6 +262,51 @@ public class LoanProductLoader {
     if (loanProduct.getWriteOffAccountCode() != null) {
       Long accountId = context.resolveEntityId("glAccount", loanProduct.getWriteOffAccountCode());
       builder.putIfNotNull("writeOffAccountId", accountId);
+    }
+
+    // Transfer in suspense (MANDATORY for ACCRUAL)
+    if (loanProduct.getTransfersInSuspenseAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getTransfersInSuspenseAccountCode());
+      builder.putIfNotNull("transfersInSuspenseAccountId", accountId);
+    }
+
+    // Receivables (MANDATORY for ACCRUAL_PERIODIC)
+    if (loanProduct.getReceivableInterestAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getReceivableInterestAccountCode());
+      builder.putIfNotNull("receivableInterestAccountId", accountId);
+    }
+
+    if (loanProduct.getReceivableFeeAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getReceivableFeeAccountCode());
+      builder.putIfNotNull("receivableFeeAccountId", accountId);
+    }
+
+    if (loanProduct.getReceivablePenaltyAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getReceivablePenaltyAccountCode());
+      builder.putIfNotNull("receivablePenaltyAccountId", accountId);
+    }
+
+    // Other accounting fields (MANDATORY for full accounting)
+    if (loanProduct.getIncomeFromRecoveryAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getIncomeFromRecoveryAccountCode());
+      builder.putIfNotNull("incomeFromRecoveryAccountId", accountId);
+    }
+
+    if (loanProduct.getOverpaymentLiabilityAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getOverpaymentLiabilityAccountCode());
+      builder.putIfNotNull("overpaymentLiabilityAccountId", accountId);
+    }
+
+    if (loanProduct.getGoodwillCreditAccountCode() != null) {
+      Long accountId =
+          context.resolveEntityId("glAccount", loanProduct.getGoodwillCreditAccountCode());
+      builder.putIfNotNull("goodwillCreditAccountId", accountId);
     }
   }
 }

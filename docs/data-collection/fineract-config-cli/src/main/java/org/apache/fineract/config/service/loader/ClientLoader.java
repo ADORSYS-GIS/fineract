@@ -194,12 +194,31 @@ public class ClientLoader {
       builder.put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
     }
 
+    // Resolve gender from code values (Gender code)
     if (client.getGender() != null) {
-      builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
+      // Try to resolve from cached code values first (e.g., "Gender:Male" or "Gender:Female")
+      Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+      if (genderId != null) {
+        builder.put("genderId", genderId);
+      } else {
+        // Fall back to enum mapper if not found in cache
+        log.warn(
+            "Gender code value '{}' not found in cache, falling back to hardcoded mapping",
+            client.getGender());
+        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
+      }
     }
 
     builder.putIfNotNull("mobileNo", client.getMobileNo());
     builder.putIfNotNull("emailAddress", client.getEmailAddress());
+
+    // Legal form is required by Fineract API: 1 = Person, 2 = Entity
+    if (client.getLegalFormId() != null) {
+      builder.put("legalFormId", client.getLegalFormId());
+    } else {
+      // Default to Person (Individual) if not specified
+      builder.put("legalFormId", 1);
+    }
 
     // Active flag determines if we activate immediately or just submit
     builder.put("active", Boolean.TRUE.equals(client.getActive()));
@@ -264,7 +283,13 @@ public class ClientLoader {
       }
 
       if (client.getGender() != null) {
-        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
+        // Resolve gender from code values cache first
+        Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+        if (genderId != null) {
+          builder.put("genderId", genderId);
+        } else {
+          log.warn("Gender '{}' not found in cache for active client update", client.getGender());
+        }
       }
 
       // Note: savingsProductId and clientTypeId would go here if supported in Client model
@@ -299,7 +324,13 @@ public class ClientLoader {
       }
 
       if (client.getGender() != null) {
-        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
+        // Resolve gender from code values cache first
+        Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+        if (genderId != null) {
+          builder.put("genderId", genderId);
+        } else {
+          log.warn("Gender '{}' not found in cache for client update", client.getGender());
+        }
       }
 
       builder.putIfNotNull("mobileNo", client.getMobileNo());

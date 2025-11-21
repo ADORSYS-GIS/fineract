@@ -109,9 +109,26 @@ class ExcelToYamlConverter:
                     'name': row['config_name'],
                     'enabled': self._parse_boolean(row['enabled'])
                 }
-                # Add value field if present
-                if 'value' in row and row['value'] is not None and not pd.isna(row['value']):
-                    config_item['value'] = str(row['value'])
+                # Handle value based on value_type
+                value_type = row.get('value_type', 'boolean') if 'value_type' in row else 'boolean'
+                if pd.isna(value_type):
+                    value_type = 'boolean'
+
+                if value_type == 'numeric':
+                    # Numeric configs need a Long value
+                    if 'value' in row and row['value'] is not None and not pd.isna(row['value']):
+                        config_item['value'] = int(float(row['value']))
+                elif value_type == 'string':
+                    # String configs use stringValue
+                    if 'value' in row and row['value'] is not None and not pd.isna(row['value']):
+                        config_item['stringValue'] = str(row['value'])
+                elif value_type == 'date':
+                    # Date configs use dateValue
+                    if 'value' in row and row['value'] is not None and not pd.isna(row['value']):
+                        config_item['dateValue'] = str(row['value'])
+                # For 'boolean' type, we only use enabled field - no value field needed
+                # This is the default behavior for toggle configs
+
                 global_config.append(config_item)
             system_config['globalConfig'] = global_config
             logger.info(f"  ✓ Global Config: {len(global_config)} configurations")
@@ -149,23 +166,28 @@ class ExcelToYamlConverter:
         df = self._read_sheet('Account Number Preferences')
         if not df.empty:
             preferences = []
-            # Prefix type mapping
-            prefix_type_map = {
-                'Office Short Name': 2,
-                'Product Short Name': 3,
-                'Client Short Name': 3
-            }
             for _, row in df.iterrows():
                 # Use entity_type or account_type
                 entity_type = row.get('entity_type') or row.get('account_type')
                 if entity_type and not pd.isna(entity_type):
-                    prefix_type = row.get('prefix_type')
-                    prefix_type_num = 2  # Default
-                    if prefix_type and not pd.isna(prefix_type):
-                        if isinstance(prefix_type, str):
-                            prefix_type_num = prefix_type_map.get(prefix_type, 2)
-                        else:
-                            prefix_type_num = int(prefix_type)
+                    # Use prefix_type_id if available, otherwise fall back to mapping
+                    prefix_type_id = row.get('prefix_type_id')
+                    if prefix_type_id and not pd.isna(prefix_type_id):
+                        prefix_type_num = int(prefix_type_id)
+                    else:
+                        # Legacy mapping for backwards compatibility
+                        prefix_type = row.get('prefix_type')
+                        prefix_type_map = {
+                            'Office Name': 1,
+                            'Office Short Name': 1,  # fallback
+                            'Client Type': 101,
+                            'Loan Product Short Name': 201,
+                            'Savings Product Short Name': 301,
+                            'Custom Prefix': 401,
+                        }
+                        prefix_type_num = 1  # Default to Office Name
+                        if prefix_type and not pd.isna(prefix_type):
+                            prefix_type_num = prefix_type_map.get(prefix_type, 1)
 
                     preferences.append({
                         'accountType': entity_type.upper(),
@@ -236,23 +258,39 @@ class ExcelToYamlConverter:
                     # Create table entry if it doesn't exist
                     if table_name not in tables_dict:
                         # Map entity_type to appTableName
-                        entity_type = row.get('entity_type', 'Client')
+                        entity_type = row.get('entity_type', 'm_client')
                         entity_map = {
                             'Client': 'm_client',
+                            'm_client': 'm_client',
                             'Loan': 'm_loan',
+                            'm_loan': 'm_loan',
                             'Savings': 'm_savings_account',
+                            'm_savings_account': 'm_savings_account',
                             'Group': 'm_group',
+                            'm_group': 'm_group',
                             'Center': 'm_center',
-                            'Office': 'm_office'
+                            'm_center': 'm_center',
+                            'Office': 'm_office',
+                            'm_office': 'm_office'
                         }
                         app_table_name = entity_map.get(entity_type, 'm_client')
 
-                        tables_dict[table_name] = {
+                        table_entry = {
                             'name': table_name,
                             'appTableName': app_table_name,
                             'multiRow': False,  # Default to False
                             'columns': []
                         }
+
+                        # Add entitySubType for m_client tables (required by Fineract API)
+                        entity_sub_type = row.get('entity_sub_type')
+                        if entity_sub_type and not pd.isna(entity_sub_type):
+                            table_entry['entitySubType'] = str(entity_sub_type).upper()
+                        elif app_table_name == 'm_client':
+                            # Default to PERSON for client tables
+                            table_entry['entitySubType'] = 'PERSON'
+
+                        tables_dict[table_name] = table_entry
 
                     # Add column/field definition
                     field_name = row.get('field_name')
@@ -789,9 +827,47 @@ class ExcelToYamlConverter:
                 if row.get('number_of_repayments_max') and not pd.isna(row.get('number_of_repayments_max')):
                     product['maxNumberOfRepayments'] = int(row['number_of_repayments_max'])
 
-                # Repayment frequency
+                # Repayment configuration (MANDATORY)
+                if row.get('repayment_every') and not pd.isna(row.get('repayment_every')):
+                    product['repaymentEvery'] = int(row['repayment_every'])
+                else:
+                    product['repaymentEvery'] = 1  # Default to 1
+
                 if row.get('repayment_frequency') and not pd.isna(row.get('repayment_frequency')):
                     product['repaymentFrequencyType'] = row['repayment_frequency']
+
+                # Digits after decimal (MANDATORY)
+                if row.get('digits_after_decimal') is not None and not pd.isna(row.get('digits_after_decimal')):
+                    product['digitsAfterDecimal'] = int(row['digits_after_decimal'])
+                else:
+                    product['digitsAfterDecimal'] = 0  # Default for XAF
+
+                # Days in year/month type (MANDATORY)
+                if row.get('days_in_year_type') and not pd.isna(row.get('days_in_year_type')):
+                    product['daysInYearType'] = int(row['days_in_year_type'])
+                else:
+                    product['daysInYearType'] = 365  # Default to 365
+
+                if row.get('days_in_month_type') and not pd.isna(row.get('days_in_month_type')):
+                    product['daysInMonthType'] = int(row['days_in_month_type'])
+                else:
+                    product['daysInMonthType'] = 30  # Default to 30
+
+                # Interest recalculation (MANDATORY)
+                if row.get('is_interest_recalculation_enabled') and not pd.isna(row.get('is_interest_recalculation_enabled')):
+                    product['isInterestRecalculationEnabled'] = self._parse_boolean(row['is_interest_recalculation_enabled'])
+                else:
+                    product['isInterestRecalculationEnabled'] = False  # Default to false
+
+                # Accounting type
+                if row.get('accounting_type') and not pd.isna(row.get('accounting_type')):
+                    accounting_type = row['accounting_type'].lower()
+                    if 'accrual' in accounting_type:
+                        product['accountingRule'] = 'ACCRUAL_PERIODIC'
+                    elif 'cash' in accounting_type:
+                        product['accountingRule'] = 'CASH_BASED'
+                    else:
+                        product['accountingRule'] = 'NONE'
 
                 # Interest rate configuration (CRITICAL)
                 if row.get('interest_rate_min') and not pd.isna(row.get('interest_rate_min')):
@@ -849,6 +925,7 @@ class ExcelToYamlConverter:
                     'name': row['product_name'],
                     'shortName': row['short_name'],
                     'currencyCode': row.get('currency') or row.get('currency_code', 'XAF'),
+                    'digitsAfterDecimal': int(row.get('digits_after_decimal', 0)) if row.get('digits_after_decimal') is not None and not pd.isna(row.get('digits_after_decimal')) else 0,
                     'nominalAnnualInterestRate': float(row.get('nominal_annual_interest_rate', 0)) if row.get('nominal_annual_interest_rate') and not pd.isna(row['nominal_annual_interest_rate']) else 0,
                     'interestCompoundingPeriodType': row.get('interest_compounding_period') or row.get('compounding_period', 'MONTHLY'),
                     'interestPostingPeriodType': row.get('interest_posting_period') or row.get('posting_period', 'MONTHLY'),
@@ -856,6 +933,16 @@ class ExcelToYamlConverter:
                     'interestCalculationDaysInYearType': row.get('interest_calculation_days_in_year') or row.get('days_in_year', 'DAYS_365'),
                     'accountingRule': 'NONE'  # Default, accounting configured separately
                 }
+
+                # Accounting type
+                if row.get('accounting_type') and not pd.isna(row.get('accounting_type')):
+                    accounting_type = row['accounting_type'].lower()
+                    if 'cash' in accounting_type:
+                        product['accountingRule'] = 'CASH_BASED'
+                    elif 'accrual' in accounting_type:
+                        product['accountingRule'] = 'ACCRUAL_PERIODIC'
+                    else:
+                        product['accountingRule'] = 'NONE'
 
                 # Optional fields
                 if row.get('description') and not pd.isna(row.get('description')):
@@ -1096,28 +1183,30 @@ class ExcelToYamlConverter:
                 gl_code = row.get('gl_code')
 
                 if mapping_type and not pd.isna(mapping_type) and gl_code and not pd.isna(gl_code):
-                    # Map the accounting types to Fineract field names
+                    # Map the accounting types to Java model field names using AccountCode suffix
+                    # The loader will resolve these GL codes to IDs via context
                     mapping_field_map = {
-                        'Fund Source': 'fundSourceAccountId',
-                        'Loan Portfolio': 'loanPortfolioAccountId',
-                        'Interest Receivable': 'receivableInterestAccountId',
-                        'Fees Receivable': 'receivableFeeAccountId',
-                        'Penalties Receivable': 'receivablePenaltyAccountId',
-                        'Transfer in Suspense': 'transfersInSuspenseAccountId',
-                        'Interest Income': 'interestOnLoanAccountId',
-                        'Fee Income': 'incomeFromFeeAccountId',
-                        'Penalty Income': 'incomeFromPenaltyAccountId',
-                        'Losses Written Off': 'writeOffAccountId',
-                        'Goodwill Credit': 'goodwillCreditAccountId',
-                        'Income from Recovery': 'incomeFromRecoveryAccountId',
-                        'Over Payment Liability': 'overpaymentLiabilityAccountId'
+                        'Fund Source': 'fundSourceAccountCode',
+                        'Loan Portfolio': 'loanPortfolioAccountCode',
+                        'Interest Receivable': 'receivableInterestAccountCode',
+                        'Fees Receivable': 'receivableFeeAccountCode',
+                        'Penalties Receivable': 'receivablePenaltyAccountCode',
+                        'Transfer in Suspense': 'transfersInSuspenseAccountCode',
+                        'Interest Income': 'interestOnLoansAccountCode',  # Match Java model
+                        'Fee Income': 'incomeFromFeesAccountCode',        # Match Java model (with 's')
+                        'Penalty Income': 'incomeFromPenaltiesAccountCode', # Match Java model (with 's')
+                        'Losses Written Off': 'writeOffAccountCode',
+                        'Goodwill Credit': 'goodwillCreditAccountCode',
+                        'Income from Recovery': 'incomeFromRecoveryAccountCode',
+                        'Over Payment Liability': 'overpaymentLiabilityAccountCode'
                     }
 
                     field_name = mapping_field_map.get(mapping_type)
                     if field_name:
-                        mappings_by_product[product_key][field_name] = int(gl_code)
+                        # Store as string (GL code) for resolution by the loader
+                        mappings_by_product[product_key][field_name] = str(int(gl_code))
 
-            # Merge mappings into loan products
+            # Merge mappings into loan products (directly on product, not nested)
             if 'loanProducts' in self.config and mappings_by_product:
                 for product in self.config['loanProducts']:
                     short_name = product.get('shortName')
@@ -1125,7 +1214,8 @@ class ExcelToYamlConverter:
                         accounting = mappings_by_product[short_name]
                         if accounting:  # Only add if there are mappings
                             product['accountingRule'] = 'ACCRUAL_PERIODIC'
-                            product['accounting'] = accounting
+                            # Merge accounting fields directly onto product
+                            product.update(accounting)
 
                 logger.info(f"  ✓ Loan Product Accounting: {len(mappings_by_product)} products mapped")
 
@@ -1146,26 +1236,32 @@ class ExcelToYamlConverter:
                 gl_code = row.get('gl_code')
 
                 if mapping_type and not pd.isna(mapping_type) and gl_code and not pd.isna(gl_code):
-                    # Map the accounting types to Fineract field names
+                    # Map the accounting types to Java model field names (using AccountCode suffix)
+                    # The loader resolves these codes to IDs via context
+                    # NOTE: escheatLiabilityAccountId is NOT supported by Fineract API
                     mapping_field_map = {
-                        'Savings Control': 'savingsControlAccountId',
-                        'Savings Reference': 'savingsReferenceAccountId',
-                        'Transfer in Suspense': 'transfersInSuspenseAccountId',
-                        'Interest Payable': 'interestOnSavingsAccountId',
-                        'Escheat Liability': 'escheatLiabilityAccountId',
-                        'Income from Fees': 'incomeFromFeeAccountId',
-                        'Income from Penalties': 'incomeFromPenaltyAccountId',
-                        'Overdraft Portfolio Control': 'overdraftPortfolioControlAccountId',
-                        'Overdraft Interest Income': 'incomeFromInterestAccountId',
-                        'Overdraft Losses Written Off': 'writeOffAccountId',
-                        'Overdraft Income from Recovery': 'incomeFromRecoveryAccountId'
+                        'Savings Control': 'savingsControlAccountCode',
+                        'Savings Reference': 'savingsReferenceAccountCode',
+                        'Transfer in Suspense': 'transfersInSuspenseAccountCode',
+                        'Interest Payable': 'interestOnSavingsAccountCode',
+                        'Interest on Savings': 'interestOnSavingsAccountCode',  # Alias
+                        # 'Escheat Liability': excluded - not supported by Fineract API
+                        'Income from Fees': 'incomeFromFeesAccountCode',
+                        'Income from Penalties': 'incomeFromPenaltiesAccountCode',
+                        'Overdraft Portfolio Control': 'overdraftPortfolioControlAccountCode',
+                        'Overdraft Interest Income': 'incomeFromInterestAccountCode',
+                        'Income from Interest': 'incomeFromInterestAccountCode',  # Alias
+                        'Overdraft Losses Written Off': 'writeOffAccountCode',
+                        'Losses Written Off': 'writeOffAccountCode',  # Alias
+                        'Overdraft Income from Recovery': 'incomeFromRecoveryAccountCode'
                     }
 
                     field_name = mapping_field_map.get(mapping_type)
                     if field_name:
-                        mappings_by_product[product_key][field_name] = int(gl_code)
+                        # Store as string (GL code) for resolution by loader
+                        mappings_by_product[product_key][field_name] = str(int(gl_code))
 
-            # Merge mappings into savings products
+            # Merge mappings into savings products (directly on product, not nested)
             if 'savingsProducts' in self.config and mappings_by_product:
                 for product in self.config['savingsProducts']:
                     short_name = product.get('shortName')
@@ -1173,7 +1269,8 @@ class ExcelToYamlConverter:
                         accounting = mappings_by_product[short_name]
                         if accounting:  # Only add if there are mappings
                             product['accountingRule'] = 'CASH_BASED'
-                            product['accounting'] = accounting
+                            # Merge accounting fields directly into product (not nested)
+                            product.update(accounting)
 
                 logger.info(f"  ✓ Savings Product Accounting: {len(mappings_by_product)} products mapped")
 
@@ -1245,6 +1342,16 @@ class ExcelToYamlConverter:
                     client['clientClassification'] = row['client_classification']
                 if row.get('legal_form') and not pd.isna(row.get('legal_form')):
                     client['legalForm'] = row['legal_form']
+                # legalFormId is required by Fineract API: 1 = Person, 2 = Entity
+                if row.get('legal_form_id') and not pd.isna(row.get('legal_form_id')):
+                    client['legalFormId'] = int(row['legal_form_id'])
+                elif row.get('client_type') and not pd.isna(row.get('client_type')):
+                    # Infer from client_type if legal_form_id not provided
+                    client_type = str(row['client_type']).lower()
+                    client['legalFormId'] = 2 if client_type in ['corporate', 'entity', 'business'] else 1
+                else:
+                    # Default to Person (Individual)
+                    client['legalFormId'] = 1
                 if row.get('staff_name') and not pd.isna(row.get('staff_name')):
                     client['staffName'] = row['staff_name']
                 if row.get('submitted_on_date'):
