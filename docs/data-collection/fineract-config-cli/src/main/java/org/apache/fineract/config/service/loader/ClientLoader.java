@@ -76,11 +76,26 @@ public class ClientLoader {
     // Check if client already exists by external ID
     if (client.getExternalId() != null) {
       try {
-        existingClient =
+        // Search endpoint returns a paged response with pageItems array
+        Map<String, Object> searchResult =
             apiClient.get("/api/v1/clients?externalId=" + client.getExternalId(), Map.class);
 
-        if (existingClient != null && existingClient.containsKey("id")) {
+        // Check if result is a paged response
+        if (searchResult != null && searchResult.containsKey("pageItems")) {
+          @SuppressWarnings("unchecked")
+          List<Map<String, Object>> pageItems =
+              (List<Map<String, Object>>) searchResult.get("pageItems");
+          if (pageItems != null && !pageItems.isEmpty()) {
+            existingClient = pageItems.get(0);
+            clientId = ((Number) existingClient.get("id")).longValue();
+          }
+        } else if (searchResult != null && searchResult.containsKey("id")) {
+          // Direct client object returned
+          existingClient = searchResult;
           clientId = ((Number) existingClient.get("id")).longValue();
+        }
+
+        if (clientId != null) {
           log.debug("Client already exists: {} (ID: {})", client.getExternalId(), clientId);
         }
       } catch (Exception ex) {

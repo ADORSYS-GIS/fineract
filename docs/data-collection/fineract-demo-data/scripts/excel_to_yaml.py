@@ -105,10 +105,14 @@ class ExcelToYamlConverter:
         if not df.empty:
             global_config = []
             for _, row in df.iterrows():
-                global_config.append({
+                config_item = {
                     'name': row['config_name'],
                     'enabled': self._parse_boolean(row['enabled'])
-                })
+                }
+                # Add value field if present
+                if 'value' in row and row['value'] is not None and not pd.isna(row['value']):
+                    config_item['value'] = str(row['value'])
+                global_config.append(config_item)
             system_config['globalConfig'] = global_config
             logger.info(f"  ✓ Global Config: {len(global_config)} configurations")
 

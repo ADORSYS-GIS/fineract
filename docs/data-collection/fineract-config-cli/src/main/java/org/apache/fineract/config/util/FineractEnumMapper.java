@@ -100,14 +100,17 @@ public class FineractEnumMapper {
 
     return switch (value.toUpperCase().trim()) {
       case "DISBURSEMENT" -> 1;
-      case "SPECIFIED_DUE_DATE" -> 2;
-      case "INSTALMENT_FEE", "INSTALLMENT_FEE" -> 3;
-      case "OVERDUE_INSTALLMENT", "OVERDUE_INSTALMENT" -> 4;
-      case "SAVINGS_ACTIVATION" -> 5;
-      case "WITHDRAWAL_FEE" -> 6;
-      case "ANNUAL_FEE" -> 7;
-      case "MONTHLY_FEE" -> 8;
-      case "WEEKLY_FEE" -> 9;
+      case "SPECIFIED_DUE_DATE", "SPECIFIED DUE DATE" -> 2;
+      case "INSTALMENT_FEE", "INSTALLMENT_FEE", "INSTALLMENT FEE", "INSTALMENT FEE" -> 3;
+      case "OVERDUE_INSTALLMENT",
+          "OVERDUE_INSTALMENT",
+          "OVERDUE INSTALLMENT",
+          "OVERDUE INSTALMENT" -> 4;
+      case "SAVINGS_ACTIVATION", "SAVINGS ACTIVATION" -> 5;
+      case "WITHDRAWAL_FEE", "WITHDRAWAL FEE" -> 6;
+      case "ANNUAL_FEE", "ANNUAL FEE" -> 7;
+      case "MONTHLY_FEE", "MONTHLY FEE" -> 8;
+      case "WEEKLY_FEE", "WEEKLY FEE" -> 9;
       default -> {
         log.warn("Unknown ChargeTimeType value: '{}', defaulting to DISBURSEMENT (1)", value);
         yield 1;
@@ -145,10 +148,10 @@ public class FineractEnumMapper {
 
     return switch (value.toUpperCase().trim()) {
       case "FLAT" -> 1;
-      case "PERCENT_OF_AMOUNT" -> 2;
-      case "PERCENT_OF_AMOUNT_AND_INTEREST" -> 3;
-      case "PERCENT_OF_INTEREST" -> 4;
-      case "PERCENT_OF_DISBURSEMENT_AMOUNT" -> 5;
+      case "PERCENT_OF_AMOUNT", "PERCENTAGE OF AMOUNT" -> 2;
+      case "PERCENT_OF_AMOUNT_AND_INTEREST", "PERCENTAGE OF AMOUNT AND INTEREST" -> 3;
+      case "PERCENT_OF_INTEREST", "PERCENTAGE OF INTEREST" -> 4;
+      case "PERCENT_OF_DISBURSEMENT_AMOUNT", "PERCENTAGE OF DISBURSEMENT AMOUNT" -> 5;
       default -> {
         log.warn("Unknown ChargeCalculationType value: '{}', defaulting to FLAT (1)", value);
         yield 1;

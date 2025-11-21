@@ -76,11 +76,26 @@ public class GroupLoader {
     // Check if group already exists by external ID
     if (group.getExternalId() != null) {
       try {
-        existingGroup =
+        // Search endpoint returns a paged response with pageItems array
+        Map<String, Object> searchResult =
             apiClient.get("/api/v1/groups?externalId=" + group.getExternalId(), Map.class);
 
-        if (existingGroup != null && existingGroup.containsKey("id")) {
+        // Check if result is a paged response
+        if (searchResult != null && searchResult.containsKey("pageItems")) {
+          @SuppressWarnings("unchecked")
+          List<Map<String, Object>> pageItems =
+              (List<Map<String, Object>>) searchResult.get("pageItems");
+          if (pageItems != null && !pageItems.isEmpty()) {
+            existingGroup = pageItems.get(0);
+            groupId = ((Number) existingGroup.get("id")).longValue();
+          }
+        } else if (searchResult != null && searchResult.containsKey("id")) {
+          // Direct group object returned
+          existingGroup = searchResult;
           groupId = ((Number) existingGroup.get("id")).longValue();
+        }
+
+        if (groupId != null) {
           log.debug("Group already exists: {} (ID: {})", group.getName(), groupId);
         }
       } catch (Exception ex) {

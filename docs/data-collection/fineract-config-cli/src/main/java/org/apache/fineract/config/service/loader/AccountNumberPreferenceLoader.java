@@ -64,14 +64,17 @@ public class AccountNumberPreferenceLoader {
       AccountNumberPreference preference, ImportContext context, ImportResult result) {
     log.debug("Loading account number preference for: {}", preference.getAccountType());
 
+    Integer targetAccountTypeId = convertAccountTypeToId(preference.getAccountType());
+
     // Get existing preferences
     List<Map<String, Object>> existingPreferences =
         apiClient.get("/api/v1/accountnumberformats", List.class);
 
     // Find preference for this account type
+    // API returns accountType as either: {id: 1, value: "Client"} or just the integer 1
     Map<String, Object> existingPreference =
         existingPreferences.stream()
-            .filter(p -> preference.getAccountType().equals(p.get("accountType")))
+            .filter(p -> matchesAccountType(p.get("accountType"), targetAccountTypeId))
             .findFirst()
             .orElse(null);
 
@@ -98,6 +101,51 @@ public class AccountNumberPreferenceLoader {
           preference.getPrefixType());
       result.recordEntity("accountNumberPreference", ImportResult.EntityAction.UPDATED);
     }
+  }
+
+  /**
+   * Checks if API-returned accountType matches the target ID.
+   *
+   * <p>API may return accountType as: - An integer (1, 2, 3, etc.) - An object {id: 1, value:
+   * "Client"} - A string "1" or "CLIENT"
+   *
+   * @param apiAccountType the accountType from API response
+   * @param targetId the target account type ID
+   * @return true if matches
+   */
+  @SuppressWarnings("unchecked")
+  private boolean matchesAccountType(Object apiAccountType, Integer targetId) {
+    if (apiAccountType == null || targetId == null) {
+      return false;
+    }
+
+    // If it's a map (object like {id: 1, value: "Client"})
+    if (apiAccountType instanceof Map) {
+      Map<String, Object> typeMap = (Map<String, Object>) apiAccountType;
+      Object idValue = typeMap.get("id");
+      if (idValue instanceof Number) {
+        return ((Number) idValue).intValue() == targetId;
+      }
+    }
+
+    // If it's a number
+    if (apiAccountType instanceof Number) {
+      return ((Number) apiAccountType).intValue() == targetId;
+    }
+
+    // If it's a string
+    if (apiAccountType instanceof String) {
+      String strValue = (String) apiAccountType;
+      try {
+        return Integer.parseInt(strValue) == targetId;
+      } catch (NumberFormatException e) {
+        // Try to match by name
+        return convertAccountTypeToId(strValue) != null
+            && convertAccountTypeToId(strValue).equals(targetId);
+      }
+    }
+
+    return false;
   }
 
   /**

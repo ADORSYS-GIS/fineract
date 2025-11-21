@@ -75,11 +75,26 @@ public class CenterLoader {
     // Check if center already exists by external ID
     if (center.getExternalId() != null) {
       try {
-        existingCenter =
+        // Search endpoint returns a paged response with pageItems array
+        Map<String, Object> searchResult =
             apiClient.get("/api/v1/centers?externalId=" + center.getExternalId(), Map.class);
 
-        if (existingCenter != null && existingCenter.containsKey("id")) {
+        // Check if result is a paged response
+        if (searchResult != null && searchResult.containsKey("pageItems")) {
+          @SuppressWarnings("unchecked")
+          List<Map<String, Object>> pageItems =
+              (List<Map<String, Object>>) searchResult.get("pageItems");
+          if (pageItems != null && !pageItems.isEmpty()) {
+            existingCenter = pageItems.get(0);
+            centerId = ((Number) existingCenter.get("id")).longValue();
+          }
+        } else if (searchResult != null && searchResult.containsKey("id")) {
+          // Direct center object returned
+          existingCenter = searchResult;
           centerId = ((Number) existingCenter.get("id")).longValue();
+        }
+
+        if (centerId != null) {
           log.debug("Center already exists: {} (ID: {})", center.getName(), centerId);
         }
       } catch (Exception ex) {

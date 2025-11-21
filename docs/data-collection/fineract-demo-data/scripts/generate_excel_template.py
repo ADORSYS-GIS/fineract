@@ -1555,7 +1555,7 @@ class FineractDemoDataGenerator:
              'description': 'Prevent backdated transactions before interest posting'},
 
             # Allow Transactions on Non-Working Days
-            {'config_name': 'allow-transactions-on-non_working_day', 'enabled': 'No', 'value': 'false',
+            {'config_name': 'allow-transactions-on-non-workingday', 'enabled': 'No', 'value': 'false',
              'description': 'Block transactions on holidays and weekends'},
 
             # Allow Transactions on Holidays
@@ -1574,48 +1574,40 @@ class FineractDemoDataGenerator:
             # {'config_name': 'organisation-start-date', 'enabled': 'Yes', 'value': '01 January 2020',
             #  'description': 'Date when the organization started operations (cutoff for historical transactions)'},
 
-            # Min/Max days between repayments
-            {'config_name': 'min-days-between-disbursal-and-first-repayment', 'enabled': 'Yes', 'value': '1',
-             'description': 'Minimum days between disbursement and first repayment'},
+            # Repayment Strategy Order (valid Fineract config)
+            {'config_name': 'repayment-strategy-order', 'enabled': 'Yes', 'value': '1',
+             'description': 'Order for repayment strategy application'},
 
-            # Grace on arrears ageing
-            {'config_name': 'grace-on-arrears-ageing', 'enabled': 'Yes', 'value': '0',
-             'description': 'Grace period for arrears aging calculation (days)'},
+            # Arrears Tolerance
+            {'config_name': 'arrears-tolerance-amount', 'enabled': 'Yes', 'value': '0',
+             'description': 'Tolerance amount for arrears calculation'},
 
-            # Allow Dividend Calculation for Inactive Clients
-            {'config_name': 'allow-dividend-calculation-for-inactive-clients', 'enabled': 'No', 'value': 'false',
-             'description': 'Exclude inactive clients from dividend calculation'},
+            # Days before repayment is due reminder
+            {'config_name': 'days-before-repayment-is-due', 'enabled': 'Yes', 'value': '3',
+             'description': 'Days before repayment due to send reminder'},
 
-            # Enforce Minimum Required Balance
-            {'config_name': 'enforce-min-required-balance', 'enabled': 'Yes', 'value': 'true',
-             'description': 'Enforce minimum balance requirement for savings accounts'},
+            # Days after repayment is overdue reminder
+            {'config_name': 'days-after-repayment-is-overdue', 'enabled': 'Yes', 'value': '3',
+             'description': 'Days after repayment overdue to send reminder'},
 
-            # Allow Withdrawal Fee
-            {'config_name': 'allow-withdrawals-on-savings-account-withhold-tax', 'enabled': 'No', 'value': 'false',
-             'description': 'Block withdrawals if withholding tax unpaid'},
+            # Enable Address
+            {'config_name': 'Enable-Address', 'enabled': 'Yes', 'value': 'true',
+             'description': 'Enable address module for clients'},
 
-            # Interest Calculation Using Daily Balance
-            {'config_name': 'interest-calculation-using-daily-balance', 'enabled': 'Yes', 'value': 'true',
-             'description': 'Calculate interest using daily balance'},
+            # Enable Sub Rates
+            {'config_name': 'sub-rates', 'enabled': 'No', 'value': 'false',
+             'description': 'Enable sub-rate interest calculations'},
 
-            # Accounting Rule
-            {'config_name': 'accounting-rule', 'enabled': 'Yes', 'value': '2',
-             'description': 'Accounting rule: 1=None, 2=Cash, 3=Accrual Periodic, 4=Accrual Upfront'},
+            # Is Interest to be Recovered First
+            {'config_name': 'is-interest-to-be-recovered-first-when-greater-than-emi', 'enabled': 'No', 'value': 'false',
+             'description': 'Recover interest before principal when payment exceeds EMI'},
 
-            # Days in Year
-            {'config_name': 'days-in-year-type', 'enabled': 'Yes', 'value': '365',
-             'description': 'Days in year for interest calculations: 360 or 365'},
-
-            # Days in Month
-            {'config_name': 'days-in-month-type', 'enabled': 'Yes', 'value': '30',
-             'description': 'Days in month for interest calculations: 30 or Actual'},
-
-            # Charge Accrual Date (may not be supported in all Fineract versions)
-            # {'config_name': 'charge-accrual-date', 'enabled': 'Yes', 'value': 'due-date',
-            #  'description': 'When to accrue charges: due-date or submitted-date'},
+            # Enable Principal Threshold for Last Installment
+            {'config_name': 'is-principal-compounding-disabled-for-overdue-loans', 'enabled': 'No', 'value': 'false',
+             'description': 'Disable principal compounding for overdue loans'},
 
             # Enable Business Date
-            {'config_name': 'enable_business_date', 'enabled': 'Yes', 'value': 'false',
+            {'config_name': 'enable-business-date', 'enabled': 'Yes', 'value': 'false',
              'description': 'Enable business date (COB) feature'},
 
             # Enable Auto Repayment for Down-payment
@@ -1626,13 +1618,13 @@ class FineractDemoDataGenerator:
             {'config_name': 'meetings-mandatory-for-jlg-loans', 'enabled': 'No', 'value': 'false',
              'description': 'Make meetings mandatory for JLG (Joint Liability Group) loans'},
 
-            # Minimum Age for Clients
-            {'config_name': 'minimum-age-for-client-activation', 'enabled': 'Yes', 'value': '18',
-             'description': 'Minimum age required for client activation'},
+            # Enable Same Maker/Checker
+            {'config_name': 'enable-same-maker-checker', 'enabled': 'No', 'value': 'false',
+             'description': 'Allow same user as maker and checker'},
 
-            # Loan COB
-            {'config_name': 'is-loan-cob-enabled', 'enabled': 'No', 'value': 'false',
-             'description': 'Enable Close of Business for loans'},
+            # Fixed Deposit Auto Renewal
+            {'config_name': 'fixed-deposit-auto-renewal', 'enabled': 'No', 'value': 'false',
+             'description': 'Auto-renew fixed deposits on maturity'},
 
             # Penalty Wait Period
             {'config_name': 'penalty-wait-period', 'enabled': 'Yes', 'value': '0',
@@ -1794,138 +1786,147 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_data_tables_sheet(self):
-        """Create custom data tables (custom fields) configuration"""
+        """Create custom data tables (custom fields) configuration
+
+        Length field is required by Fineract API for String/Text/Dropdown types:
+        - String: 200 (default)
+        - Text: 1000 (default)
+        - Dropdown: 100 (default)
+        - Number: 10
+        - Decimal: 19
+        - Date/Datetime/Boolean: not required (empty)
+        """
         data = [
             # Client Custom Fields
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_type',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'National ID,Passport,Voter Card,Driver License',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'Yes', 'dropdown_values': 'National ID,Passport,Voter Card,Driver License',
              'description': 'Type of identification document'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_number',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'Yes', 'dropdown_values': '',
              'description': 'Identification document number'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_expiry_date',
-             'field_type': 'Date', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Date', 'length': '', 'mandatory': 'No', 'dropdown_values': '',
              'description': 'ID document expiry date'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_name',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'Yes', 'dropdown_values': '',
              'description': 'Next of kin full name'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_phone',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'Yes', 'dropdown_values': '',
              'description': 'Next of kin phone number'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_relationship',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'Spouse,Parent,Sibling,Child,Friend,Other',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'Yes', 'dropdown_values': 'Spouse,Parent,Sibling,Child,Friend,Other',
              'description': 'Relationship to next of kin'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'employer_name',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Employer name (for salaried clients)'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'employer_phone',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Employer contact number'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'years_in_business',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Years in current business (for self-employed)'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'business_location',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Business physical location'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'home_ownership',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Owned,Rented,Family Home,Other',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'Owned,Rented,Family Home,Other',
              'description': 'Home ownership status'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'disability_status',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'None,Physical,Visual,Hearing,Other',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'None,Physical,Visual,Hearing,Other',
              'description': 'Disability status (for inclusive finance)'},
 
             # Additional client fields from Clients sheet
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'address',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Residential address'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'city',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'City of residence'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'marital_status',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Single,Married,Divorced,Widow,Widower',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'Single,Married,Divorced,Widow,Widower',
              'description': 'Marital status'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'number_of_dependents',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Number of dependents'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'occupation',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Client occupation or profession'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'business_type',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Type of business activity'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'monthly_income',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Estimated monthly income (XAF)'},
 
             {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'risk_rating',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'A,B,C,D',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'A,B,C,D',
              'description': 'Client risk rating (A=Low, D=High)'},
 
             # Loan Custom Fields
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'loan_purpose_detail',
-             'field_type': 'Text', 'mandatory': 'Yes', 'dropdown_values': '',
+             'field_type': 'Text', 'length': 1000, 'mandatory': 'Yes', 'dropdown_values': '',
              'description': 'Detailed description of loan purpose'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'collateral_description',
-             'field_type': 'Text', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Text', 'length': 1000, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Description of collateral provided'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'collateral_value',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Estimated collateral value (XAF)'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'guarantor_count',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Number of guarantors'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'credit_score',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Credit score (0-100)'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'repayment_source',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'Business Income,Salary,Remittances,Other',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'Yes', 'dropdown_values': 'Business Income,Salary,Remittances,Other',
              'description': 'Primary source of repayment'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'previous_loan_history',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'First Loan,Good History,Some Delays,Defaulted Before',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'First Loan,Good History,Some Delays,Defaulted Before',
              'description': 'Previous loan repayment history'},
 
             # Savings Custom Fields
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'savings_goal',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Client\'s savings goal'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'target_amount',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Target savings amount (XAF)'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'target_date',
-             'field_type': 'Date', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Date', 'length': '', 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Target date to reach goal'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'monthly_commitment',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Monthly savings commitment (XAF)'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'preferred_transaction_channel',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Branch,Mobile Money,Bank Transfer,Agent',
+             'field_type': 'Dropdown', 'length': 100, 'mandatory': 'No', 'dropdown_values': 'Branch,Mobile Money,Bank Transfer,Agent',
              'description': 'Preferred way to transact'},
         ]
         return pd.DataFrame(data)
