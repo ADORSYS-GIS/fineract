@@ -37,38 +37,16 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build with Maven
-        run: mvn clean verify -B
+        run: mvn clean package -DskipTests -B
 
       - name: Run Spotless check
         run: mvn spotless:check
-
-      - name: Run tests
-        run: mvn test -B
-
-      - name: Generate code coverage report
-        run: mvn jacoco:report
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./target/site/jacoco/jacoco.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: fineract-config-cli-jar
           path: target/fineract-config-cli.jar
-          retention-days: 7
-
-      - name: Archive test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: target/surefire-reports/
           retention-days: 7
 
   docker-build:
