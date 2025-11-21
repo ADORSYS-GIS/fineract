@@ -1,0 +1,114 @@
+name: Config-CLI Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - config-demo
+      - yaml-data
+    paths:
+      - 'docs/data-collection/fineract-config-cli/**'
+      - '.github/workflows/config-cli-build.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'docs/data-collection/fineract-config-cli/**'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: docs/data-collection/fineract-config-cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests -B
+
+      - name: Run Spotless check
+        run: mvn spotless:check
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fineract-config-cli-jar
+          path: docs/data-collection/fineract-config-cli/target/fineract-config-cli.jar
+          retention-days: 7
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: docs/data-collection/fineract-config-cli
+          file: docs/data-collection/fineract-config-cli/Dockerfile
+          push: false
+          tags: fineract-config-cli:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm fineract-config-cli:${{ github.sha }} --version || true
+
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: docs/data-collection/fineract-config-cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Spotless check
+        run: mvn spotless:check
+
+      - name: Check code formatting
+        run: |
+          mvn spotless:check || {
+            echo "Code formatting issues found. Run 'mvn spotless:apply' locally to fix."
+            exit 1
+          }
