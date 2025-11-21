@@ -76,12 +76,13 @@ To publish to ghcr.io instead of DockerHub:
 - **packages: write**: Required by GitHub Actions to publish packages to GitHub Container Registry
 - **ghcr.io registry**: Allows our organization to host and control our own Docker images instead of depending on Apache's DockerHub images
 - **GITHUB_TOKEN auth**: Simplifies authentication by using the built-in token, eliminating the need for separate DockerHub credentials
-- **Dynamic owner**: Uses `${{ github.repository_owner }}` to automatically use the correct organization/user name
+- **Dynamic owner**: Uses `${{ steps.git_hashes.outputs.owner_lowercase }}` to automatically use the correct organization/user name in lowercase (required for Docker image references)
 - **Removed Develocity**: Since we don't use Develocity build acceleration, removed the unnecessary environment variable to avoid potential secret requirements
 
 ### Repository Requirements
 - Ensure the repository has "Packages" visibility set appropriately (public/private as needed)
 - The workflow will now publish images to `ghcr.io/{our-org}/fineract` with appropriate tags
+- **Important**: Docker image references cannot contain uppercase letters. The workflow automatically converts the repository owner name to lowercase to comply with Docker naming requirements
 
 ## Recommendations
 

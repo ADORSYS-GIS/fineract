@@ -30,6 +30,7 @@ jobs:
         run: |
           echo "short_hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "long_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
         id: git_hashes
 
       - name: Build the Apache Fineract image
@@ -40,5 +41,5 @@ jobs:
           fi
           ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
             -Djib.from.platforms=linux/amd64,linux/arm64 \
-            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/fineract \
+            -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
             -Djib.to.tags=$TAGS
