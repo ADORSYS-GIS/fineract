@@ -40,7 +40,7 @@
         <commons-text.version>1.11.0</commons-text.version>
         <commons-codec.version>1.16.0</commons-codec.version>
         <lombok.version>1.18.30</lombok.version>
-        <jackson.version>2.16.1</jackson.version>
+        <jackson.version>2.18.3</jackson.version>
 
         <!-- Testing -->
         <testcontainers.version>1.19.3</testcontainers.version>

@@ -42,7 +42,7 @@ public class WorkingDaysLoader {
     try {
       Map<String, Object> request = new HashMap<>();
       request.put("recurrence", workingDaysConfig.getRecurrence());
-      request.put("repaymentReschedulingType", workingDaysConfig.getRepaymentReschedulingType());
+      request.put("repaymentRescheduleType", workingDaysConfig.getRepaymentRescheduleType());
       request.put(
           "extendTermForDailyRepayments", workingDaysConfig.isExtendTermForDailyRepayments());
 
@@ -52,7 +52,7 @@ public class WorkingDaysLoader {
       log.info(
           "Working days configured: {} (rescheduling: {})",
           workingDaysConfig.getRecurrence(),
-          workingDaysConfig.getRepaymentReschedulingType());
+          workingDaysConfig.getRepaymentRescheduleType());
 
       result.recordEntity("workingDays", ImportResult.EntityAction.UPDATED);
 

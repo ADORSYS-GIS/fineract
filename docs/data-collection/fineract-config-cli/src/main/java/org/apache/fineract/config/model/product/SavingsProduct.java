@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 
 /**
@@ -40,6 +42,17 @@ public class SavingsProduct {
   // Charges
   private List<String> chargeNames = new ArrayList<>();
 
+  // Lockin period
+  private Integer lockinPeriodFrequency;
+  private String lockinPeriodFrequencyType; // DAYS, WEEKS, MONTHS, YEARS
+
+  // Dormancy tracking
+  @JsonAlias("allowDormancyTracking")
+  private Boolean isDormancyTrackingActive;
+
+  private Long daysToInactive;
+  private Long daysToDormancy;
+
   // Accounting
   private String accountingRule; // NONE, CASH_BASED
   private String savingsReferenceAccountCode;
@@ -50,4 +63,5 @@ public class SavingsProduct {
   private String incomeFromPenaltiesAccountCode;
   private String overdraftPortfolioControlAccountCode;
   private String incomeFromInterestAccountCode;
+  private Long escheatLiabilityAccountId;
 }

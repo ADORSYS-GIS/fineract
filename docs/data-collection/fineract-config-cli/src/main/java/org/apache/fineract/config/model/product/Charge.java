@@ -21,6 +21,6 @@ public class Charge {
   private Boolean active;
   private Boolean penalty;
   private String incomeAccountCode; // GL account for income
-  private Integer feeFrequency; // For recurring charges
+  private String feeFrequency; // For recurring charges (e.g., "Monthly", "Quarterly")
   private String feeInterval; // DAYS, WEEKS, MONTHS, YEARS
 }

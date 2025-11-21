@@ -24,6 +24,12 @@ public class Client {
   private LocalDate activationDate;
   private String staffName;
 
+  // Client classification
+  private Long clientTypeId;
+  private Long clientClassificationId;
+  private String clientType; // For YAML convenience (will need resolution to ID)
+  private String clientClassification; // For YAML convenience (will need resolution to ID)
+
   // Address
   private String addressLine1;
   private String addressLine2;

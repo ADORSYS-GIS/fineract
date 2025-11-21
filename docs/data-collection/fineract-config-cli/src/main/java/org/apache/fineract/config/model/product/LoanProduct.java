@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Data;
 
 /**
@@ -59,4 +61,19 @@ public class LoanProduct {
   private Boolean multiDisburseLoan;
   private Integer maxTrancheCount;
   private BigDecimal outstandingLoanBalance;
+
+  // Additional business logic fields
+  private Boolean allowPartialPeriodInterestCalculation;
+
+  @JsonAlias("minimumGapBetweenInstallments")
+  private Integer minimumDaysBetweenDisbursalAndFirstRepayment;
+
+  // Additional accounting fields
+  private Long receivableInterestAccountId;
+  private Long receivableFeeAccountId;
+  private Long receivablePenaltyAccountId;
+  private Long transfersInSuspenseAccountId;
+  private Long goodwillCreditAccountId;
+  private Long incomeFromRecoveryAccountId;
+  private Long overpaymentLiabilityAccountId;
 }
