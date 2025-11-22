@@ -75,6 +75,10 @@ public class OAuth2Provider implements AuthProvider {
         throw new IllegalStateException("OAuth2 configuration not found");
       }
 
+      // Log OAuth2 config for debugging
+      log.info("OAuth2 Config - grant_type: {}, client_id: {}, token_url: {}",
+          oauth2.getGrantType(), oauth2.getClientId(), oauth2.getTokenUrl());
+
       // Build token request
       Map<String, Object> request = new HashMap<>();
       request.put("grant_type", oauth2.getGrantType());

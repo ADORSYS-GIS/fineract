@@ -33,7 +33,7 @@ fineract:
       token-url: ${FINERACT_AUTH_OAUTH2_TOKEN_URL:}
       client-id: ${FINERACT_AUTH_OAUTH2_CLIENT_ID:}
       client-secret: ${FINERACT_AUTH_OAUTH2_CLIENT_SECRET:}
-      grant-type: ${FINERACT_AUTH_OAUTH2_GRANT_TYPE:password}
+      grant-type: ${FINERACT_AUTH_OAUTH2_GRANT_TYPE:client_credentials} #  change to password for docker compose
       scope: ${FINERACT_AUTH_OAUTH2_SCOPE:}
 
 # Import Configuration
