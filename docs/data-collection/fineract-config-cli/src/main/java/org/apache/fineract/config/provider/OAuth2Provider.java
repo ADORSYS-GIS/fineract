@@ -1,7 +1,6 @@
 package org.apache.fineract.config.provider;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.fineract.config.properties.FineractProperties;
@@ -10,6 +9,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.extern.slf4j.Slf4j;
@@ -82,31 +85,42 @@ public class OAuth2Provider implements AuthProvider {
           oauth2.getClientId(),
           oauth2.getTokenUrl());
 
-      // Build token request
-      Map<String, Object> request = new HashMap<>();
-      request.put("grant_type", oauth2.getGrantType());
-      request.put("client_id", oauth2.getClientId());
+      // Build token request using Spring's MultiValueMap for proper form encoding
+      MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+      formData.add("grant_type", oauth2.getGrantType());
+      formData.add("client_id", oauth2.getClientId());
 
-      if (oauth2.getClientSecret() != null) {
-        request.put("client_secret", oauth2.getClientSecret());
+      // Only add client_secret if it has actual content (not null or empty)
+      if (StringUtils.hasText(oauth2.getClientSecret())) {
+        formData.add("client_secret", oauth2.getClientSecret());
       }
 
       if ("password".equals(oauth2.getGrantType())) {
-        request.put("username", fineractProperties.getUser());
-        request.put("password", fineractProperties.getPassword());
+        formData.add("username", fineractProperties.getUser());
+        formData.add("password", fineractProperties.getPassword());
       }
 
-      if (oauth2.getScope() != null) {
-        request.put("scope", oauth2.getScope());
+      // Only add scope if it has actual content (not null or empty)
+      if (StringUtils.hasText(oauth2.getScope())) {
+        formData.add("scope", oauth2.getScope());
       }
 
-      // Request token
+      // Log the actual form data being sent (mask sensitive values)
+      log.info(
+          "OAuth2 Request - grant_type: {}, client_id: {}, has_secret: {}, has_scope: {}",
+          formData.getFirst("grant_type"),
+          formData.getFirst("client_id"),
+          formData.containsKey("client_secret"),
+          formData.containsKey("scope"));
+
+      // Request token using BodyInserters.fromFormData for proper encoding
+      @SuppressWarnings("unchecked")
       Map<String, Object> response =
           webClient
               .post()
               .uri(oauth2.getTokenUrl())
               .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-              .bodyValue(buildFormData(request))
+              .body(BodyInserters.fromFormData(formData))
               .retrieve()
               .bodyToMono(Map.class)
               .block();
@@ -145,30 +159,11 @@ public class OAuth2Provider implements AuthProvider {
   }
 
   /**
-   * Builds form data for token request.
-   *
-   * @param params parameters
-   * @return form data string
-   */
-  private String buildFormData(Map<String, Object> params) {
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry<String, Object> entry : params.entrySet()) {
-      if (sb.length() > 0) {
-        sb.append("&");
-      }
-      sb.append(entry.getKey()).append("=").append(entry.getValue());
-    }
-    return sb.toString();
-  }
-
-  /**
    * Creates WebClient for OAuth2 token requests.
    *
    * @return WebClient
    */
   private WebClient createWebClient() {
-    return WebClient.builder()
-        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-        .build();
+    return WebClient.builder().build();
   }
 }
