@@ -76,8 +76,11 @@ public class OAuth2Provider implements AuthProvider {
       }
 
       // Log OAuth2 config for debugging
-      log.info("OAuth2 Config - grant_type: {}, client_id: {}, token_url: {}",
-          oauth2.getGrantType(), oauth2.getClientId(), oauth2.getTokenUrl());
+      log.info(
+          "OAuth2 Config - grant_type: {}, client_id: {}, token_url: {}",
+          oauth2.getGrantType(),
+          oauth2.getClientId(),
+          oauth2.getTokenUrl());
 
       // Build token request
       Map<String, Object> request = new HashMap<>();
