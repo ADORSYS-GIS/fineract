@@ -50,7 +50,7 @@ public class LoanTransactionLoader {
       } catch (Exception ex) {
         log.error(
             "Failed to load loan transaction for account '{}': {}",
-            transaction.getLoanAccountExternalId(),
+            transaction.getLoanExternalId(),
             ex.getMessage());
         result.recordEntity("loanTransaction", ImportResult.EntityAction.FAILED);
       }
@@ -66,13 +66,13 @@ public class LoanTransactionLoader {
    */
   private void loadSingleTransaction(
       LoanTransaction transaction, ImportContext context, ImportResult result) {
-    log.debug("Loading loan transaction for account: {}", transaction.getLoanAccountExternalId());
+    log.debug("Loading loan transaction for account: {}", transaction.getLoanExternalId());
 
     // Resolve loan account
-    Long loanId = context.resolveEntityId("loanAccount", transaction.getLoanAccountExternalId());
+    Long loanId = context.resolveEntityId("loanAccount", transaction.getLoanExternalId());
     if (loanId == null) {
       throw new IllegalStateException(
-          "Loan account '" + transaction.getLoanAccountExternalId() + "' not found");
+          "Loan account '" + transaction.getLoanExternalId() + "' not found");
     }
 
     // Build request
@@ -90,7 +90,7 @@ public class LoanTransactionLoader {
     log.info(
         "Loan transaction created: {} on account {} (ID: {})",
         transaction.getTransactionType(),
-        transaction.getLoanAccountExternalId(),
+        transaction.getLoanExternalId(),
         transactionId);
     result.recordEntity("loanTransaction", ImportResult.EntityAction.CREATED);
   }
@@ -109,8 +109,8 @@ public class LoanTransactionLoader {
 
     // Amount is only needed for repayments
     if ("REPAYMENT".equalsIgnoreCase(transaction.getTransactionType())
-        && transaction.getAmount() != null) {
-      builder.put("transactionAmount", transaction.getAmount());
+        && transaction.getTransactionAmount() != null) {
+      builder.put("transactionAmount", transaction.getTransactionAmount());
     }
 
     // Resolve payment type

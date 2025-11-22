@@ -15,7 +15,9 @@ import org.apache.fineract.config.model.product.CollateralType;
 import org.apache.fineract.config.model.product.DelinquencyBucket;
 import org.apache.fineract.config.model.product.FloatingRate;
 import org.apache.fineract.config.model.product.FundSource;
+import org.apache.fineract.config.model.product.GuarantorType;
 import org.apache.fineract.config.model.product.LoanProduct;
+import org.apache.fineract.config.model.product.LoanProvisioning;
 import org.apache.fineract.config.model.product.PaymentType;
 import org.apache.fineract.config.model.product.SavingsProduct;
 import org.apache.fineract.config.model.product.TaxGroup;
@@ -23,10 +25,13 @@ import org.apache.fineract.config.model.security.Office;
 import org.apache.fineract.config.model.security.Role;
 import org.apache.fineract.config.model.security.Staff;
 import org.apache.fineract.config.model.security.Teller;
+import org.apache.fineract.config.model.security.TellerCashierMapping;
 import org.apache.fineract.config.model.security.User;
 import org.apache.fineract.config.model.systemconfig.Holiday;
 import org.apache.fineract.config.model.systemconfig.SchedulerJob;
 import org.apache.fineract.config.model.systemconfig.SystemConfig;
+import org.apache.fineract.config.model.transaction.LoanTransaction;
+import org.apache.fineract.config.model.transaction.SavingsTransaction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -76,6 +81,9 @@ public class FineractConfig {
   /** Phase 2: Tellers */
   private List<Teller> tellers = new ArrayList<>();
 
+  /** Phase 2: Teller Cashier Mappings */
+  private List<TellerCashierMapping> tellerCashierMappings = new ArrayList<>();
+
   /** Phase 3: Chart of Accounts */
   private List<GLAccount> chartOfAccounts = new ArrayList<>();
 
@@ -94,8 +102,7 @@ public class FineractConfig {
   private List<SchedulerJob> schedulerJobs = new ArrayList<>();
 
   /** Phase 3: Loan Provisioning Criteria */
-  private List<Object> loanProvisioningCriteria =
-      new ArrayList<>(); // TODO: Create LoanProvisioningCriteria model
+  private List<LoanProvisioning> loanProvisioning = new ArrayList<>();
 
   /** Phase 4: Floating Rates */
   private List<FloatingRate> floatingRates = new ArrayList<>();
@@ -127,6 +134,9 @@ public class FineractConfig {
   /** Phase 4: Collateral Types */
   private List<CollateralType> collateralTypes = new ArrayList<>();
 
+  /** Phase 4: Guarantor Types */
+  private List<GuarantorType> guarantorTypes = new ArrayList<>();
+
   /** Phase 5: Centers */
   private List<Center> centers = new ArrayList<>();
 
@@ -149,11 +159,10 @@ public class FineractConfig {
   private List<Object> loanGuarantors = new ArrayList<>(); // TODO: Create LoanGuarantor model
 
   /** Phase 6: Savings Transactions (deposits, withdrawals) */
-  private List<Object> savingsTransactions =
-      new ArrayList<>(); // TODO: Create SavingsTransaction model
+  private List<SavingsTransaction> savingsTransactions = new ArrayList<>();
 
   /** Phase 6: Loan Transactions (repayments, waivers, writeoffs) */
-  private List<Object> loanTransactions = new ArrayList<>(); // TODO: Create LoanTransaction model
+  private List<LoanTransaction> loanTransactions = new ArrayList<>();
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

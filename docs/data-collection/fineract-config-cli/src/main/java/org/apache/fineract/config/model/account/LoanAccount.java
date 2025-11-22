@@ -18,6 +18,7 @@ public class LoanAccount {
   private String clientExternalId; // For individual loans
   private String groupName; // For group loans
   private String productName;
+  private String productShortName; // Alternative to productName
   private String loanOfficerName;
   private String fundSourceName;
   private LocalDate submittedOnDate;

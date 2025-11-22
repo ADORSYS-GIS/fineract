@@ -78,18 +78,70 @@ public class LoanAccountLoader {
     // Check if loan account already exists by external ID
     if (loanAccount.getExternalId() != null) {
       try {
-        Map<String, Object> existingLoan =
+        Map<String, Object> response =
             apiClient.get("/api/v1/loans?externalId=" + loanAccount.getExternalId(), Map.class);
 
-        if (existingLoan != null && existingLoan.containsKey("id")) {
-          Long loanId = ((Number) existingLoan.get("id")).longValue();
-          log.debug(
-              "Loan account already exists: {} (ID: {})", loanAccount.getExternalId(), loanId);
-          result.recordEntity("loanAccount", ImportResult.EntityAction.UNCHANGED);
+        // Response is paginated: {"totalFilteredRecords":1,"pageItems":[...]}
+        if (response != null && response.containsKey("pageItems")) {
+          @SuppressWarnings("unchecked")
+          List<Map<String, Object>> pageItems =
+              (List<Map<String, Object>>) response.get("pageItems");
+          if (pageItems != null && !pageItems.isEmpty()) {
+            Map<String, Object> existingLoan = pageItems.get(0);
+            Long loanId = ((Number) existingLoan.get("id")).longValue();
+            log.debug(
+                "Loan account already exists: {} (ID: {})", loanAccount.getExternalId(), loanId);
+            result.recordEntity("loanAccount", ImportResult.EntityAction.UNCHANGED);
 
-          // Store for reference
-          context.registerEntity("loanAccount", loanAccount.getExternalId(), loanId);
-          return;
+            // Store for reference
+            context.registerEntity("loanAccount", loanAccount.getExternalId(), loanId);
+
+            // Check if loan needs approval/disbursement based on workflow state
+            String workflowState = loanAccount.getWorkflowState();
+            if (workflowState == null || workflowState.isEmpty()) {
+              workflowState = "active"; // Default to active (normal flow)
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> status = (Map<String, Object>) existingLoan.get("status");
+            if (status != null && "active".equalsIgnoreCase(workflowState)) {
+              String statusCode = (String) status.get("code");
+
+              // For workflowState=active, auto-derive dates if not explicitly set
+              java.time.LocalDate effectiveApprovalDate = loanAccount.getApprovalDate();
+              java.time.LocalDate effectiveDisbursementDate = loanAccount.getDisbursementDate();
+
+              if (effectiveApprovalDate == null && loanAccount.getSubmittedOnDate() != null) {
+                effectiveApprovalDate = loanAccount.getSubmittedOnDate();
+              }
+              if (effectiveDisbursementDate == null && loanAccount.getSubmittedOnDate() != null) {
+                // Default disbursement to submitted date + 1 day (avoiding weekends)
+                effectiveDisbursementDate = loanAccount.getSubmittedOnDate().plusDays(1);
+              }
+
+              // Approve if pending approval
+              if ("loanStatusType.submitted.and.pending.approval".equals(statusCode)) {
+                if (effectiveApprovalDate != null) {
+                  log.debug(
+                      "Existing loan {} needs approval, current status: {}",
+                      loanAccount.getExternalId(),
+                      statusCode);
+                  approveLoanWithDate(
+                      loanId, loanAccount, effectiveApprovalDate, effectiveDisbursementDate);
+                  // Refresh status for disbursement check
+                  statusCode = "loanStatusType.approved";
+                }
+              }
+              // Disburse if approved but not disbursed
+              if ("loanStatusType.approved".equals(statusCode)) {
+                if (effectiveDisbursementDate != null) {
+                  log.debug("Existing loan {} needs disbursement", loanAccount.getExternalId());
+                  disburseLoanWithDate(loanId, loanAccount, effectiveDisbursementDate);
+                }
+              }
+            }
+            return;
+          }
         }
       } catch (Exception ex) {
         // Loan not found, proceed with creation
@@ -159,21 +211,31 @@ public class LoanAccountLoader {
    * @param context import context
    * @return request map
    */
+  @SuppressWarnings("unchecked")
   private Map<String, Object> buildRequest(LoanAccount loanAccount, ImportContext context) {
     RequestBuilder builder = RequestBuilder.forAccount();
 
     builder.putIfNotNull("externalId", loanAccount.getExternalId());
 
-    // Resolve product
+    // Resolve product (try productName first, then productShortName)
+    Long productId = null;
+    String productRef = null;
     if (loanAccount.getProductName() != null) {
-      Long productId = context.resolveEntityId("loanProduct", loanAccount.getProductName());
-      if (productId != null) {
-        builder.put("productId", productId);
-      } else {
-        throw new IllegalStateException(
-            "Loan product '" + loanAccount.getProductName() + "' not found");
-      }
+      productRef = loanAccount.getProductName();
+      productId = context.resolveEntityId("loanProduct", productRef);
     }
+    if (productId == null && loanAccount.getProductShortName() != null) {
+      productRef = loanAccount.getProductShortName();
+      productId = resolveLoanProductByShortName(loanAccount.getProductShortName(), context);
+    }
+    if (productId != null) {
+      builder.put("productId", productId);
+    } else {
+      throw new IllegalStateException("Loan product '" + productRef + "' not found");
+    }
+
+    // Fetch product details for default values
+    Map<String, Object> productDetails = fetchLoanProductDetails(productId);
 
     // Resolve client or group
     if (loanAccount.getClientExternalId() != null) {
@@ -225,43 +287,95 @@ public class LoanAccountLoader {
       builder.put("submittedOnDate", loanAccount.getSubmittedOnDate().format(DATE_FORMATTER));
     }
 
-    // Expected disbursement date
+    // Expected disbursement date - required, default to submitted date + 1 day
     if (loanAccount.getExpectedDisbursementDate() != null) {
       builder.put(
           "expectedDisbursementDate",
           loanAccount.getExpectedDisbursementDate().format(DATE_FORMATTER));
+    } else if (loanAccount.getSubmittedOnDate() != null) {
+      builder.put(
+          "expectedDisbursementDate",
+          loanAccount.getSubmittedOnDate().plusDays(1).format(DATE_FORMATTER));
     }
 
-    // Loan terms (overrides)
-    builder.putIfNotNull("principal", loanAccount.getPrincipal());
-    builder.putIfNotNull("numberOfRepayments", loanAccount.getNumberOfRepayments());
-    builder.putIfNotNull("repaymentEvery", loanAccount.getRepaymentEvery());
+    // loanType - required (individual=1, group=2, jlg=3)
+    if (loanAccount.getClientExternalId() != null) {
+      builder.put("loanType", "individual");
+    } else {
+      builder.put("loanType", "group");
+    }
 
+    // Loan terms (overrides or defaults)
+    builder.putIfNotNull("principal", loanAccount.getPrincipal());
+
+    // numberOfRepayments - required
+    if (loanAccount.getNumberOfRepayments() != null) {
+      builder.put("numberOfRepayments", loanAccount.getNumberOfRepayments());
+    } else {
+      builder.put("numberOfRepayments", 12); // Default to 12 months
+    }
+
+    // loanTermFrequency - required (same as numberOfRepayments if monthly)
+    builder.put(
+        "loanTermFrequency",
+        loanAccount.getNumberOfRepayments() != null ? loanAccount.getNumberOfRepayments() : 12);
+    builder.put("loanTermFrequencyType", 2); // 2 = MONTHS
+
+    // repaymentEvery - required
+    if (loanAccount.getRepaymentEvery() != null) {
+      builder.put("repaymentEvery", loanAccount.getRepaymentEvery());
+    } else {
+      builder.put("repaymentEvery", 1); // Default to every 1 period
+    }
+
+    // repaymentFrequencyType - required
     if (loanAccount.getRepaymentFrequencyType() != null) {
       builder.put(
           "repaymentFrequencyType",
           FineractEnumMapper.mapRepaymentFrequencyType(loanAccount.getRepaymentFrequencyType()));
+    } else {
+      builder.put("repaymentFrequencyType", 2); // 2 = MONTHS
     }
 
-    builder.putIfNotNull("interestRatePerPeriod", loanAccount.getInterestRatePerPeriod());
+    // interestRatePerPeriod - required, use product's default if not specified
+    if (loanAccount.getInterestRatePerPeriod() != null) {
+      builder.put("interestRatePerPeriod", loanAccount.getInterestRatePerPeriod());
+    } else if (productDetails != null && productDetails.get("interestRatePerPeriod") != null) {
+      builder.put("interestRatePerPeriod", productDetails.get("interestRatePerPeriod"));
+    } else {
+      // Fallback: this will likely fail validation
+      log.warn("No interestRatePerPeriod specified and could not get default from product");
+    }
 
+    // interestType - required (0=DECLINING_BALANCE, 1=FLAT)
     if (loanAccount.getInterestType() != null) {
       builder.put(
           "interestType", FineractEnumMapper.mapInterestType(loanAccount.getInterestType()));
+    } else {
+      builder.put("interestType", 0); // Default to DECLINING_BALANCE
     }
 
+    // interestCalculationPeriodType - required (0=DAILY, 1=SAME_AS_REPAYMENT_PERIOD)
     if (loanAccount.getInterestCalculationPeriodType() != null) {
       builder.put(
           "interestCalculationPeriodType",
           FineractEnumMapper.mapInterestCalculationPeriodType(
               loanAccount.getInterestCalculationPeriodType()));
+    } else {
+      builder.put("interestCalculationPeriodType", 1); // Default to SAME_AS_REPAYMENT_PERIOD
     }
 
+    // amortizationType - required (0=EQUAL_PRINCIPAL, 1=EQUAL_INSTALLMENTS)
     if (loanAccount.getAmortizationType() != null) {
       builder.put(
           "amortizationType",
           FineractEnumMapper.mapAmortizationType(loanAccount.getAmortizationType()));
+    } else {
+      builder.put("amortizationType", 1); // Default to EQUAL_INSTALLMENTS
     }
+
+    // transactionProcessingStrategyCode - required for modern Fineract
+    builder.put("transactionProcessingStrategyCode", "mifos-standard-strategy");
 
     // Charges
     if (loanAccount.getChargeNames() != null && !loanAccount.getChargeNames().isEmpty()) {
@@ -337,6 +451,110 @@ public class LoanAccountLoader {
       log.info("Loan disbursed: {} (ID: {})", loanAccount.getExternalId(), loanId);
     } catch (Exception ex) {
       log.warn("Failed to disburse loan {}: {}", loanId, ex.getMessage());
+    }
+  }
+
+  /**
+   * Approves a loan with explicit date parameters.
+   *
+   * @param loanId loan ID
+   * @param loanAccount loan account
+   * @param approvalDate the approval date
+   * @param expectedDisbursementDate the expected disbursement date
+   */
+  private void approveLoanWithDate(
+      Long loanId,
+      LoanAccount loanAccount,
+      java.time.LocalDate approvalDate,
+      java.time.LocalDate expectedDisbursementDate) {
+    try {
+      Map<String, Object> approvalRequest = new HashMap<>();
+      approvalRequest.put("locale", LOCALE);
+      approvalRequest.put("dateFormat", DATE_FORMAT);
+      approvalRequest.put("approvedOnDate", approvalDate.format(DATE_FORMATTER));
+
+      if (expectedDisbursementDate != null) {
+        approvalRequest.put(
+            "expectedDisbursementDate", expectedDisbursementDate.format(DATE_FORMATTER));
+      }
+
+      apiClient.post("/api/v1/loans/" + loanId + "?command=approve", approvalRequest, Map.class);
+
+      log.info("Loan approved: {} (ID: {})", loanAccount.getExternalId(), loanId);
+    } catch (Exception ex) {
+      log.warn("Failed to approve loan {}: {}", loanId, ex.getMessage());
+    }
+  }
+
+  /**
+   * Disburses a loan with explicit date parameter.
+   *
+   * @param loanId loan ID
+   * @param loanAccount loan account
+   * @param disbursementDate the actual disbursement date
+   */
+  private void disburseLoanWithDate(
+      Long loanId, LoanAccount loanAccount, java.time.LocalDate disbursementDate) {
+    try {
+      Map<String, Object> disbursementRequest = new HashMap<>();
+      disbursementRequest.put("locale", LOCALE);
+      disbursementRequest.put("dateFormat", DATE_FORMAT);
+      disbursementRequest.put("actualDisbursementDate", disbursementDate.format(DATE_FORMATTER));
+
+      apiClient.post(
+          "/api/v1/loans/" + loanId + "?command=disburse", disbursementRequest, Map.class);
+
+      log.info("Loan disbursed: {} (ID: {})", loanAccount.getExternalId(), loanId);
+    } catch (Exception ex) {
+      log.warn("Failed to disburse loan {}: {}", loanId, ex.getMessage());
+    }
+  }
+
+  /**
+   * Resolves a loan product ID by short name.
+   *
+   * @param shortName product short name
+   * @param context import context
+   * @return product ID or null if not found
+   */
+  @SuppressWarnings("unchecked")
+  private Long resolveLoanProductByShortName(String shortName, ImportContext context) {
+    // Try from context first
+    Long id = context.getEntityId("loanProduct", shortName);
+    if (id != null) {
+      return id;
+    }
+
+    // Fetch from API
+    try {
+      List<Map<String, Object>> products = apiClient.get("/api/v1/loanproducts", List.class);
+      for (Map<String, Object> product : products) {
+        if (shortName.equals(product.get("shortName"))) {
+          Long productId = ((Number) product.get("id")).longValue();
+          context.registerEntity("loanProduct", shortName, productId);
+          return productId;
+        }
+      }
+    } catch (Exception ex) {
+      log.debug("Could not look up loan product by shortName '{}': {}", shortName, ex.getMessage());
+    }
+
+    return null;
+  }
+
+  /**
+   * Fetches loan product details by ID.
+   *
+   * @param productId product ID
+   * @return product details map or null
+   */
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> fetchLoanProductDetails(Long productId) {
+    try {
+      return apiClient.get("/api/v1/loanproducts/" + productId, Map.class);
+    } catch (Exception ex) {
+      log.debug("Could not fetch loan product details for ID {}: {}", productId, ex.getMessage());
+      return null;
     }
   }
 }

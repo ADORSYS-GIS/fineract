@@ -443,20 +443,31 @@ class ExcelToYamlConverter:
                         'name': row['holiday_name']
                     }
 
-                    # Dates
+                    # Dates - support both formats (from_date/to_date and date)
                     if row.get('from_date'):
                         holiday['fromDate'] = self._parse_date(row['from_date'])
+                    elif row.get('date'):
+                        # Use single 'date' column for both from and to
+                        holiday['fromDate'] = self._parse_date(row['date'])
+                        holiday['toDate'] = self._parse_date(row['date'])
+
                     if row.get('to_date'):
                         holiday['toDate'] = self._parse_date(row['to_date'])
 
-                    # Rescheduling
+                    # Rescheduling - support both formats
                     if row.get('repayments_rescheduled_to'):
                         holiday['repaymentsRescheduledTo'] = self._parse_date(row['repayments_rescheduled_to'])
+                    elif row.get('rescheduled_to'):
+                        holiday['repaymentsRescheduledTo'] = self._parse_date(row['rescheduled_to'])
 
-                    # Offices (comma-separated list)
+                    # Description
+                    if row.get('description') and not pd.isna(row.get('description')):
+                        holiday['description'] = row['description']
+
+                    # Offices (comma-separated list) - default to all offices if not specified
                     if row.get('offices') and not pd.isna(row.get('offices')):
                         offices_str = str(row['offices'])
-                        holiday['offices'] = [o.strip() for o in offices_str.split(',')]
+                        holiday['officeNames'] = [o.strip() for o in offices_str.split(',')]
 
                     holidays.append(holiday)
 
@@ -1445,14 +1456,211 @@ class ExcelToYamlConverter:
             self.config['centers'] = centers
             logger.info(f"  ✓ Centers: {len(centers)} centers")
 
+        # 4. Loan Accounts
+        df = self._read_sheet('Loan Accounts')
+        if not df.empty:
+            loan_accounts = []
+            for _, row in df.iterrows():
+                # Skip if no client external ID
+                if not row.get('client_external_id') or pd.isna(row.get('client_external_id')):
+                    continue
+
+                account = {
+                    'clientExternalId': row['client_external_id'],
+                    'productShortName': row.get('product') or row.get('product_short_name')
+                }
+
+                # Dates
+                if row.get('submitted_on') and not pd.isna(row.get('submitted_on')):
+                    account['submittedOnDate'] = self._parse_date(row['submitted_on'])
+                if row.get('expected_disbursement_date') and not pd.isna(row.get('expected_disbursement_date')):
+                    account['expectedDisbursementDate'] = self._parse_date(row['expected_disbursement_date'])
+                if row.get('disbursement_date') and not pd.isna(row.get('disbursement_date')):
+                    account['actualDisbursementDate'] = self._parse_date(row['disbursement_date'])
+
+                # Amount
+                if row.get('principal') and not pd.isna(row.get('principal')):
+                    account['principal'] = float(row['principal'])
+
+                # Terms
+                if row.get('loan_term') and not pd.isna(row.get('loan_term')):
+                    account['numberOfRepayments'] = int(row['loan_term'])
+                if row.get('repayment_every') and not pd.isna(row.get('repayment_every')):
+                    account['repaymentEvery'] = int(row['repayment_every'])
+
+                # External ID
+                if row.get('external_id') and not pd.isna(row.get('external_id')):
+                    account['externalId'] = row['external_id']
+
+                # Workflow state (active, pending_approval, pending_disbursal)
+                if row.get('workflow_state') and not pd.isna(row.get('workflow_state')):
+                    account['workflowState'] = row['workflow_state']
+
+                # Fund source
+                if row.get('fund_source') and not pd.isna(row.get('fund_source')):
+                    account['fundSourceName'] = row['fund_source']
+
+                # Payment type
+                if row.get('payment_type') and not pd.isna(row.get('payment_type')):
+                    account['paymentTypeName'] = row['payment_type']
+
+                loan_accounts.append(account)
+
+            if loan_accounts:
+                self.config['loanAccounts'] = loan_accounts
+                logger.info(f"  ✓ Loan Accounts: {len(loan_accounts)} accounts")
+
+        # 5. Savings Accounts
+        df = self._read_sheet('Savings Accounts')
+        if not df.empty:
+            savings_accounts = []
+            for _, row in df.iterrows():
+                # Skip if no client external ID
+                if not row.get('client_external_id') or pd.isna(row.get('client_external_id')):
+                    continue
+
+                account = {
+                    'clientExternalId': row['client_external_id'],
+                    'productShortName': row.get('product') or row.get('product_short_name')
+                }
+
+                # Dates
+                if row.get('submitted_on') and not pd.isna(row.get('submitted_on')):
+                    account['submittedOnDate'] = self._parse_date(row['submitted_on'])
+
+                # External ID
+                if row.get('external_id') and not pd.isna(row.get('external_id')):
+                    account['externalId'] = row['external_id']
+
+                # Field officer
+                if row.get('field_officer') and not pd.isna(row.get('field_officer')):
+                    account['fieldOfficerName'] = row['field_officer']
+
+                # Activate flag
+                if row.get('activate') and not pd.isna(row.get('activate')):
+                    account['activate'] = self._parse_boolean(row['activate'])
+
+                savings_accounts.append(account)
+
+            if savings_accounts:
+                self.config['savingsAccounts'] = savings_accounts
+                logger.info(f"  ✓ Savings Accounts: {len(savings_accounts)} accounts")
+
     def convert_transactions(self):
         """Convert Phase 6: Transactions & Operations"""
         logger.info("Converting Phase 6: Transactions...")
 
-        # Note: Transactions are typically imported after accounts exist
-        # This is optional and may be skipped in initial config
+        # 1. Savings Deposits
+        df = self._read_sheet('Savings Deposits')
+        if not df.empty:
+            deposits = []
+            for _, row in df.iterrows():
+                # Support both account_external_id and savings_account_number
+                account_id = row.get('account_external_id') or row.get('savings_account_number')
+                if not account_id or pd.isna(account_id):
+                    continue
 
-        logger.info("  ℹ Transactions typically loaded separately after accounts exist")
+                txn = {
+                    'accountExternalId': str(account_id),
+                    'transactionType': 'DEPOSIT'
+                }
+
+                if row.get('transaction_date') and not pd.isna(row.get('transaction_date')):
+                    txn['transactionDate'] = self._parse_date(row['transaction_date'])
+                # Support both 'amount' and 'transaction_amount'
+                amount = row.get('amount') or row.get('transaction_amount')
+                if amount and not pd.isna(amount):
+                    txn['transactionAmount'] = float(amount)
+                if row.get('payment_type') and not pd.isna(row.get('payment_type')):
+                    txn['paymentTypeName'] = row['payment_type']
+                if row.get('note') and not pd.isna(row.get('note')):
+                    txn['note'] = row['note']
+
+                deposits.append(txn)
+
+            if deposits:
+                if 'savingsTransactions' not in self.config:
+                    self.config['savingsTransactions'] = []
+                self.config['savingsTransactions'].extend(deposits)
+                logger.info(f"  ✓ Savings Deposits: {len(deposits)} transactions")
+
+        # 2. Savings Withdrawals
+        df = self._read_sheet('Savings Withdrawals')
+        if not df.empty:
+            withdrawals = []
+            for _, row in df.iterrows():
+                # Support both account_external_id and savings_account_number
+                account_id = row.get('account_external_id') or row.get('savings_account_number')
+                if not account_id or pd.isna(account_id):
+                    continue
+
+                txn = {
+                    'accountExternalId': str(account_id),
+                    'transactionType': 'WITHDRAWAL'
+                }
+
+                if row.get('transaction_date') and not pd.isna(row.get('transaction_date')):
+                    txn['transactionDate'] = self._parse_date(row['transaction_date'])
+                # Support both 'amount' and 'transaction_amount'
+                amount = row.get('amount') or row.get('transaction_amount')
+                if amount and not pd.isna(amount):
+                    txn['transactionAmount'] = float(amount)
+                if row.get('payment_type') and not pd.isna(row.get('payment_type')):
+                    txn['paymentTypeName'] = row['payment_type']
+                if row.get('note') and not pd.isna(row.get('note')):
+                    txn['note'] = row['note']
+
+                withdrawals.append(txn)
+
+            if withdrawals:
+                if 'savingsTransactions' not in self.config:
+                    self.config['savingsTransactions'] = []
+                self.config['savingsTransactions'].extend(withdrawals)
+                logger.info(f"  ✓ Savings Withdrawals: {len(withdrawals)} transactions")
+
+        # 3. Loan Repayments
+        df = self._read_sheet('Loan Repayments')
+        if not df.empty:
+            repayments = []
+            for _, row in df.iterrows():
+                # Support both loan_external_id and loan_account_number
+                loan_id = row.get('loan_external_id') or row.get('loan_account_number')
+                if not loan_id or pd.isna(loan_id):
+                    continue
+
+                txn = {
+                    'loanExternalId': str(loan_id),
+                    'transactionType': 'REPAYMENT'
+                }
+
+                if row.get('transaction_date') and not pd.isna(row.get('transaction_date')):
+                    txn['transactionDate'] = self._parse_date(row['transaction_date'])
+                # Calculate total amount from components or use amount directly
+                total_amount = 0
+                if row.get('amount') and not pd.isna(row.get('amount')):
+                    total_amount = float(row['amount'])
+                else:
+                    # Sum up the components
+                    for field in ['principal_amount', 'interest_amount', 'fee_amount', 'penalty_amount']:
+                        if row.get(field) and not pd.isna(row.get(field)):
+                            total_amount += float(row[field])
+                if total_amount > 0:
+                    txn['transactionAmount'] = total_amount
+                if row.get('payment_type') and not pd.isna(row.get('payment_type')):
+                    txn['paymentTypeName'] = row['payment_type']
+                if row.get('note') and not pd.isna(row.get('note')):
+                    txn['note'] = row['note']
+                if row.get('receipt_number') and not pd.isna(row.get('receipt_number')):
+                    txn['receiptNumber'] = row['receipt_number']
+
+                repayments.append(txn)
+
+            if repayments:
+                self.config['loanTransactions'] = repayments
+                logger.info(f"  ✓ Loan Repayments: {len(repayments)} transactions")
+
+        if not self.config.get('savingsTransactions') and not self.config.get('loanTransactions'):
+            logger.info("  ℹ No transactions found (accounts may need to exist first)")
 
     def convert_all(self) -> Dict[str, Any]:
         """Convert all Excel sheets to YAML structure"""

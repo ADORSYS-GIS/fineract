@@ -77,21 +77,46 @@ public class SavingsAccountLoader {
     // Check if savings account already exists by external ID
     if (savingsAccount.getExternalId() != null) {
       try {
-        Map<String, Object> existingAccount =
+        Map<String, Object> response =
             apiClient.get(
                 "/api/v1/savingsaccounts?externalId=" + savingsAccount.getExternalId(), Map.class);
 
-        if (existingAccount != null && existingAccount.containsKey("id")) {
-          Long accountId = ((Number) existingAccount.get("id")).longValue();
-          log.debug(
-              "Savings account already exists: {} (ID: {})",
-              savingsAccount.getExternalId(),
-              accountId);
-          result.recordEntity("savingsAccount", ImportResult.EntityAction.UNCHANGED);
+        // Response is paginated: {"totalFilteredRecords":1,"pageItems":[...]}
+        if (response != null && response.containsKey("pageItems")) {
+          @SuppressWarnings("unchecked")
+          List<Map<String, Object>> pageItems =
+              (List<Map<String, Object>>) response.get("pageItems");
+          if (pageItems != null && !pageItems.isEmpty()) {
+            Map<String, Object> existingAccount = pageItems.get(0);
+            Long accountId = ((Number) existingAccount.get("id")).longValue();
+            log.debug(
+                "Savings account already exists: {} (ID: {})",
+                savingsAccount.getExternalId(),
+                accountId);
+            result.recordEntity("savingsAccount", ImportResult.EntityAction.UNCHANGED);
 
-          // Store for reference
-          context.registerEntity("savingsAccount", savingsAccount.getExternalId(), accountId);
-          return;
+            // Store for reference
+            context.registerEntity("savingsAccount", savingsAccount.getExternalId(), accountId);
+
+            // Check if account needs activation
+            if (Boolean.TRUE.equals(savingsAccount.getActive())
+                && savingsAccount.getActivationDate() != null) {
+              @SuppressWarnings("unchecked")
+              Map<String, Object> status = (Map<String, Object>) existingAccount.get("status");
+              if (status != null) {
+                String statusCode = (String) status.get("code");
+                // Only activate if not already active
+                if (!"savingsAccountStatusType.active".equals(statusCode)) {
+                  log.debug(
+                      "Existing account {} needs activation, current status: {}",
+                      savingsAccount.getExternalId(),
+                      statusCode);
+                  activateSavingsAccount(accountId, savingsAccount);
+                }
+              }
+            }
+            return;
+          }
         }
       } catch (Exception ex) {
         // Account not found, proceed with creation
@@ -136,15 +161,21 @@ public class SavingsAccountLoader {
       request.put("externalId", savingsAccount.getExternalId());
     }
 
-    // Resolve product
+    // Resolve product (try productName first, then productShortName)
+    Long productId = null;
+    String productRef = null;
     if (savingsAccount.getProductName() != null) {
-      Long productId = context.resolveEntityId("savingsProduct", savingsAccount.getProductName());
-      if (productId != null) {
-        request.put("productId", productId);
-      } else {
-        throw new IllegalStateException(
-            "Savings product '" + savingsAccount.getProductName() + "' not found");
-      }
+      productRef = savingsAccount.getProductName();
+      productId = context.resolveEntityId("savingsProduct", productRef);
+    }
+    if (productId == null && savingsAccount.getProductShortName() != null) {
+      productRef = savingsAccount.getProductShortName();
+      productId = resolveSavingsProductByShortName(savingsAccount.getProductShortName(), context);
+    }
+    if (productId != null) {
+      request.put("productId", productId);
+    } else {
+      throw new IllegalStateException("Savings product '" + productRef + "' not found");
     }
 
     // Resolve client or group
@@ -223,5 +254,38 @@ public class SavingsAccountLoader {
     } catch (Exception ex) {
       log.warn("Failed to activate savings account {}: {}", accountId, ex.getMessage());
     }
+  }
+
+  /**
+   * Resolves a savings product ID by short name.
+   *
+   * @param shortName product short name
+   * @param context import context
+   * @return product ID or null if not found
+   */
+  @SuppressWarnings("unchecked")
+  private Long resolveSavingsProductByShortName(String shortName, ImportContext context) {
+    // Try from context first
+    Long id = context.getEntityId("savingsProduct", shortName);
+    if (id != null) {
+      return id;
+    }
+
+    // Fetch from API
+    try {
+      List<Map<String, Object>> products = apiClient.get("/api/v1/savingsproducts", List.class);
+      for (Map<String, Object> product : products) {
+        if (shortName.equals(product.get("shortName"))) {
+          Long productId = ((Number) product.get("id")).longValue();
+          context.registerEntity("savingsProduct", shortName, productId);
+          return productId;
+        }
+      }
+    } catch (Exception ex) {
+      log.debug(
+          "Could not look up savings product by shortName '{}': {}", shortName, ex.getMessage());
+    }
+
+    return null;
   }
 }

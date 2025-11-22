@@ -26,15 +26,22 @@ import org.apache.fineract.config.service.loader.ChargeLoader;
 import org.apache.fineract.config.service.loader.ChartOfAccountsLoader;
 import org.apache.fineract.config.service.loader.ClientLoader;
 import org.apache.fineract.config.service.loader.CodesLoader;
+import org.apache.fineract.config.service.loader.CollateralTypeLoader;
 import org.apache.fineract.config.service.loader.CurrencyLoader;
 import org.apache.fineract.config.service.loader.DataTableLoader;
+import org.apache.fineract.config.service.loader.DelinquencyBucketLoader;
 import org.apache.fineract.config.service.loader.FinancialActivityMappingLoader;
+import org.apache.fineract.config.service.loader.FloatingRateLoader;
 import org.apache.fineract.config.service.loader.FundSourceLoader;
 import org.apache.fineract.config.service.loader.GlobalConfigLoader;
 import org.apache.fineract.config.service.loader.GroupLoader;
+import org.apache.fineract.config.service.loader.GuarantorTypeLoader;
+import org.apache.fineract.config.service.loader.HolidayLoader;
 import org.apache.fineract.config.service.loader.LoanAccountLoader;
 import org.apache.fineract.config.service.loader.LoanProductLoader;
+import org.apache.fineract.config.service.loader.LoanProvisioningLoader;
 import org.apache.fineract.config.service.loader.LoanTransactionLoader;
+import org.apache.fineract.config.service.loader.MakerCheckerConfigLoader;
 import org.apache.fineract.config.service.loader.NotificationConfigLoader;
 import org.apache.fineract.config.service.loader.NotificationTemplateLoader;
 import org.apache.fineract.config.service.loader.OfficeLoader;
@@ -43,7 +50,11 @@ import org.apache.fineract.config.service.loader.RoleLoader;
 import org.apache.fineract.config.service.loader.SavingsAccountLoader;
 import org.apache.fineract.config.service.loader.SavingsProductLoader;
 import org.apache.fineract.config.service.loader.SavingsTransactionLoader;
+import org.apache.fineract.config.service.loader.SchedulerJobLoader;
 import org.apache.fineract.config.service.loader.StaffLoader;
+import org.apache.fineract.config.service.loader.TaxGroupLoader;
+import org.apache.fineract.config.service.loader.TellerCashierLoader;
+import org.apache.fineract.config.service.loader.TellerLoader;
 import org.apache.fineract.config.service.loader.UserLoader;
 import org.apache.fineract.config.service.loader.WorkingDaysLoader;
 import org.apache.fineract.config.util.ChecksumUtil;
@@ -85,12 +96,17 @@ public class ImportService {
   private final NotificationConfigLoader notificationConfigLoader;
   private final NotificationTemplateLoader notificationTemplateLoader;
   private final DataTableLoader dataTableLoader;
+  private final HolidayLoader holidayLoader;
+  private final SchedulerJobLoader schedulerJobLoader;
+  private final MakerCheckerConfigLoader makerCheckerConfigLoader;
 
   // Entity loaders (Phase 2: Security & Organization)
   private final OfficeLoader officeLoader;
   private final RoleLoader roleLoader;
   private final UserLoader userLoader;
   private final StaffLoader staffLoader;
+  private final TellerLoader tellerLoader;
+  private final TellerCashierLoader tellerCashierLoader;
 
   // Entity loaders (Phase 3: Accounting Foundation)
   private final ChartOfAccountsLoader chartOfAccountsLoader;
@@ -102,6 +118,12 @@ public class ImportService {
   private final ChargeLoader chargeLoader;
   private final LoanProductLoader loanProductLoader;
   private final SavingsProductLoader savingsProductLoader;
+  private final FloatingRateLoader floatingRateLoader;
+  private final DelinquencyBucketLoader delinquencyBucketLoader;
+  private final TaxGroupLoader taxGroupLoader;
+  private final CollateralTypeLoader collateralTypeLoader;
+  private final GuarantorTypeLoader guarantorTypeLoader;
+  private final LoanProvisioningLoader loanProvisioningLoader;
 
   // Entity loaders (Phase 5: Client Operations & Accounts)
   private final CenterLoader centerLoader;
@@ -129,10 +151,15 @@ public class ImportService {
       NotificationConfigLoader notificationConfigLoader,
       NotificationTemplateLoader notificationTemplateLoader,
       DataTableLoader dataTableLoader,
+      HolidayLoader holidayLoader,
+      SchedulerJobLoader schedulerJobLoader,
+      MakerCheckerConfigLoader makerCheckerConfigLoader,
       OfficeLoader officeLoader,
       RoleLoader roleLoader,
       UserLoader userLoader,
       StaffLoader staffLoader,
+      TellerLoader tellerLoader,
+      TellerCashierLoader tellerCashierLoader,
       ChartOfAccountsLoader chartOfAccountsLoader,
       FinancialActivityMappingLoader financialActivityMappingLoader,
       PaymentTypeLoader paymentTypeLoader,
@@ -140,6 +167,12 @@ public class ImportService {
       ChargeLoader chargeLoader,
       LoanProductLoader loanProductLoader,
       SavingsProductLoader savingsProductLoader,
+      FloatingRateLoader floatingRateLoader,
+      DelinquencyBucketLoader delinquencyBucketLoader,
+      TaxGroupLoader taxGroupLoader,
+      CollateralTypeLoader collateralTypeLoader,
+      GuarantorTypeLoader guarantorTypeLoader,
+      LoanProvisioningLoader loanProvisioningLoader,
       CenterLoader centerLoader,
       ClientLoader clientLoader,
       GroupLoader groupLoader,
@@ -161,10 +194,15 @@ public class ImportService {
     this.notificationConfigLoader = notificationConfigLoader;
     this.notificationTemplateLoader = notificationTemplateLoader;
     this.dataTableLoader = dataTableLoader;
+    this.holidayLoader = holidayLoader;
+    this.schedulerJobLoader = schedulerJobLoader;
+    this.makerCheckerConfigLoader = makerCheckerConfigLoader;
     this.officeLoader = officeLoader;
     this.roleLoader = roleLoader;
     this.userLoader = userLoader;
     this.staffLoader = staffLoader;
+    this.tellerLoader = tellerLoader;
+    this.tellerCashierLoader = tellerCashierLoader;
     this.chartOfAccountsLoader = chartOfAccountsLoader;
     this.financialActivityMappingLoader = financialActivityMappingLoader;
     this.paymentTypeLoader = paymentTypeLoader;
@@ -172,6 +210,12 @@ public class ImportService {
     this.chargeLoader = chargeLoader;
     this.loanProductLoader = loanProductLoader;
     this.savingsProductLoader = savingsProductLoader;
+    this.floatingRateLoader = floatingRateLoader;
+    this.delinquencyBucketLoader = delinquencyBucketLoader;
+    this.taxGroupLoader = taxGroupLoader;
+    this.collateralTypeLoader = collateralTypeLoader;
+    this.guarantorTypeLoader = guarantorTypeLoader;
+    this.loanProvisioningLoader = loanProvisioningLoader;
     this.centerLoader = centerLoader;
     this.clientLoader = clientLoader;
     this.groupLoader = groupLoader;
@@ -572,6 +616,43 @@ public class ImportService {
           log.error("  ✗ Failed to load data tables: {}", ex.getMessage());
         }
       }
+
+      // 9. Holidays
+      if (config.getSystemConfig().getHolidays() != null
+          && !config.getSystemConfig().getHolidays().isEmpty()) {
+        log.info("  → Loading holidays...");
+        try {
+          holidayLoader.load(config.getSystemConfig().getHolidays(), context, result);
+          log.info("  ✓ Holidays loaded");
+        } catch (Exception ex) {
+          log.error("  ✗ Failed to load holidays: {}", ex.getMessage());
+        }
+      }
+
+      // 10. Scheduler Jobs
+      if (config.getSystemConfig().getSchedulerJobs() != null
+          && !config.getSystemConfig().getSchedulerJobs().isEmpty()) {
+        log.info("  → Loading scheduler jobs...");
+        try {
+          schedulerJobLoader.load(config.getSystemConfig().getSchedulerJobs(), context, result);
+          log.info("  ✓ Scheduler jobs loaded");
+        } catch (Exception ex) {
+          log.error("  ✗ Failed to load scheduler jobs: {}", ex.getMessage());
+        }
+      }
+
+      // 11. Maker-Checker Configuration
+      if (config.getSystemConfig().getMakerCheckerConfig() != null
+          && !config.getSystemConfig().getMakerCheckerConfig().isEmpty()) {
+        log.info("  → Loading maker-checker configuration...");
+        try {
+          makerCheckerConfigLoader.load(
+              config.getSystemConfig().getMakerCheckerConfig(), context, result);
+          log.info("  ✓ Maker-checker configuration loaded");
+        } catch (Exception ex) {
+          log.error("  ✗ Failed to load maker-checker configuration: {}", ex.getMessage());
+        }
+      }
     }
 
     // Phase 2: Security & Organization
@@ -618,6 +699,28 @@ public class ImportService {
         log.info("  ✓ Staff loaded");
       } catch (Exception ex) {
         log.error("  ✗ Failed to load staff: {}", ex.getMessage());
+      }
+    }
+
+    // 5. Tellers (depends on offices)
+    if (config.getTellers() != null && !config.getTellers().isEmpty()) {
+      log.info("  → Loading tellers...");
+      try {
+        tellerLoader.load((List) config.getTellers(), context, result);
+        log.info("  ✓ Tellers loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load tellers: {}", ex.getMessage());
+      }
+    }
+
+    // 6. Teller Cashier Mappings (depends on tellers and staff)
+    if (config.getTellerCashierMappings() != null && !config.getTellerCashierMappings().isEmpty()) {
+      log.info("  → Loading teller cashier mappings...");
+      try {
+        tellerCashierLoader.load((List) config.getTellerCashierMappings(), context, result);
+        log.info("  ✓ Teller cashier mappings loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load teller cashier mappings: {}", ex.getMessage());
       }
     }
 
@@ -673,7 +776,73 @@ public class ImportService {
     // Phase 4: Financial Products
     log.info("Loading Phase 4: Financial Products");
 
-    // 1. Charges (depends on GL accounts)
+    // 1. Floating Rates (must be before loan products)
+    if (config.getFloatingRates() != null && !config.getFloatingRates().isEmpty()) {
+      log.info("  → Loading floating rates...");
+      try {
+        floatingRateLoader.load((List) config.getFloatingRates(), context, result);
+        log.info("  ✓ Floating rates loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load floating rates: {}", ex.getMessage());
+      }
+    }
+
+    // 2. Delinquency Buckets (must be before loan products)
+    if (config.getDelinquencyBuckets() != null && !config.getDelinquencyBuckets().isEmpty()) {
+      log.info("  → Loading delinquency buckets...");
+      try {
+        delinquencyBucketLoader.load((List) config.getDelinquencyBuckets(), context, result);
+        log.info("  ✓ Delinquency buckets loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load delinquency buckets: {}", ex.getMessage());
+      }
+    }
+
+    // 3. Tax Groups (for products with tax)
+    if (config.getTaxGroups() != null && !config.getTaxGroups().isEmpty()) {
+      log.info("  → Loading tax groups...");
+      try {
+        taxGroupLoader.load((List) config.getTaxGroups(), context, result);
+        log.info("  ✓ Tax groups loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load tax groups: {}", ex.getMessage());
+      }
+    }
+
+    // 4. Collateral Types (for loan collateral management)
+    if (config.getCollateralTypes() != null && !config.getCollateralTypes().isEmpty()) {
+      log.info("  → Loading collateral types...");
+      try {
+        collateralTypeLoader.load((List) config.getCollateralTypes(), context, result);
+        log.info("  ✓ Collateral types loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load collateral types: {}", ex.getMessage());
+      }
+    }
+
+    // 4b. Guarantor Types (for loan guarantor management)
+    if (config.getGuarantorTypes() != null && !config.getGuarantorTypes().isEmpty()) {
+      log.info("  → Loading guarantor types...");
+      try {
+        guarantorTypeLoader.load((List) config.getGuarantorTypes(), context, result);
+        log.info("  ✓ Guarantor types loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load guarantor types: {}", ex.getMessage());
+      }
+    }
+
+    // 4c. Loan Provisioning (for portfolio risk management)
+    if (config.getLoanProvisioning() != null && !config.getLoanProvisioning().isEmpty()) {
+      log.info("  → Loading loan provisioning criteria...");
+      try {
+        loanProvisioningLoader.load((List) config.getLoanProvisioning(), context, result);
+        log.info("  ✓ Loan provisioning criteria loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load loan provisioning criteria: {}", ex.getMessage());
+      }
+    }
+
+    // 5. Charges (depends on GL accounts)
     if (config.getCharges() != null && !config.getCharges().isEmpty()) {
       log.info("  → Loading charges...");
       try {
@@ -684,7 +853,7 @@ public class ImportService {
       }
     }
 
-    // 2. Loan Products (depends on charges, GL accounts, fund sources)
+    // 6. Loan Products (depends on charges, GL accounts, fund sources, floating rates, delinquency)
     if (config.getLoanProducts() != null && !config.getLoanProducts().isEmpty()) {
       log.info("  → Loading loan products...");
       try {
@@ -695,7 +864,7 @@ public class ImportService {
       }
     }
 
-    // 3. Savings Products (depends on charges, GL accounts)
+    // 7. Savings Products (depends on charges, GL accounts, tax groups)
     if (config.getSavingsProducts() != null && !config.getSavingsProducts().isEmpty()) {
       log.info("  → Loading savings products...");
       try {

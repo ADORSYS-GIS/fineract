@@ -16,11 +16,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Data
 public class SavingsTransaction {
-  private String savingsAccountExternalId;
-  private String transactionType; // DEPOSIT, WITHDRAWAL
+  /** External ID of the savings account (YAML: accountExternalId) */
+  private String accountExternalId;
+
+  /** Transaction type: DEPOSIT, WITHDRAWAL */
+  private String transactionType;
+
+  /** Transaction date */
   private LocalDate transactionDate;
-  private BigDecimal amount;
+
+  /** Transaction amount (YAML: transactionAmount) */
+  private BigDecimal transactionAmount;
+
+  /** Payment type name */
   private String paymentTypeName;
+
+  /** Transaction note */
   private String note;
 
   /**

@@ -637,17 +637,173 @@ systemConfig:
     description: Delay between retry attempts (minutes)
   holidays:
   - name: New Year's Day
+    fromDate:
+    - 2024
+    - 1
+    - 1
+    toDate:
+    - 2024
+    - 1
+    - 1
+    repaymentsRescheduledTo:
+    - 2024
+    - 1
+    - 2
+    description: New Year Holiday
   - name: Youth Day
+    fromDate:
+    - 2024
+    - 2
+    - 11
+    toDate:
+    - 2024
+    - 2
+    - 11
+    repaymentsRescheduledTo:
+    - 2024
+    - 2
+    - 12
+    description: Youth Day Holiday
   - name: Labour Day
+    fromDate:
+    - 2024
+    - 5
+    - 1
+    toDate:
+    - 2024
+    - 5
+    - 1
+    repaymentsRescheduledTo:
+    - 2024
+    - 5
+    - 2
+    description: International Labour Day
   - name: National Day
+    fromDate:
+    - 2024
+    - 5
+    - 20
+    toDate:
+    - 2024
+    - 5
+    - 20
+    repaymentsRescheduledTo:
+    - 2024
+    - 5
+    - 21
+    description: Cameroon National Day
   - name: Assumption Day
+    fromDate:
+    - 2024
+    - 8
+    - 15
+    toDate:
+    - 2024
+    - 8
+    - 15
+    repaymentsRescheduledTo:
+    - 2024
+    - 8
+    - 16
+    description: Assumption of Mary
   - name: Christmas Day
+    fromDate:
+    - 2024
+    - 12
+    - 25
+    toDate:
+    - 2024
+    - 12
+    - 25
+    repaymentsRescheduledTo:
+    - 2024
+    - 12
+    - 26
+    description: Christmas Holiday
   - name: New Year's Day
+    fromDate:
+    - 2025
+    - 1
+    - 1
+    toDate:
+    - 2025
+    - 1
+    - 1
+    repaymentsRescheduledTo:
+    - 2025
+    - 1
+    - 2
+    description: New Year Holiday
   - name: Youth Day
+    fromDate:
+    - 2025
+    - 2
+    - 11
+    toDate:
+    - 2025
+    - 2
+    - 11
+    repaymentsRescheduledTo:
+    - 2025
+    - 2
+    - 12
+    description: Youth Day Holiday
   - name: Labour Day
+    fromDate:
+    - 2025
+    - 5
+    - 1
+    toDate:
+    - 2025
+    - 5
+    - 1
+    repaymentsRescheduledTo:
+    - 2025
+    - 5
+    - 2
+    description: International Labour Day
   - name: National Day
+    fromDate:
+    - 2025
+    - 5
+    - 20
+    toDate:
+    - 2025
+    - 5
+    - 20
+    repaymentsRescheduledTo:
+    - 2025
+    - 5
+    - 21
+    description: Cameroon National Day
   - name: Assumption Day
+    fromDate:
+    - 2025
+    - 8
+    - 15
+    toDate:
+    - 2025
+    - 8
+    - 15
+    repaymentsRescheduledTo:
+    - 2025
+    - 8
+    - 18
+    description: Assumption of Mary
   - name: Christmas Day
+    fromDate:
+    - 2025
+    - 12
+    - 25
+    toDate:
+    - 2025
+    - 12
+    - 25
+    repaymentsRescheduledTo:
+    - 2025
+    - 12
+    - 26
+    description: Christmas Holiday
 offices:
 - name: Yaounde Branch
   openingDate:
@@ -1153,6 +1309,7 @@ taxGroups:
 - name: Savings Interest Tax
   taxComponents:
   - name: Withholding Tax on Interest
+    percentage: 10
     startDate:
     - 2024
     - 1
@@ -1161,6 +1318,7 @@ taxGroups:
 - name: Loan Interest Tax
   taxComponents:
   - name: Withholding Tax on Loan Interest
+    percentage: 10
     startDate:
     - 2024
     - 1
@@ -1216,14 +1374,26 @@ tellers:
   - 31
   status: Active
 tellerCashierMappings:
-- tellerName: Teller - Yaounde
-  description: Yaounde branch teller and vault configuration
-- tellerName: Teller - Douala
-  description: Douala branch teller and vault configuration
-- tellerName: Teller - Bafoussam
-  description: Bafoussam branch teller and vault configuration
-- tellerName: Teller - Bamenda
-  description: Bamenda branch teller and vault configuration
+- tellerName: Teller 1 - Yaounde
+  staffExternalId: STF-003
+  description: Yaounde branch cashier assignment
+  startDate: [2024, 1, 20]
+  isFullDay: true
+- tellerName: Teller 1 - Douala
+  staffExternalId: STF-006
+  description: Douala branch cashier assignment
+  startDate: [2024, 1, 20]
+  isFullDay: true
+- tellerName: Teller 1 - Bafoussam
+  staffExternalId: STF-009
+  description: Bafoussam branch cashier assignment
+  startDate: [2024, 2, 1]
+  isFullDay: true
+- tellerName: Teller 1 - Bamenda
+  staffExternalId: STF-012
+  description: Bamenda branch cashier assignment
+  startDate: [2024, 2, 15]
+  isFullDay: true
 charges:
 - name: Loan Processing Fee
   chargeAppliesTo: Loan
@@ -1919,3 +2089,431 @@ centers:
   - 2
   - 2
   staffName: loan.bafoussam
+loanAccounts:
+- clientExternalId: CLI-001
+  productShortName: MSOL
+  submittedOnDate:
+  - 2024
+  - 2
+  - 1
+  principal: 200000.0
+  numberOfRepayments: 6
+  externalId: LOAN-001
+  workflowState: active
+  fundSourceName: Own Capital
+- clientExternalId: CLI-002
+  productShortName: SBIZ
+  submittedOnDate:
+  - 2024
+  - 2
+  - 5
+  principal: 2000000.0
+  numberOfRepayments: 12
+  externalId: LOAN-002
+  workflowState: pending_approval
+  fundSourceName: Bank Loan - Ecobank
+- clientExternalId: CLI-003
+  productShortName: MSOL
+  submittedOnDate:
+  - 2024
+  - 2
+  - 8
+  principal: 150000.0
+  numberOfRepayments: 6
+  externalId: LOAN-003
+  workflowState: active
+  fundSourceName: Own Capital
+- clientExternalId: CLI-004
+  productShortName: ASEA
+  submittedOnDate:
+  - 2024
+  - 2
+  - 12
+  principal: 500000.0
+  numberOfRepayments: 6
+  externalId: LOAN-004
+  workflowState: active
+  fundSourceName: Donor - AfDB
+- clientExternalId: CLI-005
+  productShortName: MSOL
+  submittedOnDate:
+  - 2024
+  - 2
+  - 15
+  principal: 180000.0
+  numberOfRepayments: 6
+  externalId: LOAN-005
+  workflowState: active
+  fundSourceName: Own Capital
+- clientExternalId: CLI-006
+  productShortName: SBIZ
+  submittedOnDate:
+  - 2024
+  - 2
+  - 18
+  principal: 3000000.0
+  numberOfRepayments: 18
+  externalId: LOAN-006
+  workflowState: pending_disbursal
+  fundSourceName: Bank Loan - Ecobank
+savingsAccounts:
+- clientExternalId: CLI-001
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 1
+  - 20
+  externalId: SAV-001
+  fieldOfficerName: loan.douala
+  active: true
+  activationDate:
+  - 2024
+  - 1
+  - 21
+- clientExternalId: CLI-002
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 1
+  - 25
+  externalId: SAV-002
+  fieldOfficerName: loan.douala
+  active: true
+  activationDate:
+  - 2024
+  - 1
+  - 26
+- clientExternalId: CLI-002
+  productShortName: FDEP
+  submittedOnDate:
+  - 2024
+  - 2
+  - 1
+  externalId: SAV-003
+  fieldOfficerName: loan.douala
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 2
+- clientExternalId: CLI-003
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 2
+  - 1
+  externalId: SAV-004
+  fieldOfficerName: loan.yaounde
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 2
+- clientExternalId: CLI-004
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 2
+  - 5
+  externalId: SAV-005
+  fieldOfficerName: loan.bafoussam
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 6
+- clientExternalId: CLI-005
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 2
+  - 10
+  externalId: SAV-006
+  fieldOfficerName: loan.douala
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 11
+- clientExternalId: CLI-006
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 2
+  - 15
+  externalId: SAV-007
+  fieldOfficerName: loan.yaounde
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 16
+- clientExternalId: CLI-006
+  productShortName: FDEP
+  submittedOnDate:
+  - 2024
+  - 2
+  - 20
+  externalId: SAV-008
+  fieldOfficerName: loan.yaounde
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 21
+- clientExternalId: CLI-007
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 2
+  - 20
+  externalId: SAV-009
+  fieldOfficerName: loan.bamenda
+  active: true
+  activationDate:
+  - 2024
+  - 2
+  - 21
+- clientExternalId: CLI-008
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 3
+  - 1
+  externalId: SAV-010
+  fieldOfficerName: loan.douala
+  active: true
+  activationDate:
+  - 2024
+  - 3
+  - 4
+- clientExternalId: CLI-009
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 3
+  - 5
+  externalId: SAV-011
+  fieldOfficerName: loan.bafoussam
+  active: true
+  activationDate:
+  - 2024
+  - 3
+  - 6
+- clientExternalId: CLI-010
+  productShortName: VSAV
+  submittedOnDate:
+  - 2024
+  - 3
+  - 10
+  externalId: SAV-012
+  fieldOfficerName: loan.yaounde
+  active: true
+  activationDate:
+  - 2024
+  - 3
+  - 11
+savingsTransactions:
+- accountExternalId: SAV-001
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 1
+  transactionAmount: 50000.0
+  paymentTypeName: Cash
+  note: Monthly deposit
+- accountExternalId: SAV-002
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 5
+  transactionAmount: 25000.0
+  paymentTypeName: Bank Transfer
+  note: Monthly savings
+- accountExternalId: SAV-004
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 2
+  transactionAmount: 30000.0
+  paymentTypeName: Cash
+  note: Weekly deposit
+- accountExternalId: SAV-005
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 10
+  transactionAmount: 15000.0
+  paymentTypeName: MTN Mobile Money
+  note: Mobile money deposit
+- accountExternalId: SAV-006
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 3
+  transactionAmount: 40000.0
+  paymentTypeName: Cash
+  note: Business savings
+- accountExternalId: SAV-007
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 12
+  transactionAmount: 35000.0
+  paymentTypeName: Cheque
+  note: Farm income deposit
+- accountExternalId: SAV-001
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 20
+  transactionAmount: 35000.0
+  paymentTypeName: Cash
+  note: Cross-branch deposit - Douala client depositing at Yaounde
+- accountExternalId: SAV-004
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 22
+  transactionAmount: 20000.0
+  paymentTypeName: Cash
+  note: Cross-branch deposit - Yaounde client depositing at Douala
+- accountExternalId: SAV-002
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 25
+  transactionAmount: 20000.0
+  paymentTypeName: Cash
+  note: Cross-branch deposit - Douala client depositing at Bafoussam
+- accountExternalId: SAV-005
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 28
+  transactionAmount: 25000.0
+  paymentTypeName: Cash
+  note: Cross-branch deposit - Bafoussam client depositing at Yaounde
+- accountExternalId: SAV-011
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 10
+  transactionAmount: 20000.0
+  paymentTypeName: Cash
+  note: Initial deposit
+- accountExternalId: SAV-012
+  transactionType: DEPOSIT
+  transactionDate:
+  - 2024
+  - 3
+  - 15
+  transactionAmount: 25000.0
+  paymentTypeName: Cash
+  note: Initial deposit
+- accountExternalId: SAV-001
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 15
+  transactionAmount: 20000.0
+  paymentTypeName: Cash
+  note: Emergency withdrawal
+- accountExternalId: SAV-002
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 18
+  transactionAmount: 10000.0
+  paymentTypeName: Cash
+  note: Cash withdrawal
+- accountExternalId: SAV-004
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 16
+  transactionAmount: 30000.0
+  paymentTypeName: Cash
+  note: Personal expense
+- accountExternalId: SAV-005
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 20
+  transactionAmount: 10000.0
+  paymentTypeName: Bank Transfer
+  note: Supplier payment
+- accountExternalId: SAV-011
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 17
+  transactionAmount: 15000.0
+  paymentTypeName: Cash
+  note: School fees
+- accountExternalId: SAV-012
+  transactionType: WITHDRAWAL
+  transactionDate:
+  - 2024
+  - 3
+  - 22
+  transactionAmount: 20000.0
+  paymentTypeName: Cash
+  note: Medical expenses
+loanTransactions:
+- loanExternalId: LOAN-001
+  transactionType: REPAYMENT
+  transactionDate:
+  - 2024
+  - 3
+  - 15
+  transactionAmount: 25000.0
+  paymentTypeName: Cash
+  note: Monthly repayment
+  receiptNumber: REP-001
+- loanExternalId: LOAN-003
+  transactionType: REPAYMENT
+  transactionDate:
+  - 2024
+  - 3
+  - 18
+  transactionAmount: 38000.0
+  paymentTypeName: Cash
+  note: Monthly repayment
+  receiptNumber: REP-003
+- loanExternalId: LOAN-004
+  transactionType: REPAYMENT
+  transactionDate:
+  - 2024
+  - 3
+  - 25
+  transactionAmount: 102000.0
+  paymentTypeName: Bank Transfer
+  note: Late payment with penalty
+  receiptNumber: REP-004
+- loanExternalId: LOAN-005
+  transactionType: REPAYMENT
+  transactionDate:
+  - 2024
+  - 3
+  - 22
+  transactionAmount: 31500.0
+  paymentTypeName: Cash
+  note: Monthly repayment
+  receiptNumber: REP-005

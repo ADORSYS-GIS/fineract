@@ -25,20 +25,28 @@ public class Holiday {
   private String description;
 
   /**
-   * Start date of the holiday in [year, month, day] format.
+   * Start date of the holiday.
    *
-   * <p>Example: [2024, 1, 1] for January 1, 2024
+   * <p>Supports both string format (e.g., "2024-01-01") and array format [2024, 1, 1]
    */
   @JsonProperty("fromDate")
-  private List<Integer> fromDate;
+  private Object fromDate;
 
   /**
-   * End date of the holiday in [year, month, day] format.
+   * End date of the holiday.
    *
-   * <p>Example: [2024, 1, 1] for January 1, 2024
+   * <p>Supports both string format (e.g., "2024-01-01") and array format [2024, 1, 1]
    */
   @JsonProperty("toDate")
-  private List<Integer> toDate;
+  private Object toDate;
+
+  /**
+   * Date to reschedule repayments to (for specific date rescheduling).
+   *
+   * <p>Used when a specific date is needed instead of a rule.
+   */
+  @JsonProperty("repaymentsRescheduledTo")
+  private Object repaymentsRescheduledTo;
 
   /**
    * List of office names where this holiday applies.

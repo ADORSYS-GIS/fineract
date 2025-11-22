@@ -51,6 +51,9 @@ public class SavingsAccount {
   /** Name of the savings product. */
   private String productName;
 
+  /** Short name of the savings product (alternative to productName). */
+  private String productShortName;
+
   /** Name of the field officer assigned to this account. */
   private String fieldOfficerName;
 
@@ -78,10 +81,18 @@ public class SavingsAccount {
    *
    * <p>The account will be approved and activated on this date. This date is immutable after
    * account creation.
+   *
+   * <p>Accepts both "activationDate" and "activatedOnDate" from YAML.
    */
-  @JsonProperty("activatedOnDate")
   @JsonDeserialize(using = DateArrayDeserializer.class)
   private LocalDate activationDate;
+
+  /** Alias for activationDate (alternative YAML field name). */
+  @JsonProperty("activatedOnDate")
+  @JsonDeserialize(using = DateArrayDeserializer.class)
+  public void setActivatedOnDate(LocalDate date) {
+    this.activationDate = date;
+  }
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

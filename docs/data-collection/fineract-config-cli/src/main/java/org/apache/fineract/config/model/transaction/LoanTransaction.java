@@ -16,12 +16,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Data
 public class LoanTransaction {
-  private String loanAccountExternalId;
-  private String transactionType; // REPAYMENT, WAIVER, WRITEOFF
+  /** External ID of the loan account (YAML: loanExternalId) */
+  private String loanExternalId;
+
+  /** Transaction type: REPAYMENT, WAIVER, WRITEOFF */
+  private String transactionType;
+
+  /** Transaction date */
   private LocalDate transactionDate;
-  private BigDecimal amount;
+
+  /** Transaction amount (YAML: transactionAmount) */
+  private BigDecimal transactionAmount;
+
+  /** Payment type name */
   private String paymentTypeName;
+
+  /** Transaction note */
   private String note;
+
+  /** Receipt number */
+  private String receiptNumber;
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

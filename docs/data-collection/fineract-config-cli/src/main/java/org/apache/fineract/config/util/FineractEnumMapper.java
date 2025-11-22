@@ -907,6 +907,62 @@ public class FineractEnumMapper {
   }
 
   // ===========================================================================================
+  // HOLIDAY ENUMS (HolidayLoader.java - 1 method)
+  // ===========================================================================================
+
+  /**
+   * Maps HolidayReschedulingRule enum to integer ID.
+   *
+   * <p>Used by: HolidayLoader
+   *
+   * <p>Fineract API values:
+   *
+   * <ul>
+   *   <li>RESCHEDULE_TO_NEXT_WORKING_DAY = 1
+   *   <li>RESCHEDULE_TO_SPECIFIC_DATE = 2
+   *   <li>RESCHEDULE_TO_NEXT_REPAYMENT_MEETING_DATE = 3
+   *   <li>RESCHEDULE_TO_NEXT_WORKING_DAY_ADV = 4
+   * </ul>
+   *
+   * @param value enum name or integer string
+   * @return integer ID (defaults to 1 - RESCHEDULE_TO_NEXT_WORKING_DAY)
+   */
+  public static Integer mapHolidayReschedulingRule(String value) {
+    if (value == null || value.isBlank()) {
+      log.warn(
+          "HolidayReschedulingRule value is null/empty, defaulting to RESCHEDULE_TO_NEXT_WORKING_DAY"
+              + " (1)");
+      return 1;
+    }
+
+    // Try parsing as integer
+    try {
+      return Integer.parseInt(value.trim());
+    } catch (NumberFormatException e) {
+      // Not an integer, proceed with enum name mapping
+    }
+
+    // Map enum name to integer ID (normalize spaces and underscores)
+    String normalized = value.toUpperCase().trim().replace(" ", "_");
+    return switch (normalized) {
+      case "NEXT_WORKING_DAY", "RESCHEDULE_TO_NEXT_WORKING_DAY" -> 1;
+      case "SPECIFIC_DATE", "RESCHEDULE_TO_SPECIFIC_DATE" -> 2;
+      case "NEXT_REPAYMENT_MEETING_DATE",
+          "NEXT_MEETING_DAY",
+          "RESCHEDULE_TO_NEXT_REPAYMENT_MEETING_DATE" -> 3;
+      case "NEXT_WORKING_DAY_ADV", "RESCHEDULE_TO_NEXT_WORKING_DAY_ADV" -> 4;
+      case "SAME_DAY" -> 1; // Treat SAME_DAY as NEXT_WORKING_DAY for compatibility
+      default -> {
+        log.warn(
+            "Unknown HolidayReschedulingRule value: '{}', defaulting to"
+                + " RESCHEDULE_TO_NEXT_WORKING_DAY (1)",
+            value);
+        yield 1;
+      }
+    };
+  }
+
+  // ===========================================================================================
   // WORKING DAYS ENUM (WorkingDaysLoader.java - 1 method - REFERENCE IMPLEMENTATION)
   // ===========================================================================================
 

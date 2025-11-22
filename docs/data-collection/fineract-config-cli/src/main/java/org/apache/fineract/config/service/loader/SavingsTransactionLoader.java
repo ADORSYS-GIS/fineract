@@ -51,7 +51,7 @@ public class SavingsTransactionLoader {
       } catch (Exception ex) {
         log.error(
             "Failed to load savings transaction for account '{}': {}",
-            transaction.getSavingsAccountExternalId(),
+            transaction.getAccountExternalId(),
             ex.getMessage());
         result.recordEntity("savingsTransaction", ImportResult.EntityAction.FAILED);
       }
@@ -67,15 +67,13 @@ public class SavingsTransactionLoader {
    */
   private void loadSingleTransaction(
       SavingsTransaction transaction, ImportContext context, ImportResult result) {
-    log.debug(
-        "Loading savings transaction for account: {}", transaction.getSavingsAccountExternalId());
+    log.debug("Loading savings transaction for account: {}", transaction.getAccountExternalId());
 
     // Resolve savings account
-    Long accountId =
-        context.resolveEntityId("savingsAccount", transaction.getSavingsAccountExternalId());
+    Long accountId = context.resolveEntityId("savingsAccount", transaction.getAccountExternalId());
     if (accountId == null) {
       throw new IllegalStateException(
-          "Savings account '" + transaction.getSavingsAccountExternalId() + "' not found");
+          "Savings account '" + transaction.getAccountExternalId() + "' not found");
     }
 
     // Build request
@@ -93,7 +91,7 @@ public class SavingsTransactionLoader {
     log.info(
         "Savings transaction created: {} on account {} (ID: {})",
         transaction.getTransactionType(),
-        transaction.getSavingsAccountExternalId(),
+        transaction.getAccountExternalId(),
         transactionId);
     result.recordEntity("savingsTransaction", ImportResult.EntityAction.CREATED);
   }
@@ -114,7 +112,7 @@ public class SavingsTransactionLoader {
 
     return RequestBuilder.forTransaction()
         .put("transactionDate", transaction.getTransactionDate().format(DATE_FORMATTER))
-        .put("transactionAmount", transaction.getAmount())
+        .put("transactionAmount", transaction.getTransactionAmount())
         .putIfNotNull("paymentTypeId", paymentTypeId)
         .putIfNotNull("note", transaction.getNote())
         .build();
