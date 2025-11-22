@@ -560,14 +560,19 @@ class ExcelToYamlConverter:
             for _, row in df.iterrows():
                 user = {
                     'username': row['username'],
-                    'firstName': row['first_name'],
-                    'lastName': row['last_name'],
+                    'firstname': row['first_name'],  # lowercase to match User.java model
+                    'lastname': row['last_name'],    # lowercase to match User.java model
                     'email': row['email'],
                     'officeName': row['office_name'],
-                    'roles': row['roles'].split(',') if row.get('roles') else []
+                    'roles': [r.strip() for r in row['roles'].split(',')] if row.get('roles') else []
                 }
+                # Password is required for user creation
+                if row.get('password'):
+                    user['password'] = row['password']
                 if row.get('staff_name'):
                     user['staffName'] = row['staff_name']
+                if row.get('password_never_expires'):
+                    user['passwordNeverExpires'] = self._parse_boolean(row['password_never_expires'])
 
                 users.append(user)
 
@@ -748,8 +753,10 @@ class ExcelToYamlConverter:
                         'tellerName': row['teller_name']
                     }
 
-                    # Staff/Cashier
-                    if row.get('staff_name') and not pd.isna(row.get('staff_name')):
+                    # Staff/Cashier - prefer external_id over name
+                    if row.get('staff_external_id') and not pd.isna(row.get('staff_external_id')):
+                        mapping['staffExternalId'] = row['staff_external_id']
+                    elif row.get('staff_name') and not pd.isna(row.get('staff_name')):
                         mapping['staffName'] = row['staff_name']
 
                     # Start/End date
@@ -1658,6 +1665,95 @@ class ExcelToYamlConverter:
             if repayments:
                 self.config['loanTransactions'] = repayments
                 logger.info(f"  ✓ Loan Repayments: {len(repayments)} transactions")
+
+        # 4. Loan Collateral
+        df = self._read_sheet('Loan Collateral')
+        if not df.empty:
+            collaterals = []
+            for _, row in df.iterrows():
+                loan_id = row.get('loan_external_id')
+                if not loan_id or pd.isna(loan_id):
+                    continue
+
+                collateral = {
+                    'loanExternalId': str(loan_id)
+                }
+                if row.get('collateral_type_name') and not pd.isna(row.get('collateral_type_name')):
+                    collateral['collateralTypeName'] = row['collateral_type_name']
+                if row.get('value') and not pd.isna(row.get('value')):
+                    collateral['value'] = float(row['value'])
+                if row.get('description') and not pd.isna(row.get('description')):
+                    collateral['description'] = row['description']
+
+                collaterals.append(collateral)
+
+            if collaterals:
+                self.config['loanCollaterals'] = collaterals
+                logger.info(f"  ✓ Loan Collateral: {len(collaterals)} items")
+
+        # 5. Loan Guarantors
+        df = self._read_sheet('Loan Guarantors')
+        if not df.empty:
+            guarantors = []
+            for _, row in df.iterrows():
+                loan_id = row.get('loan_external_id')
+                if not loan_id or pd.isna(loan_id):
+                    continue
+
+                guarantor = {
+                    'loanExternalId': str(loan_id)
+                }
+                if row.get('guarantor_type') and not pd.isna(row.get('guarantor_type')):
+                    guarantor['guarantorType'] = row['guarantor_type']
+                if row.get('client_external_id') and not pd.isna(row.get('client_external_id')):
+                    guarantor['clientExternalId'] = str(row['client_external_id'])
+                if row.get('staff_name') and not pd.isna(row.get('staff_name')):
+                    guarantor['staffName'] = row['staff_name']
+                if row.get('firstname') and not pd.isna(row.get('firstname')):
+                    guarantor['firstname'] = row['firstname']
+                if row.get('lastname') and not pd.isna(row.get('lastname')):
+                    guarantor['lastname'] = row['lastname']
+                if row.get('address_line_1') and not pd.isna(row.get('address_line_1')):
+                    guarantor['addressLine1'] = row['address_line_1']
+                if row.get('city') and not pd.isna(row.get('city')):
+                    guarantor['city'] = row['city']
+                if row.get('amount') and not pd.isna(row.get('amount')):
+                    guarantor['amount'] = float(row['amount'])
+                if row.get('savings_external_id') and not pd.isna(row.get('savings_external_id')):
+                    guarantor['savingsExternalId'] = str(row['savings_external_id'])
+
+                guarantors.append(guarantor)
+
+            if guarantors:
+                self.config['loanGuarantors'] = guarantors
+                logger.info(f"  ✓ Loan Guarantors: {len(guarantors)} items")
+
+        # 6. Teller Accounting Rules
+        df = self._read_sheet('Teller Accounting Rules')
+        if not df.empty:
+            rules = []
+            for _, row in df.iterrows():
+                teller_name = row.get('teller_name')
+                if not teller_name or pd.isna(teller_name):
+                    continue
+
+                rule = {
+                    'tellerName': teller_name
+                }
+                if row.get('cash_in_gl_code') and not pd.isna(row.get('cash_in_gl_code')):
+                    rule['cashInGlCode'] = str(row['cash_in_gl_code'])
+                if row.get('cash_out_gl_code') and not pd.isna(row.get('cash_out_gl_code')):
+                    rule['cashOutGlCode'] = str(row['cash_out_gl_code'])
+                if row.get('description') and not pd.isna(row.get('description')):
+                    rule['description'] = row['description']
+                if row.get('office_name') and not pd.isna(row.get('office_name')):
+                    rule['officeName'] = row['office_name']
+
+                rules.append(rule)
+
+            if rules:
+                self.config['tellerAccountingRules'] = rules
+                logger.info(f"  ✓ Teller Accounting Rules: {len(rules)} items")
 
         if not self.config.get('savingsTransactions') and not self.config.get('loanTransactions'):
             logger.info("  ℹ No transactions found (accounts may need to exist first)")

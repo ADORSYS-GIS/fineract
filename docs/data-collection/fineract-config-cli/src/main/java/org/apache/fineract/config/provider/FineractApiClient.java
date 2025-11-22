@@ -8,8 +8,11 @@ import org.apache.fineract.config.provider.auth.AuthProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import io.netty.handler.ssl.SslContext;
@@ -210,10 +213,23 @@ public class FineractApiClient {
               .secure(spec -> spec.sslContext(sslContext))
               .responseTimeout(Duration.ofSeconds(fineractProperties.getReadTimeout()));
 
+      // Configure exchange strategies with larger buffer size for large responses
+      // Default is 256KB which may not be enough for accounts with many transactions
+      ExchangeStrategies exchangeStrategies =
+          ExchangeStrategies.builder()
+              .codecs(
+                  configurer -> {
+                    configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024); // 16MB
+                    configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder());
+                    configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder());
+                  })
+              .build();
+
       // Create WebClient
       return WebClient.builder()
           .baseUrl(fineractProperties.getUrl())
           .clientConnector(new ReactorClientHttpConnector(httpClient))
+          .exchangeStrategies(exchangeStrategies)
           .build();
 
     } catch (Exception ex) {

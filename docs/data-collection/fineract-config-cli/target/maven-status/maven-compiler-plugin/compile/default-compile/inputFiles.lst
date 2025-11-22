@@ -40,6 +40,7 @@
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/FineractConfig.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/StateService.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/client/Group.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/LoanCollateralLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/security/Staff.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/client/Client.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/SavingsTransactionLoader.java
@@ -60,6 +61,7 @@
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/NotificationConfigLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/UpsertService.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/provider/auth/AuthProvider.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/account/LoanCollateral.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/LoanProvisioningLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/ExportService.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/security/Permission.java
@@ -72,8 +74,10 @@
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/ChargeLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/product/DelinquencyRange.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/WorkingDaysLoader.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/LoanGuarantorLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/product/FundSource.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/properties/ImportProperties.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/PaymentTypeAccountingMappingLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/systemconfig/EmailConfig.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/MakerCheckerConfigLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/FundSourceLoader.java
@@ -82,14 +86,17 @@
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/PlannedChange.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/util/InputValidator.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/properties/FineractProperties.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/accounting/TellerAccountingRule.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/PaymentTypeLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/systemconfig/DataTableColumn.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/security/TellerCashierMapping.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/product/SavingsProduct.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/SchedulerJobLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/security/User.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/TellerAccountingRuleLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/product/PaymentType.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/systemconfig/NotificationTemplate.java
+/Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/model/account/LoanGuarantor.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/ImportService.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/service/loader/CodesLoader.java
 /Users/guymoyo/dev/fineract/docs/data-collection/fineract-config-cli/src/main/java/org/apache/fineract/config/cli/FineractConfigCommands.java

@@ -5,6 +5,7 @@ org/apache/fineract/config/model/systemconfig/GlobalConfigItem.class
 org/apache/fineract/config/model/systemconfig/NotificationConfig$SmsConfig.class
 org/apache/fineract/config/model/account/SavingsAccount.class
 org/apache/fineract/config/model/ImportResult$EntityAction.class
+org/apache/fineract/config/service/loader/LoanGuarantorLoader.class
 org/apache/fineract/config/service/ValidationService.class
 org/apache/fineract/config/model/systemconfig/NotificationTemplate.class
 org/apache/fineract/config/model/product/Charge.class
@@ -27,6 +28,7 @@ org/apache/fineract/config/model/systemconfig/CurrencyConfig.class
 org/apache/fineract/config/model/product/CollateralType.class
 org/apache/fineract/config/model/ImportState.class
 org/apache/fineract/config/service/loader/CenterLoader.class
+org/apache/fineract/config/model/account/LoanGuarantor.class
 org/apache/fineract/config/model/accounting/FinancialActivityMapping.class
 org/apache/fineract/config/properties/ImportProperties$ParallelProperties.class
 org/apache/fineract/config/service/loader/SavingsProductLoader.class
@@ -37,6 +39,7 @@ org/apache/fineract/config/model/product/GuarantorType.class
 org/apache/fineract/config/service/loader/StaffLoader.class
 org/apache/fineract/config/util/ChecksumUtil.class
 org/apache/fineract/config/model/systemconfig/Holiday.class
+org/apache/fineract/config/model/account/LoanCollateral.class
 org/apache/fineract/config/properties/FineractProperties$AuthProperties.class
 org/apache/fineract/config/model/security/Staff.class
 org/apache/fineract/config/provider/OAuth2Provider.class
@@ -49,6 +52,7 @@ org/apache/fineract/config/model/product/FundSource.class
 org/apache/fineract/config/model/client/Client.class
 org/apache/fineract/config/service/loader/DataTableLoader.class
 org/apache/fineract/config/service/loader/HolidayLoader.class
+org/apache/fineract/config/service/loader/LoanCollateralLoader.class
 org/apache/fineract/config/model/PlannedChange$ChangeType.class
 org/apache/fineract/config/service/loader/ClientLoader.class
 org/apache/fineract/config/service/loader/CodesLoader.class
@@ -78,6 +82,7 @@ org/apache/fineract/config/model/security/Permission.class
 org/apache/fineract/config/model/client/Group.class
 org/apache/fineract/config/service/loader/CurrencyLoader.class
 org/apache/fineract/config/model/systemconfig/AccountNumberPreference.class
+org/apache/fineract/config/service/loader/PaymentTypeAccountingMappingLoader.class
 org/apache/fineract/config/model/ImportResult$EntityStats.class
 org/apache/fineract/config/service/loader/LoanTransactionLoader.class
 org/apache/fineract/config/model/PlannedChange$FieldChange.class
@@ -98,6 +103,7 @@ org/apache/fineract/config/properties/ImportProperties$ManagedResourceMode.class
 org/apache/fineract/config/model/product/PaymentType.class
 org/apache/fineract/config/service/loader/DelinquencyBucketLoader.class
 org/apache/fineract/config/provider/FineractApiClient.class
+org/apache/fineract/config/model/accounting/TellerAccountingRule.class
 org/apache/fineract/config/util/InputValidator.class
 org/apache/fineract/config/model/PlannedChange.class
 org/apache/fineract/config/cli/FineractConfigCommands$1.class
@@ -108,6 +114,7 @@ org/apache/fineract/config/model/systemconfig/SystemConfig.class
 org/apache/fineract/config/model/security/Role.class
 org/apache/fineract/config/model/systemconfig/NotificationConfig$EmailConfig.class
 org/apache/fineract/config/model/client/Center.class
+org/apache/fineract/config/service/loader/TellerAccountingRuleLoader.class
 org/apache/fineract/config/model/systemconfig/SchedulerJob.class
 org/apache/fineract/config/service/ExportService.class
 org/apache/fineract/config/exception/ValidationException.class

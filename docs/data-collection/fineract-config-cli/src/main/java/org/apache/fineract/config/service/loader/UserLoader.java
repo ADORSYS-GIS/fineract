@@ -182,7 +182,16 @@ public class UserLoader {
       request.put("roles", roleIds);
     }
 
-    // TODO: Add staff assignment support when staff loader is implemented
+    // Resolve staff (optional - links user to staff record)
+    if (user.getStaffName() != null) {
+      Long staffId = context.resolveEntityId("staff", user.getStaffName());
+      if (staffId != null) {
+        request.put("staffId", staffId);
+        log.debug("Linking user '{}' to staff '{}'", user.getUsername(), user.getStaffName());
+      } else {
+        log.warn("Staff '{}' not found for user '{}'", user.getStaffName(), user.getUsername());
+      }
+    }
 
     request.put("sendPasswordToEmail", false);
 
@@ -238,7 +247,15 @@ public class UserLoader {
       request.put("roles", roleIds);
     }
 
-    // TODO: Add staff assignment support when staff loader is implemented
+    // Resolve staff (optional - links user to staff record)
+    if (user.getStaffName() != null) {
+      Long staffId = context.resolveEntityId("staff", user.getStaffName());
+      if (staffId != null) {
+        request.put("staffId", staffId);
+      } else {
+        log.warn("Staff '{}' not found for user '{}'", user.getStaffName(), user.getUsername());
+      }
+    }
 
     return request;
   }

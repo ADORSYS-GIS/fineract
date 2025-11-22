@@ -75,12 +75,23 @@ public class LoanTransactionLoader {
           "Loan account '" + transaction.getLoanExternalId() + "' not found");
     }
 
-    // Build request
-    Map<String, Object> request = buildRequest(transaction, context);
-
     // Determine transaction command
     String command =
         FineractEnumMapper.mapLoanTransactionTypeToCommand(transaction.getTransactionType());
+
+    // Check if similar transaction already exists (idempotency)
+    if (transactionAlreadyExists(loanId, transaction, command)) {
+      log.info(
+          "Loan transaction already exists: {} {} on account {}, skipping",
+          transaction.getTransactionType(),
+          transaction.getTransactionAmount(),
+          transaction.getLoanExternalId());
+      result.recordEntity("loanTransaction", ImportResult.EntityAction.UNCHANGED);
+      return;
+    }
+
+    // Build request
+    Map<String, Object> request = buildRequest(transaction, context);
 
     // Post transaction
     String endpoint = "/api/v1/loans/" + loanId + "/transactions?command=" + command;
@@ -93,6 +104,87 @@ public class LoanTransactionLoader {
         transaction.getLoanExternalId(),
         transactionId);
     result.recordEntity("loanTransaction", ImportResult.EntityAction.CREATED);
+  }
+
+  /**
+   * Checks if a similar transaction already exists for the loan.
+   *
+   * @param loanId loan ID
+   * @param transaction transaction to check
+   * @param transactionCommand transaction command (repayment/waiveinterest/etc)
+   * @return true if similar transaction already exists
+   */
+  @SuppressWarnings("unchecked")
+  private boolean transactionAlreadyExists(
+      Long loanId, LoanTransaction transaction, String transactionCommand) {
+    try {
+      // Get loan with transactions
+      String endpoint = "/api/v1/loans/" + loanId + "?associations=transactions";
+      Map<String, Object> loan = apiClient.get(endpoint, Map.class);
+
+      List<Map<String, Object>> transactions = (List<Map<String, Object>>) loan.get("transactions");
+      if (transactions == null || transactions.isEmpty()) {
+        return false;
+      }
+
+      java.math.BigDecimal expectedAmount = transaction.getTransactionAmount();
+
+      // Map command to transaction type
+      String expectedType = mapCommandToTransactionType(transactionCommand);
+
+      for (Map<String, Object> existing : transactions) {
+        // Check transaction type
+        Map<String, Object> typeObj = (Map<String, Object>) existing.get("type");
+        if (typeObj == null) {
+          continue;
+        }
+        String existingType = (String) typeObj.get("value");
+        if (!expectedType.equalsIgnoreCase(existingType)) {
+          continue;
+        }
+
+        // Check amount (for repayments)
+        if (expectedAmount != null) {
+          Object amountObj = existing.get("amount");
+          if (amountObj == null) {
+            continue;
+          }
+          java.math.BigDecimal existingAmount = new java.math.BigDecimal(amountObj.toString());
+          if (existingAmount.compareTo(expectedAmount) != 0) {
+            continue;
+          }
+        }
+
+        // Check date - Fineract returns date as array [year, month, day]
+        List<Integer> dateArray = (List<Integer>) existing.get("date");
+        if (dateArray != null && dateArray.size() >= 3) {
+          java.time.LocalDate existingDate =
+              java.time.LocalDate.of(dateArray.get(0), dateArray.get(1), dateArray.get(2));
+          if (existingDate.equals(transaction.getTransactionDate())) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (Exception ex) {
+      log.debug("Error checking existing loan transactions: {}", ex.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Maps command to transaction type value for comparison.
+   *
+   * @param command transaction command
+   * @return transaction type value
+   */
+  private String mapCommandToTransactionType(String command) {
+    return switch (command.toLowerCase()) {
+      case "repayment" -> "Repayment";
+      case "waiveinterest" -> "Waive Interest";
+      case "writeoff" -> "Write-Off";
+      default -> command;
+    };
   }
 
   /**

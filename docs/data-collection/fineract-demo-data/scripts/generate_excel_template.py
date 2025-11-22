@@ -136,6 +136,96 @@ class FineractDemoDataGenerator:
         ]
         return pd.DataFrame(data)
 
+    def create_users_sheet(self):
+        """Create system users with staff linkage and role assignments.
+
+        Note: Fineract password requirements:
+        - 12 to 50 characters long
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one numeric digit
+        - At least one special character
+        - No spaces
+        - No consecutive repeating characters
+        """
+        data = [
+            # Head Office Users
+            {'username': 'admin.system', 'first_name': 'Thomas', 'last_name': 'Ndongo',
+             'email': 't.ndongo@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'System Administrator', 'staff_name': 'Thomas Ndongo',
+             'password': 'Adm1n$yst3m@2024', 'password_never_expires': True},
+
+            {'username': 'accountant', 'first_name': 'Christine', 'last_name': 'Biaka',
+             'email': 'c.biaka@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'Accountant', 'staff_name': 'Christine Biaka',
+             'password': 'Ac0untant@2024!', 'password_never_expires': False},
+
+            # Yaounde Branch Users
+            {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
+             'email': 'j.mbarga@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Jean Mbarga',
+             'password': 'Man4ger@Yde2024', 'password_never_expires': False},
+
+            {'username': 'loan.yaounde', 'first_name': 'Marie', 'last_name': 'Ngo Balla',
+             'email': 'm.ngoballa@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Marie Ngo Balla',
+             'password': 'Lo4n0ficer@Yde1', 'password_never_expires': False},
+
+            {'username': 'cashier.yaounde', 'first_name': 'Paul', 'last_name': 'Atangana',
+             'email': 'p.atangana@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Cashier', 'staff_name': 'Paul Atangana',
+             'password': 'Cash1er@Yde2024', 'password_never_expires': False},
+
+            # Douala Branch Users
+            {'username': 'manager.douala', 'first_name': 'Grace', 'last_name': 'Douala',
+             'email': 'g.douala@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Grace Douala',
+             'password': 'Man4ger@Dla2024', 'password_never_expires': False},
+
+            {'username': 'loan.douala', 'first_name': 'Emmanuel', 'last_name': 'Ewondo',
+             'email': 'e.ewondo@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Emmanuel Ewondo',
+             'password': 'Lo4n0ficer@Dla1', 'password_never_expires': False},
+
+            {'username': 'cashier.douala', 'first_name': 'Francine', 'last_name': 'Makang',
+             'email': 'f.makang@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Cashier', 'staff_name': 'Francine Makang',
+             'password': 'Cash1er@Dla2024', 'password_never_expires': False},
+
+            # Bafoussam Branch Users
+            {'username': 'manager.bafoussam', 'first_name': 'Bernard', 'last_name': 'Kamga',
+             'email': 'b.kamga@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Bernard Kamga',
+             'password': 'Man4ger@Baf2024', 'password_never_expires': False},
+
+            {'username': 'loan.bafoussam', 'first_name': 'Justine', 'last_name': 'Tchuente',
+             'email': 'j.tchuente@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Justine Tchuente',
+             'password': 'Lo4n0ficer@Baf1', 'password_never_expires': False},
+
+            {'username': 'cashier.bafoussam', 'first_name': 'David', 'last_name': 'Fotso',
+             'email': 'd.fotso@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Cashier', 'staff_name': 'David Fotso',
+             'password': 'Cash1er@Baf2024', 'password_never_expires': False},
+
+            # Bamenda Branch Users
+            {'username': 'manager.bamenda', 'first_name': 'Peter', 'last_name': 'Nkeng',
+             'email': 'p.nkeng@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Peter Nkeng',
+             'password': 'Man4ger@Bam2024', 'password_never_expires': False},
+
+            {'username': 'loan.bamenda', 'first_name': 'Alice', 'last_name': 'Fon',
+             'email': 'a.fon@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Alice Fon',
+             'password': 'Lo4n0ficer@Bam1', 'password_never_expires': False},
+
+            {'username': 'cashier.bamenda', 'first_name': 'Joseph', 'last_name': 'Tanyi',
+             'email': 'j.tanyi@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Cashier', 'staff_name': 'Joseph Tanyi',
+             'password': 'Cash1er@Bam2024', 'password_never_expires': False},
+        ]
+        return pd.DataFrame(data)
+
     def create_clients_sheet(self):
         """Create sample clients.
 
@@ -1137,28 +1227,35 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_teller_cashier_mappings_sheet(self):
-        """Create teller/cashier GL account mappings per office"""
+        """Create teller/cashier GL account mappings per office.
+
+        staff_external_id links to the cashier staff member who operates the teller.
+        """
         data = [
-            # Yaounde Branch
-            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller - Yaounde',
+            # Yaounde Branch - Paul Atangana (STF-003) as cashier
+            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller 1 - Yaounde',
+             'staff_external_id': 'STF-003',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Yaounde branch teller and vault configuration'},
 
-            # Douala Branch
-            {'office_name': 'Douala Branch', 'teller_name': 'Teller - Douala',
+            # Douala Branch - Francine Makang (STF-006) as cashier
+            {'office_name': 'Douala Branch', 'teller_name': 'Teller 1 - Douala',
+             'staff_external_id': 'STF-006',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Douala branch teller and vault configuration'},
 
-            # Bafoussam Branch
-            {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller - Bafoussam',
+            # Bafoussam Branch - David Fotso (STF-009) as cashier
+            {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller 1 - Bafoussam',
+             'staff_external_id': 'STF-009',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Bafoussam branch teller and vault configuration'},
 
-            # Bamenda Branch
-            {'office_name': 'Bamenda Branch', 'teller_name': 'Teller - Bamenda',
+            # Bamenda Branch - Joseph Tanyi (STF-012) as cashier
+            {'office_name': 'Bamenda Branch', 'teller_name': 'Teller 1 - Bamenda',
+             'staff_external_id': 'STF-012',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Bamenda branch teller and vault configuration'},
@@ -1191,6 +1288,40 @@ class FineractDemoDataGenerator:
              'description': 'Main teller counter at Bamenda branch',
              'start_date': '2024-02-15', 'end_date': '2030-12-31',
              'status': 'Active'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_teller_accounting_rules_sheet(self):
+        """Create teller accounting rules.
+
+        Fields match TellerAccountingRule model:
+        - teller_name: Name of the teller
+        - cash_in_gl_code: GL account code for cash in (debit)
+        - cash_out_gl_code: GL account code for cash out (credit)
+        - description: Description of the accounting rule
+        - office_name: Office scope for the rule
+        """
+        # GL codes from system: 42 = Cash on Hand, 41 = Banks - Current Accounts
+        data = [
+            # Yaounde Branch Teller
+            {'teller_name': 'Teller 1 - Yaounde', 'office_name': 'Yaounde Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Yaounde main teller'},
+
+            # Douala Branch Teller
+            {'teller_name': 'Teller 1 - Douala', 'office_name': 'Douala Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Douala main teller'},
+
+            # Bafoussam Branch Teller
+            {'teller_name': 'Teller 1 - Bafoussam', 'office_name': 'Bafoussam Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Bafoussam main teller'},
+
+            # Bamenda Branch Teller
+            {'teller_name': 'Teller 1 - Bamenda', 'office_name': 'Bamenda Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Bamenda main teller'},
         ]
         return pd.DataFrame(data)
 
@@ -2284,58 +2415,62 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_savings_withdrawals_sheet(self):
-        """Create sample savings withdrawal transactions"""
+        """Create sample savings withdrawal transactions.
+
+        Note: Withdrawal amounts must be less than account balance.
+        Using small amounts to ensure sufficient balance after deposits.
+        """
         data = [
             # Withdrawals for Yaounde clients
             {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
-             'transaction_date': '2024-03-15', 'transaction_amount': 20000,
+             'transaction_date': '2024-03-15', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-001',
              'note': 'Emergency withdrawal', 'office': 'Yaounde Branch'},
 
             {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
-             'transaction_date': '2024-03-18', 'transaction_amount': 10000,
-             'payment_type': 'ATM', 'receipt_number': 'WDL-002',
+             'transaction_date': '2024-03-18', 'transaction_amount': 5000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-002',
              'note': 'Cash withdrawal', 'office': 'Yaounde Branch'},
 
             # Withdrawals for Douala clients
             {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
-             'transaction_date': '2024-03-16', 'transaction_amount': 30000,
+             'transaction_date': '2024-03-16', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-003',
              'note': 'Personal expense', 'office': 'Douala Branch'},
 
             {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
-             'transaction_date': '2024-03-20', 'transaction_amount': 25000,
+             'transaction_date': '2024-03-20', 'transaction_amount': 5000,
              'payment_type': 'Bank Transfer', 'receipt_number': 'WDL-004',
              'note': 'Supplier payment', 'office': 'Douala Branch'},
 
             # Withdrawals for Bafoussam clients
             {'client_name': 'Pierre Tchuente', 'savings_account_number': 'SAV-011',
-             'transaction_date': '2024-03-17', 'transaction_amount': 15000,
+             'transaction_date': '2024-03-17', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-005',
              'note': 'School fees', 'office': 'Bafoussam Branch'},
 
             {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-012',
-             'transaction_date': '2024-03-22', 'transaction_amount': 20000,
+             'transaction_date': '2024-03-22', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-006',
              'note': 'Medical expenses', 'office': 'Bafoussam Branch'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_repayments_sheet(self):
-        """Create sample loan repayment transactions"""
+        """Create sample loan repayment transactions.
+
+        Note: Loans must be Active, Fully Paid or Overpaid to accept repayments.
+        LOAN-001, LOAN-003, LOAN-004, LOAN-005 are Overpaid (can accept repayments)
+        LOAN-002, LOAN-006 are pending approval (cannot accept repayments)
+        """
         data = [
-            # Repayments for Yaounde clients
+            # Repayments for Yaounde clients - LOAN-001 (Overpaid)
             {'client_name': 'Jean Dupont', 'loan_account_number': 'LOAN-001',
              'transaction_date': '2024-03-15', 'principal_amount': 20000, 'interest_amount': 5000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-001', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
 
-            {'client_name': 'Marie Kamga', 'loan_account_number': 'LOAN-002',
-             'transaction_date': '2024-03-20', 'principal_amount': 40000, 'interest_amount': 12000,
-             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Bank Transfer',
-             'receipt_number': 'REP-002', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
-
-            # Repayments for Douala clients
+            # Repayments for Douala clients - LOAN-003 (Overpaid)
             {'client_name': 'Paul Ekambi', 'loan_account_number': 'LOAN-003',
              'transaction_date': '2024-03-18', 'principal_amount': 30000, 'interest_amount': 8000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
@@ -2346,122 +2481,73 @@ class FineractDemoDataGenerator:
              'fee_amount': 0, 'penalty_amount': 2000, 'payment_type': 'Bank Transfer',
              'receipt_number': 'REP-004', 'note': 'Late payment with penalty', 'office': 'Douala Branch'},
 
-            # Repayments for Bafoussam clients
+            # Repayments for Bafoussam clients - LOAN-005 (Overpaid)
             {'client_name': 'Pierre Tchuente', 'loan_account_number': 'LOAN-005',
              'transaction_date': '2024-03-22', 'principal_amount': 25000, 'interest_amount': 6500,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-005', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
-
-            {'client_name': 'Justine Moukouri', 'loan_account_number': 'LOAN-006',
-             'transaction_date': '2024-03-29', 'principal_amount': 35000, 'interest_amount': 9000,
-             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Mobile Money',
-             'receipt_number': 'REP-006', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_collateral_sheet(self):
-        """Create loan collateral assignments"""
+        """Create loan collateral assignments.
+
+        Fields match LoanCollateral model:
+        - loan_external_id: External ID of the loan account
+        - collateral_type_name: Name of collateral type (must match existing type)
+        - value: Collateral value amount
+        - description: Description of the collateral
+        """
+        # Collateral type names must match create_collateral_types_sheet():
+        # 'Land Title', 'Vehicle Registration', 'Household Goods', 'Shop/Business Equipment',
+        # 'Savings Account Lien', 'Group Guarantee'
+        # Use loans LOAN-002 and LOAN-006 (pending approval status - collateral can be added)
         data = [
-            # Collateral for Yaounde loans
-            {'loan_account_number': 'LOAN-001', 'client_name': 'Jean Dupont',
-             'collateral_type': 'Land Title', 'collateral_value': 1000000,
-             'description': 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001',
-             'location': 'Bastos, Yaounde', 'condition': 'Good',
-             'valuation_date': '2024-01-15', 'valuation_by': 'Licensed Appraiser',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            # Collateral for pending loans only
+            {'loan_external_id': 'LOAN-002', 'collateral_type_name': 'Land Title',
+             'value': 1000000,
+             'description': 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001'},
 
-            {'loan_account_number': 'LOAN-002', 'client_name': 'Marie Kamga',
-             'collateral_type': 'Business Equipment', 'collateral_value': 1500000,
-             'description': 'Commercial sewing machines (5 units) and industrial pressing equipment',
-             'location': 'Shop at Mokolo Market, Yaounde', 'condition': 'Excellent',
-             'valuation_date': '2024-01-20', 'valuation_by': 'Equipment Assessor',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-002', 'collateral_type_name': 'Shop/Business Equipment',
+             'value': 500000,
+             'description': 'Commercial sewing machines (5 units)'},
 
-            # Collateral for Douala loans
-            {'loan_account_number': 'LOAN-003', 'client_name': 'Paul Ekambi',
-             'collateral_type': 'Vehicle', 'collateral_value': 1200000,
-             'description': 'Toyota Hilux 2020 - Registration DLA-4567-AB',
-             'location': 'Akwa, Douala', 'condition': 'Very Good',
-             'valuation_date': '2024-01-18', 'valuation_by': 'Auto Valuer',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-006', 'collateral_type_name': 'Vehicle Registration',
+             'value': 1200000,
+             'description': 'Toyota Hilux 2020 - Registration DLA-4567-AB'},
 
-            {'loan_account_number': 'LOAN-004', 'client_name': 'Grace Fotso',
-             'collateral_type': 'Commercial Property', 'collateral_value': 3000000,
-             'description': 'Commercial building with 3 shops - Title deed #DLA-2022-089',
-             'location': 'Bonaberi, Douala', 'condition': 'Good',
-             'valuation_date': '2024-01-25', 'valuation_by': 'Real Estate Appraiser',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
-
-            # Collateral for Bafoussam loans
-            {'loan_account_number': 'LOAN-005', 'client_name': 'Pierre Tchuente',
-             'collateral_type': 'Agricultural Land', 'collateral_value': 800000,
-             'description': '2 hectares farmland with coffee plantation',
-             'location': 'Baleng, Bafoussam', 'condition': 'Good',
-             'valuation_date': '2024-01-22', 'valuation_by': 'Agricultural Assessor',
-             'ownership_status': 'Owned', 'insurance': 'No'},
-
-            {'loan_account_number': 'LOAN-006', 'client_name': 'Justine Moukouri',
-             'collateral_type': 'Farm Equipment', 'collateral_value': 1000000,
-             'description': 'Tractor and farming implements',
-             'location': 'Farm in Dschang Road', 'condition': 'Good',
-             'valuation_date': '2024-02-01', 'valuation_by': 'Equipment Assessor',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-006', 'collateral_type_name': 'Household Goods',
+             'value': 300000,
+             'description': 'Furniture, appliances and household items'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_guarantors_sheet(self):
-        """Create loan guarantor assignments"""
+        """Create loan guarantor assignments.
+
+        Fields match LoanGuarantor model:
+        - loan_external_id: External ID of the loan account
+        - guarantor_type: CLIENT, STAFF, or EXTERNAL
+        - client_external_id: For CLIENT type guarantors
+        - staff_name: For STAFF type guarantors
+        - firstname, lastname, address_line_1, city: For EXTERNAL type guarantors
+        - amount: Guaranteed amount
+        - savings_external_id: Optional savings account held as collateral
+        """
+        # Only use loans with "Submitted and pending approval" status: LOAN-002, LOAN-006
+        # Cannot add guarantors to closed/overpaid loans
+        # Note: Client cannot be guarantor for their own loan
+        # LOAN-002 belongs to CLI-002, so use CLI-003 as guarantor
         data = [
-            # Guarantors for Yaounde loans
-            {'loan_account_number': 'LOAN-001', 'borrower_name': 'Jean Dupont',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Thomas Mbele',
-             'guarantor_id': 'ID-12345678', 'guarantor_phone': '+237 677 88 99 00',
-             'guarantor_address': 'Mvan, Yaounde', 'relationship': 'Brother',
-             'guaranteed_amount': 250000, 'guarantee_date': '2024-02-10',
-             'employment': 'Civil Servant - Ministry of Education',
-             'employer_name': 'Government of Cameroon', 'monthly_income': 350000},
+            # CLIENT type guarantor - another client guarantees the loan
+            # (CLI-003 guarantees CLI-002's loan LOAN-002)
+            {'loan_external_id': 'LOAN-002', 'guarantor_type': 'CLIENT',
+             'client_external_id': 'CLI-003', 'amount': 250000},
 
-            {'loan_account_number': 'LOAN-002', 'borrower_name': 'Marie Kamga',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Christine Biaka',
-             'guarantor_id': 'ID-23456789', 'guarantor_phone': '+237 677 11 22 33',
-             'guarantor_address': 'Bastos, Yaounde', 'relationship': 'Business Partner',
-             'guaranteed_amount': 500000, 'guarantee_date': '2024-02-15',
-             'employment': 'Accountant - Private Sector',
-             'employer_name': 'ECOBANK Cameroun', 'monthly_income': 450000},
-
-            # Guarantors for Douala loans
-            {'loan_account_number': 'LOAN-003', 'borrower_name': 'Paul Ekambi',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Samuel Nkolo',
-             'guarantor_id': 'ID-34567890', 'guarantor_phone': '+237 677 22 33 44',
-             'guarantor_address': 'Bonapriso, Douala', 'relationship': 'Friend',
-             'guaranteed_amount': 375000, 'guarantee_date': '2024-02-12',
-             'employment': 'Business Owner - Import/Export',
-             'employer_name': 'Self-employed', 'monthly_income': 800000},
-
-            {'loan_account_number': 'LOAN-004', 'borrower_name': 'Grace Fotso',
-             'guarantor_type': 'Corporate', 'guarantor_name': 'Fotso Family Business Ltd',
-             'guarantor_id': 'RC-DLA-2020-1234', 'guarantor_phone': '+237 233 44 55 66',
-             'guarantor_address': 'Akwa, Douala', 'relationship': 'Family Business',
-             'guaranteed_amount': 1000000, 'guarantee_date': '2024-02-20',
-             'employment': 'Corporate Entity',
-             'employer_name': 'N/A', 'monthly_income': 0},
-
-            # Guarantors for Bafoussam loans
-            {'loan_account_number': 'LOAN-005', 'borrower_name': 'Pierre Tchuente',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Jean Kemayou',
-             'guarantor_id': 'ID-45678901', 'guarantor_phone': '+237 677 33 44 55',
-             'guarantor_address': 'Centre Ville, Bafoussam', 'relationship': 'Cousin',
-             'guaranteed_amount': 300000, 'guarantee_date': '2024-02-18',
-             'employment': 'Teacher - Secondary School',
-             'employer_name': 'Lycee de Bafoussam', 'monthly_income': 280000},
-
-            {'loan_account_number': 'LOAN-006', 'borrower_name': 'Justine Moukouri',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Marie Fotso',
-             'guarantor_id': 'ID-56789012', 'guarantor_phone': '+237 677 44 55 66',
-             'guarantor_address': 'Djeleng, Bafoussam', 'relationship': 'Sister',
-             'guaranteed_amount': 400000, 'guarantee_date': '2024-02-25',
-             'employment': 'Nurse - Public Hospital',
-             'employer_name': 'Bafoussam Regional Hospital', 'monthly_income': 320000},
+            # EXTERNAL type guarantor - person not in system
+            {'loan_external_id': 'LOAN-006', 'guarantor_type': 'EXTERNAL',
+             'firstname': 'Jean', 'lastname': 'Kemayou',
+             'address_line_1': 'Centre Ville', 'city': 'Bafoussam', 'amount': 400000},
         ]
         return pd.DataFrame(data)
 
@@ -2826,6 +2912,9 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
             print("  Creating Staff sheet...")
             self.create_staff_sheet().to_excel(writer, sheet_name='Staff', index=False)
 
+            print("  Creating Users sheet...")
+            self.create_users_sheet().to_excel(writer, sheet_name='Users', index=False)
+
             print("  Creating Clients sheet...")
             self.create_clients_sheet().to_excel(writer, sheet_name='Clients', index=False)
 
@@ -2900,6 +2989,9 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
 
             print("  Creating Tellers sheet...")
             self.create_tellers_sheet().to_excel(writer, sheet_name='Tellers', index=False)
+
+            print("  Creating Teller Accounting Rules sheet...")
+            self.create_teller_accounting_rules_sheet().to_excel(writer, sheet_name='Teller Accounting Rules', index=False)
 
             print("  Creating Roles and Permissions sheet...")
             self.create_roles_permissions_sheet().to_excel(writer, sheet_name='Roles Permissions', index=False)

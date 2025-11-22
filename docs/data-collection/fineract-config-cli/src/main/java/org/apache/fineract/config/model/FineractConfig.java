@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.fineract.config.model.account.LoanAccount;
+import org.apache.fineract.config.model.account.LoanCollateral;
+import org.apache.fineract.config.model.account.LoanGuarantor;
 import org.apache.fineract.config.model.account.SavingsAccount;
 import org.apache.fineract.config.model.accounting.FinancialActivityMapping;
 import org.apache.fineract.config.model.accounting.GLAccount;
+import org.apache.fineract.config.model.accounting.PaymentTypeAccountingMapping;
+import org.apache.fineract.config.model.accounting.TellerAccountingRule;
 import org.apache.fineract.config.model.client.Center;
 import org.apache.fineract.config.model.client.Client;
 import org.apache.fineract.config.model.client.Group;
@@ -91,8 +95,7 @@ public class FineractConfig {
   private List<FinancialActivityMapping> financialActivityMappings = new ArrayList<>();
 
   /** Phase 3: Teller Accounting Rules */
-  private List<Object> tellerAccountingRules =
-      new ArrayList<>(); // TODO: Create TellerAccountingRule model
+  private List<TellerAccountingRule> tellerAccountingRules = new ArrayList<>();
 
   /** Phase 3: Maker-Checker Configuration */
   private List<Object> makerCheckerConfig =
@@ -118,6 +121,9 @@ public class FineractConfig {
 
   /** Phase 4: Payment Types */
   private List<PaymentType> paymentTypes = new ArrayList<>();
+
+  /** Phase 4: Payment Type Accounting Mappings */
+  private List<PaymentTypeAccountingMapping> paymentTypeAccountingMappings = new ArrayList<>();
 
   /** Phase 4: Holiday Calendar */
   private List<Holiday> holidayCalendar = new ArrayList<>();
@@ -153,10 +159,10 @@ public class FineractConfig {
   private List<LoanAccount> loanAccounts = new ArrayList<>();
 
   /** Phase 5: Loan Collateral */
-  private List<Object> loanCollateral = new ArrayList<>(); // TODO: Create LoanCollateral model
+  private List<LoanCollateral> loanCollaterals = new ArrayList<>();
 
   /** Phase 5: Loan Guarantors */
-  private List<Object> loanGuarantors = new ArrayList<>(); // TODO: Create LoanGuarantor model
+  private List<LoanGuarantor> loanGuarantors = new ArrayList<>();
 
   /** Phase 6: Savings Transactions (deposits, withdrawals) */
   private List<SavingsTransaction> savingsTransactions = new ArrayList<>();

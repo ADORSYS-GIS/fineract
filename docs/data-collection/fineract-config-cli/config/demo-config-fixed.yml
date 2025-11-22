@@ -1065,6 +1065,134 @@ staff:
   - 2024
   - 2
   - 20
+users:
+- username: admin.system
+  firstname: Thomas
+  lastname: Ndongo
+  email: t.ndongo@mfi.cm
+  officeName: Head Office
+  roles:
+  - System Administrator
+  password: Adm1n$yst3m@2024
+  staffName: Thomas Ndongo
+  passwordNeverExpires: true
+- username: accountant
+  firstname: Christine
+  lastname: Biaka
+  email: c.biaka@mfi.cm
+  officeName: Head Office
+  roles:
+  - Accountant
+  password: Ac0untant@2024!
+  staffName: Christine Biaka
+- username: manager.yaounde
+  firstname: Jean
+  lastname: Mbarga
+  email: j.mbarga@mfi.cm
+  officeName: Yaounde Branch
+  roles:
+  - Branch Manager
+  password: Man4ger@Yde2024
+  staffName: Jean Mbarga
+- username: loan.yaounde
+  firstname: Marie
+  lastname: Ngo Balla
+  email: m.ngoballa@mfi.cm
+  officeName: Yaounde Branch
+  roles:
+  - Loan Officer
+  password: Lo4n0ficer@Yde1
+  staffName: Marie Ngo Balla
+- username: cashier.yaounde
+  firstname: Paul
+  lastname: Atangana
+  email: p.atangana@mfi.cm
+  officeName: Yaounde Branch
+  roles:
+  - Cashier
+  password: Cash1er@Yde2024
+  staffName: Paul Atangana
+- username: manager.douala
+  firstname: Grace
+  lastname: Douala
+  email: g.douala@mfi.cm
+  officeName: Douala Branch
+  roles:
+  - Branch Manager
+  password: Man4ger@Dla2024
+  staffName: Grace Douala
+- username: loan.douala
+  firstname: Emmanuel
+  lastname: Ewondo
+  email: e.ewondo@mfi.cm
+  officeName: Douala Branch
+  roles:
+  - Loan Officer
+  password: Lo4n0ficer@Dla1
+  staffName: Emmanuel Ewondo
+- username: cashier.douala
+  firstname: Francine
+  lastname: Makang
+  email: f.makang@mfi.cm
+  officeName: Douala Branch
+  roles:
+  - Cashier
+  password: Cash1er@Dla2024
+  staffName: Francine Makang
+- username: manager.bafoussam
+  firstname: Bernard
+  lastname: Kamga
+  email: b.kamga@mfi.cm
+  officeName: Bafoussam Branch
+  roles:
+  - Branch Manager
+  password: Man4ger@Baf2024
+  staffName: Bernard Kamga
+- username: loan.bafoussam
+  firstname: Justine
+  lastname: Tchuente
+  email: j.tchuente@mfi.cm
+  officeName: Bafoussam Branch
+  roles:
+  - Loan Officer
+  password: Lo4n0ficer@Baf1
+  staffName: Justine Tchuente
+- username: cashier.bafoussam
+  firstname: David
+  lastname: Fotso
+  email: d.fotso@mfi.cm
+  officeName: Bafoussam Branch
+  roles:
+  - Cashier
+  password: Cash1er@Baf2024
+  staffName: David Fotso
+- username: manager.bamenda
+  firstname: Peter
+  lastname: Nkeng
+  email: p.nkeng@mfi.cm
+  officeName: Bamenda Branch
+  roles:
+  - Branch Manager
+  password: Man4ger@Bam2024
+  staffName: Peter Nkeng
+- username: loan.bamenda
+  firstname: Alice
+  lastname: Fon
+  email: a.fon@mfi.cm
+  officeName: Bamenda Branch
+  roles:
+  - Loan Officer
+  password: Lo4n0ficer@Bam1
+  staffName: Alice Fon
+- username: cashier.bamenda
+  firstname: Joseph
+  lastname: Tanyi
+  email: j.tanyi@mfi.cm
+  officeName: Bamenda Branch
+  roles:
+  - Cashier
+  password: Cash1er@Bam2024
+  staffName: Joseph Tanyi
 chartOfAccounts:
 - name: Banks - Current Accounts
   glCode: 41
@@ -1309,7 +1437,6 @@ taxGroups:
 - name: Savings Interest Tax
   taxComponents:
   - name: Withholding Tax on Interest
-    percentage: 10
     startDate:
     - 2024
     - 1
@@ -1318,7 +1445,6 @@ taxGroups:
 - name: Loan Interest Tax
   taxComponents:
   - name: Withholding Tax on Loan Interest
-    percentage: 10
     startDate:
     - 2024
     - 1
@@ -1376,24 +1502,16 @@ tellers:
 tellerCashierMappings:
 - tellerName: Teller 1 - Yaounde
   staffExternalId: STF-003
-  description: Yaounde branch cashier assignment
-  startDate: [2024, 1, 20]
-  isFullDay: true
+  description: Yaounde branch teller and vault configuration
 - tellerName: Teller 1 - Douala
   staffExternalId: STF-006
-  description: Douala branch cashier assignment
-  startDate: [2024, 1, 20]
-  isFullDay: true
+  description: Douala branch teller and vault configuration
 - tellerName: Teller 1 - Bafoussam
   staffExternalId: STF-009
-  description: Bafoussam branch cashier assignment
-  startDate: [2024, 2, 1]
-  isFullDay: true
+  description: Bafoussam branch teller and vault configuration
 - tellerName: Teller 1 - Bamenda
   staffExternalId: STF-012
-  description: Bamenda branch cashier assignment
-  startDate: [2024, 2, 15]
-  isFullDay: true
+  description: Bamenda branch teller and vault configuration
 charges:
 - name: Loan Processing Fee
   chargeAppliesTo: Loan
@@ -2117,7 +2235,7 @@ loanAccounts:
   submittedOnDate:
   - 2024
   - 2
-  - 8
+  - 10
   principal: 150000.0
   numberOfRepayments: 6
   externalId: LOAN-003
@@ -2165,11 +2283,6 @@ savingsAccounts:
   - 20
   externalId: SAV-001
   fieldOfficerName: loan.douala
-  active: true
-  activationDate:
-  - 2024
-  - 1
-  - 21
 - clientExternalId: CLI-002
   productShortName: VSAV
   submittedOnDate:
@@ -2178,11 +2291,6 @@ savingsAccounts:
   - 25
   externalId: SAV-002
   fieldOfficerName: loan.douala
-  active: true
-  activationDate:
-  - 2024
-  - 1
-  - 26
 - clientExternalId: CLI-002
   productShortName: FDEP
   submittedOnDate:
@@ -2191,11 +2299,6 @@ savingsAccounts:
   - 1
   externalId: SAV-003
   fieldOfficerName: loan.douala
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 2
 - clientExternalId: CLI-003
   productShortName: VSAV
   submittedOnDate:
@@ -2204,11 +2307,6 @@ savingsAccounts:
   - 1
   externalId: SAV-004
   fieldOfficerName: loan.yaounde
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 2
 - clientExternalId: CLI-004
   productShortName: VSAV
   submittedOnDate:
@@ -2217,11 +2315,6 @@ savingsAccounts:
   - 5
   externalId: SAV-005
   fieldOfficerName: loan.bafoussam
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 6
 - clientExternalId: CLI-005
   productShortName: VSAV
   submittedOnDate:
@@ -2230,11 +2323,6 @@ savingsAccounts:
   - 10
   externalId: SAV-006
   fieldOfficerName: loan.douala
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 11
 - clientExternalId: CLI-006
   productShortName: VSAV
   submittedOnDate:
@@ -2243,11 +2331,6 @@ savingsAccounts:
   - 15
   externalId: SAV-007
   fieldOfficerName: loan.yaounde
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 16
 - clientExternalId: CLI-006
   productShortName: FDEP
   submittedOnDate:
@@ -2256,11 +2339,6 @@ savingsAccounts:
   - 20
   externalId: SAV-008
   fieldOfficerName: loan.yaounde
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 21
 - clientExternalId: CLI-007
   productShortName: VSAV
   submittedOnDate:
@@ -2269,11 +2347,6 @@ savingsAccounts:
   - 20
   externalId: SAV-009
   fieldOfficerName: loan.bamenda
-  active: true
-  activationDate:
-  - 2024
-  - 2
-  - 21
 - clientExternalId: CLI-008
   productShortName: VSAV
   submittedOnDate:
@@ -2282,11 +2355,6 @@ savingsAccounts:
   - 1
   externalId: SAV-010
   fieldOfficerName: loan.douala
-  active: true
-  activationDate:
-  - 2024
-  - 3
-  - 4
 - clientExternalId: CLI-009
   productShortName: VSAV
   submittedOnDate:
@@ -2295,11 +2363,6 @@ savingsAccounts:
   - 5
   externalId: SAV-011
   fieldOfficerName: loan.bafoussam
-  active: true
-  activationDate:
-  - 2024
-  - 3
-  - 6
 - clientExternalId: CLI-010
   productShortName: VSAV
   submittedOnDate:
@@ -2308,11 +2371,6 @@ savingsAccounts:
   - 10
   externalId: SAV-012
   fieldOfficerName: loan.yaounde
-  active: true
-  activationDate:
-  - 2024
-  - 3
-  - 11
 savingsTransactions:
 - accountExternalId: SAV-001
   transactionType: DEPOSIT
@@ -2404,31 +2462,13 @@ savingsTransactions:
   transactionAmount: 25000.0
   paymentTypeName: Cash
   note: Cross-branch deposit - Bafoussam client depositing at Yaounde
-- accountExternalId: SAV-011
-  transactionType: DEPOSIT
-  transactionDate:
-  - 2024
-  - 3
-  - 10
-  transactionAmount: 20000.0
-  paymentTypeName: Cash
-  note: Initial deposit
-- accountExternalId: SAV-012
-  transactionType: DEPOSIT
-  transactionDate:
-  - 2024
-  - 3
-  - 15
-  transactionAmount: 25000.0
-  paymentTypeName: Cash
-  note: Initial deposit
 - accountExternalId: SAV-001
   transactionType: WITHDRAWAL
   transactionDate:
   - 2024
   - 3
   - 15
-  transactionAmount: 20000.0
+  transactionAmount: 5000.0
   paymentTypeName: Cash
   note: Emergency withdrawal
 - accountExternalId: SAV-002
@@ -2437,7 +2477,7 @@ savingsTransactions:
   - 2024
   - 3
   - 18
-  transactionAmount: 10000.0
+  transactionAmount: 5000.0
   paymentTypeName: Cash
   note: Cash withdrawal
 - accountExternalId: SAV-004
@@ -2446,7 +2486,7 @@ savingsTransactions:
   - 2024
   - 3
   - 16
-  transactionAmount: 30000.0
+  transactionAmount: 5000.0
   paymentTypeName: Cash
   note: Personal expense
 - accountExternalId: SAV-005
@@ -2455,7 +2495,7 @@ savingsTransactions:
   - 2024
   - 3
   - 20
-  transactionAmount: 10000.0
+  transactionAmount: 5000.0
   paymentTypeName: Bank Transfer
   note: Supplier payment
 - accountExternalId: SAV-011
@@ -2464,7 +2504,7 @@ savingsTransactions:
   - 2024
   - 3
   - 17
-  transactionAmount: 15000.0
+  transactionAmount: 5000.0
   paymentTypeName: Cash
   note: School fees
 - accountExternalId: SAV-012
@@ -2473,7 +2513,7 @@ savingsTransactions:
   - 2024
   - 3
   - 22
-  transactionAmount: 20000.0
+  transactionAmount: 5000.0
   paymentTypeName: Cash
   note: Medical expenses
 loanTransactions:
@@ -2517,3 +2557,53 @@ loanTransactions:
   paymentTypeName: Cash
   note: Monthly repayment
   receiptNumber: REP-005
+loanCollaterals:
+- loanExternalId: LOAN-002
+  collateralTypeName: Land Title
+  value: 1000000.0
+  description: 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001'
+- loanExternalId: LOAN-002
+  collateralTypeName: Shop/Business Equipment
+  value: 500000.0
+  description: Commercial sewing machines (5 units)
+- loanExternalId: LOAN-006
+  collateralTypeName: Vehicle Registration
+  value: 1200000.0
+  description: Toyota Hilux 2020 - Registration DLA-4567-AB
+- loanExternalId: LOAN-006
+  collateralTypeName: Household Goods
+  value: 300000.0
+  description: Furniture, appliances and household items
+loanGuarantors:
+- loanExternalId: LOAN-002
+  guarantorType: CLIENT
+  clientExternalId: CLI-003
+  amount: 250000.0
+- loanExternalId: LOAN-006
+  guarantorType: EXTERNAL
+  firstname: Jean
+  lastname: Kemayou
+  addressLine1: Centre Ville
+  city: Bafoussam
+  amount: 400000.0
+tellerAccountingRules:
+- tellerName: Teller 1 - Yaounde
+  cashInGlCode: '42'
+  cashOutGlCode: '42'
+  description: Cash accounting rule for Yaounde main teller
+  officeName: Yaounde Branch
+- tellerName: Teller 1 - Douala
+  cashInGlCode: '42'
+  cashOutGlCode: '42'
+  description: Cash accounting rule for Douala main teller
+  officeName: Douala Branch
+- tellerName: Teller 1 - Bafoussam
+  cashInGlCode: '42'
+  cashOutGlCode: '42'
+  description: Cash accounting rule for Bafoussam main teller
+  officeName: Bafoussam Branch
+- tellerName: Teller 1 - Bamenda
+  cashInGlCode: '42'
+  cashOutGlCode: '42'
+  description: Cash accounting rule for Bamenda main teller
+  officeName: Bamenda Branch
