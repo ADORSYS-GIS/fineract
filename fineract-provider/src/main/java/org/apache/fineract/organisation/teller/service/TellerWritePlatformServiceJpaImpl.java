@@ -21,6 +21,7 @@ package org.apache.fineract.organisation.teller.service;
 import jakarta.persistence.PersistenceException;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -383,7 +384,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
             cashierTxn.setTxnType(txnType.getId());
 
-            this.cashierTxnRepository.save(cashierTxn);
+            this.cashierTxnRepository.saveAndFlush(cashierTxn);
 
             // Pass the journal entries
             FinancialActivityAccount mainVaultFinancialActivityAccount = this.financialActivityAccountRepositoryWrapper
@@ -402,33 +403,31 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             final Office cashierOffice = cashier.getTeller().getOffice();
 
-            final Long time = System.currentTimeMillis();
-            final String uniqueVal = String.valueOf(time) + currentUser.getId() + cashierOffice.getId();
-            final String transactionId = Long.toHexString(Long.parseLong(uniqueVal));
+            final String transactionId = UUID.randomUUID().toString();
 
             final JournalEntry debitJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
-                                                                                               // detail
+                                                                                                // detail
                     debitAccount, cashierTxn.getCurrencyCode(),
 
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.DEBIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
                     null, null, null, // entity Type, entityId, reference number
                     null, null, null, null); // Loan
-                                             // and
-                                             // Savings
-                                             // Txn
+                                              // and
+                                              // Savings
+                                              // Txn
 
             final JournalEntry creditJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
-                                                                                                // detail
+                                                                                                 // detail
                     creditAccount, cashierTxn.getCurrencyCode(),
 
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
                     null, null, null, // entity Type, entityId, reference number
                     null, null, null, null); // Loan
-                                             // and
-                                             // Savings
-                                             // Txn
+                                              // and
+                                              // Savings
+                                              // Txn
 
             this.glJournalEntryRepository.saveAndFlush(debitJournalEntry);
             this.glJournalEntryRepository.saveAndFlush(creditJournalEntry);
