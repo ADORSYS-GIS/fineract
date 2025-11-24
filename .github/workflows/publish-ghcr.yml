@@ -45,3 +45,31 @@ jobs:
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
             -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
             -Djib.to.tags=$TAGS
+
+      - name: Build Fineract image with embedded plugins
+        run:  |
+          # Build the custom image with plugins
+          docker build -f Dockerfile.plugins -t ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins .
+
+          # Tag with version tags
+          TAGS="${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
+          if [ "${{ github.ref_name }}" == "develop" ]; then
+            TAGS="$TAGS,latest"
+          fi
+
+          # Create tags for the plugin-enhanced image
+          for tag in $(echo $TAGS | tr ',' '\n'); do
+            docker tag ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins \
+                      ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins-$tag
+          done
+
+      - name: Push plugin-enhanced image to GHCR
+        run:  |
+          # Push all tags for the plugin-enhanced image
+          docker push ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins
+          docker push ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins-${{ steps.git_hashes.outputs.short_hash }}
+          docker push ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins-${{ steps.git_hashes.outputs.long_hash }}
+
+          if [ "${{ github.ref_name }}" == "develop" ]; then
+            docker push ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract:with-plugins-latest
+          fi

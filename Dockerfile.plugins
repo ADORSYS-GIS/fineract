@@ -1,0 +1,20 @@
+# Fineract with Embedded Pentaho Plugin
+FROM ghcr.io/adorsys-gis/fineract:0e2c0ed93
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the Pentaho plugin files into the image
+# Note: The plugin contains both JARs and report templates
+COPY fineract-pentaho/MifosSecurityPlugin-1.12.1 /app/plugins
+COPY fineract-pentaho/MifosSecurityPlugin-1.12.1 /pentahoReports
+
+# Set environment variables for plugin loading and report paths
+ENV JAVA_TOOL_OPTIONS="-Dloader.path=/app/plugins/"
+ENV FINERACT_PENTAHO_REPORTS_PATH="/pentahoReports/MariaDB/"
+
+# Expose the default Fineract port
+EXPOSE 8443
+
+# Use the default Fineract entrypoint
+ENTRYPOINT ["java", "-jar", "/app/fineract-provider.jar"]
