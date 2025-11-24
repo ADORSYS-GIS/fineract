@@ -35,9 +35,9 @@ jobs:
 
       - name: Build the Apache Fineract image
         run:  |
-          TAGS=${{ github.ref_name }}
+          TAGS="${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
           if [ "${{ github.ref_name }}" == "develop" ]; then
-            TAGS="$TAGS,${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
+            TAGS="$TAGS,latest"
           fi
           ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
             -Djib.from.platforms=linux/amd64,linux/arm64 \
