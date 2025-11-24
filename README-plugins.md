@@ -46,16 +46,23 @@ This directory contains the implementation of **Image Embedding** approach for d
 
 ## CI/CD Integration
 
-The GitHub Actions workflow now automatically:
+The CI/CD setup uses two separate workflows for better modularity:
 
-1. **Builds the base Fineract image** and pushes to `ghcr.io/adorsys-gis/fineract`
-2. **Builds the plugin-enhanced image** and pushes to `ghcr.io/adorsys-gis/fineract:with-plugins`
+### 1. `publish-ghcr.yml` - Base Image Publishing
+Builds and publishes the base Fineract image to `ghcr.io/adorsys-gis/fineract`
 
-Available tags:
+### 2. `build-plugins.yml` - Plugin Image Building
+Automatically triggered after the base image is successfully published. Builds and publishes plugin-enhanced images.
+
+**Available tags:**
 - `ghcr.io/adorsys-gis/fineract:latest` (base image)
 - `ghcr.io/adorsys-gis/fineract:with-plugins-latest` (with plugins)
 - `ghcr.io/adorsys-gis/fineract:<commit-hash>` (base image)
 - `ghcr.io/adorsys-gis/fineract:with-plugins-<commit-hash>` (with plugins)
+
+**Workflow Triggers:**
+- **Automatic**: Plugin workflow runs after base image publishing succeeds and automatically determines the correct base image tag to use
+- **Manual**: Can trigger plugin builds independently via GitHub Actions UI with custom base image tag
 
 ## Key Differences from Volume Mounting
 

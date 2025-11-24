@@ -1,5 +1,6 @@
 # Fineract with Embedded Pentaho Plugin
-FROM ghcr.io/adorsys-gis/fineract:0e2c0ed93
+ARG BASE_IMAGE=ghcr.io/adorsys-gis/fineract:0e2c0ed93
+FROM ${BASE_IMAGE}
 
 # Set the working directory
 WORKDIR /app

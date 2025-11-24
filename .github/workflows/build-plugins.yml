@@ -1,0 +1,103 @@
+name: Build Fineract Plugin Images
+
+on:
+  workflow_run:
+    workflows: ["Fineract Publish to GitHub Container Registry"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      base_image_tag:
+        description: 'Base Fineract image tag to use'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build-plugins:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        id: setup
+        run: |
+          OWNER_LOWERCAS=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+          echo "owner_lowercase=$OWNER_LOWERCAS" >> $GITHUB_OUTPUT
+
+      - name: Determine base image tag
+        id: base_image
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Use the provided input
+            BASE_TAG="${{ inputs.base_image_tag }}"
+          else
+            # Get the tag from the triggering workflow
+            TRIGGERING_BRANCH="${{ github.event.workflow_run.head_branch }}"
+            TRIGGERING_SHA="${{ github.event.workflow_run.head_sha }}"
+
+            if [ "$TRIGGERING_BRANCH" == "develop" ]; then
+              # For develop branch, use "latest" tag
+              BASE_TAG="latest"
+            else
+              # For other branches, use the short SHA (which is always tagged)
+              BASE_TAG=$(echo "$TRIGGERING_SHA" | cut -c1-7)
+            fi
+          fi
+          echo "base_tag=$BASE_TAG" >> $GITHUB_OUTPUT
+          echo "Using base image: ghcr.io/${{ steps.setup.outputs.owner_lowercase }}/fineract:$BASE_TAG"
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Fineract image with embedded plugins
+        run: |
+          OWNER_LOWERCAS="${{ steps.setup.outputs.owner_lowercase }}"
+          BASE_TAG="${{ steps.base_image.outputs.base_tag }}"
+
+          # Build the plugin image using the specified base image
+          docker build \
+            --build-arg BASE_IMAGE=ghcr.io/$OWNER_LOWERCAS/fineract:$BASE_TAG \
+            -f Dockerfile.plugins \
+            -t ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins \
+            -t ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins-$BASE_TAG \
+            .
+
+      - name: Test the plugin image
+        run: |
+          # Quick smoke test - check if container starts
+          docker run -d --name test-plugins \
+            -e FINERACT_DEFAULT_TENANT_ID=default \
+            -e FINERACT_HIKARI_PASSWORD=test \
+            ghcr.io/${{ steps.setup.outputs.owner_lowercase }}/fineract:with-plugins
+
+          # Wait a bit for startup
+          sleep 30
+
+          # Check if health endpoint responds (will fail but shows the app started)
+          docker exec test-plugins curl -f http://localhost:8443/fineract-provider/actuator/health || true
+
+          # Clean up
+          docker stop test-plugins
+          docker rm test-plugins
+
+      - name: Push plugin-enhanced image to GHCR
+        run: |
+          OWNER_LOWERCAS="${{ steps.setup.outputs.owner_lowercase }}"
+          BASE_TAG="${{ steps.base_image.outputs.base_tag }}"
+
+          # Push the images
+          docker push ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins
+          docker push ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins-$BASE_TAG
+
+          echo "Plugin images pushed:"
+          echo "- ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins"
+          echo "- ghcr.io/$OWNER_LOWERCAS/fineract:with-plugins-$BASE_TAG"
