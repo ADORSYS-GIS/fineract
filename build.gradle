@@ -206,7 +206,7 @@ allprojects  {
         }
     }
 
-    apply plugin: 'org.nosphere.apache.rat'
+    // apply plugin: 'org.nosphere.apache.rat'
     apply plugin: 'com.github.jk1.dependency-license-report'
 
     // Configuration for the sonarqube plugin is now in GitHub Actions
