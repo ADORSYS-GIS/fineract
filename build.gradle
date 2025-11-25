@@ -269,6 +269,9 @@ allprojects  {
         excludes = [
             '**/src/main/templates/**/*.mustache',
             '**/keycloak-config/**',
+            '**/Dockerfile.keycloak-setup',
+            '**/config/docker/env/fineract-keycloak.env',
+            '**/fineract-helm-chart/**',
             '**/.dockerignore',
             '**/*.launch',
             '**/licenses/**',
