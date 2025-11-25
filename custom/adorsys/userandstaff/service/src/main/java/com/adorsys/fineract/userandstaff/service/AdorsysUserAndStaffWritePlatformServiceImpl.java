@@ -93,6 +93,7 @@ public class AdorsysUserAndStaffWritePlatformServiceImpl implements AdorsysUserA
         if (jsonObject.has("lastname")) userObject.add("lastname", jsonObject.get("lastname"));
         if (jsonObject.has("email")) userObject.add("email", jsonObject.get("email"));
         if (jsonObject.has("roles")) userObject.add("roles", jsonObject.get("roles"));
+        if (jsonObject.has("officeId")) userObject.add("officeId", jsonObject.get("officeId"));
         final String userJson = this.fromJsonHelper.toJson(userObject);
         final JsonElement userJsonElement = this.fromJsonHelper.parse(userJson);
         final JsonCommand userCommand = JsonCommand.from(userJson, userJsonElement, fromJsonHelper, "USER", userId, null, null, null,

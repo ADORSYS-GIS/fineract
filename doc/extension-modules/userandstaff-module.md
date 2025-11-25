@@ -26,7 +26,7 @@ The `data` layer defines the data transfer objects (DTOs) for the module.
 The `service` layer contains the core business logic for the module.
 
 -   **`AdorsysUserAndStaffWritePlatformServiceImpl.java`**: This class is responsible for creating and updating employees. It takes a single JSON command and orchestrates the creation of both the `Staff` and `AppUser` entities by calling the respective core Fineract services.
--   **`AdorsysUserAndStaffReadPlatformServiceImpl.java`**: This class is responsible for retrieving employee data. It fetches data from both the `Staff` and `AppUser` tables and combines them into a single `EmployeeData` object.
+-   **`AdorsysUserAndStaffReadPlatformServiceImpl.java`**: This class is responsible for retrieving employee data. It fetches data from both the `Staff` and `AppUser` tables and combines them into a single `EmployeeData` object. The `EmployeeDataMapper` class is used to map the data from the `AppUserData` and `StaffData` objects into the `EmployeeData` object, including the `availableRoles` and `selectedRoles` fields.
 
 ### 2.4. The Starter Layer
 

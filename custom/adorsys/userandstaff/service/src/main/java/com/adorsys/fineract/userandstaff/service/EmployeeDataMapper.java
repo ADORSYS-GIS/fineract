@@ -4,11 +4,13 @@ import com.adorsys.fineract.userandstaff.data.EmployeeData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.useradministration.data.AppUserData;
+import org.apache.fineract.useradministration.data.RoleData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +46,20 @@ public class EmployeeDataMapper {
         Number staffIdNumber = (Number) appUserMap.get("staffId");
         Long staffId = staffIdNumber != null ? staffIdNumber.longValue() : null;
 
+        // Extract roles using a similar deserialization approach
+        Collection<RoleData> availableRoles = null;
+        if (appUserMap.containsKey("availableRoles")) {
+            String rolesJson = this.gson.toJson(appUserMap.get("availableRoles"));
+            Type typeOfRoles = new TypeToken<Collection<RoleData>>() {}.getType();
+            availableRoles = this.gson.fromJson(rolesJson, typeOfRoles);
+        }
+
+        Collection<RoleData> selectedRoles = null;
+        if (appUserMap.containsKey("selectedRoles")) {
+            String rolesJson = this.gson.toJson(appUserMap.get("selectedRoles"));
+            Type typeOfRoles = new TypeToken<Collection<RoleData>>() {}.getType();
+            selectedRoles = this.gson.fromJson(rolesJson, typeOfRoles);
+        }
 
         // Extract staff-related fields
         String mobileNo = null;
@@ -62,7 +78,7 @@ public class EmployeeDataMapper {
         // For now, we will pass null. A more complete solution would require a custom query.
         // Create and return the new EmployeeData object
         EmployeeData employeeData = new EmployeeData(id, username, officeId, officeName, firstname, lastname, email, passwordNeverExpires,
-                null, null, null, staffData, mobileNo, isLoanOfficer, externalId);
+                null, availableRoles, selectedRoles, staffData, mobileNo, isLoanOfficer, externalId);
         Map<String, Object> result = new HashMap<>();
         result.put("employeeData", employeeData);
         result.put("staffId", staffId);
