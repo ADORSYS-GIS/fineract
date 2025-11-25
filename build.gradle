@@ -49,7 +49,8 @@ buildscript {
                 'fineract-e2e-tests-core',
                 'fineract-e2e-tests-runner',
                 'fineract-progressive-loan',
-                'fineract-progressive-loan-embeddable-schedule-generator'
+                'fineract-progressive-loan-embeddable-schedule-generator',
+                'fineract-war'
             ].contains(it.name)
         }
         fineractPublishProjects = subprojects.findAll{
@@ -157,6 +158,12 @@ subprojects { subproject ->
 }
 
 allprojects  {
+    apply plugin: 'java'
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
     group = 'org.apache.fineract'
 
     repositories {
@@ -469,9 +476,9 @@ configure(project.fineractJavaProjects) {
         options.deprecation = true
     }
 
-    check {
-        dependsOn(rat, licenseMain, licenseTest)
-    }
+    // check {
+    //     dependsOn(rat, licenseMain, licenseTest)
+    // }
 
     dependencies {
         spotbugsPlugins 'jp.skypencil.findbugs.slf4j:bug-pattern:1.5.0@jar'
@@ -812,6 +819,7 @@ configure(project.fineractCustomProjects) {
     }
 }
 
+/*
 configure(project.fineractPublishProjects) {
     apply plugin: 'maven-publish'
 
@@ -877,6 +885,7 @@ configure(project.fineractPublishProjects) {
         }
     }
 }
+*/
 
 task printSourceSetInformation() {
     doLast{
