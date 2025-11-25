@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-version: "3.8"
 services:
   db:
     extends:
@@ -40,7 +39,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
-    command: start-dev --health-enabled=true
+    command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
@@ -50,8 +49,8 @@ services:
       - "8180:9000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
 
   keycloak-config-cli:
