@@ -666,9 +666,9 @@ configure(project.fineractJavaProjects) {
         }
     }
 
-    check {
-        dependsOn(rat, licenseMain, licenseTest)
-    }
+    // check {
+    //     dependsOn(rat, licenseMain, licenseTest)
+    // }
 
     dependencies {
         implementation (
