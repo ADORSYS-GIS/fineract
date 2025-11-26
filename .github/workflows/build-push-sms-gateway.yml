@@ -3,7 +3,8 @@ name: Build & Push SMS Gateway Native Image
 on:
   push:
     branches:
-      - feat/sms-config
+      - develop
+      - main
     tags:
       - 'v*'
     paths:
