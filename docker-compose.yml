@@ -46,13 +46,12 @@ services:
       KC_HEALTH_ENABLED: "true"
     ports:
       - "9000:8080"
-      - "8180:9000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
 
   keycloak-config-cli:
       image: adorsys/keycloak-config-cli:latest
