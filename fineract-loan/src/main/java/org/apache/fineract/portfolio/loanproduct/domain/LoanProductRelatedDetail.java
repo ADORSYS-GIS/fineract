@@ -53,7 +53,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 @Embeddable
 @Getter
 @Setter
-public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentScheduleRelatedDetail {
+public class LoanProductRelatedDetail {
 
     @Embedded
     private MonetaryCurrency currency;
@@ -204,6 +204,9 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     @Column(name = "buy_down_fee_income_type")
     private LoanBuyDownFeeIncomeType buyDownFeeIncomeType;
 
+    @Column(name = "is_merchant_buy_down_fee")
+    private boolean merchantBuyDownFee = true;
+
     @Column(name = "installment_amount_in_multiples_of")
     private Integer installmentAmountInMultiplesOf;
 
@@ -226,7 +229,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             final LoanCapitalizedIncomeStrategy capitalizedIncomeStrategy, final LoanCapitalizedIncomeType capitalizedIncomeType,
             final Integer installmentAmountInMultiplesOf, final boolean enableBuyDownFee,
             final LoanBuyDownFeeCalculationType buyDownFeeCalculationType, final LoanBuyDownFeeStrategy buyDownFeeStrategy,
-            final LoanBuyDownFeeIncomeType buyDownFeeIncomeType) {
+            final LoanBuyDownFeeIncomeType buyDownFeeIncomeType, final boolean merchantBuyDownFee) {
 
         final MonetaryCurrency currency = MonetaryCurrency.fromCurrencyData(currencyData);
         return new LoanProductRelatedDetail(currency, principal, nominalInterestRatePerPeriod, interestRatePeriodFrequencyType,
@@ -238,7 +241,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
                 loanScheduleType, loanScheduleProcessingType, fixedLength, enableAccrualActivityPosting, supportedInterestRefundTypes,
                 chargeOffBehaviour, interestRecognitionOnDisbursementDate, daysInYearCustomStrategy, enableIncomeCapitalization,
                 capitalizedIncomeCalculationType, capitalizedIncomeStrategy, capitalizedIncomeType, installmentAmountInMultiplesOf,
-                enableBuyDownFee, buyDownFeeCalculationType, buyDownFeeStrategy, buyDownFeeIncomeType);
+                enableBuyDownFee, buyDownFeeCalculationType, buyDownFeeStrategy, buyDownFeeIncomeType, merchantBuyDownFee);
     }
 
     protected LoanProductRelatedDetail() {
@@ -264,7 +267,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             final LoanCapitalizedIncomeStrategy capitalizedIncomeStrategy, final LoanCapitalizedIncomeType capitalizedIncomeType,
             final Integer installmentAmountInMultiplesOf, final boolean enableBuyDownFee,
             final LoanBuyDownFeeCalculationType buyDownFeeCalculationType, final LoanBuyDownFeeStrategy buyDownFeeStrategy,
-            final LoanBuyDownFeeIncomeType buyDownFeeIncomeType) {
+            final LoanBuyDownFeeIncomeType buyDownFeeIncomeType, final boolean merchantBuyDownFee) {
         this.currency = currency;
         this.principal = defaultPrincipal;
         this.nominalInterestRatePerPeriod = defaultNominalInterestRatePerPeriod;
@@ -311,6 +314,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
         this.buyDownFeeCalculationType = buyDownFeeCalculationType;
         this.buyDownFeeStrategy = buyDownFeeStrategy;
         this.buyDownFeeIncomeType = buyDownFeeIncomeType;
+        this.merchantBuyDownFee = merchantBuyDownFee;
     }
 
     private Integer defaultToNullIfZero(final Integer value) {
@@ -325,7 +329,6 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
         return this.currency.copy();
     }
 
-    @Override
     public CurrencyData getCurrencyData() {
         return currency.toData();
     }
@@ -338,27 +341,20 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
         return Money.of(getCurrencyData(), this.inArrearsTolerance);
     }
 
-    // TODO: REVIEW
-    @Override
     public BigDecimal getNominalInterestRatePerPeriod() {
         return this.nominalInterestRatePerPeriod == null ? null
                 : BigDecimal.valueOf(Double.parseDouble(this.nominalInterestRatePerPeriod.stripTrailingZeros().toString()));
     }
 
-    // TODO: REVIEW
-    @Override
     public PeriodFrequencyType getInterestPeriodFrequencyType() {
         return this.interestPeriodFrequencyType == null ? PeriodFrequencyType.INVALID : this.interestPeriodFrequencyType;
     }
 
-    // TODO: REVIEW
-    @Override
     public BigDecimal getAnnualNominalInterestRate() {
         return this.annualNominalInterestRate == null ? null
                 : BigDecimal.valueOf(Double.parseDouble(this.annualNominalInterestRate.stripTrailingZeros().toString()));
     }
 
-    @Override
     public DaysInYearCustomStrategyType getDaysInYearCustomStrategy() {
         return daysInYearCustomStrategy;
     }

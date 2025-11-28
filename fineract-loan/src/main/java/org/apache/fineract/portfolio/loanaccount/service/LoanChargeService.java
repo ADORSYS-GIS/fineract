@@ -33,6 +33,7 @@ import org.apache.fineract.infrastructure.configuration.service.TemporaryConfigu
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
@@ -51,7 +52,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleIns
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleProcessingWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTrancheDisbursementCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.SingleLoanChargeRepaymentScheduleProcessingWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.MoneyHolder;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.TransactionCtx;
@@ -64,7 +64,6 @@ public class LoanChargeService {
     private final LoanTransactionProcessingService loanTransactionProcessingService;
     private final LoanLifecycleStateMachine loanLifecycleStateMachine;
     private final LoanBalanceService loanBalanceService;
-    private final LoanTransactionRepository loanTransactionRepository;
 
     public void recalculateAllCharges(final Loan loan) {
         Set<LoanCharge> charges = loan.getActiveCharges();
@@ -134,11 +133,9 @@ public class LoanChargeService {
         }
     }
 
-    public void makeChargePayment(final Loan loan, final Long chargeId, final List<Long> existingTransactionIds,
-            final List<Long> existingReversedTransactionIds, final LoanTransaction paymentTransaction, final Integer installmentNumber) {
+    public void makeChargePayment(final Loan loan, final Long chargeId, final LoanTransaction paymentTransaction,
+            final Integer installmentNumber) {
         loanChargeValidator.validateChargePaymentNotInFuture(paymentTransaction);
-        existingTransactionIds.addAll(loanTransactionRepository.findTransactionIdsByLoan(loan));
-        existingReversedTransactionIds.addAll(loanTransactionRepository.findReversedTransactionIdsByLoan(loan));
         LoanCharge charge = null;
         for (final LoanCharge loanCharge : loan.getCharges()) {
             if (loanCharge.isActive() && chargeId.equals(loanCharge.getId())) {
@@ -655,7 +652,8 @@ public class LoanChargeService {
     private List<LoanInstallmentCharge> generateInstallmentLoanCharges(final Loan loan, final LoanCharge loanCharge) {
         final List<LoanInstallmentCharge> loanChargePerInstallments = new ArrayList<>();
         if (loanCharge.isInstalmentFee()) {
-            List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+            final List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments().stream()
+                    .filter(i -> !i.isDownPayment() && !i.isAdditional() && !i.isReAged()).toList();
             for (final LoanRepaymentScheduleInstallment installment : installments) {
                 BigDecimal amount;
                 if (loanCharge.getChargeCalculation().isFlat()) {
@@ -902,6 +900,53 @@ public class LoanChargeService {
             }
         }
         return amount;
+    }
+
+    public void removeLoanCharge(final Loan loan, final LoanCharge loanCharge) {
+        final boolean removed = loanCharge.isActive();
+        if (removed) {
+            loanCharge.setActive(false);
+            final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
+            wrapper.reprocess(loan.getCurrency(), loan.getDisbursementDate(), loan.getRepaymentScheduleInstallments(),
+                    loan.getActiveCharges());
+            loan.updateSummaryWithTotalFeeChargesDueAtDisbursement(loan.deriveSumTotalOfChargesDueAtDisbursement());
+        }
+
+        removeOrModifyTransactionAssociatedWithLoanChargeIfDueAtDisbursement(loan, loanCharge);
+        loan.getLoanCharges().remove(loanCharge);
+    }
+
+    private void removeOrModifyTransactionAssociatedWithLoanChargeIfDueAtDisbursement(final Loan loan, final LoanCharge loanCharge) {
+        if (loanCharge.isDueAtDisbursement()) {
+            LoanTransaction transactionToRemove = null;
+            List<LoanTransaction> transactions = loan.getLoanTransactions();
+            for (final LoanTransaction transaction : transactions) {
+                if (transaction.isRepaymentAtDisbursement()
+                        && doesLoanChargePaidByContainLoanCharge(transaction.getLoanChargesPaid(), loanCharge)) {
+                    final MonetaryCurrency currency = loan.getCurrency();
+                    final Money chargeAmount = Money.of(currency, loanCharge.amount());
+                    if (transaction.isGreaterThan(chargeAmount)) {
+                        final Money principalPortion = Money.zero(currency);
+                        final Money interestPortion = Money.zero(currency);
+                        final Money penaltyChargesPortion = Money.zero(currency);
+
+                        transaction.updateComponentsAndTotal(principalPortion, interestPortion, chargeAmount, penaltyChargesPortion);
+
+                    } else {
+                        transactionToRemove = transaction;
+                    }
+                }
+            }
+
+            if (transactionToRemove != null) {
+                loan.removeLoanTransaction(transactionToRemove);
+            }
+        }
+    }
+
+    private boolean doesLoanChargePaidByContainLoanCharge(Set<LoanChargePaidBy> loanChargePaidBys, LoanCharge loanCharge) {
+        return loanChargePaidBys.stream() //
+                .anyMatch(loanChargePaidBy -> loanChargePaidBy.getLoanCharge().equals(loanCharge));
     }
 
 }

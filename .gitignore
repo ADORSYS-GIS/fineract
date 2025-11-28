@@ -33,3 +33,5 @@ gradleExp/
 /target
 .run/
 .java-version
+
+.windsurf/
