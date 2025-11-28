@@ -1,4 +1,4 @@
-# Mifos Reporting Plugin: A Comprehensive Guide
+# Mifos Reporting Plugin: A Comprehensive Guide.
 
 This document provides a complete guide to the Mifos Reporting Plugin for Apache Fineract, including installation, testing, usage, and frontend integration.
 
