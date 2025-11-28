@@ -1,7 +1,6 @@
 name: Fineract Cargo & Unit- & Integration tests - MariaDB
 
-on:
-  workflow_dispatch:
+on: [push, pull_request]
 
 permissions:
   contents: read
