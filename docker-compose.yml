@@ -15,11 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-version: "3.8"
-
 services:
-
   db:
     extends:
       file: ./config/docker/compose/mariadb.yml
@@ -37,7 +33,7 @@ services:
       db:
         condition: service_healthy
       keycloak:
-        condition:  service_started
+        condition: service_healthy
     env_file:
       - ./config/docker/env/fineract.env
       - ./config/docker/env/fineract-common.env
