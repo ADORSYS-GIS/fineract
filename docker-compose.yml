@@ -15,16 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-version: "3.8"
-
 services:
-
   db:
     extends:
       file: ./config/docker/compose/mariadb.yml
       service: mariadb
-
   fineract:
     extends:
       file: ./config/docker/compose/fineract.yml
@@ -35,7 +30,7 @@ services:
       db:
         condition: service_healthy
       keycloak:
-        condition:  service_started
+        condition: service_healthy
     env_file:
       - ./config/docker/env/fineract.env
       - ./config/docker/env/fineract-common.env
@@ -44,20 +39,19 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
-    command: start-dev --health-enabled=true
+    command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
     ports:
       - "9000:8080"
-      - "8180:9000"
     healthcheck:
-      test: ["CMD-SHELL", "timeout 3 sh -c 'cat < /dev/null > /dev/tcp/localhost/9000' || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
 
   keycloak-config-cli:
       image: adorsys/keycloak-config-cli:latest
@@ -71,7 +65,6 @@ services:
         - IMPORT_FILES_LOCATIONS=/config/*
       volumes:
         - ./keycloak-config:/config
-
   keycloak-setup:
     build:
       context: .

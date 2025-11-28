@@ -64,7 +64,9 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumDat
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
+import org.apache.fineract.portfolio.savings.data.SavingsAccrualData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargesPaidByData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
@@ -89,7 +91,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     // mappers
     private final SavingsAccountTransactionTemplateMapper transactionTemplateMapper;
-    private final SavingsAccountTransactionsMapper transactionsMapper;
+    protected SavingsAccountTransactionsMapper transactionsMapper;
     private final SavingsAccountTransactionsForBatchMapper savingsAccountTransactionsForBatchMapper;
     private final SavingAccountMapper savingAccountMapper;
     private final SavingAccountMapperForInterestPosting savingAccountMapperForInterestPosting;
@@ -336,6 +338,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("txd.id as taxDetailsId, txd.amount as taxAmount, ");
             sqlBuilder.append("apm.gl_account_id as glAccountIdForInterestOnSavings, apm1.gl_account_id as glAccountIdForSavingsControl, ");
             sqlBuilder.append(
+                    "apm2.gl_account_id as glAccountIdForInterestReceivable,apm3.gl_account_id as glAccountIdForOverdraftPorfolio, ");
+            sqlBuilder.append("apm4.gl_account_id as glAccountIdForInterestPayable, ");
+            sqlBuilder.append(
                     "mtc.id as taxComponentId, mtc.debit_account_id as debitAccountId, mtc.credit_account_id as creditAccountId, mtc.percentage as taxPercentage ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
@@ -354,6 +359,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     "left join acc_product_mapping apm on apm.product_type = 2 and apm.product_id = sp.id and apm.financial_account_type=3 ");
             sqlBuilder.append(
                     "left join acc_product_mapping apm1 on apm1.product_type = 2 and apm1.product_id = sp.id and apm1.financial_account_type=2 ");
+            sqlBuilder.append("left join acc_product_mapping apm2 on apm2.product_id = sp.id and apm2.financial_account_type=18 ");
+            sqlBuilder.append("left join acc_product_mapping apm3 on apm3.product_id = sp.id and apm3.financial_account_type = 11 ");
+            sqlBuilder.append("left join acc_product_mapping apm4 on apm4.product_id = sp.id and apm4.financial_account_type = 17 ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -406,6 +414,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
                     final Long glAccountIdForInterestOnSavings = rs.getLong("glAccountIdForInterestOnSavings");
                     final Long glAccountIdForSavingsControl = rs.getLong("glAccountIdForSavingsControl");
+
+                    final Long glAccountIdForOverdraftPorfolio = rs.getLong("glAccountIdForOverdraftPorfolio");
+                    final Long glAccountIdForInterestReceivable = rs.getLong("glAccountIdForInterestReceivable");
+
+                    final Long glAccountIdForInterestPayable = rs.getLong("glAccountIdForInterestPayable");
 
                     final Long productId = rs.getLong("productId");
                     final Integer accountType = rs.getInt("accountingType");
@@ -563,6 +576,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     savingsAccountData.setClientData(clientData);
                     savingsAccountData.setGroupGeneralData(groupGeneralData);
                     savingsAccountData.setSavingsProduct(savingsProductData);
+
+                    savingsAccountData.setGlAccountIdForInterestReceivable(glAccountIdForInterestReceivable);
+                    savingsAccountData.setGlAccountIdForOverdraftPorfolio(glAccountIdForOverdraftPorfolio);
+
+                    savingsAccountData.setGlAccountIdForInterestPayable(glAccountIdForInterestPayable);
+
                     savingsAccountData.setGlAccountIdForInterestOnSavings(glAccountIdForInterestOnSavings);
                     savingsAccountData.setGlAccountIdForSavingsControl(glAccountIdForSavingsControl);
                 }
@@ -1069,7 +1088,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
      * return this.jdbcTemplate.query(sql, this.annualFeeMapper, new Object[] {}); }
      */
 
-    public static final class SavingsAccountTransactionsMapper implements RowMapper<SavingsAccountTransactionData> {
+    public static class SavingsAccountTransactionsMapper implements RowMapper<SavingsAccountTransactionData> {
 
         private static final String SELECT = buildSelect();
         private static final String FROM = buildFrom();
@@ -1077,7 +1096,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
         public SavingsAccountTransactionsMapper() {}
 
-        private static String buildSelect() {
+        protected static String buildSelect() {
             return "tr.id as transactionId, tr.transaction_type_enum as transactionType, "
                     + "tr.transaction_date as transactionDate, tr.amount as transactionAmount, "
                     + "tr.release_id_of_hold_amount as releaseTransactionId, tr.reason_for_block as reasonForBlock, "
@@ -1097,7 +1116,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     + "curr.display_symbol as currencyDisplaySymbol, pt.value as paymentTypeName, " + "tr.is_manual as postInterestAsOn ";
         }
 
-        private static String buildFrom() {
+        protected static String buildFrom() {
             return " FROM m_savings_account_transaction tr join m_savings_account sa on tr.savings_account_id = sa.id "
                     + "join m_currency curr on curr.code = sa.currency_code "
                     + "left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id "
@@ -1385,5 +1404,14 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     @Override
     public Long retrieveAccountIdByExternalId(final ExternalId externalId) {
         return savingsAccountRepositoryWrapper.findIdByExternalId(externalId);
+    }
+
+    @Override
+    public List<SavingsAccrualData> retrievePeriodicAccrualData(LocalDate tillDate, SavingsAccount savings) {
+        Long savingsId = (savings != null) ? savings.getId() : null;
+        Integer status = SavingsAccountStatusType.ACTIVE.getValue();
+        Integer accountingRule = AccountingRuleType.ACCRUAL_PERIODIC.getValue();
+
+        return this.savingsAccountRepositoryWrapper.findAccrualData(tillDate, savingsId, status, accountingRule);
     }
 }
