@@ -1,6 +1,7 @@
 name: Fineract Docker Builds
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,24 +26,50 @@ jobs:
       IMAGE_NAME: fineract
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
+        uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
 
       - name: Build the image
         run: ./gradlew --no-daemon --console=plain :fineract-provider:jibDockerBuild -Djib.to.image=$IMAGE_NAME -x test -x cucumber
 
       - name: Start the ${{ matrix.db_type }} stack
         run: docker compose -f ${{ matrix.compose_file }} up -d
+      - name: Wait for keycloak to become healthy and dump logs on failure
+        run: |
+          COMPOSE_FILE="${{ matrix.compose_file }}"
+          NAME="fineract-keycloak-1"
+          ATTEMPTS=40
+          while [ $ATTEMPTS -gt 0 ]; do
+            STATUS="$(docker inspect --format='{{.State.Health.Status}}' $NAME 2>/dev/null)"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Keycloak container is healthy."
+              break
+            fi
+            echo "Waiting for ${NAME} to become healthy (current status: ${STATUS:-not running}, attempts left: $ATTEMPTS)"
+            docker compose -f "$COMPOSE_FILE" ps
+            ATTEMPTS=$((ATTEMPTS - 1))
+            sleep 10
+          done
+
+          if [ "$STATUS" != "healthy" ]; then
+            echo "Keycloak container did not become healthy in time."
+            echo "=== Keycloak last 300 lines ==="
+            docker compose -f "$COMPOSE_FILE" logs --no-color --tail=300 keycloak || true
+            echo "=== Docker inspect (State) ==="
+            docker inspect --format '{{json .State}}' $NAME || true
+            exit 1
+          fi
 
       - name: Check the stack
         run: docker ps

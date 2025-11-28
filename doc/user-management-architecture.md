@@ -65,7 +65,7 @@ Before we can interact with the Fineract API, we need an access token. For admin
 **Step 1: Get the Authorization Code**
 
 1.  In your browser, navigate to the following URL (ensure it's a single line):
-   
+
     ```
     http://172.17.0.1:9000/realms/fineract/protocol/openid-connect/auth
     ?client_id=web-client
