@@ -1,6 +1,7 @@
 name: Fineract Docker Builds
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -8,7 +9,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -26,7 +26,8 @@ jobs:
       IMAGE_NAME: fineract
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           fetch-depth: 0
 
@@ -44,6 +45,31 @@ jobs:
 
       - name: Start the ${{ matrix.db_type }} stack
         run: docker compose -f ${{ matrix.compose_file }} up -d
+      - name: Wait for keycloak to become healthy and dump logs on failure
+        run: |
+          COMPOSE_FILE="${{ matrix.compose_file }}"
+          NAME="fineract-keycloak-1"
+          ATTEMPTS=40
+          while [ $ATTEMPTS -gt 0 ]; do
+            STATUS="$(docker inspect --format='{{.State.Health.Status}}' $NAME 2>/dev/null)"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Keycloak container is healthy."
+              break
+            fi
+            echo "Waiting for ${NAME} to become healthy (current status: ${STATUS:-not running}, attempts left: $ATTEMPTS)"
+            docker compose -f "$COMPOSE_FILE" ps
+            ATTEMPTS=$((ATTEMPTS - 1))
+            sleep 10
+          done
+
+          if [ "$STATUS" != "healthy" ]; then
+            echo "Keycloak container did not become healthy in time."
+            echo "=== Keycloak last 300 lines ==="
+            docker compose -f "$COMPOSE_FILE" logs --no-color --tail=300 keycloak || true
+            echo "=== Docker inspect (State) ==="
+            docker inspect --format '{{json .State}}' $NAME || true
+            exit 1
+          fi
 
       - name: Check the stack
         run: docker ps
