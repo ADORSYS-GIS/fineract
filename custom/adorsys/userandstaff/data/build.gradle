@@ -1,0 +1,9 @@
+description = 'Adorsys Fineract User and Staff Data'
+
+group = 'com.adorsys.fineract'
+
+base {
+    archivesName = 'adorsys-fineract-userandstaff-data'
+}
+
+apply from: 'dependencies.gradle'
