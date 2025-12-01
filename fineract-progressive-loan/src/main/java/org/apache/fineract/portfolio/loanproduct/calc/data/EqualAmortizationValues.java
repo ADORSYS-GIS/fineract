@@ -16,18 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.data;
+package org.apache.fineract.portfolio.loanproduct.calc.data;
 
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.math.BigDecimal;
+import org.apache.fineract.organisation.monetary.domain.Money;
 
-@Getter
-@AllArgsConstructor
-public class LoanSchedulePeriodDataWrapper {
+public record EqualAmortizationValues(Money value, Money adjustment) {
 
-    private final LoanPrincipalRelatedDataHolder data;
-    private final LocalDate date;
-    private final boolean isDisbursement;
-    private final boolean isDisbursed;
+    public Money getAdjustedValue() {
+        return value.add(adjustment);
+    }
+
+    public Money calculateValue(boolean isLast) {
+        return (isLast ? getAdjustedValue() : value);
+    }
+
+    public BigDecimal calculateValueBigDecimal(boolean isLast) {
+        return calculateValue(isLast).getAmount();
+    }
+
+    public EqualAmortizationValues add(EqualAmortizationValues other) {
+        return new EqualAmortizationValues(value.add(other.value), adjustment.add(other.adjustment));
+    }
 }

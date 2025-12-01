@@ -16,18 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.data;
+package org.apache.fineract.portfolio.util;
 
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.List;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 
-@Getter
-@AllArgsConstructor
-public class LoanSchedulePeriodDataWrapper {
+public final class InstallmentProcessingHelper {
 
-    private final LoanPrincipalRelatedDataHolder data;
-    private final LocalDate date;
-    private final boolean isDisbursement;
-    private final boolean isDisbursed;
+    private InstallmentProcessingHelper() {}
+
+    public static void addOneToInstallmentNumberFromInstallment(final List<LoanRepaymentScheduleInstallment> installments,
+            final int installmentNumber) {
+        installments.stream().filter(i -> i.getInstallmentNumber() != null && i.getInstallmentNumber() >= installmentNumber)
+                .forEach(i -> i.setInstallmentNumber(i.getInstallmentNumber() + 1));
+    }
 }
