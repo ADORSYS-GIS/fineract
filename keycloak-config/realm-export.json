@@ -26,7 +26,7 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
@@ -45,6 +45,7 @@
   "quickLoginCheckMilliSeconds": 1000,
   "maxDeltaTimeSeconds": 43200,
   "failureFactor": 30,
+  "loginTheme": "adorsys-tm-01",
   "roles": {
     "realm": [
       {
@@ -877,7 +878,8 @@
       "secret": "**********",
       "redirectUris": [
         "http://localhost*",
-        "https://localhost*"
+        "https://localhost*",
+        "http://localhost/cashier/callback"
       ],
       "webOrigins": [
         "http://localhost*"
