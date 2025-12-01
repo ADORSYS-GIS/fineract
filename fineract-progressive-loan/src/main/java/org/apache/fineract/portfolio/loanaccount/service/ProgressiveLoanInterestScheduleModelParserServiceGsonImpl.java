@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.google.gson.ToNumberPolicy;
-import jakarta.validation.constraints.NotNull;
 import java.math.MathContext;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +35,8 @@ import org.apache.fineract.organisation.monetary.serialization.MoneySerializer;
 import org.apache.fineract.portfolio.loanproduct.calc.data.InterestPeriod;
 import org.apache.fineract.portfolio.loanproduct.calc.data.ProgressiveLoanInterestScheduleModel;
 import org.apache.fineract.portfolio.loanproduct.calc.data.RepaymentPeriod;
-import org.apache.fineract.portfolio.loanproduct.domain.LoanProductMinimumRepaymentScheduleRelatedDetail;
+import org.apache.fineract.portfolio.loanproduct.domain.ILoanConfigurationDetails;
+import org.springframework.lang.NonNull;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class ProgressiveLoanInterestScheduleModelParserServiceGsonImpl implement
                 .addSerializationExclusionStrategy(new JsonExcludeAnnotationBasedExclusionStrategy()).create();
     }
 
-    private Gson createDeserializer(LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail, MathContext mc,
+    private Gson createDeserializer(ILoanConfigurationDetails loanProductRelatedDetail, MathContext mc,
             Integer installmentAmountInMultipliesOf) {
         InterestScheduleModelServiceGsonContext ctx = new InterestScheduleModelServiceGsonContext(
                 new MonetaryCurrency(loanProductRelatedDetail.getCurrencyData()), mc, loanProductRelatedDetail,
@@ -68,14 +68,13 @@ public class ProgressiveLoanInterestScheduleModelParserServiceGsonImpl implement
     }
 
     @Override
-    public String toJson(@NotNull ProgressiveLoanInterestScheduleModel model) {
+    public String toJson(@NonNull ProgressiveLoanInterestScheduleModel model) {
         return gsonSerializer.toJson(model);
     }
 
     @Override
-    public ProgressiveLoanInterestScheduleModel fromJson(String s,
-            @NotNull LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail, @NotNull MathContext mc,
-            Integer installmentAmountInMultipliesOf) {
+    public ProgressiveLoanInterestScheduleModel fromJson(String s, @NonNull ILoanConfigurationDetails loanProductRelatedDetail,
+            @NonNull MathContext mc, Integer installmentAmountInMultipliesOf) {
         if (s == null) {
             return null;
         }

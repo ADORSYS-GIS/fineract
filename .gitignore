@@ -1,5 +1,6 @@
 *.class
 *.jar
+!/keycloak-theme/*.jar
 *.war
 *.ear
 .classpath
@@ -33,3 +34,10 @@ gradleExp/
 
 .run/
 .java-version
+
+# Python
+__pycache__/
+
+# Logs
+logs/
+.windsurf/

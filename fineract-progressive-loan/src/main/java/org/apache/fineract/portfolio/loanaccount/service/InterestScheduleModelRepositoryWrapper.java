@@ -23,18 +23,20 @@ import java.util.Optional;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.ProgressiveLoanModel;
 import org.apache.fineract.portfolio.loanproduct.calc.data.ProgressiveLoanInterestScheduleModel;
-import org.apache.fineract.portfolio.loanproduct.domain.LoanProductMinimumRepaymentScheduleRelatedDetail;
+import org.apache.fineract.portfolio.loanproduct.domain.ILoanConfigurationDetails;
 
 public interface InterestScheduleModelRepositoryWrapper {
 
     Optional<ProgressiveLoanModel> findOneByLoanId(Long loanId);
 
+    Optional<ProgressiveLoanModel> findOneByLoan(Loan loan);
+
     Optional<ProgressiveLoanInterestScheduleModel> extractModel(Optional<ProgressiveLoanModel> progressiveLoanModel);
 
     ProgressiveLoanInterestScheduleModel writeInterestScheduleModel(Loan loan, ProgressiveLoanInterestScheduleModel model);
 
-    Optional<ProgressiveLoanInterestScheduleModel> readProgressiveLoanInterestScheduleModel(Long loanId,
-            LoanProductMinimumRepaymentScheduleRelatedDetail detail, Integer installmentAmountInMultipliesOf);
+    Optional<ProgressiveLoanInterestScheduleModel> readProgressiveLoanInterestScheduleModel(Long loanId, ILoanConfigurationDetails detail,
+            Integer installmentAmountInMultipliesOf);
 
     boolean hasValidModelForDate(Long loanId, LocalDate targetDate);
 
