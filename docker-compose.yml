@@ -20,6 +20,9 @@ services:
     extends:
       file: ./config/docker/compose/mariadb.yml
       service: mariadb
+    networks:
+      - fineract-network
+
   fineract:
     extends:
       file: ./config/docker/compose/fineract.yml
@@ -38,21 +41,43 @@ services:
       - ./config/docker/env/fineract-keycloak.env
     environment:
       - FINERACT_WEB_HOOK_URL=http://sms-gateway:8080/sms/
+    volumes:
+      - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/app/plugins
+      - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/pentahoReports
+    environment:
+      - FINERACT_PENTAHO_REPORTS_PATH=/pentahoReports/MariaDB/
+      - JAVA_TOOL_OPTIONS=-Dloader.path=/app/plugins/
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
-    command: start-dev
+    command: >
+      start-dev
+      --health-enabled=true
+      --spi-theme-static-max-age=-1
+      --spi-theme-cache-themes=false
+      --spi-theme-cache-templates=false
+      --hostname-strict=false
+      --http-enabled=true
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
+      KC_THEME_DEFAULT: adorsys-tm-01
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
     ports:
       - "9000:8080"
+      - "8180:9000"
+    volumes:
+      - ./keycloak-theme/theme-1.0.1.jar:/opt/keycloak/providers/theme-1.0.1.jar:ro
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8080/health/ready || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 120s
+      test: ["CMD-SHELL", "timeout 3 sh -c 'cat < /dev/null > /dev/tcp/localhost/9000' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - fineract-network
 
   keycloak-config-cli:
       image: adorsys/keycloak-config-cli:latest
@@ -66,6 +91,9 @@ services:
         - IMPORT_FILES_LOCATIONS=/config/*
       volumes:
         - ./keycloak-config:/config
+      networks:
+        - fineract-network
+
   keycloak-setup:
     build:
       context: .
@@ -83,3 +111,68 @@ services:
     depends_on:
       fineract:
         condition: service_healthy
+    networks:
+      - fineract-network
+
+  apache-proxy:
+    build:
+      context: ./config/apache
+    depends_on:
+      - fineract
+      - keycloak
+      # - admin-app  # Commented out - image not available in registry
+      - cashier-app
+      - branchmanager-app
+      - accountmanager-app
+      # - mifos-app  # Commented out - image not available in registry
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      - fineract-network
+
+  # admin-app:
+  #   image: ghcr.io/adorsys-gis/fineract-apps/admin-app:latest
+  #   container_name: admin_app_test
+  #   ports:
+  #     - "5172:80"
+  #   networks:
+  #     - fineract-network
+
+  cashier-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/cashier-app:latest
+    container_name: cashier_app_test
+    ports:
+      - "5173:80"
+    networks:
+      - fineract-network
+
+  branchmanager-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/branchmanager-app:latest
+    container_name: branchmanager_app_test
+    ports:
+      - "5174:80"
+    networks:
+      - fineract-network
+
+  accountmanager-app:
+    image: ghcr.io/adorsys-gis/fineract-apps/account-manager-app:latest
+    container_name: accountmanager_app_test
+    ports:
+      - "5175:80"
+    networks:
+      - fineract-network
+
+  # mifos-app:
+  #   image: ghcr.io/adorsys-gis/fineract-apps/mifos-app:latest
+  #   container_name: mifos_app_test
+  #   ports:
+  #     - "5176:80"
+  #   networks:
+  #     - fineract-network
+
+networks:
+  fineract-network:
+    driver: bridge
+    name: fineract-dev-network

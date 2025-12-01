@@ -26,6 +26,7 @@
         <insert tableName="job">
             <column name="name" value="Acme Noop Job"/>
             <column name="display_name" value="Acme Noop Job"/>
+            <column name="short_name" value="ACM_NOOP"/>
             <column name="cron_expression" value="0 1 0 1/1 * ? *"/>
             <column name="create_time" valueDate="${current_datetime}"/>
             <column name="task_priority" valueNumeric="5"/>
@@ -41,11 +42,5 @@
             <column name="node_id" valueNumeric="1"/>
             <column name="is_mismatched_job" valueBoolean="true"/>
         </insert>
-    </changeSet>
-    <changeSet author="acme" id="2">
-        <update tableName="job">
-            <column name="short_name" value="ACM_NOOP"/>
-            <where>name='Acme Noop Job'</where>
-        </update>
     </changeSet>
 </databaseChangeLog>
