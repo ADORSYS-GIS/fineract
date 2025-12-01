@@ -5,11 +5,11 @@ FROM quay.io/keycloak/keycloak:26.2.5
 USER root
 
 # Copy the setup script into the image
-COPY setup_keycloak.sh /setup_keycloak.sh
+COPY adorsys-keycloak-setup.sh /adorsys-keycloak-setup.sh
 
 # Make the script executable during the image build process
-RUN chmod +x /setup_keycloak.sh
+RUN chmod +x /adorsys-keycloak-setup.sh
 
 # Set the new entrypoint to run the script and then wait.
 # This keeps the container alive so other services can depend on it.
-ENTRYPOINT ["/bin/bash", "-c", "/setup_keycloak.sh && tail -f /dev/null"]
+ENTRYPOINT ["/bin/bash", "-c", "/adorsys-keycloak-setup.sh && tail -f /dev/null"]
