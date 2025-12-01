@@ -39,6 +39,8 @@ services:
       - ./config/docker/env/fineract-common.env
       - ./config/docker/env/fineract-mariadb.env
       - ./config/docker/env/fineract-keycloak.env
+    environment:
+      - FINERACT_WEB_HOOK_URL=http://sms-gateway:8080/sms/
     volumes:
       - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/app/plugins
       - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/pentahoReports
@@ -99,6 +101,16 @@ services:
     depends_on:
       keycloak-config-cli:
         condition: service_completed_successfully
+
+  sms-gateway:
+    build:
+      context: ./sms-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      fineract:
+        condition: service_healthy
     networks:
       - fineract-network
 
