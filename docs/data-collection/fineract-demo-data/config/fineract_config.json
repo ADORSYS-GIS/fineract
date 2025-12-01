@@ -1,0 +1,35 @@
+{
+  "fineract_url": "https://localhost/fineract-provider/api/v1",
+  "username": "mifos",
+  "password": "password",
+  "tenant": "default",
+  "default_password": "Fineract@Pas1234",
+  "description": "Fineract API configuration for demo data loading",
+
+  "connection_settings": {
+    "timeout": 30,
+    "retry_attempts": 3,
+    "retry_delay": 2
+  },
+
+  "data_loading_options": {
+    "skip_existing": true,
+    "continue_on_error": true,
+    "batch_size": 10,
+    "delay_between_requests": 0.5
+  },
+
+  "logging": {
+    "level": "INFO",
+    "file": "../logs/load_demo_data.log",
+    "console": true
+  },
+
+  "notes": [
+    "Default Fineract credentials are mifos/password",
+    "Change these credentials in production environments",
+    "The tenant must exist in Fineract before loading data",
+    "Ensure Fineract is running and accessible at the specified URL",
+    "default_password must meet requirements: 12-50 chars, uppercase, lowercase, number, special char, no consecutive repeating chars"
+  ]
+}
