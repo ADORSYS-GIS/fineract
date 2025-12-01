@@ -413,7 +413,7 @@ EMAIL="teller@example.com"
 After saving the changes, run the script to create the user in Keycloak:
 
 ```bash
-docker exec fineract-keycloak-1 bash -c "$(cat setup_keycloak.sh)"
+docker exec fineract-keycloak-1 bash -c "$(cat keycloak-setup.sh)"
 ```
 
 Repeat this process for each new user you want to create.

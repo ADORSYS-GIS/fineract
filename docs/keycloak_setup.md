@@ -56,12 +56,12 @@ The `setup_keycloak.sh` script is used to perform initial user setup after the K
 
 2.  **Make the script executable**: Before running the script, make it executable:
     ```bash
-    chmod +x setup_keycloak.sh
+    chmod +x keycloak-setup.sh
     ```
 
 3.  **Run the setup script**: Once the Keycloak container is running, execute the `setup_keycloak.sh` script to create the initial user. The following command executes the script's content inside the Keycloak container:
     ```bash
-    docker exec fineract-keycloak-1 bash -c "$(cat setup_keycloak.sh)"
+    docker exec fineract-keycloak-1 bash -c "$(cat keycloak-setup.sh)"
     ```
 
 ---

@@ -1,7 +1,3 @@
-plugins {
-    id 'org.springframework.boot'
-}
-
 description = 'Adorsys Fineract User and Staff Starter'
 
 group = 'com.adorsys.fineract'
