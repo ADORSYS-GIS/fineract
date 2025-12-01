@@ -39,10 +39,12 @@ services:
       - ./config/docker/env/fineract-common.env
       - ./config/docker/env/fineract-mariadb.env
       - ./config/docker/env/fineract-keycloak.env
-    extra_hosts:
-      - "keycloak.local:172.21.0.1"
-    networks:
-      - fineract-network
+    volumes:
+      - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/app/plugins
+      - ./fineract-pentaho/MifosSecurityPlugin-1.12.1:/pentahoReports
+    environment:
+      - FINERACT_PENTAHO_REPORTS_PATH=/pentahoReports/MariaDB/
+      - JAVA_TOOL_OPTIONS=-Dloader.path=/app/plugins/
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
