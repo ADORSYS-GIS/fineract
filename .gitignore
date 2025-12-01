@@ -1,5 +1,6 @@
 *.class
 *.jar
+!/keycloak-theme/*.jar
 *.war
 *.ear
 .classpath
@@ -30,8 +31,13 @@ fineract-provider/src/main/generated/
 
 **/out/
 gradleExp/
-
+/target
 .run/
 .java-version
 
+# Python
+__pycache__/
+
+# Logs
+logs/
 .windsurf/

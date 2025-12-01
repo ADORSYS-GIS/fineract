@@ -1,0 +1,797 @@
+2025-10-23 12:29:27,772 - INFO - ╔══════════════════════════════════════════════════════════════════════════════╗
+2025-10-23 12:29:27,772 - INFO - ║                    FINERACT DEMO DATA LOADER                                 ║
+2025-10-23 12:29:27,772 - INFO - ╚══════════════════════════════════════════════════════════════════════════════╝
+2025-10-23 12:29:27,773 - INFO - 
+Excel file: ../output/fineract_demo_data_20251022_170528.xlsx
+2025-10-23 12:29:27,773 - INFO - Fineract URL: https://localhost/fineract-provider/api/v1
+2025-10-23 12:29:27,773 - INFO - Tenant: default
+2025-10-23 12:29:27,773 - INFO - 
+2025-10-23 12:29:27,773 - INFO - ================================================================================
+2025-10-23 12:29:27,773 - INFO - LOADING CURRENCY CONFIGURATION
+2025-10-23 12:29:27,773 - INFO - ================================================================================
+2025-10-23 12:29:27,881 - INFO -   Found currency: XAF - Central African CFA Franc
+2025-10-23 12:29:27,938 - INFO - ✓ Enabled currencies: XAF
+2025-10-23 12:29:27,939 - INFO -   XAF: Central African CFA Franc
+2025-10-23 12:29:27,939 - INFO -     Display symbol: FCFA, Decimal places: 0
+2025-10-23 12:29:27,939 - INFO - ================================================================================
+2025-10-23 12:29:27,939 - INFO - LOADING WORKING DAYS CONFIGURATION
+2025-10-23 12:29:27,939 - INFO - ================================================================================
+2025-10-23 12:29:28,014 - INFO - ✓ Working days configured: Mon, Tue, Wed, Thu, Fri
+2025-10-23 12:29:28,014 - INFO -   Recurrence rule: FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,
+2025-10-23 12:29:28,015 - INFO - ================================================================================
+2025-10-23 12:29:28,015 - INFO - LOADING GLOBAL CONFIGURATION
+2025-10-23 12:29:28,015 - INFO - ================================================================================
+2025-10-23 12:29:28,088 - INFO - ✓ Configured: maker-checker = true (enabled: Yes)
+2025-10-23 12:29:28,242 - INFO - ✓ Configured: reschedule-future-repayments = true (enabled: Yes)
+2025-10-23 12:29:28,401 - INFO - ✓ Configured: allow-backdated-transaction-before-interest-posting = false (enabled: No)
+2025-10-23 12:29:28,658 - INFO - ✓ Configured: allow-transactions-on-holiday = false (enabled: No)
+2025-10-23 12:29:28,796 - INFO - ✓ Configured: financial-year-beginning-month = 1 (enabled: Yes)
+2025-10-23 12:29:29,954 - INFO - ✓ Configured: enable-auto-generated-external-id = true (enabled: Yes)
+2025-10-23 12:29:30,092 - INFO - ✓ Configured: meetings-mandatory-for-jlg-loans = false (enabled: No)
+2025-10-23 12:29:30,430 - INFO - ✓ Configured: penalty-wait-period = 0 (enabled: Yes)
+2025-10-23 12:29:30,530 - INFO - ================================================================================
+2025-10-23 12:29:30,530 - INFO - LOADING CODES AND VALUES
+2025-10-23 12:29:30,530 - INFO - ================================================================================
+2025-10-23 12:29:30,569 - INFO - ⊙ Code already exists: Gender (ID: 4)
+2025-10-23 12:29:30,604 - INFO -   ✓ Added value: Male
+2025-10-23 12:29:30,739 - INFO -   ✓ Added value: Female
+2025-10-23 12:29:30,872 - INFO -   ✓ Added value: Other
+2025-10-23 12:29:30,973 - INFO - ⊙ Code already exists: ClientType (ID: 16)
+2025-10-23 12:29:31,026 - INFO -   ✓ Added value: Individual
+2025-10-23 12:29:31,194 - INFO -   ✓ Added value: Corporate
+2025-10-23 12:29:31,294 - INFO - ⊙ Code already exists: ClientClassification (ID: 17)
+2025-10-23 12:29:31,345 - INFO -   ✓ Added value: Active
+2025-10-23 12:29:31,505 - INFO -   ✓ Added value: Pending
+2025-10-23 12:29:31,660 - INFO -   ✓ Added value: Closed
+2025-10-23 12:29:31,826 - INFO - ✓ Created code: MaritalStatus (ID: 42)
+2025-10-23 12:29:31,866 - INFO -   ✓ Added value: Single
+2025-10-23 12:29:32,028 - INFO -   ✓ Added value: Married
+2025-10-23 12:29:32,185 - INFO -   ✓ Added value: Divorced
+2025-10-23 12:29:32,344 - INFO -   ✓ Added value: Widow
+2025-10-23 12:29:32,510 - INFO - ✓ Created code: EducationLevel (ID: 43)
+2025-10-23 12:29:32,558 - INFO -   ✓ Added value: Primary
+2025-10-23 12:29:32,724 - INFO -   ✓ Added value: Secondary
+2025-10-23 12:29:32,867 - INFO -   ✓ Added value: University
+2025-10-23 12:29:33,029 - INFO -   ✓ Added value: No Formal Education
+2025-10-23 12:29:33,129 - INFO - ⊙ Code already exists: LoanPurpose (ID: 3)
+2025-10-23 12:29:33,160 - INFO -   ✓ Added value: Working Capital
+2025-10-23 12:29:33,304 - INFO -   ✓ Added value: Equipment Purchase
+2025-10-23 12:29:33,453 - INFO -   ✓ Added value: Inventory
+2025-10-23 12:29:33,604 - INFO -   ✓ Added value: Agricultural Input
+2025-10-23 12:29:33,743 - INFO -   ✓ Added value: Education
+2025-10-23 12:29:33,893 - INFO -   ✓ Added value: Emergency
+2025-10-23 12:29:34,031 - INFO - ✓ Created code: SavingsClosureReason (ID: 44)
+2025-10-23 12:29:34,060 - INFO -   ✓ Added value: Client Request
+2025-10-23 12:29:34,207 - INFO -   ✓ Added value: Dormant Account
+2025-10-23 12:29:34,362 - INFO -   ✓ Added value: Moved to Another Branch
+2025-10-23 12:29:34,517 - INFO -   ✓ Added value: Deceased
+2025-10-23 12:29:34,678 - INFO -   ✓ Added value: Fraudulent Activity
+2025-10-23 12:29:34,837 - INFO - ✓ Created code: LoanClosureReason (ID: 45)
+2025-10-23 12:29:34,889 - INFO -   ✓ Added value: Fully Paid
+2025-10-23 12:29:35,044 - INFO -   ✓ Added value: Written Off
+2025-10-23 12:29:35,205 - INFO -   ✓ Added value: Rescheduled
+2025-10-23 12:29:35,376 - INFO -   ✓ Added value: Foreclosed
+2025-10-23 12:29:35,514 - INFO - ✓ Created code: BusinessType (ID: 46)
+2025-10-23 12:29:35,555 - INFO -   ✓ Added value: Retail Trade
+2025-10-23 12:29:35,700 - INFO -   ✓ Added value: Wholesale Trade
+2025-10-23 12:29:35,833 - INFO -   ✓ Added value: Agriculture
+2025-10-23 12:29:35,961 - INFO -   ✓ Added value: Services
+2025-10-23 12:29:36,093 - INFO -   ✓ Added value: Manufacturing
+2025-10-23 12:29:36,256 - INFO -   ✓ Added value: Transportation
+2025-10-23 12:29:36,412 - INFO -   ✓ Added value: Food Services
+2025-10-23 12:29:36,513 - INFO - ⊙ Code already exists: GuarantorRelationship (ID: 6)
+2025-10-23 12:29:36,563 - INFO -   ✓ Added value: Family Member
+2025-10-23 12:29:36,755 - INFO -   ✓ Added value: Employer
+2025-10-23 12:29:36,886 - INFO -   ✓ Added value: Business Partner
+2025-10-23 12:29:37,031 - INFO -   ✓ Added value: Group Member
+2025-10-23 12:29:37,193 - INFO -   ✓ Added value: Community Leader
+2025-10-23 12:29:37,293 - INFO - ================================================================================
+2025-10-23 12:29:37,293 - INFO - LOADING ACCOUNT NUMBER PREFERENCES
+2025-10-23 12:29:37,293 - INFO - ================================================================================
+2025-10-23 12:29:37,400 - INFO - ✓ Configured account numbers for Client: DLA000001
+2025-10-23 12:29:37,401 - INFO -   Prefix type: Office Short Name (ID: 1)
+2025-10-23 12:29:37,661 - INFO - ✓ Configured account numbers for Loan: MICRO000001
+2025-10-23 12:29:37,661 - INFO -   Prefix type: Product Short Name (ID: 201)
+2025-10-23 12:29:37,946 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/accountnumberformats
+2025-10-23 12:29:37,946 - ERROR - Response: {"developerMessage":"The request caused a data integrity issue to be fired by the database.","httpStatusCode":"403","defaultUserMessage":"Account Format preferences for Account type `accountType.savings` already exists","userMessageGlobalisationCode":"error.msg.account.number.format.duplicate.account.type","errors":[{"defaultUserMessage":"Account Format preferences for Account type `accountType.savings` already exists","parameterName":"externalId","developerMessage":"Account Format preferences for Account type `accountType.savings` already exists","userMessageGlobalisationCode":"error.msg.account.number.format.duplicate.account.type","args":[{"value":3},{"value":"accountType.savings"}]}]}
+2025-10-23 12:29:37,946 - INFO -   ⊙ Account number format already exists for Savings
+2025-10-23 12:29:38,211 - INFO - ✓ Configured account numbers for Groups: GRP-DLA001
+2025-10-23 12:29:38,212 - INFO -   Prefix type: Office Short Name (ID: 1)
+2025-10-23 12:29:38,475 - INFO - ✓ Configured account numbers for Centers: CTR-DLA001
+2025-10-23 12:29:38,475 - INFO -   Prefix type: Office Short Name (ID: 1)
+2025-10-23 12:29:38,675 - INFO - ================================================================================
+2025-10-23 12:29:38,675 - INFO - LOADING SMS/EMAIL CONFIGURATION (REFERENCE)
+2025-10-23 12:29:38,676 - INFO - ================================================================================
+2025-10-23 12:29:38,706 - INFO - SMS/Email configuration requires manual setup in Fineract:
+2025-10-23 12:29:38,706 - INFO - 
+2025-10-23 12:29:38,706 - INFO - • SMS Gateway:
+2025-10-23 12:29:38,706 - INFO -   - account_sid: YOUR_TWILIO_ACCOUNT_SID
+2025-10-23 12:29:38,707 - INFO -     (Twilio Account SID for SMS service)
+2025-10-23 12:29:38,707 - INFO -   - auth_token: YOUR_TWILIO_AUTH_TOKEN
+2025-10-23 12:29:38,707 - INFO -     (Twilio Authentication Token (keep secure!))
+2025-10-23 12:29:38,707 - INFO -   - from_phone_number: +237XXXXXXXXX
+2025-10-23 12:29:38,707 - INFO -     (Twilio phone number to send SMS from)
+2025-10-23 12:29:38,707 - INFO - 
+2025-10-23 12:29:38,707 - INFO - • Email SMTP:
+2025-10-23 12:29:38,707 - INFO -   - smtp_host: smtp.gmail.com
+2025-10-23 12:29:38,707 - INFO -     (SMTP server hostname)
+2025-10-23 12:29:38,707 - INFO -   - smtp_port: 587
+2025-10-23 12:29:38,707 - INFO -     (SMTP server port (587 for TLS, 465 for SSL))
+2025-10-23 12:29:38,707 - INFO -   - smtp_username: your-email@gmail.com
+2025-10-23 12:29:38,707 - INFO -     (SMTP authentication username (email address))
+2025-10-23 12:29:38,707 - INFO -   - smtp_password: YOUR_APP_PASSWORD
+2025-10-23 12:29:38,707 - INFO -     (SMTP authentication password (use app password for Gmail))
+2025-10-23 12:29:38,707 - INFO -   - from_email: noreply@yourmfi.com
+2025-10-23 12:29:38,707 - INFO -     (Email address shown as sender)
+2025-10-23 12:29:38,707 - INFO -   - from_name: Cameroon MicroFinance
+2025-10-23 12:29:38,707 - INFO -     (Display name shown as sender)
+2025-10-23 12:29:38,707 - INFO -   - use_tls: Yes
+2025-10-23 12:29:38,707 - INFO -     (Enable TLS encryption)
+2025-10-23 12:29:38,707 - INFO - 
+2025-10-23 12:29:38,708 - INFO - • Notification Settings:
+2025-10-23 12:29:38,708 - INFO -   - enable_sms_notifications: Yes
+2025-10-23 12:29:38,708 - INFO -     (Enable SMS notifications globally)
+2025-10-23 12:29:38,708 - INFO -   - enable_email_notifications: Yes
+2025-10-23 12:29:38,708 - INFO -     (Enable email notifications globally)
+2025-10-23 12:29:38,708 - INFO -   - max_retry_attempts: 3
+2025-10-23 12:29:38,708 - INFO -     (Maximum retry attempts for failed notifications)
+2025-10-23 12:29:38,708 - INFO -   - retry_delay_minutes: 5
+2025-10-23 12:29:38,708 - INFO -     (Delay between retry attempts (minutes))
+2025-10-23 12:29:38,708 - INFO - 
+2025-10-23 12:29:38,708 - INFO - NOTE: SMS/Email notifications require:
+2025-10-23 12:29:38,708 - INFO -   1. External message gateway setup (Twilio/Infobip)
+2025-10-23 12:29:38,708 - INFO -   2. SMTP server configuration for email
+2025-10-23 12:29:38,708 - INFO -   3. Notification service configuration in Fineract
+2025-10-23 12:29:38,708 - INFO -   4. See README for integration instructions
+2025-10-23 12:29:38,708 - INFO - ================================================================================
+2025-10-23 12:29:38,708 - INFO - LOADING NOTIFICATION TEMPLATES
+2025-10-23 12:29:38,708 - INFO - ================================================================================
+2025-10-23 12:29:38,780 - INFO - ✓ Created template: Client Activation (SMS) - ID: 1
+2025-10-23 12:29:39,034 - INFO - ✓ Created template: Client Activation Email (Email) - ID: 2
+2025-10-23 12:29:39,294 - INFO - ✓ Created template: Loan Approval (SMS) - ID: 3
+2025-10-23 12:29:39,552 - INFO - ✓ Created template: Loan Disbursement (SMS) - ID: 4
+2025-10-23 12:29:39,802 - INFO - ✓ Created template: Loan Repayment Due (SMS) - ID: 5
+2025-10-23 12:29:40,063 - INFO - ✓ Created template: Loan Repayment Overdue (SMS) - ID: 6
+2025-10-23 12:29:40,321 - INFO - ✓ Created template: Loan Repayment Received (SMS) - ID: 7
+2025-10-23 12:29:40,554 - INFO - ✓ Created template: Loan Fully Repaid (SMS) - ID: 8
+2025-10-23 12:29:40,789 - INFO - ✓ Created template: Savings Account Activation (SMS) - ID: 9
+2025-10-23 12:29:41,038 - INFO - ✓ Created template: Savings Deposit (SMS) - ID: 10
+2025-10-23 12:29:41,296 - INFO - ✓ Created template: Savings Withdrawal (SMS) - ID: 11
+2025-10-23 12:29:41,559 - INFO - ✓ Created template: Interest Posted (SMS) - ID: 12
+2025-10-23 12:29:41,807 - INFO - ✓ Created template: Low Balance Alert (SMS) - ID: 13
+2025-10-23 12:29:42,051 - INFO - ✓ Created template: Account Dormancy Warning (SMS) - ID: 14
+2025-10-23 12:29:42,310 - INFO - ✓ Created template: Password Changed (Email) - ID: 15
+2025-10-23 12:29:42,579 - INFO - ✓ Created template: Failed Login Attempt (Email) - ID: 16
+2025-10-23 12:29:42,780 - INFO - ================================================================================
+2025-10-23 12:29:42,780 - INFO - LOADING DATA TABLES (CUSTOM FIELDS)
+2025-10-23 12:29:42,780 - INFO - ================================================================================
+2025-10-23 12:29:42,920 - INFO - ✓ Created data table: client_additional_info for Client
+2025-10-23 12:29:42,920 - INFO -   Fields: id_type, id_number, id_expiry_date, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, employer_name, employer_phone, years_in_business, business_location, home_ownership, disability_status
+2025-10-23 12:29:43,296 - INFO - ✓ Created data table: loan_additional_info for Loan
+2025-10-23 12:29:43,296 - INFO -   Fields: loan_purpose_detail, collateral_description, collateral_value, guarantor_count, credit_score, repayment_source, previous_loan_history
+2025-10-23 12:29:43,654 - INFO - ✓ Created data table: savings_additional_info for Savings
+2025-10-23 12:29:43,654 - INFO -   Fields: savings_goal, target_amount, target_date, monthly_commitment, preferred_transaction_channel
+2025-10-23 12:29:43,955 - INFO - 
+2025-10-23 12:29:43,955 - INFO - NOTE: Custom fields (data tables) are now available in:
+2025-10-23 12:29:43,955 - INFO -   - Client forms (additional_info tab)
+2025-10-23 12:29:43,955 - INFO -   - Loan application forms
+2025-10-23 12:29:43,955 - INFO -   - Savings account forms
+2025-10-23 12:29:43,956 - INFO - ================================================================================
+2025-10-23 12:29:43,956 - INFO - LOADING ROLES AND PERMISSIONS
+2025-10-23 12:29:43,956 - INFO - ================================================================================
+2025-10-23 12:29:44,010 - INFO - Found 5 existing roles in Fineract
+2025-10-23 12:29:44,010 - INFO - Fetching all available permissions from Fineract...
+2025-10-23 12:29:44,045 - INFO - Cached 679 permissions
+2025-10-23 12:29:44,046 - INFO -   Mapped Client.ALL_FUNCTIONS → 52 permissions
+2025-10-23 12:29:44,046 - INFO -   Mapped Loan.ALL_FUNCTIONS → 97 permissions
+2025-10-23 12:29:44,047 - INFO -   Mapped Savings.ALL_FUNCTIONS → 16 permissions
+2025-10-23 12:29:44,047 - INFO -   Mapped Transaction.ALL_FUNCTIONS → 9 permissions
+2025-10-23 12:29:44,047 - INFO -   Mapped Report.READ → 5 permissions
+2025-10-23 12:29:44,047 - INFO -   Mapped Office.READ → 4 permissions
+2025-10-23 12:29:44,048 - INFO -   Mapped Staff.READ → 5 permissions
+2025-10-23 12:29:44,048 - INFO -   Mapped Accounting.CREATE_READ → 2 permissions
+2025-10-23 12:29:44,048 - INFO -   Mapped Teller.ALL_FUNCTIONS → 5 permissions
+2025-10-23 12:29:44,048 - INFO -   Mapped Maker-Checker.APPROVE → 8 permissions
+2025-10-23 12:29:44,049 - INFO -   Mapped Client.CREATE_UPDATE_READ → 36 permissions
+2025-10-23 12:29:44,049 - INFO -   Mapped Loan.CREATE_UPDATE_READ → 77 permissions
+2025-10-23 12:29:44,049 - INFO -   Mapped Loan.DISBURSE_REPAYMENT → 6 permissions
+2025-10-23 12:29:44,050 - INFO -   Mapped Savings.CREATE_UPDATE_READ → 8 permissions
+2025-10-23 12:29:44,050 - INFO -   Mapped Transaction.CREATE_READ → 6 permissions
+2025-10-23 12:29:44,050 - INFO -   Mapped Report.READ → 5 permissions
+2025-10-23 12:29:44,050 - INFO -   Mapped Office.READ → 4 permissions
+2025-10-23 12:29:44,050 - INFO -   Mapped Maker-Checker.CREATE → 2 permissions
+2025-10-23 12:29:44,051 - INFO -   Mapped Client.READ → 22 permissions
+2025-10-23 12:29:44,051 - INFO -   Mapped Loan.READ → 56 permissions
+2025-10-23 12:29:44,051 - INFO -   Mapped Savings.TRANSACTION → 2 permissions
+2025-10-23 12:29:44,051 - INFO -   Mapped Transaction.CREATE_READ → 6 permissions
+2025-10-23 12:29:44,052 - INFO -   Mapped Report.READ → 5 permissions
+2025-10-23 12:29:44,052 - INFO -   Mapped Maker-Checker.CREATE → 2 permissions
+2025-10-23 12:29:44,052 - INFO -   Mapped Office.ALL_FUNCTIONS → 8 permissions
+2025-10-23 12:29:44,052 - INFO -   Mapped Staff.ALL_FUNCTIONS → 10 permissions
+2025-10-23 12:29:44,052 - INFO -   Mapped Loan Product.ALL_FUNCTIONS → 21 permissions
+2025-10-23 12:29:44,053 - INFO -   Mapped Savings Product.ALL_FUNCTIONS → 4 permissions
+2025-10-23 12:29:44,053 - INFO -   Mapped Charge.ALL_FUNCTIONS → 18 permissions
+2025-10-23 12:29:44,053 - INFO -   Mapped Client.CREATE_UPDATE_READ → 36 permissions
+2025-10-23 12:29:44,053 - INFO -   Mapped Loan.READ → 56 permissions
+2025-10-23 12:29:44,053 - INFO -   Mapped Savings.READ → 2 permissions
+2025-10-23 12:29:44,054 - INFO -   Mapped Report.READ → 5 permissions
+2025-10-23 12:29:44,054 - INFO -   Mapped Maker-Checker.CREATE → 2 permissions
+2025-10-23 12:29:44,054 - INFO -   Mapped Accounting.ALL_FUNCTIONS → 4 permissions
+2025-10-23 12:29:44,054 - INFO -   Mapped Client.READ → 22 permissions
+2025-10-23 12:29:44,054 - INFO -   Mapped Loan.READ → 56 permissions
+2025-10-23 12:29:44,055 - INFO -   Mapped Savings.READ → 2 permissions
+2025-10-23 12:29:44,055 - INFO -   Mapped Transaction.READ → 4 permissions
+2025-10-23 12:29:44,055 - INFO -   Mapped Report.READ → 5 permissions
+2025-10-23 12:29:44,055 - INFO -   Mapped Office.READ → 4 permissions
+2025-10-23 12:29:44,055 - INFO -   Mapped Maker-Checker.APPROVE → 8 permissions
+2025-10-23 12:29:44,055 - INFO - ⊙ Role already exists: Branch Manager (ID: 3)
+2025-10-23 12:29:44,125 - INFO -   ✓ Assigned 192 permissions to Branch Manager
+2025-10-23 12:29:44,486 - INFO - ✓ Created role: Loan Officer (ID: 6)
+2025-10-23 12:29:44,881 - INFO -   ✓ Assigned 133 permissions to Loan Officer
+2025-10-23 12:29:45,181 - INFO - ⊙ Role already exists: Cashier (ID: 5)
+2025-10-23 12:29:45,273 - INFO -   ✓ Assigned 84 permissions to Cashier
+2025-10-23 12:29:45,620 - INFO - ✓ Created role: System Administrator (ID: 7)
+2025-10-23 12:29:45,977 - INFO -   ✓ Assigned 149 permissions to System Administrator
+2025-10-23 12:29:46,339 - INFO - ✓ Created role: Accountant (ID: 8)
+2025-10-23 12:29:46,716 - INFO -   ✓ Assigned 97 permissions to Accountant
+2025-10-23 12:29:47,016 - INFO - 
+2025-10-23 12:29:47,016 - INFO - NOTE: Role permissions have been configured based on permission mappings.
+2025-10-23 12:29:47,018 - INFO -       Review roles in Fineract Admin UI: Admin → System → Manage Roles
+2025-10-23 12:29:47,018 - INFO - ================================================================================
+2025-10-23 12:29:47,018 - INFO - LOADING OFFICES
+2025-10-23 12:29:47,018 - INFO - ================================================================================
+2025-10-23 12:29:47,040 - INFO - Found 4 existing offices in Fineract
+2025-10-23 12:29:47,040 - INFO - ✓ Using existing Head Office (ID: 1) as 'Head Office Yaounde'
+2025-10-23 12:29:47,101 - INFO - ✓ Created office: Yaounde Branch (ID: 11)
+2025-10-23 12:29:47,660 - INFO - ✓ Created office: Douala Branch (ID: 12)
+2025-10-23 12:29:48,222 - INFO - ✓ Created office: Bafoussam Branch (ID: 13)
+2025-10-23 12:29:48,786 - INFO - ✓ Created office: Bamenda Branch (ID: 14)
+2025-10-23 12:29:49,287 - INFO - ================================================================================
+2025-10-23 12:29:49,287 - INFO - LOADING STAFF
+2025-10-23 12:29:49,287 - INFO - ================================================================================
+2025-10-23 12:29:49,363 - INFO - ✓ Created staff: Thomas Ndongo (ID: 20)
+2025-10-23 12:29:49,428 - INFO - Found 8 roles in Fineract: ['Super user', 'Self Service User', 'Branch Manager', 'Account Manager', 'Cashier', 'Loan Officer', 'System Administrator', 'Accountant']
+2025-10-23 12:29:49,428 - INFO -   ✓ Assigning role 'System Administrator' (ID: 7) to user admin.system
+2025-10-23 12:29:49,547 - INFO -   ✓ Created user account: admin.system
+2025-10-23 12:29:50,102 - INFO - ✓ Created staff: Christine Biaka (ID: 21)
+2025-10-23 12:29:50,102 - INFO -   ✓ Assigning role 'Accountant' (ID: 8) to user accountant
+2025-10-23 12:29:50,232 - INFO -   ✓ Created user account: accountant
+2025-10-23 12:29:50,772 - INFO - ✓ Created staff: Jean Mbarga (ID: 22)
+2025-10-23 12:29:50,772 - INFO -   ✓ Assigning role 'Branch Manager' (ID: 3) to user manager.yaounde
+2025-10-23 12:29:50,875 - INFO -   ✓ Created user account: manager.yaounde
+2025-10-23 12:29:51,446 - INFO - ✓ Created staff: Marie Ngo Balla (ID: 23)
+2025-10-23 12:29:51,446 - INFO -   ✓ Assigning role 'Loan Officer' (ID: 6) to user loan.yaounde
+2025-10-23 12:29:51,575 - INFO -   ✓ Created user account: loan.yaounde
+2025-10-23 12:29:52,140 - INFO - ✓ Created staff: Paul Atangana (ID: 24)
+2025-10-23 12:29:52,140 - INFO -   ✓ Assigning role 'Cashier' (ID: 5) to user cashier.yaounde
+2025-10-23 12:29:52,259 - INFO -   ✓ Created user account: cashier.yaounde
+2025-10-23 12:29:52,827 - INFO - ✓ Created staff: Grace Douala (ID: 25)
+2025-10-23 12:29:52,827 - INFO -   ✓ Assigning role 'Branch Manager' (ID: 3) to user manager.douala
+2025-10-23 12:29:52,959 - INFO -   ✓ Created user account: manager.douala
+2025-10-23 12:29:53,522 - INFO - ✓ Created staff: Emmanuel Ewondo (ID: 26)
+2025-10-23 12:29:53,522 - INFO -   ✓ Assigning role 'Loan Officer' (ID: 6) to user loan.douala
+2025-10-23 12:29:53,644 - INFO -   ✓ Created user account: loan.douala
+2025-10-23 12:29:54,181 - INFO - ✓ Created staff: Francine Makang (ID: 27)
+2025-10-23 12:29:54,181 - INFO -   ✓ Assigning role 'Cashier' (ID: 5) to user cashier.douala
+2025-10-23 12:29:54,304 - INFO -   ✓ Created user account: cashier.douala
+2025-10-23 12:29:54,841 - INFO - ✓ Created staff: Bernard Kamga (ID: 28)
+2025-10-23 12:29:54,841 - INFO -   ✓ Assigning role 'Branch Manager' (ID: 3) to user manager.bafoussam
+2025-10-23 12:29:54,949 - INFO -   ✓ Created user account: manager.bafoussam
+2025-10-23 12:29:55,499 - INFO - ✓ Created staff: Justine Tchuente (ID: 29)
+2025-10-23 12:29:55,500 - INFO -   ✓ Assigning role 'Loan Officer' (ID: 6) to user loan.bafoussam
+2025-10-23 12:29:55,629 - INFO -   ✓ Created user account: loan.bafoussam
+2025-10-23 12:29:56,186 - INFO - ✓ Created staff: David Fotso (ID: 30)
+2025-10-23 12:29:56,187 - INFO -   ✓ Assigning role 'Cashier' (ID: 5) to user cashier.bafoussam
+2025-10-23 12:29:56,334 - INFO -   ✓ Created user account: cashier.bafoussam
+2025-10-23 12:29:56,872 - INFO - ✓ Created staff: Peter Nkeng (ID: 31)
+2025-10-23 12:29:56,872 - INFO -   ✓ Assigning role 'Branch Manager' (ID: 3) to user manager.bamenda
+2025-10-23 12:29:56,983 - INFO -   ✓ Created user account: manager.bamenda
+2025-10-23 12:29:57,537 - INFO - ✓ Created staff: Alice Fon (ID: 32)
+2025-10-23 12:29:57,537 - INFO -   ✓ Assigning role 'Loan Officer' (ID: 6) to user loan.bamenda
+2025-10-23 12:29:57,647 - INFO -   ✓ Created user account: loan.bamenda
+2025-10-23 12:29:58,187 - INFO - ✓ Created staff: Joseph Tanyi (ID: 33)
+2025-10-23 12:29:58,187 - INFO -   ✓ Assigning role 'Cashier' (ID: 5) to user cashier.bamenda
+2025-10-23 12:29:58,350 - INFO -   ✓ Created user account: cashier.bamenda
+2025-10-23 12:29:58,850 - INFO - ================================================================================
+2025-10-23 12:29:58,851 - INFO - LOADING TELLERS
+2025-10-23 12:29:58,851 - INFO - ================================================================================
+2025-10-23 12:29:58,931 - INFO - ✓ Created teller: Teller 1 - Yaounde at Yaounde Branch (ID: 8)
+2025-10-23 12:29:59,290 - INFO - ✓ Created teller: Teller 1 - Douala at Douala Branch (ID: 9)
+2025-10-23 12:29:59,651 - INFO - ✓ Created teller: Teller 1 - Bafoussam at Bafoussam Branch (ID: 10)
+2025-10-23 12:30:00,039 - INFO - ✓ Created teller: Teller 1 - Bamenda at Bamenda Branch (ID: 11)
+2025-10-23 12:30:00,339 - INFO - 
+2025-10-23 12:30:00,339 - INFO - NOTE: Tellers are now available for cash management:
+2025-10-23 12:30:00,340 - INFO -   - Branch managers can assign cashiers to tellers
+2025-10-23 12:30:00,340 - INFO -   - Cashiers can allocate/settle cash daily
+2025-10-23 12:30:00,340 - INFO -   - All teller transactions are tracked per office
+2025-10-23 12:30:00,340 - INFO - ================================================================================
+2025-10-23 12:30:00,340 - INFO - LOADING CHART OF ACCOUNTS
+2025-10-23 12:30:00,340 - INFO - ================================================================================
+2025-10-23 12:30:00,432 - INFO - ✓ Created GL Account: 41 - Banks - Current Accounts (ID: 76)
+2025-10-23 12:30:00,768 - INFO - ✓ Created GL Account: 42 - Cash on Hand (ID: 77)
+2025-10-23 12:30:01,140 - INFO - ✓ Created GL Account: 51 - Loans to Clients - Principal (ID: 78)
+2025-10-23 12:30:01,502 - INFO - ✓ Created GL Account: 52 - Loans to Clients - Interest Receivable (ID: 79)
+2025-10-23 12:30:01,861 - INFO - ✓ Created GL Account: 53 - Loans to Clients - Fees Receivable (ID: 80)
+2025-10-23 12:30:02,207 - INFO - ✓ Created GL Account: 54 - Loans to Clients - Penalties Receivable (ID: 81)
+2025-10-23 12:30:02,548 - INFO - ✓ Created GL Account: 55 - Provision for Loan Losses (ID: 82)
+2025-10-23 12:30:02,895 - INFO - ✓ Created GL Account: 122 - Due from Other Branches (Receivable) (ID: 83)
+2025-10-23 12:30:03,253 - INFO - ✓ Created GL Account: 61 - Voluntary Savings Accounts (ID: 84)
+2025-10-23 12:30:03,617 - INFO - ✓ Created GL Account: 62 - Fixed Deposit Accounts (ID: 85)
+2025-10-23 12:30:03,989 - INFO - ✓ Created GL Account: 63 - Mandatory Group Savings (ID: 86)
+2025-10-23 12:30:04,355 - INFO - ✓ Created GL Account: 64 - Savings Interest Payable (ID: 87)
+2025-10-23 12:30:04,715 - INFO - ✓ Created GL Account: 131 - Due to Other Branches (Payable) (ID: 88)
+2025-10-23 12:30:05,083 - INFO - ✓ Created GL Account: 71 - Share Capital (ID: 89)
+2025-10-23 12:30:05,443 - INFO - ✓ Created GL Account: 72 - Retained Earnings (ID: 90)
+2025-10-23 12:30:05,786 - INFO - ✓ Created GL Account: 81 - Interest Income on Loans (ID: 91)
+2025-10-23 12:30:06,141 - INFO - ✓ Created GL Account: 82 - Fee Income - Loan Processing (ID: 92)
+2025-10-23 12:30:06,495 - INFO - ✓ Created GL Account: 83 - Penalty Income (ID: 93)
+2025-10-23 12:30:06,853 - INFO - ✓ Created GL Account: 84 - Fee Income - Savings Accounts (ID: 94)
+2025-10-23 12:30:07,218 - INFO - ✓ Created GL Account: 91 - Interest Expense on Savings (ID: 95)
+2025-10-23 12:30:07,559 - INFO - ✓ Created GL Account: 92 - Loan Loss Provision Expense (ID: 96)
+2025-10-23 12:30:07,908 - INFO - ✓ Created GL Account: 93 - Loan Write-off Expense (ID: 97)
+2025-10-23 12:30:08,275 - INFO - ✓ Created GL Account: 94 - Staff Salaries (ID: 98)
+2025-10-23 12:30:08,638 - INFO - ✓ Created GL Account: 95 - Office Rent (ID: 99)
+2025-10-23 12:30:08,998 - INFO - ✓ Created GL Account: 96 - Utilities (ID: 100)
+2025-10-23 12:30:09,359 - INFO - ✓ Created GL Account: 97 - Tax Expense - Withholding Tax (ID: 101)
+2025-10-23 12:30:09,724 - INFO - ✓ Created GL Account: 141 - Tax Payable - WHT (ID: 102)
+2025-10-23 12:30:10,089 - INFO - ✓ Created GL Account: 43 - MTN Mobile Money (ID: 103)
+2025-10-23 12:30:10,443 - INFO - ✓ Created GL Account: 44 - Orange Money (ID: 104)
+2025-10-23 12:30:10,786 - INFO - ✓ Created GL Account: 85 - Mobile Money Transfer Fees (ID: 105)
+2025-10-23 12:30:11,155 - INFO - ✓ Created GL Account: 98 - Cash Shortage (ID: 106)
+2025-10-23 12:30:11,516 - INFO - ✓ Created GL Account: 86 - Cash Overage (ID: 107)
+2025-10-23 12:30:11,816 - INFO - ================================================================================
+2025-10-23 12:30:11,817 - INFO - LOADING CHARGES
+2025-10-23 12:30:11,817 - INFO - ================================================================================
+2025-10-23 12:30:11,895 - INFO - ✓ Created charge: Loan Processing Fee (ID: 2)
+2025-10-23 12:30:12,242 - INFO - ✓ Created charge: Late Payment Penalty (ID: 3)
+2025-10-23 12:30:12,613 - INFO - ✓ Created charge: Loan Insurance (ID: 4)
+2025-10-23 12:30:12,975 - INFO - ✓ Created charge: Account Opening Fee (ID: 5)
+2025-10-23 12:30:13,304 - ERROR - HTTP Error: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,304 - ERROR - Response: {"defaultUserMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","parameterName":"id","developerMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","userMessageGlobalisationCode":"error.msg.invalid.json.data","args":[]}
+2025-10-23 12:30:13,305 - ERROR - ✗ Failed to create charge Monthly Account Maintenance: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,386 - INFO - ✓ Created charge: Withdrawal Fee (ID: 6)
+2025-10-23 12:30:13,701 - ERROR - HTTP Error: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,701 - ERROR - Response: {"defaultUserMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","parameterName":"id","developerMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","userMessageGlobalisationCode":"error.msg.invalid.json.data","args":[]}
+2025-10-23 12:30:13,701 - ERROR - ✗ Failed to create charge ATM Card Fee: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,763 - ERROR - HTTP Error: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,763 - ERROR - Response: {"defaultUserMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","parameterName":"id","developerMessage":"The referenced JSON data is invalid, validate date format as yyyy-MM-dd or other cases like String instead of Number","userMessageGlobalisationCode":"error.msg.invalid.json.data","args":[]}
+2025-10-23 12:30:13,763 - ERROR - ✗ Failed to create charge Weekly Service Charge: 400 Client Error:  for url: https://localhost/fineract-provider/api/v1/charges
+2025-10-23 12:30:13,828 - INFO - ✓ Created charge: Loan Restructuring Fee (ID: 7)
+2025-10-23 12:30:14,190 - INFO - ✓ Created charge: Early Repayment Penalty (ID: 8)
+2025-10-23 12:30:14,564 - INFO - ✓ Created charge: Dormant Account Reactivation (ID: 9)
+2025-10-23 12:30:14,864 - INFO - ================================================================================
+2025-10-23 12:30:14,865 - INFO - LOADING FUND SOURCES
+2025-10-23 12:30:14,865 - INFO - ================================================================================
+2025-10-23 12:30:14,956 - INFO - ✓ Created fund: Own Capital (ID: 3)
+2025-10-23 12:30:15,314 - INFO - ✓ Created fund: Bank Loan - Ecobank (ID: 4)
+2025-10-23 12:30:15,677 - INFO - ✓ Created fund: Bank Loan - BICEC (ID: 5)
+2025-10-23 12:30:16,029 - INFO - ✓ Created fund: Donor - AfDB (ID: 6)
+2025-10-23 12:30:16,383 - INFO - ✓ Created fund: Donor - GIZ (ID: 7)
+2025-10-23 12:30:16,740 - INFO - ✓ Created fund: Donor - World Bank (ID: 8)
+2025-10-23 12:30:17,040 - INFO - ================================================================================
+2025-10-23 12:30:17,040 - INFO - LOADING PAYMENT TYPES
+2025-10-23 12:30:17,040 - INFO - ================================================================================
+2025-10-23 12:30:17,123 - INFO - ✓ Created payment type: Cash (ID: 6)
+2025-10-23 12:30:17,478 - INFO - ✓ Created payment type: MTN Mobile Money (ID: 7)
+2025-10-23 12:30:17,837 - INFO - ✓ Created payment type: Orange Money (ID: 8)
+2025-10-23 12:30:18,197 - INFO - ✓ Created payment type: Bank Transfer (ID: 9)
+2025-10-23 12:30:18,566 - INFO - ✓ Created payment type: Cheque (ID: 10)
+2025-10-23 12:30:18,867 - INFO - ================================================================================
+2025-10-23 12:30:18,867 - INFO - LOADING HOLIDAYS
+2025-10-23 12:30:18,868 - INFO - ================================================================================
+2025-10-23 12:30:18,968 - INFO - ✓ Created holiday: New Year's Day (2024-01-01) → rescheduled to 2024-01-02 - ID: 1
+2025-10-23 12:30:19,340 - INFO - ✓ Created holiday: Youth Day (2024-02-11) → rescheduled to 2024-02-12 - ID: 2
+2025-10-23 12:30:19,704 - INFO - ✓ Created holiday: Labour Day (2024-05-01) → rescheduled to 2024-05-02 - ID: 3
+2025-10-23 12:30:20,081 - INFO - ✓ Created holiday: National Day (2024-05-20) → rescheduled to 2024-05-21 - ID: 4
+2025-10-23 12:30:20,425 - INFO - ✓ Created holiday: Assumption Day (2024-08-15) → rescheduled to 2024-08-16 - ID: 5
+2025-10-23 12:30:20,767 - INFO - ✓ Created holiday: Christmas Day (2024-12-25) → rescheduled to 2024-12-26 - ID: 6
+2025-10-23 12:30:21,148 - INFO - ✓ Created holiday: New Year's Day (2025-01-01) → rescheduled to 2025-01-02 - ID: 7
+2025-10-23 12:30:21,489 - INFO - ✓ Created holiday: Youth Day (2025-02-11) → rescheduled to 2025-02-12 - ID: 8
+2025-10-23 12:30:21,855 - INFO - ✓ Created holiday: Labour Day (2025-05-01) → rescheduled to 2025-05-02 - ID: 9
+2025-10-23 12:30:22,230 - INFO - ✓ Created holiday: National Day (2025-05-20) → rescheduled to 2025-05-21 - ID: 10
+2025-10-23 12:30:22,596 - INFO - ✓ Created holiday: Assumption Day (2025-08-15) → rescheduled to 2025-08-18 - ID: 11
+2025-10-23 12:30:22,961 - INFO - ✓ Created holiday: Christmas Day (2025-12-25) → rescheduled to 2025-12-26 - ID: 12
+2025-10-23 12:30:23,262 - INFO - ================================================================================
+2025-10-23 12:30:23,262 - INFO - LOADING FINANCIAL ACTIVITY MAPPINGS
+2025-10-23 12:30:23,262 - INFO - ================================================================================
+2025-10-23 12:30:23,342 - INFO - ✓ Mapped Asset Transfer → GL 122 (Due from Other Branches (Receivable))
+2025-10-23 12:30:23,698 - INFO - ✓ Mapped Liability Transfer → GL 131 (Due to Other Branches (Payable))
+2025-10-23 12:30:24,066 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,066 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Mapping for activity already exists 101","parameterName":"id","developerMessage":"Mapping for activity already exists 101","userMessageGlobalisationCode":"error.msg.financialActivityAccount.exists","args":[{"value":101}]}]}
+2025-10-23 12:30:24,066 - ERROR - ✗ Failed to map financial activity Cash at Mainvault: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,124 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,124 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Mapping for activity already exists 102","parameterName":"id","developerMessage":"Mapping for activity already exists 102","userMessageGlobalisationCode":"error.msg.financialActivityAccount.exists","args":[{"value":102}]}]}
+2025-10-23 12:30:24,124 - ERROR - ✗ Failed to map financial activity Cash at Teller: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,152 - INFO - ✓ Mapped Opening Balances Contra → GL 71 (Share Capital)
+2025-10-23 12:30:24,519 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,519 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Mapping for activity already exists 103","parameterName":"id","developerMessage":"Mapping for activity already exists 103","userMessageGlobalisationCode":"error.msg.financialActivityAccount.exists","args":[{"value":103}]}]}
+2025-10-23 12:30:24,519 - ERROR - ✗ Failed to map financial activity Fund Source: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/financialactivityaccounts
+2025-10-23 12:30:24,520 - INFO - ================================================================================
+2025-10-23 12:30:24,520 - INFO - LOADING TELLER ACCOUNTING RULES
+2025-10-23 12:30:24,520 - INFO - ================================================================================
+2025-10-23 12:30:24,583 - INFO - ✓ Created shortage rule: Cash Shortage - Teller - Yaounde (ID: 1)
+2025-10-23 12:30:24,583 - INFO -   Debit: GL 98, Credit: GL 42
+2025-10-23 12:30:24,941 - INFO - ✓ Created overage rule: Cash Overage - Teller - Yaounde (ID: 2)
+2025-10-23 12:30:24,941 - INFO -   Debit: GL 42, Credit: GL 86
+2025-10-23 12:30:25,290 - INFO - ✓ Created shortage rule: Cash Shortage - Teller - Douala (ID: 3)
+2025-10-23 12:30:25,291 - INFO -   Debit: GL 98, Credit: GL 42
+2025-10-23 12:30:25,643 - INFO - ✓ Created overage rule: Cash Overage - Teller - Douala (ID: 4)
+2025-10-23 12:30:25,644 - INFO -   Debit: GL 42, Credit: GL 86
+2025-10-23 12:30:25,990 - INFO - ✓ Created shortage rule: Cash Shortage - Teller - Bafoussam (ID: 5)
+2025-10-23 12:30:25,990 - INFO -   Debit: GL 98, Credit: GL 42
+2025-10-23 12:30:26,351 - INFO - ✓ Created overage rule: Cash Overage - Teller - Bafoussam (ID: 6)
+2025-10-23 12:30:26,351 - INFO -   Debit: GL 42, Credit: GL 86
+2025-10-23 12:30:26,704 - INFO - ✓ Created shortage rule: Cash Shortage - Teller - Bamenda (ID: 7)
+2025-10-23 12:30:26,704 - INFO -   Debit: GL 98, Credit: GL 42
+2025-10-23 12:30:27,061 - INFO - ✓ Created overage rule: Cash Overage - Teller - Bamenda (ID: 8)
+2025-10-23 12:30:27,062 - INFO -   Debit: GL 42, Credit: GL 86
+2025-10-23 12:30:27,362 - INFO - 
+2025-10-23 12:30:27,362 - INFO - ✓ Created 8 accounting rules for teller cash management
+2025-10-23 12:30:27,362 - INFO -   Cashiers can use these rules to record cash shortages/overages
+2025-10-23 12:30:27,363 - INFO -   Access: Admin → Accounting → Frequent Postings → Accounting Rules
+2025-10-23 12:30:27,363 - INFO - ================================================================================
+2025-10-23 12:30:27,363 - INFO - ENABLING MAKER-CHECKER (DUAL AUTHORIZATION)
+2025-10-23 12:30:27,363 - INFO - ================================================================================
+2025-10-23 12:30:27,408 - INFO - Found 679 permissions in Fineract
+2025-10-23 12:30:27,443 - INFO -   Attempting to enable: Loan Approval
+2025-10-23 12:30:27,443 - INFO -     Permission code: APPROVE_LOAN
+2025-10-23 12:30:27,485 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:27,485 - INFO -       Recommended Threshold: 2,000,000 XAF
+2025-10-23 12:30:27,486 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:27,686 - INFO -   Attempting to enable: Loan Disbursement
+2025-10-23 12:30:27,686 - INFO -     Permission code: DISBURSE_LOAN
+2025-10-23 12:30:27,755 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:27,756 - INFO -       Recommended Threshold: 5,000,000 XAF
+2025-10-23 12:30:27,756 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:27,956 - INFO -   Attempting to enable: Loan Write-off
+2025-10-23 12:30:27,957 - INFO -     Permission code: WRITEOFF_LOAN
+2025-10-23 12:30:28,028 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:28,028 - INFO -       Recommended Threshold: 0 XAF
+2025-10-23 12:30:28,028 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:28,229 - INFO -   Attempting to enable: Create Loan Reschedule Request
+2025-10-23 12:30:28,229 - INFO -     Permission code: CREATE_RESCHEDULELOAN
+2025-10-23 12:30:28,301 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:28,302 - INFO -       Recommended Threshold: 1,000,000 XAF
+2025-10-23 12:30:28,302 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:28,503 - INFO -   Attempting to enable: Close Savings Account
+2025-10-23 12:30:28,503 - INFO -     Permission code: CLOSE_SAVINGSACCOUNT
+2025-10-23 12:30:28,568 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:28,569 - INFO -       Recommended Threshold: 500,000 XAF
+2025-10-23 12:30:28,569 - INFO -       Maker: Cashier, Checker: Branch Manager
+2025-10-23 12:30:28,770 - INFO -   Attempting to enable: Client Activation
+2025-10-23 12:30:28,770 - INFO -     Permission code: ACTIVATE_CLIENT
+2025-10-23 12:30:28,837 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:28,837 - INFO -       Recommended Threshold: 0 XAF
+2025-10-23 12:30:28,837 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:29,038 - INFO -   Attempting to enable: Propose Client Transfer
+2025-10-23 12:30:29,038 - INFO -     Permission code: PROPOSETRANSFER_CLIENT
+2025-10-23 12:30:29,111 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:29,111 - INFO -       Recommended Threshold: 0 XAF
+2025-10-23 12:30:29,111 - INFO -       Maker: Loan Officer, Checker: Branch Manager
+2025-10-23 12:30:29,312 - INFO -   Attempting to enable: Create Manual Journal Entry
+2025-10-23 12:30:29,312 - INFO -     Permission code: CREATE_JOURNALENTRY
+2025-10-23 12:30:29,387 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:29,387 - INFO -       Recommended Threshold: 500,000 XAF
+2025-10-23 12:30:29,387 - INFO -       Maker: Accountant, Checker: Branch Manager
+2025-10-23 12:30:29,588 - INFO -   Attempting to enable: Create User
+2025-10-23 12:30:29,588 - INFO -     Permission code: CREATE_USER
+2025-10-23 12:30:29,660 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:29,660 - INFO -       Recommended Threshold: 0 XAF
+2025-10-23 12:30:29,660 - INFO -       Maker: Branch Manager, Checker: Head Office Manager
+2025-10-23 12:30:29,861 - INFO -   Attempting to enable: Update User
+2025-10-23 12:30:29,861 - INFO -     Permission code: UPDATE_USER
+2025-10-23 12:30:29,928 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:29,928 - INFO -       Recommended Threshold: 0 XAF
+2025-10-23 12:30:29,929 - INFO -       Maker: Branch Manager, Checker: Head Office Manager
+2025-10-23 12:30:30,129 - INFO -   Attempting to enable: Create Office Transaction
+2025-10-23 12:30:30,129 - INFO -     Permission code: CREATE_OFFICETRANSACTION
+2025-10-23 12:30:30,189 - INFO -     ✓ Enabled successfully
+2025-10-23 12:30:30,189 - INFO -       Recommended Threshold: 3,000,000 XAF
+2025-10-23 12:30:30,189 - INFO -       Maker: Branch Manager, Checker: Head Office Manager
+2025-10-23 12:30:30,389 - INFO - 
+2025-10-23 12:30:30,390 - INFO - ✓ Successfully enabled maker-checker for 11/11 operations
+2025-10-23 12:30:30,390 - INFO - 
+2025-10-23 12:30:30,390 - INFO - NOTE: Maker-Checker has been configured for available operations.
+2025-10-23 12:30:30,390 - INFO -       These operations will require dual authorization (maker + checker).
+2025-10-23 12:30:30,390 - INFO -       Configure approval thresholds in: Admin → System → Manage Maker Checkers
+2025-10-23 12:30:30,390 - INFO - 
+2025-10-23 12:30:30,390 - INFO -       For unavailable permissions, check:
+2025-10-23 12:30:30,390 - INFO -         - Your Fineract version may not support all permission codes
+2025-10-23 12:30:30,391 - INFO -         - Some features may require plugins or newer versions
+2025-10-23 12:30:30,391 - INFO -         - Manual configuration via Admin UI may be needed
+2025-10-23 12:30:30,391 - INFO - ================================================================================
+2025-10-23 12:30:30,391 - INFO - LOADING SCHEDULER JOBS CONFIGURATION
+2025-10-23 12:30:30,391 - INFO - ================================================================================
+2025-10-23 12:30:30,457 - INFO - Found 38 existing jobs in Fineract
+2025-10-23 12:30:30,494 - INFO - ✓ Configured job: Post Interest For Savings (ID: 6)
+2025-10-23 12:30:30,494 - INFO -   Schedule: 0 0 0 1/1 * ? *, Active: Yes
+2025-10-23 12:30:30,737 - INFO - ✓ Configured job: Transfer Fee For Loans From Savings (ID: 7)
+2025-10-23 12:30:30,738 - INFO -   Schedule: 0 0 1 * * ?, Active: Yes
+2025-10-23 12:30:30,978 - INFO - ✓ Configured job: Update Loan Arrears Ageing (ID: 2)
+2025-10-23 12:30:30,978 - INFO -   Schedule: 0 0 0 1/1 * ? *, Active: Yes
+2025-10-23 12:30:31,242 - INFO - ✓ Configured job: Add Accrual Transactions (ID: 11)
+2025-10-23 12:30:31,242 - INFO -   Schedule: 0 0 2 * * ?, Active: Yes
+2025-10-23 12:30:31,501 - INFO - ✓ Configured job: Apply Annual Fee For Savings (ID: 4)
+2025-10-23 12:30:31,501 - INFO -   Schedule: 0 0 0 1 1 ? *, Active: Yes
+2025-10-23 12:30:31,770 - INFO - ✓ Configured job: Apply penalty to overdue loans (ID: 12)
+2025-10-23 12:30:31,771 - INFO -   Schedule: 0 0 3 * * ?, Active: Yes
+2025-10-23 12:30:32,036 - INFO - ✓ Configured job: Update Savings Dormant Accounts (ID: 21)
+2025-10-23 12:30:32,036 - INFO -   Schedule: 0 0 0 1/1 * ? *, Active: Yes
+2025-10-23 12:30:32,299 - INFO - ✓ Configured job: Execute Standing Instruction (ID: 10)
+2025-10-23 12:30:32,299 - INFO -   Schedule: 0 0 0 1/1 * ? *, Active: Yes
+2025-10-23 12:30:32,554 - INFO - ✓ Configured job: Add Periodic Accrual Transactions (ID: 16)
+2025-10-23 12:30:32,554 - INFO -   Schedule: 0 0 0 1 * ? *, Active: Yes
+2025-10-23 12:30:32,754 - INFO - 
+2025-10-23 12:30:32,755 - INFO - ✓ Successfully configured 9/9 scheduler jobs
+2025-10-23 12:30:32,755 - INFO - ================================================================================
+2025-10-23 12:30:32,755 - INFO - LOADING LOAN PRODUCTS
+2025-10-23 12:30:32,755 - INFO - ================================================================================
+2025-10-23 12:30:32,850 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:32,952 - INFO - ✓ Created loan product: Microcredit Solidarity Loan (ID: 2)
+2025-10-23 12:30:33,459 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:33,573 - INFO - ✓ Created loan product: SME Business Loan (ID: 3)
+2025-10-23 12:30:34,082 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:34,199 - INFO - ✓ Created loan product: Agricultural Seasonal Loan (ID: 4)
+2025-10-23 12:30:34,699 - INFO - ================================================================================
+2025-10-23 12:30:34,700 - INFO - LOADING DELINQUENCY BUCKETS
+2025-10-23 12:30:34,700 - INFO - ================================================================================
+2025-10-23 12:30:34,753 - INFO - Creating delinquency ranges...
+2025-10-23 12:30:34,823 - INFO -   ✓ Created delinquency range: Early Stage (1-30 days, ID: 1)
+2025-10-23 12:30:35,071 - INFO -   ✓ Created delinquency range: Moderate (31-60 days, ID: 2)
+2025-10-23 12:30:35,317 - INFO -   ✓ Created delinquency range: High Risk (61-90 days, ID: 3)
+2025-10-23 12:30:35,566 - INFO -   ✓ Created delinquency range: Very High Risk (91-180 days, ID: 4)
+2025-10-23 12:30:35,803 - INFO -   ✓ Created delinquency range: Default (181-9999 days, ID: 5)
+2025-10-23 12:30:36,003 - INFO - 
+Creating delinquency bucket with 5 ranges...
+2025-10-23 12:30:36,073 - INFO - ✓ Created delinquency bucket: Loan Arrears Classification (ID: 1)
+2025-10-23 12:30:36,073 - INFO -   Configured with 5 delinquency ranges
+2025-10-23 12:30:36,073 - INFO - 
+Mapping delinquency bucket to 3 loan products...
+2025-10-23 12:30:36,150 - INFO -   ✓ Mapped to loan product: MSOL
+2025-10-23 12:30:36,410 - INFO -   ✓ Mapped to loan product: SBIZ
+2025-10-23 12:30:36,727 - INFO -   ✓ Mapped to loan product: ASEA
+2025-10-23 12:30:36,928 - INFO - ================================================================================
+2025-10-23 12:30:36,928 - INFO - LOADING SAVINGS PRODUCTS
+2025-10-23 12:30:36,928 - INFO - ================================================================================
+2025-10-23 12:30:37,001 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:37,071 - INFO - ✓ Created savings product: Voluntary Savings Account (ID: 2)
+2025-10-23 12:30:37,578 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:37,680 - INFO - ✓ Created savings product: Fixed Deposit Account (ID: 3)
+2025-10-23 12:30:38,186 - INFO -   Added 5 payment channel mappings
+2025-10-23 12:30:38,284 - INFO - ✓ Created savings product: Mandatory Group Savings (ID: 4)
+2025-10-23 12:30:38,785 - INFO - ================================================================================
+2025-10-23 12:30:38,786 - INFO - LOADING LOAN PROVISIONING CRITERIA
+2025-10-23 12:30:38,786 - INFO - ================================================================================
+2025-10-23 12:30:38,841 - INFO - Using Fineract's pre-existing provisioning categories:
+2025-10-23 12:30:38,841 - INFO -   • STANDARD (ID: 1)
+2025-10-23 12:30:38,841 - INFO -   • SUB-STANDARD (ID: 2)
+2025-10-23 12:30:38,841 - INFO -   • DOUBTFUL (ID: 3)
+2025-10-23 12:30:38,841 - INFO -   • LOSS (ID: 4)
+2025-10-23 12:30:38,841 - INFO - 
+2025-10-23 12:30:38,842 - INFO - Creating provisioning criteria for 3 loan products
+2025-10-23 12:30:38,842 - INFO - Loan product IDs: [2, 3, 4]
+2025-10-23 12:30:38,842 - INFO - Definitions: 4 categories
+2025-10-23 12:30:38,842 - INFO - 
+2025-10-23 12:30:38,953 - INFO - ✓ Created provisioning criteria: COBAC Provisioning Standards (ID: 1)
+2025-10-23 12:30:38,953 - INFO -   Applied to 3 loan products
+2025-10-23 12:30:38,953 - INFO - 
+2025-10-23 12:30:38,953 - INFO -   • STANDARD: 0-30 days, 0.0% provision
+2025-10-23 12:30:38,953 - INFO -   • SUB-STANDARD: 31-90 days, 25.0% provision
+2025-10-23 12:30:38,953 - INFO -   • DOUBTFUL: 91-180 days, 50.0% provision
+2025-10-23 12:30:38,953 - INFO -   • LOSS: 181-9999 days, 100.0% provision
+2025-10-23 12:30:39,454 - INFO - ================================================================================
+2025-10-23 12:30:39,454 - INFO - LOADING COLLATERAL TYPES
+2025-10-23 12:30:39,454 - INFO - ================================================================================
+2025-10-23 12:30:39,548 - INFO - ✓ Created collateral type: Land Title (ID: 1)
+2025-10-23 12:30:39,901 - INFO - ✓ Created collateral type: Vehicle Registration (ID: 2)
+2025-10-23 12:30:40,260 - INFO - ✓ Created collateral type: Household Goods (ID: 3)
+2025-10-23 12:30:40,602 - INFO - ✓ Created collateral type: Shop/Business Equipment (ID: 4)
+2025-10-23 12:30:40,942 - INFO - ✓ Created collateral type: Savings Account Lien (ID: 5)
+2025-10-23 12:30:41,308 - INFO - ✓ Created collateral type: Group Guarantee (ID: 6)
+2025-10-23 12:30:41,608 - INFO - ================================================================================
+2025-10-23 12:30:41,609 - INFO - LOADING CLIENTS
+2025-10-23 12:30:41,609 - INFO - ================================================================================
+2025-10-23 12:30:41,753 - INFO - ✓ Created client: Akoumba Ngono (ID: 4)
+2025-10-23 12:30:42,326 - INFO - ✓ Created client: Ibrahim Mahamat (ID: 5)
+2025-10-23 12:30:42,909 - INFO - ✓ Created client: Marie Claire Tchouta (ID: 6)
+2025-10-23 12:30:43,508 - INFO - ✓ Created client: Jean Paul Kamdem (ID: 7)
+2025-10-23 12:30:44,096 - INFO - ✓ Created client: Claudine Ekotto (ID: 8)
+2025-10-23 12:30:44,681 - INFO - ✓ Created client: Patrick Ndongo (ID: 9)
+2025-10-23 12:30:45,266 - INFO - ✓ Created client: Beatrice Nana (ID: 10)
+2025-10-23 12:30:45,822 - INFO - ✓ Created client: Samuel Ebong (ID: 11)
+2025-10-23 12:30:46,417 - INFO - ✓ Created client: Bernadette Fotso (ID: 12)
+2025-10-23 12:30:47,002 - INFO - ✓ Created client: Francois Manga (ID: 13)
+2025-10-23 12:30:47,590 - INFO - ✓ Created client: Agnes Fon (ID: 14)
+2025-10-23 12:30:48,205 - INFO - ✓ Created client: Robert Essomba (ID: 15)
+2025-10-23 12:30:48,706 - INFO - ================================================================================
+2025-10-23 12:30:48,706 - INFO - LOADING SAVINGS ACCOUNTS
+2025-10-23 12:30:48,706 - INFO - ================================================================================
+2025-10-23 12:30:49,117 - INFO - ✓ Created savings account: SAV-001 (ID: 6)
+2025-10-23 12:30:50,120 - INFO - ✓ Created savings account: SAV-002 (ID: 7)
+2025-10-23 12:30:51,037 - INFO - ✓ Created savings account: SAV-003 (ID: 8)
+2025-10-23 12:30:52,015 - INFO - ✓ Created savings account: SAV-004 (ID: 9)
+2025-10-23 12:30:52,985 - INFO - ✓ Created savings account: SAV-005 (ID: 10)
+2025-10-23 12:30:54,010 - INFO - ✓ Created savings account: SAV-006 (ID: 11)
+2025-10-23 12:30:54,930 - INFO - ✓ Created savings account: SAV-007 (ID: 12)
+2025-10-23 12:30:55,847 - INFO - ✓ Created savings account: SAV-008 (ID: 13)
+2025-10-23 12:30:56,738 - INFO - ✓ Created savings account: SAV-009 (ID: 14)
+2025-10-23 12:30:57,699 - INFO - ✓ Created savings account: SAV-010 (ID: 15)
+2025-10-23 12:30:58,686 - INFO - ✓ Created savings account: SAV-011 (ID: 16)
+2025-10-23 12:30:59,682 - INFO - ✓ Created savings account: SAV-012 (ID: 17)
+2025-10-23 12:31:00,383 - INFO - ================================================================================
+2025-10-23 12:31:00,383 - INFO - LOADING LOAN ACCOUNTS
+2025-10-23 12:31:00,384 - INFO - ================================================================================
+2025-10-23 12:31:00,779 - INFO - ✓ Created loan account: LOAN-001 (ID: 3)
+2025-10-23 12:31:01,828 - INFO - ✓ Created loan account: LOAN-002 (ID: 4)
+2025-10-23 12:31:02,804 - INFO - ✓ Created loan account: LOAN-003 (ID: 5)
+2025-10-23 12:31:03,774 - INFO - ✓ Created loan account: LOAN-004 (ID: 6)
+2025-10-23 12:31:04,727 - INFO - ✓ Created loan account: LOAN-005 (ID: 7)
+2025-10-23 12:31:05,640 - INFO - ✓ Created loan account: LOAN-006 (ID: 8)
+2025-10-23 12:31:06,340 - INFO - ================================================================================
+2025-10-23 12:31:06,341 - INFO - LOADING LOAN COLLATERAL ASSIGNMENTS
+2025-10-23 12:31:06,341 - INFO - ================================================================================
+2025-10-23 12:31:06,378 - INFO - NOTE: Loan collateral management requires additional configuration:
+2025-10-23 12:31:06,378 - INFO -       1. Collateral must be set up as Code Values under 'LoanCollateral' code
+2025-10-23 12:31:06,378 - INFO -       2. Or use the Collateral Management module (if enabled)
+2025-10-23 12:31:06,378 - INFO - 
+2025-10-23 12:31:06,378 - INFO -       Skipping 6 collateral assignments for now.
+2025-10-23 12:31:06,378 - INFO -       Collateral can be manually added via: Loans → Loan Account → Collateral Tab
+2025-10-23 12:31:06,378 - INFO - 
+2025-10-23 12:31:06,378 - INFO -       To enable collateral, configure code values:
+2025-10-23 12:31:06,378 - INFO -       Admin → System → Manage Codes → LoanCollateral → Add Code Value
+2025-10-23 12:31:06,378 - INFO - 
+2025-10-23 12:31:06,378 - INFO - Collateral assignments in demo data:
+2025-10-23 12:31:06,379 - INFO -   • LOAN-001 (Jean Dupont)
+2025-10-23 12:31:06,379 - INFO -     Land Title: 1,000,000 XAF
+2025-10-23 12:31:06,379 - INFO -     Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001
+2025-10-23 12:31:06,379 - INFO -   • LOAN-002 (Marie Kamga)
+2025-10-23 12:31:06,379 - INFO -     Business Equipment: 1,500,000 XAF
+2025-10-23 12:31:06,379 - INFO -     Commercial sewing machines (5 units) and industrial pressing equipment
+2025-10-23 12:31:06,379 - INFO -   • LOAN-003 (Paul Ekambi)
+2025-10-23 12:31:06,379 - INFO -     Vehicle: 1,200,000 XAF
+2025-10-23 12:31:06,379 - INFO -     Toyota Hilux 2020 - Registration DLA-4567-AB
+2025-10-23 12:31:06,379 - INFO -   • LOAN-004 (Grace Fotso)
+2025-10-23 12:31:06,379 - INFO -     Commercial Property: 3,000,000 XAF
+2025-10-23 12:31:06,379 - INFO -     Commercial building with 3 shops - Title deed #DLA-2022-089
+2025-10-23 12:31:06,379 - INFO -   • LOAN-005 (Pierre Tchuente)
+2025-10-23 12:31:06,379 - INFO -     Agricultural Land: 800,000 XAF
+2025-10-23 12:31:06,379 - INFO -     2 hectares farmland with coffee plantation
+2025-10-23 12:31:06,379 - INFO -   • LOAN-006 (Justine Moukouri)
+2025-10-23 12:31:06,379 - INFO -     Farm Equipment: 1,000,000 XAF
+2025-10-23 12:31:06,379 - INFO -     Tractor and farming implements
+2025-10-23 12:31:06,379 - INFO - 
+2025-10-23 12:31:06,379 - INFO - ✓ Collateral loading skipped (requires manual configuration)
+2025-10-23 12:31:06,379 - INFO -   View documentation for collateral setup instructions
+2025-10-23 12:31:06,379 - INFO - ================================================================================
+2025-10-23 12:31:06,379 - INFO - LOADING LOAN GUARANTOR ASSIGNMENTS
+2025-10-23 12:31:06,379 - INFO - ================================================================================
+2025-10-23 12:31:06,502 - INFO -   ✓ Guarantor assigned to LOAN-001 (Jean Dupont)
+2025-10-23 12:31:06,503 - INFO -     Guarantor: Thomas Mbele (Individual)
+2025-10-23 12:31:06,503 - INFO -     Relationship: Brother | Amount: 250,000 XAF
+2025-10-23 12:31:06,503 - INFO -     Employment: Civil Servant - Ministry of Education | Income: 350,000 XAF/month
+2025-10-23 12:31:06,503 - INFO -     Guarantor ID: 1
+2025-10-23 12:31:06,877 - INFO -   ✓ Guarantor assigned to LOAN-002 (Marie Kamga)
+2025-10-23 12:31:06,877 - INFO -     Guarantor: Christine Biaka (Individual)
+2025-10-23 12:31:06,877 - INFO -     Relationship: Business Partner | Amount: 500,000 XAF
+2025-10-23 12:31:06,877 - INFO -     Employment: Accountant - Private Sector | Income: 450,000 XAF/month
+2025-10-23 12:31:06,877 - INFO -     Guarantor ID: 2
+2025-10-23 12:31:07,251 - INFO -   ✓ Guarantor assigned to LOAN-003 (Paul Ekambi)
+2025-10-23 12:31:07,251 - INFO -     Guarantor: Samuel Nkolo (Individual)
+2025-10-23 12:31:07,251 - INFO -     Relationship: Friend | Amount: 375,000 XAF
+2025-10-23 12:31:07,251 - INFO -     Employment: Business Owner - Import/Export | Income: 800,000 XAF/month
+2025-10-23 12:31:07,251 - INFO -     Guarantor ID: 3
+2025-10-23 12:31:07,617 - INFO -   ✓ Guarantor assigned to LOAN-004 (Grace Fotso)
+2025-10-23 12:31:07,618 - INFO -     Guarantor: Fotso Family Business Ltd (Corporate)
+2025-10-23 12:31:07,618 - INFO -     Relationship: Family Business | Amount: 1,000,000 XAF
+2025-10-23 12:31:07,618 - INFO -     Guarantor ID: 4
+2025-10-23 12:31:07,967 - INFO -   ✓ Guarantor assigned to LOAN-005 (Pierre Tchuente)
+2025-10-23 12:31:07,967 - INFO -     Guarantor: Jean Kemayou (Individual)
+2025-10-23 12:31:07,967 - INFO -     Relationship: Cousin | Amount: 300,000 XAF
+2025-10-23 12:31:07,968 - INFO -     Employment: Teacher - Secondary School | Income: 280,000 XAF/month
+2025-10-23 12:31:07,968 - INFO -     Guarantor ID: 5
+2025-10-23 12:31:08,341 - INFO -   ✓ Guarantor assigned to LOAN-006 (Justine Moukouri)
+2025-10-23 12:31:08,341 - INFO -     Guarantor: Marie Fotso (Individual)
+2025-10-23 12:31:08,341 - INFO -     Relationship: Sister | Amount: 400,000 XAF
+2025-10-23 12:31:08,341 - INFO -     Employment: Nurse - Public Hospital | Income: 320,000 XAF/month
+2025-10-23 12:31:08,341 - INFO -     Guarantor ID: 6
+2025-10-23 12:31:08,642 - INFO - 
+✓ Completed loading 6 guarantor assignments
+2025-10-23 12:31:08,643 - INFO -       View: Loans → Loan Account → Guarantors Tab
+2025-10-23 12:31:08,643 - INFO - ================================================================================
+2025-10-23 12:31:08,643 - INFO - LOADING SAVINGS DEPOSITS
+2025-10-23 12:31:08,643 - INFO - ================================================================================
+2025-10-23 12:31:08,747 - INFO -   ✓ Deposited 50,000 XAF to SAV-001 (Jean Dupont) - Receipt: RCP-001
+2025-10-23 12:31:09,101 - INFO -   ✓ Deposited 25,000 XAF to SAV-002 (Marie Kamga) - Receipt: RCP-002
+2025-10-23 12:31:09,467 - INFO -   ✓ Deposited 30,000 XAF to SAV-004 (Paul Ekambi) - Receipt: RCP-003
+2025-10-23 12:31:09,878 - INFO -   ✓ Deposited 15,000 XAF to SAV-005 (Grace Fotso) - Receipt: RCP-004
+2025-10-23 12:31:10,256 - INFO -   ✓ Deposited 40,000 XAF to SAV-006 (François Nkomo) - Receipt: RCP-005
+2025-10-23 12:31:10,640 - INFO -   ✓ Deposited 35,000 XAF to SAV-007 (Justine Moukouri) - Receipt: RCP-006
+2025-10-23 12:31:11,008 - INFO -   ✓ Deposited 35,000 XAF to SAV-001 (Jean Dupont) - Receipt: RCP-007
+2025-10-23 12:31:11,414 - INFO -   ✓ Deposited 20,000 XAF to SAV-004 (Paul Ekambi) - Receipt: RCP-008
+2025-10-23 12:31:11,801 - INFO -   ✓ Deposited 20,000 XAF to SAV-002 (Marie Kamga) - Receipt: RCP-009
+2025-10-23 12:31:12,189 - INFO -   ✓ Deposited 25,000 XAF to SAV-005 (Grace Fotso) - Receipt: RCP-010
+2025-10-23 12:31:12,489 - INFO - 
+✓ Completed loading 10 deposit transactions
+2025-10-23 12:31:12,490 - INFO - ================================================================================
+2025-10-23 12:31:12,490 - INFO - LOADING SAVINGS WITHDRAWALS
+2025-10-23 12:31:12,490 - INFO - ================================================================================
+2025-10-23 12:31:12,612 - INFO -   ✓ Withdrew 20,000 XAF from SAV-001 (Jean Dupont) - Receipt: WDL-001
+2025-10-23 12:31:12,994 - INFO -   ✓ Withdrew 10,000 XAF from SAV-002 (Marie Kamga) - Receipt: WDL-002
+2025-10-23 12:31:13,370 - INFO -   ✓ Withdrew 30,000 XAF from SAV-004 (Paul Ekambi) - Receipt: WDL-003
+2025-10-23 12:31:13,753 - INFO -   ✓ Withdrew 25,000 XAF from SAV-005 (Grace Fotso) - Receipt: WDL-004
+2025-10-23 12:31:14,124 - INFO -   ✓ Withdrew 15,000 XAF from SAV-011 (Pierre Tchuente) - Receipt: WDL-005
+2025-10-23 12:31:14,514 - INFO -   ✓ Withdrew 20,000 XAF from SAV-012 (Justine Moukouri) - Receipt: WDL-006
+2025-10-23 12:31:14,814 - INFO - 
+✓ Completed loading 6 withdrawal transactions
+2025-10-23 12:31:14,814 - INFO - ================================================================================
+2025-10-23 12:31:14,815 - INFO - LOADING LOAN REPAYMENTS
+2025-10-23 12:31:14,815 - INFO - ================================================================================
+2025-10-23 12:31:15,001 - INFO -   ✓ Repayment 25,000 XAF for LOAN-001 (Jean Dupont) - Principal: 20,000, Interest: 5,000 - Receipt: REP-001
+2025-10-23 12:31:15,403 - INFO -   ✓ Repayment 52,000 XAF for LOAN-002 (Marie Kamga) - Principal: 40,000, Interest: 12,000 - Receipt: REP-002
+2025-10-23 12:31:15,799 - INFO -   ✓ Repayment 38,000 XAF for LOAN-003 (Paul Ekambi) - Principal: 30,000, Interest: 8,000 - Receipt: REP-003
+2025-10-23 12:31:16,265 - INFO -   ✓ Repayment 102,000 XAF for LOAN-004 (Grace Fotso) - Principal: 80,000, Interest: 20,000 - Receipt: REP-004
+2025-10-23 12:31:16,730 - INFO -   ✓ Repayment 31,500 XAF for LOAN-005 (Pierre Tchuente) - Principal: 25,000, Interest: 6,500 - Receipt: REP-005
+2025-10-23 12:31:17,142 - INFO -   ✓ Repayment 44,000 XAF for LOAN-006 (Justine Moukouri) - Principal: 35,000, Interest: 9,000 - Receipt: REP-006
+2025-10-23 12:31:17,442 - INFO - 
+✓ Completed loading 6 repayment transactions
+2025-10-23 12:31:17,443 - INFO - ================================================================================
+2025-10-23 12:31:17,443 - INFO - LOADING INTER-BRANCH TRANSFERS
+2025-10-23 12:31:17,443 - INFO - ================================================================================
+2025-10-23 12:31:17,480 - INFO - 
+Processing 6 inter-branch transfers...
+2025-10-23 12:31:17,480 - INFO - Note: Inter-branch transfers use GL journal entries for accounting.
+
+2025-10-23 12:31:17,480 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,480 - INFO -   Creating manual journal entry for: IBT-001
+2025-10-23 12:31:17,555 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,555 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,555 - ERROR -   ✗ Failed to process transfer IBT-001: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,555 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,555 - INFO -   Creating manual journal entry for: IBT-002
+2025-10-23 12:31:17,603 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,603 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,603 - ERROR -   ✗ Failed to process transfer IBT-002: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,604 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,604 - INFO -   Creating manual journal entry for: IBT-003
+2025-10-23 12:31:17,668 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,669 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,669 - ERROR -   ✗ Failed to process transfer IBT-003: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,669 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,669 - INFO -   Creating manual journal entry for: IBT-004
+2025-10-23 12:31:17,709 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,709 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,709 - ERROR -   ✗ Failed to process transfer IBT-004: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,710 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,710 - INFO -   Creating manual journal entry for: IBT-005
+2025-10-23 12:31:17,761 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,761 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,761 - ERROR -   ✗ Failed to process transfer IBT-005: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,762 - WARNING -   ⚠ Inter-branch transfer GL accounts not configured (15, 25)
+2025-10-23 12:31:17,762 - INFO -   Creating manual journal entry for: IBT-006
+2025-10-23 12:31:17,822 - ERROR - HTTP Error: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,822 - ERROR - Response: {"developerMessage":"Request was understood but caused a domain rule violation.","httpStatusCode":"403","defaultUserMessage":"Errors contain reason for domain rule violation.","userMessageGlobalisationCode":"validation.msg.domain.rule.violation","errors":[{"defaultUserMessage":"Target account does not allow manual adjustments","parameterName":"id","developerMessage":"Target account does not allow manual adjustments","userMessageGlobalisationCode":"error.msg.glJournalEntry.invalid.account.manual.adjustments.not.permitted","args":[{},{"value":"Main Vault Cash"},{"value":"10110"}]}]}
+2025-10-23 12:31:17,823 - ERROR -   ✗ Failed to process transfer IBT-006: 403 Client Error:  for url: https://localhost/fineract-provider/api/v1/journalentries
+2025-10-23 12:31:17,823 - INFO - 
+✓ Completed loading 6 inter-branch transfers
+2025-10-23 12:31:17,823 - INFO - 
+Note: Inter-branch transfers are recorded as GL journal entries.
+2025-10-23 12:31:17,823 - INFO -       View: Accounting → Frequent Postings → View Journal Entries
+2025-10-23 12:31:17,823 - INFO - ================================================================================
+2025-10-23 12:31:17,823 - INFO - SUMMARY
+2025-10-23 12:31:17,823 - INFO - ================================================================================
+2025-10-23 12:31:17,823 - INFO - Offices created: 9
+2025-10-23 12:31:17,823 - INFO - Staff created: 14
+2025-10-23 12:31:17,823 - INFO - GL Accounts created: 32
+2025-10-23 12:31:17,823 - INFO - Charges created: 8
+2025-10-23 12:31:17,823 - INFO - Fund sources created: 6
+2025-10-23 12:31:17,823 - INFO - Payment types created: 5
+2025-10-23 12:31:17,823 - INFO - Financial Activity Mappings configured: Yes
+2025-10-23 12:31:17,823 - INFO - Maker-Checker (dual authorization) enabled: Yes
+2025-10-23 12:31:17,823 - INFO - Loan products created: 3
+2025-10-23 12:31:17,824 - INFO - Savings products created: 3
+2025-10-23 12:31:17,824 - INFO - Clients created: 12
+2025-10-23 12:31:17,824 - INFO - Savings accounts created: 12
+2025-10-23 12:31:17,824 - INFO - Loan accounts created: 6
+2025-10-23 12:31:17,824 - INFO - ================================================================================
+2025-10-23 12:31:17,824 - INFO - ✓ Demo data loaded successfully in 110.05 seconds
+2025-10-23 12:31:17,824 - INFO - ================================================================================

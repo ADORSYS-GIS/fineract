@@ -33,4 +33,10 @@ USER_INTERNAL_ID=$($KEYCLOAK_BIN/kcadm.sh get users -r $REALM --query username=$
 echo "🔒 Setting password..."
 $KEYCLOAK_BIN/kcadm.sh set-password -r $REALM --userid $USER_INTERNAL_ID --new-password $PASSWORD --temporary=false
 
+# Assign realm-management role to the user
+echo "👑 Granting 'manage-users' role..."
+$KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername $USERNAME --cclientid realm-management --rolename manage-users
+echo "👑 Granting 'view-realm' role..."
+$KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername $USERNAME --cclientid realm-management --rolename view-realm
+
 echo "✅ User creation complete!"

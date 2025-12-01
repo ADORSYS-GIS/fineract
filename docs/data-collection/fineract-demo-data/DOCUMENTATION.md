@@ -1,4 +1,4 @@
-# Fineract Demo Data Loader - Technical Documentation
+# Fineract Demo Data Loader - Technical Documentation.
 
 **Last Updated**: October 14, 2025
 **Version**: 2.0.0
