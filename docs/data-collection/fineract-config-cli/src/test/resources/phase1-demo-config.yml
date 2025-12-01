@@ -1,0 +1,163 @@
+# Phase 1: System Configuration Demo
+# This configuration demonstrates all 8 Phase 1 entity types
+
+tenant: default
+
+systemConfig:
+  # 1. Currency Configuration
+  currency:
+    code: XAF
+    name: Central African CFA Franc
+    decimalPlaces: 0
+
+  # 2. Working Days Configuration
+  workingDays:
+    recurrence: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+    repaymentReschedulingType: MOVE_TO_NEXT_WORKING_DAY
+    extendTermForDailyRepayments: false
+
+  # 3. Global Configuration
+  globalConfig:
+    - name: maker-checker
+      enabled: false
+    - name: enable-address
+      enabled: true
+    - name: enable-sms-outbound
+      enabled: true
+    - name: enable-email-outbound
+      enabled: true
+
+  # 4. Codes and Code Values
+  codes:
+    - name: CustomerType
+      values:
+        - name: Individual
+          position: 1
+          isActive: true
+        - name: Business
+          position: 2
+          isActive: true
+        - name: Group
+          position: 3
+          isActive: true
+
+    - name: LoanPurpose
+      values:
+        - name: Agriculture
+          position: 1
+          isActive: true
+        - name: Trade
+          position: 2
+          isActive: true
+        - name: Education
+          position: 3
+          isActive: true
+        - name: Health
+          position: 4
+          isActive: true
+
+    - name: Gender
+      values:
+        - name: Male
+          position: 1
+          isActive: true
+        - name: Female
+          position: 2
+          isActive: true
+
+  # 5. Account Number Preferences
+  accountNumberPreferences:
+    - accountType: CLIENT
+      prefixType: 2  # Office prefix
+    - accountType: LOAN
+      prefixType: 3  # Client prefix
+    - accountType: SAVINGS
+      prefixType: 3  # Client prefix
+
+  # 6. Notification Configuration (SMS/Email)
+  notificationConfig:
+    sms:
+      providerId: twilioProvider
+      hostName: api.twilio.com
+      port: 443
+      accountSId: ${env:TWILIO_ACCOUNT_SID}
+      authToken: ${env:TWILIO_AUTH_TOKEN}
+
+    email:
+      smtpServer: smtp.gmail.com
+      smtpPort: 587
+      smtpUsername: ${env:SMTP_USERNAME}
+      smtpPassword: ${env:SMTP_PASSWORD}
+      fromEmail: noreply@microfinance.cm
+      fromName: Cameroon MFI
+      useTLS: true
+
+  # 7. Notification Templates
+  notificationTemplates:
+    - name: LoanApprovalSMS
+      type: SMS
+      entity: LOAN
+      subject: Loan Approved
+      text: "Dear {{client.displayName}}, your loan of {{loan.principal}} has been approved. Reference: {{loan.accountNo}}"
+
+    - name: LoanApprovalEmail
+      type: EMAIL
+      entity: LOAN
+      subject: Loan Application Approved
+      text: |
+        Dear {{client.displayName}},
+
+        We are pleased to inform you that your loan application has been approved.
+
+        Loan Details:
+        - Amount: {{loan.principal}} XAF
+        - Reference: {{loan.accountNo}}
+        - Loan Officer: {{loan.loanOfficerName}}
+
+        Please contact us for next steps.
+
+        Best regards,
+        Cameroon MFI
+
+    - name: SavingsDepositSMS
+      type: SMS
+      entity: SAVINGS
+      subject: Deposit Received
+      text: "Deposit of {{transaction.amount}} XAF received. New balance: {{account.balance}} XAF. Ref: {{transaction.id}}"
+
+  # 8. Data Tables (Custom Fields)
+  dataTables:
+    - name: client_additional_info
+      apptableName: m_client
+      multiRow: false
+      columns:
+        - name: national_id
+          type: String
+          length: 20
+          mandatory: true
+        - name: occupation
+          type: String
+          length: 100
+          mandatory: false
+        - name: monthly_income
+          type: Decimal
+          mandatory: false
+        - name: employment_start_date
+          type: Date
+          mandatory: false
+
+    - name: loan_collateral
+      apptableName: m_loan
+      multiRow: true
+      columns:
+        - name: collateral_type
+          type: Dropdown
+          code: CollateralType
+          mandatory: true
+        - name: collateral_value
+          type: Decimal
+          mandatory: true
+        - name: description
+          type: String
+          length: 500
+          mandatory: false

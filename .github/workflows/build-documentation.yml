@@ -1,5 +1,15 @@
 name: Fineract Documentation build
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
 permissions:
   contents: read
 jobs:

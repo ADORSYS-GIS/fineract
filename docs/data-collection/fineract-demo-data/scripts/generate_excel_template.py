@@ -136,12 +136,107 @@ class FineractDemoDataGenerator:
         ]
         return pd.DataFrame(data)
 
+    def create_users_sheet(self):
+        """Create system users with staff linkage and role assignments.
+
+        Note: Fineract password requirements:
+        - 12 to 50 characters long
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one numeric digit
+        - At least one special character
+        - No spaces
+        - No consecutive repeating characters
+        """
+        data = [
+            # Head Office Users
+            {'username': 'admin.system', 'first_name': 'Thomas', 'last_name': 'Ndongo',
+             'email': 't.ndongo@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'System Administrator', 'staff_name': 'Thomas Ndongo',
+             'password': 'Adm1n$yst3m@2024', 'password_never_expires': True},
+
+            {'username': 'accountant', 'first_name': 'Christine', 'last_name': 'Biaka',
+             'email': 'c.biaka@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'Accountant', 'staff_name': 'Christine Biaka',
+             'password': 'Ac0untant@2024!', 'password_never_expires': False},
+
+            # Yaounde Branch Users
+            {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
+             'email': 'j.mbarga@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Jean Mbarga',
+             'password': 'Man4ger@Yde2024', 'password_never_expires': False},
+
+            {'username': 'loan.yaounde', 'first_name': 'Marie', 'last_name': 'Ngo Balla',
+             'email': 'm.ngoballa@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Marie Ngo Balla',
+             'password': 'Lo4n0ficer@Yde1', 'password_never_expires': False},
+
+            {'username': 'cashier.yaounde', 'first_name': 'Paul', 'last_name': 'Atangana',
+             'email': 'p.atangana@mfi.cm', 'office_name': 'Yaounde Branch',
+             'roles': 'Cashier', 'staff_name': 'Paul Atangana',
+             'password': 'Cash1er@Yde2024', 'password_never_expires': False},
+
+            # Douala Branch Users
+            {'username': 'manager.douala', 'first_name': 'Grace', 'last_name': 'Douala',
+             'email': 'g.douala@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Grace Douala',
+             'password': 'Man4ger@Dla2024', 'password_never_expires': False},
+
+            {'username': 'loan.douala', 'first_name': 'Emmanuel', 'last_name': 'Ewondo',
+             'email': 'e.ewondo@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Emmanuel Ewondo',
+             'password': 'Lo4n0ficer@Dla1', 'password_never_expires': False},
+
+            {'username': 'cashier.douala', 'first_name': 'Francine', 'last_name': 'Makang',
+             'email': 'f.makang@mfi.cm', 'office_name': 'Douala Branch',
+             'roles': 'Cashier', 'staff_name': 'Francine Makang',
+             'password': 'Cash1er@Dla2024', 'password_never_expires': False},
+
+            # Bafoussam Branch Users
+            {'username': 'manager.bafoussam', 'first_name': 'Bernard', 'last_name': 'Kamga',
+             'email': 'b.kamga@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Bernard Kamga',
+             'password': 'Man4ger@Baf2024', 'password_never_expires': False},
+
+            {'username': 'loan.bafoussam', 'first_name': 'Justine', 'last_name': 'Tchuente',
+             'email': 'j.tchuente@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Justine Tchuente',
+             'password': 'Lo4n0ficer@Baf1', 'password_never_expires': False},
+
+            {'username': 'cashier.bafoussam', 'first_name': 'David', 'last_name': 'Fotso',
+             'email': 'd.fotso@mfi.cm', 'office_name': 'Bafoussam Branch',
+             'roles': 'Cashier', 'staff_name': 'David Fotso',
+             'password': 'Cash1er@Baf2024', 'password_never_expires': False},
+
+            # Bamenda Branch Users
+            {'username': 'manager.bamenda', 'first_name': 'Peter', 'last_name': 'Nkeng',
+             'email': 'p.nkeng@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Branch Manager', 'staff_name': 'Peter Nkeng',
+             'password': 'Man4ger@Bam2024', 'password_never_expires': False},
+
+            {'username': 'loan.bamenda', 'first_name': 'Alice', 'last_name': 'Fon',
+             'email': 'a.fon@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Loan Officer', 'staff_name': 'Alice Fon',
+             'password': 'Lo4n0ficer@Bam1', 'password_never_expires': False},
+
+            {'username': 'cashier.bamenda', 'first_name': 'Joseph', 'last_name': 'Tanyi',
+             'email': 'j.tanyi@mfi.cm', 'office_name': 'Bamenda Branch',
+             'roles': 'Cashier', 'staff_name': 'Joseph Tanyi',
+             'password': 'Cash1er@Bam2024', 'password_never_expires': False},
+        ]
+        return pd.DataFrame(data)
+
     def create_clients_sheet(self):
-        """Create sample clients"""
+        """Create sample clients.
+
+        legalFormId values:
+        - 1 = Person (Individual)
+        - 2 = Entity (Corporate/Business)
+        """
         data = [
             {'firstname': 'Akoumba', 'lastname': 'Ngono', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Female', 'mobile': '+237 690 12 34 56', 'email': 'a.ngono@gmail.com',
-             'date_of_birth': '1985-03-15', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1985-03-15', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-001', 'activation_date': '2024-01-20', 'national_id': 'CM1234567890',
              'address': 'Bonaberi, Rue des Fleurs', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 3, 'occupation': 'Petty Trader', 'business_type': 'Retail Trade',
@@ -149,7 +244,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Ibrahim', 'lastname': 'Mahamat', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 690 23 45 67', 'email': 'i.mahamat@yahoo.fr',
-             'date_of_birth': '1978-07-22', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1978-07-22', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-002', 'activation_date': '2024-01-25', 'national_id': 'CM2345678901',
              'address': 'Ndokoti, Carrefour Ange Raphael', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 5, 'occupation': 'Transport Owner', 'business_type': 'Transportation',
@@ -157,7 +252,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Marie Claire', 'lastname': 'Tchouta', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Female', 'mobile': '+237 690 34 56 78', 'email': 'm.tchouta@gmail.com',
-             'date_of_birth': '1990-11-10', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1990-11-10', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-003', 'activation_date': '2024-02-01', 'national_id': 'CM3456789012',
              'address': 'Melen, Quartier Fouda', 'city': 'Yaounde', 'marital_status': 'Single',
              'number_of_dependents': 1, 'occupation': 'Hairdresser', 'business_type': 'Services',
@@ -165,7 +260,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Jean Paul', 'lastname': 'Kamdem', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
              'gender': 'Male', 'mobile': '+237 690 45 67 89', 'email': 'jp.kamdem@yahoo.fr',
-             'date_of_birth': '1982-05-18', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1982-05-18', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-004', 'activation_date': '2024-02-05', 'national_id': 'CM4567890123',
              'address': 'Tamdja, Marche des Vivres', 'city': 'Bafoussam', 'marital_status': 'Married',
              'number_of_dependents': 4, 'occupation': 'Farmer', 'business_type': 'Agriculture',
@@ -173,7 +268,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Claudine', 'lastname': 'Ekotto', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Female', 'mobile': '+237 690 56 78 90', 'email': 'c.ekotto@gmail.com',
-             'date_of_birth': '1988-09-25', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1988-09-25', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-005', 'activation_date': '2024-02-10', 'national_id': 'CM5678901234',
              'address': 'New Bell, Rue Joffre', 'city': 'Douala', 'marital_status': 'Widow',
              'number_of_dependents': 2, 'occupation': 'Restaurant Owner', 'business_type': 'Food Services',
@@ -181,7 +276,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Patrick', 'lastname': 'Ndongo', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Male', 'mobile': '+237 690 67 89 01', 'email': 'p.ndongo@hotmail.com',
-             'date_of_birth': '1975-12-03', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1975-12-03', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-006', 'activation_date': '2024-02-15', 'national_id': 'CM6789012345',
              'address': 'Omnisport, Carrefour Warda', 'city': 'Yaounde', 'marital_status': 'Married',
              'number_of_dependents': 6, 'occupation': 'Wholesaler', 'business_type': 'Wholesale Trade',
@@ -189,7 +284,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Beatrice', 'lastname': 'Nana', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
              'gender': 'Female', 'mobile': '+237 690 78 90 12', 'email': 'b.nana@gmail.com',
-             'date_of_birth': '1992-04-14', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1992-04-14', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-007', 'activation_date': '2024-02-20', 'national_id': 'CM7890123456',
              'address': 'Nkwen, Mile 4', 'city': 'Bamenda', 'marital_status': 'Single',
              'number_of_dependents': 0, 'occupation': 'Seamstress', 'business_type': 'Services',
@@ -197,7 +292,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Samuel', 'lastname': 'Ebong', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 690 89 01 23', 'email': 's.ebong@yahoo.fr',
-             'date_of_birth': '1980-08-30', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1980-08-30', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-008', 'activation_date': '2024-03-01', 'national_id': 'CM8901234567',
              'address': 'Bepanda, Rond Point', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 3, 'occupation': 'Mechanic', 'business_type': 'Services',
@@ -205,7 +300,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Bernadette', 'lastname': 'Fotso', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
              'gender': 'Female', 'mobile': '+237 690 90 12 34', 'email': 'b.fotso@gmail.com',
-             'date_of_birth': '1987-06-20', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1987-06-20', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-009', 'activation_date': '2024-03-05', 'national_id': 'CM9012345678',
              'address': 'Famla, Marche Central', 'city': 'Bafoussam', 'marital_status': 'Married',
              'number_of_dependents': 2, 'occupation': 'Vegetable Seller', 'business_type': 'Retail Trade',
@@ -213,7 +308,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Francois', 'lastname': 'Manga', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Male', 'mobile': '+237 690 01 23 45', 'email': 'f.manga@hotmail.com',
-             'date_of_birth': '1983-02-28', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1983-02-28', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-010', 'activation_date': '2024-03-10', 'national_id': 'CM0123456789',
              'address': 'Elig-Essono, Nouvelle Route', 'city': 'Yaounde', 'marital_status': 'Divorced',
              'number_of_dependents': 2, 'occupation': 'Carpenter', 'business_type': 'Services',
@@ -221,7 +316,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Agnes', 'lastname': 'Fon', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
              'gender': 'Female', 'mobile': '+237 691 12 34 56', 'email': 'a.fon@gmail.com',
-             'date_of_birth': '1991-10-05', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1991-10-05', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-011', 'activation_date': '2024-03-15', 'national_id': 'CM1234567891',
              'address': 'Ntarikon, Junction', 'city': 'Bamenda', 'marital_status': 'Single',
              'number_of_dependents': 1, 'occupation': 'Boutique Owner', 'business_type': 'Retail Trade',
@@ -229,7 +324,7 @@ class FineractDemoDataGenerator:
 
             {'firstname': 'Robert', 'lastname': 'Essomba', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 691 23 45 67', 'email': 'r.essomba@yahoo.fr',
-             'date_of_birth': '1979-01-17', 'client_type': 'Individual', 'client_classification': 'Active',
+             'date_of_birth': '1979-01-17', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
              'external_id': 'CLI-012', 'activation_date': '2024-03-20', 'national_id': 'CM2345678902',
              'address': 'Akwa, Boulevard de la Republique', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 4, 'occupation': 'Electronics Trader', 'business_type': 'Retail Trade',
@@ -237,20 +332,83 @@ class FineractDemoDataGenerator:
         ]
         return pd.DataFrame(data)
 
+    def create_groups_sheet(self):
+        """Create sample groups (solidarity groups)
+
+        IMPORTANT: Group activation dates must be >= parent office opening date
+        - Douala Branch opened: 2024-01-15
+        - Yaounde Branch opened: 2024-01-15
+        - Bafoussam Branch opened: 2024-02-01
+        - Bamenda Branch opened: 2024-02-15
+        """
+        data = [
+            {'group_name': 'Femmes Solidaires Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'GRP-001', 'activation_date': '2024-01-25', 'submitted_on_date': '2024-01-20',
+             'active': 'Yes', 'center_name': 'Centre Commercial Douala',
+             'client_external_ids': 'CLI-001,CLI-005,CLI-008'},
+
+            {'group_name': 'Commercants Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
+             'external_id': 'GRP-002', 'activation_date': '2024-01-25', 'submitted_on_date': '2024-01-20',
+             'active': 'Yes', 'center_name': 'Centre Melen Yaounde',
+             'client_external_ids': 'CLI-003,CLI-006,CLI-010'},
+
+            {'group_name': 'Agriculteurs Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
+             'external_id': 'GRP-003', 'activation_date': '2024-02-10', 'submitted_on_date': '2024-02-05',
+             'active': 'Yes', 'center_name': '',
+             'client_external_ids': 'CLI-004,CLI-009'},
+
+            {'group_name': 'Artisans Bamenda', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
+             'external_id': 'GRP-004', 'activation_date': '2024-02-20', 'submitted_on_date': '2024-02-16',
+             'active': 'Yes', 'center_name': '',
+             'client_external_ids': 'CLI-007,CLI-011'},
+
+            {'group_name': 'Transporteurs Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'GRP-005', 'activation_date': '2024-02-20', 'submitted_on_date': '2024-02-16',
+             'active': 'Yes', 'center_name': 'Centre Commercial Douala',
+             'client_external_ids': 'CLI-002,CLI-012'},
+        ]
+        return pd.DataFrame(data)
+
+    def create_centers_sheet(self):
+        """Create sample centers (collection of groups)
+
+        IMPORTANT: Center activation dates must be >= parent office opening date
+        - Douala Branch opened: 2024-01-15
+        - Yaounde Branch opened: 2024-01-15
+        - Bafoussam Branch opened: 2024-02-01
+        - Bamenda Branch opened: 2024-02-15
+        """
+        data = [
+            {'center_name': 'Centre Commercial Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
+             'external_id': 'CTR-001', 'activation_date': '2024-01-20', 'submitted_on_date': '2024-01-16',
+             'active': 'Yes'},
+
+            {'center_name': 'Centre Melen Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
+             'external_id': 'CTR-002', 'activation_date': '2024-01-20', 'submitted_on_date': '2024-01-16',
+             'active': 'Yes'},
+
+            {'center_name': 'Centre Tamdja Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
+             'external_id': 'CTR-003', 'activation_date': '2024-02-05', 'submitted_on_date': '2024-02-02',
+             'active': 'Yes'},
+        ]
+        return pd.DataFrame(data)
+
     def create_loan_products_sheet(self):
-        """Create loan products configuration"""
+        """Create loan products configuration with all mandatory fields for Fineract API"""
         data = [
             {
                 'product_name': 'Microcredit Solidarity Loan',
                 'short_name': 'MSOL',
                 'description': 'Small loans for petty traders and artisans (solidarity group)',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,
                 'principal_min': 50000,
                 'principal_default': 200000,
                 'principal_max': 500000,
                 'number_of_repayments_min': 3,
                 'number_of_repayments_default': 6,
                 'number_of_repayments_max': 12,
+                'repayment_every': 1,
                 'repayment_frequency': 'Monthly',
                 'interest_rate_min': 18.0,
                 'interest_rate_default': 24.0,
@@ -258,25 +416,31 @@ class FineractDemoDataGenerator:
                 'interest_calculation_period': 'Same as repayment period',
                 'amortization_type': 'Equal installments',
                 'interest_type': 'Declining Balance',
+                'days_in_year_type': 365,
+                'days_in_month_type': 30,
+                'is_interest_recalculation_enabled': 'No',
                 'grace_on_principal_periods': 0,
                 'grace_on_interest_periods': 0,
                 'processing_fee_percent': 2.0,
                 'insurance_mandatory': 'Yes',
                 'insurance_percent': 1.5,
                 'minimum_gap_between_installments': 30,
-                'allow_partial_period_interest_calculation': 'No'
+                'allow_partial_period_interest_calculation': 'No',
+                'accounting_type': 'Accrual (periodic)'
             },
             {
                 'product_name': 'SME Business Loan',
                 'short_name': 'SBIZ',
                 'description': 'Medium loans for small and medium enterprises',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,
                 'principal_min': 500000,
                 'principal_default': 2000000,
                 'principal_max': 10000000,
                 'number_of_repayments_min': 6,
                 'number_of_repayments_default': 12,
                 'number_of_repayments_max': 24,
+                'repayment_every': 1,
                 'repayment_frequency': 'Monthly',
                 'interest_rate_min': 15.0,
                 'interest_rate_default': 20.0,
@@ -284,25 +448,31 @@ class FineractDemoDataGenerator:
                 'interest_calculation_period': 'Same as repayment period',
                 'amortization_type': 'Equal installments',
                 'interest_type': 'Declining Balance',
+                'days_in_year_type': 365,
+                'days_in_month_type': 30,
+                'is_interest_recalculation_enabled': 'No',
                 'grace_on_principal_periods': 1,
                 'grace_on_interest_periods': 0,
                 'processing_fee_percent': 1.5,
                 'insurance_mandatory': 'Yes',
                 'insurance_percent': 1.0,
                 'minimum_gap_between_installments': 30,
-                'allow_partial_period_interest_calculation': 'No'
+                'allow_partial_period_interest_calculation': 'No',
+                'accounting_type': 'Accrual (periodic)'
             },
             {
                 'product_name': 'Agricultural Seasonal Loan',
                 'short_name': 'ASEA',
                 'description': 'Seasonal loans for agricultural activities',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,
                 'principal_min': 100000,
                 'principal_default': 500000,
                 'principal_max': 3000000,
                 'number_of_repayments_min': 3,
                 'number_of_repayments_default': 6,
                 'number_of_repayments_max': 9,
+                'repayment_every': 1,
                 'repayment_frequency': 'Monthly',
                 'interest_rate_min': 12.0,
                 'interest_rate_default': 18.0,
@@ -310,25 +480,30 @@ class FineractDemoDataGenerator:
                 'interest_calculation_period': 'Same as repayment period',
                 'amortization_type': 'Equal installments',
                 'interest_type': 'Declining Balance',
+                'days_in_year_type': 365,
+                'days_in_month_type': 30,
+                'is_interest_recalculation_enabled': 'No',
                 'grace_on_principal_periods': 2,
                 'grace_on_interest_periods': 1,
                 'processing_fee_percent': 1.0,
                 'insurance_mandatory': 'Yes',
                 'insurance_percent': 1.5,
                 'minimum_gap_between_installments': 30,
-                'allow_partial_period_interest_calculation': 'Yes'
+                'allow_partial_period_interest_calculation': 'Yes',
+                'accounting_type': 'Accrual (periodic)'
             }
         ]
         return pd.DataFrame(data)
 
     def create_savings_products_sheet(self):
-        """Create savings products configuration"""
+        """Create savings products configuration with all mandatory fields for Fineract API"""
         data = [
             {
                 'product_name': 'Voluntary Savings Account',
                 'short_name': 'VSAV',  # Max 4 characters for Fineract
                 'description': 'Standard voluntary savings account',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,  # MANDATORY for XAF
                 'nominal_annual_interest_rate': 3.0,
                 'interest_compounding_period': 'Monthly',
                 'interest_posting_period': 'Monthly',
@@ -341,14 +516,16 @@ class FineractDemoDataGenerator:
                 'allow_dormancy_tracking': 'Yes',
                 'days_to_inactive': 180,
                 'days_to_dormancy': 365,
-                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled, but tax groups need to be created first
-                'lock_in_period': 0
+                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled
+                'lock_in_period': 0,
+                'accounting_type': 'Cash'  # CASH_BASED accounting
             },
             {
                 'product_name': 'Fixed Deposit Account',
                 'short_name': 'FDEP',  # Max 4 characters for Fineract
                 'description': 'Fixed deposit with higher interest rate',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,  # MANDATORY for XAF
                 'nominal_annual_interest_rate': 6.0,
                 'interest_compounding_period': 'Monthly',
                 'interest_posting_period': 'Monthly',
@@ -361,14 +538,16 @@ class FineractDemoDataGenerator:
                 'allow_dormancy_tracking': 'No',
                 'days_to_inactive': 0,
                 'days_to_dormancy': 0,
-                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled, but tax groups need to be created first
-                'lock_in_period': 180
+                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled
+                'lock_in_period': 180,
+                'accounting_type': 'Cash'  # CASH_BASED accounting
             },
             {
                 'product_name': 'Mandatory Group Savings',
                 'short_name': 'MGRP',  # Max 4 characters for Fineract
                 'description': 'Mandatory savings for group loan members',
                 'currency': 'XAF',
+                'digits_after_decimal': 0,  # MANDATORY for XAF
                 'nominal_annual_interest_rate': 2.0,
                 'interest_compounding_period': 'Monthly',
                 'interest_posting_period': 'Monthly',
@@ -381,47 +560,34 @@ class FineractDemoDataGenerator:
                 'allow_dormancy_tracking': 'No',
                 'days_to_inactive': 0,
                 'days_to_dormancy': 0,
-                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled, but tax groups need to be created first
-                'lock_in_period': 0
+                'withhold_tax': 0,  # Disabled - taxGroupId is mandatory if enabled
+                'lock_in_period': 0,
+                'accounting_type': 'Cash'  # CASH_BASED accounting
             }
         ]
         return pd.DataFrame(data)
 
     def create_charges_sheet(self):
-        """Create fees and charges with fee frequency support"""
+        """Create fees and charges with fee frequency support
+
+        Valid charge_time values by charge_type:
+        - Loan: DISBURSEMENT(1), SPECIFIED_DUE_DATE(2), MONTHLY_FEE(8), WEEKLY_FEE(9), TRANCHE_DISBURSEMENT(12)
+        - Savings: SPECIFIED_DUE_DATE(2), SAVINGS_ACTIVATION(5), WITHDRAWAL_FEE(6), ANNUAL_FEE(7),
+                   MONTHLY_FEE(8), WEEKLY_FEE(9), OVERDRAFT_FEE(10), SAVINGS_CLOSURE(11), FDA_PRE_CLOSURE(16)
+        """
         data = [
+            # LOAN CHARGES (valid: 1, 2, 8, 9, 12)
             {'charge_name': 'Loan Processing Fee', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
              'amount': 2.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
              'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Late Payment Penalty', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
-             'amount': 5.0, 'currency': 'XAF', 'charge_time': 'Overdue Installment', 'fee_frequency': None,
+             'amount': 5.0, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': None,
              'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Loan Insurance', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
              'amount': 1.5, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
              'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
-
-            {'charge_name': 'Account Opening Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 1000, 'currency': 'XAF', 'charge_time': 'Activation', 'fee_frequency': None,
-             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
-
-            {'charge_name': 'Monthly Account Maintenance', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 500, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Monthly',
-             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': None, 'active': 'Yes'},
-
-            {'charge_name': 'Withdrawal Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 200, 'currency': 'XAF', 'charge_time': 'Withdrawal', 'fee_frequency': None,
-             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
-
-            {'charge_name': 'ATM Card Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 5000, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Yearly',
-             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': 1, 'active': 'Yes'},
-
-            # Note: Weekly fee example
-            {'charge_name': 'Weekly Service Charge', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 100, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': 'Weekly',
-             'fee_interval': 1, 'fee_on_day': 1, 'fee_on_month': None, 'active': 'Yes'},
 
             {'charge_name': 'Loan Restructuring Fee', 'charge_type': 'Loan', 'calculation_type': 'Percentage of Amount',
              'amount': 1.0, 'currency': 'XAF', 'charge_time': 'Specified Due Date', 'fee_frequency': None,
@@ -431,8 +597,15 @@ class FineractDemoDataGenerator:
              'amount': 3.0, 'currency': 'XAF', 'charge_time': 'Disbursement', 'fee_frequency': None,
              'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'No'},
 
+            # SAVINGS CHARGES - Only using simple charge types that don't require feeOnMonthDay/feeInterval
+            # Valid simple types: 5 (Savings Activation)
+            # Note: Withdrawal Fee (type 6) requires feeOnMonthDay in Fineract, so we exclude it
+            {'charge_name': 'Account Opening Fee', 'charge_type': 'Savings', 'calculation_type': 'Flat',
+             'amount': 1000, 'currency': 'XAF', 'charge_time': 'Savings Activation', 'fee_frequency': None,
+             'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
+
             {'charge_name': 'Dormant Account Reactivation', 'charge_type': 'Savings', 'calculation_type': 'Flat',
-             'amount': 2000, 'currency': 'XAF', 'charge_time': 'Activation', 'fee_frequency': None,
+             'amount': 2000, 'currency': 'XAF', 'charge_time': 'Savings Activation', 'fee_frequency': None,
              'fee_interval': None, 'fee_on_day': None, 'fee_on_month': None, 'active': 'Yes'},
         ]
         return pd.DataFrame(data)
@@ -577,12 +750,19 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_loan_accounts_sheet(self):
-        """Create sample loan accounts"""
+        """Create sample loan accounts
+
+        workflow_state values:
+        - 'active': Auto-approve and auto-disburse (normal flow)
+        - 'pending_approval': Create loan, stop at approval (demonstrates maker-checker)
+        - 'pending_disbursal': Create and approve loan, stop at disbursal (demonstrates maker-checker)
+        """
         data = [
             {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2024-02-01',
              'approved_on': '2024-02-05', 'disbursed_on': '2024-02-09', 'principal': 200000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-001',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Purchase additional stock for retail shop',
              'repayment_source': 'Business Income', 'credit_score': 72,
              'previous_loan_history': 'Good History'},
@@ -591,7 +771,8 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-08', 'disbursed_on': '2024-02-12', 'principal': 2000000,
              'loan_term': 12, 'interest_rate': 20.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002',
-             'loan_purpose_detail': 'Expand transport business - purchase second vehicle',
+             'workflow_state': 'pending_approval',
+             'loan_purpose_detail': 'Expand transport business - purchase second vehicle (PENDING APPROVAL)',
              'repayment_source': 'Business Income', 'credit_score': 85,
              'previous_loan_history': 'First Loan'},
 
@@ -599,6 +780,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-12', 'disbursed_on': '2024-02-15', 'principal': 150000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-003',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Renovate salon and purchase new equipment',
              'repayment_source': 'Business Income', 'credit_score': 68,
              'previous_loan_history': 'First Loan'},
@@ -607,6 +789,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-15', 'disbursed_on': '2024-02-19', 'principal': 500000,
              'loan_term': 6, 'interest_rate': 18.0, 'loan_officer': 'loan.bafoussam',
              'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Purchase fertilizer and seeds for planting season',
              'repayment_source': 'Business Income', 'credit_score': 75,
              'previous_loan_history': 'Good History'},
@@ -615,6 +798,7 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-18', 'disbursed_on': '2024-02-20', 'principal': 180000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-005',
+             'workflow_state': 'active',
              'loan_purpose_detail': 'Expand restaurant seating and buy cooking equipment',
              'repayment_source': 'Business Income', 'credit_score': 70,
              'previous_loan_history': 'Some Delays'},
@@ -623,7 +807,8 @@ class FineractDemoDataGenerator:
              'approved_on': '2024-02-20', 'disbursed_on': '2024-02-26', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006',
-             'loan_purpose_detail': 'Stock wholesale shop with imported goods',
+             'workflow_state': 'pending_disbursal',
+             'loan_purpose_detail': 'Stock wholesale shop with imported goods (PENDING DISBURSAL)',
              'repayment_source': 'Business Income', 'credit_score': 90,
              'previous_loan_history': 'Good History'},
         ]
@@ -926,11 +1111,11 @@ class FineractDemoDataGenerator:
                 {'product_short_name': product, 'mapping_type': 'Losses Written Off', 'gl_code': '93',
                  'gl_name': 'Loan Write-off Expense', 'description': 'Written-off loan expense'},
 
-                {'product_short_name': product, 'mapping_type': 'Goodwill Credit', 'gl_code': '81',
-                 'gl_name': 'Interest Income on Loans', 'description': 'Goodwill credit account'},
+                {'product_short_name': product, 'mapping_type': 'Goodwill Credit', 'gl_code': '93',
+                 'gl_name': 'Loan Write-off Expense', 'description': 'Goodwill credit account (EXPENSE type)'},
 
                 {'product_short_name': product, 'mapping_type': 'Income from Recovery', 'gl_code': '81',
-                 'gl_name': 'Interest Income on Loans', 'description': 'Recovery income'},
+                 'gl_name': 'Interest Income on Loans', 'description': 'Recovery income (INCOME type)'},
 
                 {'product_short_name': product, 'mapping_type': 'Over Payment Liability', 'gl_code': '64',
                  'gl_name': 'Savings Interest Payable', 'description': 'Overpayment liability account'},
@@ -1042,28 +1227,35 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_teller_cashier_mappings_sheet(self):
-        """Create teller/cashier GL account mappings per office"""
+        """Create teller/cashier GL account mappings per office.
+
+        staff_external_id links to the cashier staff member who operates the teller.
+        """
         data = [
-            # Yaounde Branch
-            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller - Yaounde',
+            # Yaounde Branch - Paul Atangana (STF-003) as cashier
+            {'office_name': 'Yaounde Branch', 'teller_name': 'Teller 1 - Yaounde',
+             'staff_external_id': 'STF-003',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Yaounde branch teller and vault configuration'},
 
-            # Douala Branch
-            {'office_name': 'Douala Branch', 'teller_name': 'Teller - Douala',
+            # Douala Branch - Francine Makang (STF-006) as cashier
+            {'office_name': 'Douala Branch', 'teller_name': 'Teller 1 - Douala',
+             'staff_external_id': 'STF-006',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Douala branch teller and vault configuration'},
 
-            # Bafoussam Branch
-            {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller - Bafoussam',
+            # Bafoussam Branch - David Fotso (STF-009) as cashier
+            {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller 1 - Bafoussam',
+             'staff_external_id': 'STF-009',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Bafoussam branch teller and vault configuration'},
 
-            # Bamenda Branch
-            {'office_name': 'Bamenda Branch', 'teller_name': 'Teller - Bamenda',
+            # Bamenda Branch - Joseph Tanyi (STF-012) as cashier
+            {'office_name': 'Bamenda Branch', 'teller_name': 'Teller 1 - Bamenda',
+             'staff_external_id': 'STF-012',
              'cash_gl_code': '42', 'vault_gl_code': '42',
              'shortage_gl_code': '98', 'overage_gl_code': '86',
              'description': 'Bamenda branch teller and vault configuration'},
@@ -1099,6 +1291,40 @@ class FineractDemoDataGenerator:
         ]
         return pd.DataFrame(data)
 
+    def create_teller_accounting_rules_sheet(self):
+        """Create teller accounting rules.
+
+        Fields match TellerAccountingRule model:
+        - teller_name: Name of the teller
+        - cash_in_gl_code: GL account code for cash in (debit)
+        - cash_out_gl_code: GL account code for cash out (credit)
+        - description: Description of the accounting rule
+        - office_name: Office scope for the rule
+        """
+        # GL codes from system: 42 = Cash on Hand, 41 = Banks - Current Accounts
+        data = [
+            # Yaounde Branch Teller
+            {'teller_name': 'Teller 1 - Yaounde', 'office_name': 'Yaounde Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Yaounde main teller'},
+
+            # Douala Branch Teller
+            {'teller_name': 'Teller 1 - Douala', 'office_name': 'Douala Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Douala main teller'},
+
+            # Bafoussam Branch Teller
+            {'teller_name': 'Teller 1 - Bafoussam', 'office_name': 'Bafoussam Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Bafoussam main teller'},
+
+            # Bamenda Branch Teller
+            {'teller_name': 'Teller 1 - Bamenda', 'office_name': 'Bamenda Branch',
+             'cash_in_gl_code': '42', 'cash_out_gl_code': '42',
+             'description': 'Cash accounting rule for Bamenda main teller'},
+        ]
+        return pd.DataFrame(data)
+
     def create_roles_permissions_sheet(self):
         """Create roles with permissions assignments"""
         data = [
@@ -1121,8 +1347,8 @@ class FineractDemoDataGenerator:
              'description': 'Record shortage/overage journal entries and view accounting'},
             {'role_name': 'Branch Manager', 'permission_group': 'Teller', 'permission': 'ALL_FUNCTIONS',
              'description': 'Manage teller cash allocation and settlement'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Maker-Checker', 'permission': 'APPROVE',
-             'description': 'Can approve maker-checker tasks (checker role)'},
+            {'role_name': 'Branch Manager', 'permission_group': 'Checker', 'permission': 'CHECKER_SUPER_USER',
+             'description': 'Can approve/reject pending maker-checker tasks'},
 
             # Loan Officer Role - Loan and client operations
             {'role_name': 'Loan Officer', 'permission_group': 'Client', 'permission': 'CREATE_UPDATE_READ',
@@ -1141,8 +1367,6 @@ class FineractDemoDataGenerator:
              'description': 'View operational reports'},
             {'role_name': 'Loan Officer', 'permission_group': 'Office', 'permission': 'READ',
              'description': 'View office information'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
-             'description': 'Can create maker-checker tasks (maker role)'},
 
             # Cashier Role - Transaction processing only
             {'role_name': 'Cashier', 'permission_group': 'Client', 'permission': 'READ',
@@ -1157,8 +1381,6 @@ class FineractDemoDataGenerator:
              'description': 'View transaction reports'},
             {'role_name': 'Cashier', 'permission_group': 'PaymentType', 'permission': 'READ',
              'description': 'Read payment types'},
-            {'role_name': 'Cashier', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
-             'description': 'Can create maker-checker tasks (maker role)'},
 
             # System Administrator Role - System configuration and setup
             {'role_name': 'System Administrator', 'permission_group': 'Office', 'permission': 'ALL_FUNCTIONS',
@@ -1179,8 +1401,8 @@ class FineractDemoDataGenerator:
              'description': 'View savings accounts'},
             {'role_name': 'System Administrator', 'permission_group': 'Report', 'permission': 'READ',
              'description': 'View all reports'},
-            {'role_name': 'System Administrator', 'permission_group': 'Maker-Checker', 'permission': 'CREATE',
-             'description': 'Can create maker-checker tasks (maker role)'},
+            {'role_name': 'System Administrator', 'permission_group': 'MakerChecker', 'permission': 'ENABLE_MAKERCHECKER',
+             'description': 'Can enable/disable maker-checker for specific operations'},
 
             # Accountant Role - Accounting and financial management
             {'role_name': 'Accountant', 'permission_group': 'Accounting', 'permission': 'ALL_FUNCTIONS',
@@ -1197,8 +1419,8 @@ class FineractDemoDataGenerator:
              'description': 'View financial reports'},
             {'role_name': 'Accountant', 'permission_group': 'Office', 'permission': 'READ',
              'description': 'View office information'},
-            {'role_name': 'Accountant', 'permission_group': 'Maker-Checker', 'permission': 'APPROVE',
-             'description': 'Can approve accounting maker-checker tasks (checker role)'},
+            {'role_name': 'Accountant', 'permission_group': 'Checker', 'permission': 'CHECKER_SUPER_USER',
+             'description': 'Can approve/reject pending accounting tasks'},
         ]
         return pd.DataFrame(data)
 
@@ -1206,68 +1428,72 @@ class FineractDemoDataGenerator:
         """Create Maker-Checker (4-eyes principle) configuration for critical operations
 
         All permission codes verified against Fineract source code (@CommandType annotations).
+
+        NOTE: Fineract's maker-checker is boolean-only (enabled/disabled).
+        Amount-based thresholds are NOT supported by the native Fineract API.
+        When enabled, ALL operations of that type will require approval.
         """
         data = [
             # Loan operations
             {'task_name': 'Loan Approval', 'entity': 'Loan', 'action': 'APPROVE',
-             'threshold_amount': 2000000, 'threshold_currency': 'XAF',
+             'enabled': True,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Loans above 2M XAF require manager approval'},
+             'description': 'All loan approvals require manager authorization (demonstrates workflow)'},
 
             {'task_name': 'Loan Disbursement', 'entity': 'Loan', 'action': 'DISBURSE',
-             'threshold_amount': 5000000, 'threshold_currency': 'XAF',
+             'enabled': True,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Disbursements above 5M XAF require manager approval'},
+             'description': 'All loan disbursements require manager authorization (demonstrates workflow)'},
 
             {'task_name': 'Loan Write-off', 'entity': 'Loan', 'action': 'WRITEOFF',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'All loan write-offs require manager approval (any amount)'},
+             'description': 'Loan write-offs require manager approval (disabled by default)'},
 
             {'task_name': 'Create Loan Reschedule Request', 'entity': 'RESCHEDULELOAN', 'action': 'CREATE',
-             'threshold_amount': 1000000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Loan rescheduling above 1M XAF requires manager approval'},
+             'description': 'Loan rescheduling requires manager approval (disabled by default)'},
 
             # Savings operations
             {'task_name': 'Close Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'CLOSE',
-             'threshold_amount': 500000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
-             'description': 'Account closures with balance above 500K XAF require manager approval'},
+             'description': 'Savings account closures require manager approval (disabled by default)'},
 
             # Client operations
             {'task_name': 'Client Activation', 'entity': 'Client', 'action': 'ACTIVATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'New client activation requires manager approval'},
+             'description': 'New client activation requires manager approval (disabled by default)'},
 
             {'task_name': 'Propose Client Transfer', 'entity': 'Client', 'action': 'PROPOSETRANSFER',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
-             'description': 'Client office transfer requires manager approval'},
+             'description': 'Client office transfer requires manager approval (disabled by default)'},
 
             # Accounting operations
             {'task_name': 'Create Manual Journal Entry', 'entity': 'JOURNALENTRY', 'action': 'CREATE',
-             'threshold_amount': 500000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Accountant', 'checker_role': 'Branch Manager',
-             'description': 'Manual journal entries above 500K XAF require manager approval'},
+             'description': 'Manual journal entries require manager approval (disabled by default)'},
 
             # User/System operations
             {'task_name': 'Create User', 'entity': 'User', 'action': 'CREATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Creating new system users requires head office approval'},
+             'description': 'Creating new system users requires head office approval (disabled by default)'},
 
             {'task_name': 'Update User', 'entity': 'User', 'action': 'UPDATE',
-             'threshold_amount': 0, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Updating user details requires head office approval'},
+             'description': 'Updating user details requires head office approval (disabled by default)'},
 
             # Office/Fund transfers
             {'task_name': 'Create Office Transaction', 'entity': 'OFFICETRANSACTION', 'action': 'CREATE',
-             'threshold_amount': 3000000, 'threshold_currency': 'XAF',
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Head Office Manager',
-             'description': 'Inter-branch fund transfers above 3M XAF require head office approval'},
+             'description': 'Inter-branch fund transfers require head office approval (disabled by default)'},
         ]
         return pd.DataFrame(data)
 
@@ -1294,22 +1520,30 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_account_number_preferences_sheet(self):
-        """Create account number format preferences"""
+        """Create account number format preferences.
+
+        Valid prefixType values per entity type (from Fineract API):
+        - CLIENT: 1 (Office Name), 101 (Client Type), 401 (Custom Prefix)
+        - LOAN: 1 (Office Name), 201 (Loan Product Short Name), 401 (Custom Prefix)
+        - SAVINGS: 1 (Office Name), 301 (Savings Product Short Name), 401 (Custom Prefix)
+        - GROUPS: 1 (Office Name) only
+        - CENTERS: 1 (Office Name) only
+        """
         data = [
-            {'entity_type': 'Client', 'prefix_type': 'Office Short Name', 'account_number_length': 9,
-             'example': 'DLA000001', 'description': 'Client account numbers: Office code + 6 digits'},
+            {'entity_type': 'CLIENT', 'prefix_type': 'Office Name', 'prefix_type_id': 1,
+             'example': 'Yaounde000001', 'description': 'Client account numbers: Office name + sequence'},
 
-            {'entity_type': 'Loan', 'prefix_type': 'Product Short Name', 'account_number_length': 12,
-             'example': 'MICRO000001', 'description': 'Loan account numbers: Product code + 6 digits'},
+            {'entity_type': 'LOAN', 'prefix_type': 'Loan Product Short Name', 'prefix_type_id': 201,
+             'example': 'MICRO000001', 'description': 'Loan account numbers: Product short name + sequence'},
 
-            {'entity_type': 'Savings', 'prefix_type': 'Product Short Name', 'account_number_length': 12,
-             'example': 'VOL00000001', 'description': 'Savings account numbers: Product code + 8 digits'},
+            {'entity_type': 'SAVINGS', 'prefix_type': 'Savings Product Short Name', 'prefix_type_id': 301,
+             'example': 'VOL00000001', 'description': 'Savings account numbers: Product short name + sequence'},
 
-            {'entity_type': 'Groups', 'prefix_type': 'Office Short Name', 'account_number_length': 10,
-             'example': 'GRP-DLA001', 'description': 'Group account numbers: GRP-Office code + 3 digits'},
+            {'entity_type': 'GROUP', 'prefix_type': 'Office Name', 'prefix_type_id': 1,
+             'example': 'Yaounde-GRP001', 'description': 'Group account numbers: Office name + sequence'},
 
-            {'entity_type': 'Centers', 'prefix_type': 'Office Short Name', 'account_number_length': 10,
-             'example': 'CTR-DLA001', 'description': 'Center account numbers: CTR-Office code + 3 digits'},
+            {'entity_type': 'CENTER', 'prefix_type': 'Office Name', 'prefix_type_id': 1,
+             'example': 'Yaounde-CTR001', 'description': 'Center account numbers: Office name + sequence'},
         ]
         return pd.DataFrame(data)
 
@@ -1477,102 +1711,77 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_global_config_sheet(self):
-        """Create comprehensive global configuration settings"""
+        """Create comprehensive global configuration settings.
+
+        value_type indicates how the value should be interpreted:
+        - 'boolean': The config is a toggle, use 'enabled' field only (no value field needed)
+        - 'numeric': The config expects an integer value
+        - 'string': The config expects a string value (use stringValue field)
+        - 'date': The config expects a date value (use dateValue field)
+        """
         data = [
-            # Maker-Checker Global Settings
-            {'config_name': 'maker-checker', 'enabled': 'Yes', 'value': 'true',
+            # Maker-Checker Global Settings (boolean - toggle only)
+            {'config_name': 'maker-checker', 'enabled': 'Yes', 'value_type': 'boolean',
              'description': 'Enable maker-checker globally'},
 
-            # Reschedule Future Repayments
-            {'config_name': 'reschedule-future-repayments', 'enabled': 'Yes', 'value': 'true',
+            # Reschedule Future Repayments (boolean)
+            {'config_name': 'reschedule-future-repayments', 'enabled': 'Yes', 'value_type': 'boolean',
              'description': 'Allow rescheduling of future repayments'},
 
-            # Allow Backdated Transaction
-            {'config_name': 'allow-backdated-transaction-before-interest-posting', 'enabled': 'No', 'value': 'false',
+            # Allow Backdated Transaction (boolean)
+            {'config_name': 'allow-backdated-transaction-before-interest-posting', 'enabled': 'No', 'value_type': 'boolean',
              'description': 'Prevent backdated transactions before interest posting'},
 
-            # Allow Transactions on Non-Working Days
-            {'config_name': 'allow-transactions-on-non_working_day', 'enabled': 'No', 'value': 'false',
+            # Allow Transactions on Non-Working Days (boolean)
+            {'config_name': 'allow-transactions-on-non-workingday', 'enabled': 'No', 'value_type': 'boolean',
              'description': 'Block transactions on holidays and weekends'},
 
-            # Allow Transactions on Holidays
-            {'config_name': 'allow-transactions-on-holiday', 'enabled': 'No', 'value': 'false',
+            # Allow Transactions on Holidays (boolean)
+            {'config_name': 'allow-transactions-on-holiday', 'enabled': 'No', 'value_type': 'boolean',
              'description': 'Block transactions on public holidays'},
 
-            # Savings Interest Posting (may not be supported in all Fineract versions)
-            # {'config_name': 'savings-interest-posting-current-period-end', 'enabled': 'Yes', 'value': 'per_period',
-            #  'description': 'Post savings interest at period end'},
+            # Financial Year Beginning (numeric: 1-12 for month)
+            {'config_name': 'financial-year-beginning-month', 'enabled': 'Yes', 'value': 1, 'value_type': 'numeric',
+             'description': 'Financial year starts in January (1-12)'},
 
-            # Financial Year Beginning
-            {'config_name': 'financial-year-beginning-month', 'enabled': 'Yes', 'value': '1',
-             'description': 'Financial year starts in January'},
+            # Days before repayment is due reminder (numeric)
+            {'config_name': 'days-before-repayment-is-due', 'enabled': 'Yes', 'value': 3, 'value_type': 'numeric',
+             'description': 'Days before repayment due to send reminder'},
 
-            # Organisation Start Date - DISABLED: Causes 500 error in some Fineract versions
-            # {'config_name': 'organisation-start-date', 'enabled': 'Yes', 'value': '01 January 2020',
-            #  'description': 'Date when the organization started operations (cutoff for historical transactions)'},
+            # Days after repayment is overdue reminder (numeric)
+            {'config_name': 'days-after-repayment-is-overdue', 'enabled': 'Yes', 'value': 3, 'value_type': 'numeric',
+             'description': 'Days after repayment overdue to send reminder'},
 
-            # Min/Max days between repayments
-            {'config_name': 'min-days-between-disbursal-and-first-repayment', 'enabled': 'Yes', 'value': '1',
-             'description': 'Minimum days between disbursement and first repayment'},
+            # Enable Sub Rates (boolean)
+            {'config_name': 'sub-rates', 'enabled': 'No', 'value_type': 'boolean',
+             'description': 'Enable sub-rate interest calculations'},
 
-            # Grace on arrears ageing
-            {'config_name': 'grace-on-arrears-ageing', 'enabled': 'Yes', 'value': '0',
-             'description': 'Grace period for arrears aging calculation (days)'},
+            # Is Interest to be Recovered First (boolean)
+            {'config_name': 'is-interest-to-be-recovered-first-when-greater-than-emi', 'enabled': 'No', 'value_type': 'boolean',
+             'description': 'Recover interest before principal when payment exceeds EMI'},
 
-            # Allow Dividend Calculation for Inactive Clients
-            {'config_name': 'allow-dividend-calculation-for-inactive-clients', 'enabled': 'No', 'value': 'false',
-             'description': 'Exclude inactive clients from dividend calculation'},
+            # Enable Principal Threshold for Last Installment (boolean)
+            {'config_name': 'is-principal-compounding-disabled-for-overdue-loans', 'enabled': 'No', 'value_type': 'boolean',
+             'description': 'Disable principal compounding for overdue loans'},
 
-            # Enforce Minimum Required Balance
-            {'config_name': 'enforce-min-required-balance', 'enabled': 'Yes', 'value': 'true',
-             'description': 'Enforce minimum balance requirement for savings accounts'},
-
-            # Allow Withdrawal Fee
-            {'config_name': 'allow-withdrawals-on-savings-account-withhold-tax', 'enabled': 'No', 'value': 'false',
-             'description': 'Block withdrawals if withholding tax unpaid'},
-
-            # Interest Calculation Using Daily Balance
-            {'config_name': 'interest-calculation-using-daily-balance', 'enabled': 'Yes', 'value': 'true',
-             'description': 'Calculate interest using daily balance'},
-
-            # Accounting Rule
-            {'config_name': 'accounting-rule', 'enabled': 'Yes', 'value': '2',
-             'description': 'Accounting rule: 1=None, 2=Cash, 3=Accrual Periodic, 4=Accrual Upfront'},
-
-            # Days in Year
-            {'config_name': 'days-in-year-type', 'enabled': 'Yes', 'value': '365',
-             'description': 'Days in year for interest calculations: 360 or 365'},
-
-            # Days in Month
-            {'config_name': 'days-in-month-type', 'enabled': 'Yes', 'value': '30',
-             'description': 'Days in month for interest calculations: 30 or Actual'},
-
-            # Charge Accrual Date (may not be supported in all Fineract versions)
-            # {'config_name': 'charge-accrual-date', 'enabled': 'Yes', 'value': 'due-date',
-            #  'description': 'When to accrue charges: due-date or submitted-date'},
-
-            # Enable Business Date
-            {'config_name': 'enable_business_date', 'enabled': 'Yes', 'value': 'false',
+            # Enable Business Date (boolean)
+            {'config_name': 'enable-business-date', 'enabled': 'Yes', 'value_type': 'boolean',
              'description': 'Enable business date (COB) feature'},
 
-            # Enable Auto Repayment for Down-payment
-            {'config_name': 'enable-auto-generated-external-id', 'enabled': 'Yes', 'value': 'true',
+            # Enable Auto Repayment for Down-payment (boolean)
+            {'config_name': 'enable-auto-generated-external-id', 'enabled': 'Yes', 'value_type': 'boolean',
              'description': 'Auto-generate external IDs if not provided'},
 
-            # Meeting Calendar
-            {'config_name': 'meetings-mandatory-for-jlg-loans', 'enabled': 'No', 'value': 'false',
+            # Meeting Calendar (boolean)
+            {'config_name': 'meetings-mandatory-for-jlg-loans', 'enabled': 'No', 'value_type': 'boolean',
              'description': 'Make meetings mandatory for JLG (Joint Liability Group) loans'},
 
-            # Minimum Age for Clients
-            {'config_name': 'minimum-age-for-client-activation', 'enabled': 'Yes', 'value': '18',
-             'description': 'Minimum age required for client activation'},
+            # Enable Same Maker/Checker (boolean)
+            {'config_name': 'enable-same-maker-checker', 'enabled': 'No', 'value_type': 'boolean',
+             'description': 'Allow same user as maker and checker'},
 
-            # Loan COB
-            {'config_name': 'is-loan-cob-enabled', 'enabled': 'No', 'value': 'false',
-             'description': 'Enable Close of Business for loans'},
-
-            # Penalty Wait Period
-            {'config_name': 'penalty-wait-period', 'enabled': 'Yes', 'value': '0',
+            # Penalty Wait Period (numeric)
+            {'config_name': 'penalty-wait-period', 'enabled': 'Yes', 'value': 0, 'value_type': 'numeric',
              'description': 'Days to wait before applying penalty charges'},
         ]
         return pd.DataFrame(data)
@@ -1731,139 +1940,154 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_data_tables_sheet(self):
-        """Create custom data tables (custom fields) configuration"""
-        data = [
-            # Client Custom Fields
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_type',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'National ID,Passport,Voter Card,Driver License',
-             'description': 'Type of identification document'},
+        """Create custom data tables (custom fields) configuration
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_number',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+        IMPORTANT fields for Fineract API:
+        - entity_sub_type: Required for Client entity (PERSON or ENTITY)
+        - code: Required for Dropdown type fields (must reference an existing code name)
+        - length: Required for String/Text/Dropdown types
+
+        Length defaults:
+        - String: 200
+        - Text: 1000
+        - Dropdown: 100
+        - Number: 10
+        - Decimal: 19
+        - Date/Datetime/Boolean: not required (empty)
+        """
+        data = [
+            # Client Custom Fields - entitySubType is MANDATORY for m_client tables
+            # Note: Using String type instead of Dropdown for simplicity (avoids code dependency)
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'id_type', 'field_type': 'String', 'length': 100, 'mandatory': 'Yes',
+             'description': 'Type of identification document (National ID, Passport, etc.)'},
+
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'id_number', 'field_type': 'String', 'length': 200, 'mandatory': 'Yes',
              'description': 'Identification document number'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'id_expiry_date',
-             'field_type': 'Date', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'id_expiry_date', 'field_type': 'Date', 'length': '', 'mandatory': 'No',
              'description': 'ID document expiry date'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_name',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'next_of_kin_name', 'field_type': 'String', 'length': 200, 'mandatory': 'Yes',
              'description': 'Next of kin full name'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_phone',
-             'field_type': 'String', 'mandatory': 'Yes', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'next_of_kin_phone', 'field_type': 'String', 'length': 200, 'mandatory': 'Yes',
              'description': 'Next of kin phone number'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'next_of_kin_relationship',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'Spouse,Parent,Sibling,Child,Friend,Other',
-             'description': 'Relationship to next of kin'},
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'next_of_kin_relationship', 'field_type': 'String', 'length': 100, 'mandatory': 'Yes',
+             'description': 'Relationship to next of kin (Spouse, Parent, Sibling, etc.)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'employer_name',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'employer_name', 'field_type': 'String', 'length': 200, 'mandatory': 'No',
              'description': 'Employer name (for salaried clients)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'employer_phone',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'employer_phone', 'field_type': 'String', 'length': 200, 'mandatory': 'No',
              'description': 'Employer contact number'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'years_in_business',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'years_in_business', 'field_type': 'Number', 'length': 10, 'mandatory': 'No',
              'description': 'Years in current business (for self-employed)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'business_location',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'business_location', 'field_type': 'String', 'length': 200, 'mandatory': 'No',
              'description': 'Business physical location'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'home_ownership',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Owned,Rented,Family Home,Other',
-             'description': 'Home ownership status'},
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'home_ownership', 'field_type': 'String', 'length': 100, 'mandatory': 'No',
+             'description': 'Home ownership status (Owned, Rented, Family Home, etc.)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'disability_status',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'None,Physical,Visual,Hearing,Other',
-             'description': 'Disability status (for inclusive finance)'},
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info',
+             'field_name': 'disability_status', 'field_type': 'String', 'length': 100, 'mandatory': 'No',
+             'description': 'Disability status (None, Physical, Visual, Hearing, Other)'},
 
-            # Additional client fields from Clients sheet
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'address',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            # Additional client fields from Clients sheet (must use m_client with entity_sub_type)
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'address',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Residential address'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'city',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'city',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'City of residence'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'marital_status',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Single,Married,Divorced,Widow,Widower',
-             'description': 'Marital status'},
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'marital_status',
+             'field_type': 'String', 'length': 100, 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Marital status (Single, Married, Divorced, Widow, Widower)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'number_of_dependents',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'number_of_dependents',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Number of dependents'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'occupation',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'occupation',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Client occupation or profession'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'business_type',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'business_type',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Type of business activity'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'monthly_income',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'monthly_income',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Estimated monthly income (XAF)'},
 
-            {'entity_type': 'Client', 'table_name': 'client_additional_info', 'field_name': 'risk_rating',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'A,B,C,D',
-             'description': 'Client risk rating (A=Low, D=High)'},
+            {'entity_type': 'm_client', 'entity_sub_type': 'PERSON', 'table_name': 'client_additional_info', 'field_name': 'risk_rating',
+             'field_type': 'String', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Client risk rating (A=Low, B, C, D=High)'},
 
             # Loan Custom Fields
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'loan_purpose_detail',
-             'field_type': 'Text', 'mandatory': 'Yes', 'dropdown_values': '',
+             'field_type': 'Text', 'length': 1000, 'mandatory': 'Yes', 'dropdown_values': '',
              'description': 'Detailed description of loan purpose'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'collateral_description',
-             'field_type': 'Text', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Text', 'length': 1000, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Description of collateral provided'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'collateral_value',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Estimated collateral value (XAF)'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'guarantor_count',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Number of guarantors'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'credit_score',
-             'field_type': 'Number', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Number', 'length': 10, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Credit score (0-100)'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'repayment_source',
-             'field_type': 'Dropdown', 'mandatory': 'Yes', 'dropdown_values': 'Business Income,Salary,Remittances,Other',
-             'description': 'Primary source of repayment'},
+             'field_type': 'String', 'length': 100, 'mandatory': 'Yes', 'dropdown_values': '',
+             'description': 'Primary source of repayment (Business Income, Salary, Remittances, Other)'},
 
             {'entity_type': 'Loan', 'table_name': 'loan_additional_info', 'field_name': 'previous_loan_history',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'First Loan,Good History,Some Delays,Defaulted Before',
-             'description': 'Previous loan repayment history'},
+             'field_type': 'String', 'length': 100, 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Previous loan repayment history (First Loan, Good History, Some Delays, Defaulted Before)'},
 
             # Savings Custom Fields
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'savings_goal',
-             'field_type': 'String', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'String', 'length': 200, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Client\'s savings goal'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'target_amount',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Target savings amount (XAF)'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'target_date',
-             'field_type': 'Date', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Date', 'length': '', 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Target date to reach goal'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'monthly_commitment',
-             'field_type': 'Decimal', 'mandatory': 'No', 'dropdown_values': '',
+             'field_type': 'Decimal', 'length': 19, 'mandatory': 'No', 'dropdown_values': '',
              'description': 'Monthly savings commitment (XAF)'},
 
             {'entity_type': 'Savings', 'table_name': 'savings_additional_info', 'field_name': 'preferred_transaction_channel',
-             'field_type': 'Dropdown', 'mandatory': 'No', 'dropdown_values': 'Branch,Mobile Money,Bank Transfer,Agent',
-             'description': 'Preferred way to transact'},
+             'field_type': 'String', 'length': 100, 'mandatory': 'No', 'dropdown_values': '',
+             'description': 'Preferred way to transact (Branch, Mobile Money, Bank Transfer, Agent)'},
         ]
         return pd.DataFrame(data)
 
@@ -2106,6 +2330,26 @@ class FineractDemoDataGenerator:
                     'description': 'Whether this field is required',
                     'allowed_values': ['Yes', 'No']
                 }
+            },
+            'Maker Checker Config': {
+                'entity': {
+                    'description': 'Entity type for maker-checker. Common values: Loan, SAVINGSACCOUNT, Client, JOURNALENTRY, User, RESCHEDULELOAN, OFFICETRANSACTION',
+                    'allowed_values': ['Loan', 'SAVINGSACCOUNT', 'Client', 'JOURNALENTRY', 'User', 'RESCHEDULELOAN', 'OFFICETRANSACTION']
+                },
+                'action': {
+                    'description': 'Action type for maker-checker. Common values: APPROVE, DISBURSE, WRITEOFF, CREATE, ACTIVATE, UPDATE, CLOSE, PROPOSETRANSFER',
+                    'allowed_values': ['APPROVE', 'DISBURSE', 'WRITEOFF', 'CREATE', 'ACTIVATE', 'UPDATE', 'CLOSE', 'PROPOSETRANSFER']
+                },
+                'enabled': {
+                    'description': 'Enable this maker-checker permission. When enabled, ALL operations of this type require approval (Fineract does NOT support amount-based thresholds)',
+                    'allowed_values': ['True', 'False']
+                }
+            },
+            'Loan Accounts': {
+                'workflow_state': {
+                    'description': 'Loan workflow state:\n- active: Auto-approve and auto-disburse (normal flow)\n- pending_approval: Create loan, stop at approval (demonstrates maker-checker)\n- pending_disbursal: Create and approve loan, stop at disbursal (demonstrates maker-checker)',
+                    'allowed_values': ['active', 'pending_approval', 'pending_disbursal']
+                }
             }
         }
 
@@ -2171,58 +2415,62 @@ class FineractDemoDataGenerator:
         return pd.DataFrame(data)
 
     def create_savings_withdrawals_sheet(self):
-        """Create sample savings withdrawal transactions"""
+        """Create sample savings withdrawal transactions.
+
+        Note: Withdrawal amounts must be less than account balance.
+        Using small amounts to ensure sufficient balance after deposits.
+        """
         data = [
             # Withdrawals for Yaounde clients
             {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
-             'transaction_date': '2024-03-15', 'transaction_amount': 20000,
+             'transaction_date': '2024-03-15', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-001',
              'note': 'Emergency withdrawal', 'office': 'Yaounde Branch'},
 
             {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
-             'transaction_date': '2024-03-18', 'transaction_amount': 10000,
-             'payment_type': 'ATM', 'receipt_number': 'WDL-002',
+             'transaction_date': '2024-03-18', 'transaction_amount': 5000,
+             'payment_type': 'Cash', 'receipt_number': 'WDL-002',
              'note': 'Cash withdrawal', 'office': 'Yaounde Branch'},
 
             # Withdrawals for Douala clients
             {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
-             'transaction_date': '2024-03-16', 'transaction_amount': 30000,
+             'transaction_date': '2024-03-16', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-003',
              'note': 'Personal expense', 'office': 'Douala Branch'},
 
             {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
-             'transaction_date': '2024-03-20', 'transaction_amount': 25000,
+             'transaction_date': '2024-03-20', 'transaction_amount': 5000,
              'payment_type': 'Bank Transfer', 'receipt_number': 'WDL-004',
              'note': 'Supplier payment', 'office': 'Douala Branch'},
 
             # Withdrawals for Bafoussam clients
             {'client_name': 'Pierre Tchuente', 'savings_account_number': 'SAV-011',
-             'transaction_date': '2024-03-17', 'transaction_amount': 15000,
+             'transaction_date': '2024-03-17', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-005',
              'note': 'School fees', 'office': 'Bafoussam Branch'},
 
             {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-012',
-             'transaction_date': '2024-03-22', 'transaction_amount': 20000,
+             'transaction_date': '2024-03-22', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-006',
              'note': 'Medical expenses', 'office': 'Bafoussam Branch'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_repayments_sheet(self):
-        """Create sample loan repayment transactions"""
+        """Create sample loan repayment transactions.
+
+        Note: Loans must be Active, Fully Paid or Overpaid to accept repayments.
+        LOAN-001, LOAN-003, LOAN-004, LOAN-005 are Overpaid (can accept repayments)
+        LOAN-002, LOAN-006 are pending approval (cannot accept repayments)
+        """
         data = [
-            # Repayments for Yaounde clients
+            # Repayments for Yaounde clients - LOAN-001 (Overpaid)
             {'client_name': 'Jean Dupont', 'loan_account_number': 'LOAN-001',
              'transaction_date': '2024-03-15', 'principal_amount': 20000, 'interest_amount': 5000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-001', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
 
-            {'client_name': 'Marie Kamga', 'loan_account_number': 'LOAN-002',
-             'transaction_date': '2024-03-20', 'principal_amount': 40000, 'interest_amount': 12000,
-             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Bank Transfer',
-             'receipt_number': 'REP-002', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
-
-            # Repayments for Douala clients
+            # Repayments for Douala clients - LOAN-003 (Overpaid)
             {'client_name': 'Paul Ekambi', 'loan_account_number': 'LOAN-003',
              'transaction_date': '2024-03-18', 'principal_amount': 30000, 'interest_amount': 8000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
@@ -2233,122 +2481,73 @@ class FineractDemoDataGenerator:
              'fee_amount': 0, 'penalty_amount': 2000, 'payment_type': 'Bank Transfer',
              'receipt_number': 'REP-004', 'note': 'Late payment with penalty', 'office': 'Douala Branch'},
 
-            # Repayments for Bafoussam clients
+            # Repayments for Bafoussam clients - LOAN-005 (Overpaid)
             {'client_name': 'Pierre Tchuente', 'loan_account_number': 'LOAN-005',
              'transaction_date': '2024-03-22', 'principal_amount': 25000, 'interest_amount': 6500,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-005', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
-
-            {'client_name': 'Justine Moukouri', 'loan_account_number': 'LOAN-006',
-             'transaction_date': '2024-03-29', 'principal_amount': 35000, 'interest_amount': 9000,
-             'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Mobile Money',
-             'receipt_number': 'REP-006', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_collateral_sheet(self):
-        """Create loan collateral assignments"""
+        """Create loan collateral assignments.
+
+        Fields match LoanCollateral model:
+        - loan_external_id: External ID of the loan account
+        - collateral_type_name: Name of collateral type (must match existing type)
+        - value: Collateral value amount
+        - description: Description of the collateral
+        """
+        # Collateral type names must match create_collateral_types_sheet():
+        # 'Land Title', 'Vehicle Registration', 'Household Goods', 'Shop/Business Equipment',
+        # 'Savings Account Lien', 'Group Guarantee'
+        # Use loans LOAN-002 and LOAN-006 (pending approval status - collateral can be added)
         data = [
-            # Collateral for Yaounde loans
-            {'loan_account_number': 'LOAN-001', 'client_name': 'Jean Dupont',
-             'collateral_type': 'Land Title', 'collateral_value': 1000000,
-             'description': 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001',
-             'location': 'Bastos, Yaounde', 'condition': 'Good',
-             'valuation_date': '2024-01-15', 'valuation_by': 'Licensed Appraiser',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            # Collateral for pending loans only
+            {'loan_external_id': 'LOAN-002', 'collateral_type_name': 'Land Title',
+             'value': 1000000,
+             'description': 'Residential plot in Bastos, Yaounde - Title deed #YDE-2023-001'},
 
-            {'loan_account_number': 'LOAN-002', 'client_name': 'Marie Kamga',
-             'collateral_type': 'Business Equipment', 'collateral_value': 1500000,
-             'description': 'Commercial sewing machines (5 units) and industrial pressing equipment',
-             'location': 'Shop at Mokolo Market, Yaounde', 'condition': 'Excellent',
-             'valuation_date': '2024-01-20', 'valuation_by': 'Equipment Assessor',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-002', 'collateral_type_name': 'Shop/Business Equipment',
+             'value': 500000,
+             'description': 'Commercial sewing machines (5 units)'},
 
-            # Collateral for Douala loans
-            {'loan_account_number': 'LOAN-003', 'client_name': 'Paul Ekambi',
-             'collateral_type': 'Vehicle', 'collateral_value': 1200000,
-             'description': 'Toyota Hilux 2020 - Registration DLA-4567-AB',
-             'location': 'Akwa, Douala', 'condition': 'Very Good',
-             'valuation_date': '2024-01-18', 'valuation_by': 'Auto Valuer',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-006', 'collateral_type_name': 'Vehicle Registration',
+             'value': 1200000,
+             'description': 'Toyota Hilux 2020 - Registration DLA-4567-AB'},
 
-            {'loan_account_number': 'LOAN-004', 'client_name': 'Grace Fotso',
-             'collateral_type': 'Commercial Property', 'collateral_value': 3000000,
-             'description': 'Commercial building with 3 shops - Title deed #DLA-2022-089',
-             'location': 'Bonaberi, Douala', 'condition': 'Good',
-             'valuation_date': '2024-01-25', 'valuation_by': 'Real Estate Appraiser',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
-
-            # Collateral for Bafoussam loans
-            {'loan_account_number': 'LOAN-005', 'client_name': 'Pierre Tchuente',
-             'collateral_type': 'Agricultural Land', 'collateral_value': 800000,
-             'description': '2 hectares farmland with coffee plantation',
-             'location': 'Baleng, Bafoussam', 'condition': 'Good',
-             'valuation_date': '2024-01-22', 'valuation_by': 'Agricultural Assessor',
-             'ownership_status': 'Owned', 'insurance': 'No'},
-
-            {'loan_account_number': 'LOAN-006', 'client_name': 'Justine Moukouri',
-             'collateral_type': 'Farm Equipment', 'collateral_value': 1000000,
-             'description': 'Tractor and farming implements',
-             'location': 'Farm in Dschang Road', 'condition': 'Good',
-             'valuation_date': '2024-02-01', 'valuation_by': 'Equipment Assessor',
-             'ownership_status': 'Owned', 'insurance': 'Yes'},
+            {'loan_external_id': 'LOAN-006', 'collateral_type_name': 'Household Goods',
+             'value': 300000,
+             'description': 'Furniture, appliances and household items'},
         ]
         return pd.DataFrame(data)
 
     def create_loan_guarantors_sheet(self):
-        """Create loan guarantor assignments"""
+        """Create loan guarantor assignments.
+
+        Fields match LoanGuarantor model:
+        - loan_external_id: External ID of the loan account
+        - guarantor_type: CLIENT, STAFF, or EXTERNAL
+        - client_external_id: For CLIENT type guarantors
+        - staff_name: For STAFF type guarantors
+        - firstname, lastname, address_line_1, city: For EXTERNAL type guarantors
+        - amount: Guaranteed amount
+        - savings_external_id: Optional savings account held as collateral
+        """
+        # Only use loans with "Submitted and pending approval" status: LOAN-002, LOAN-006
+        # Cannot add guarantors to closed/overpaid loans
+        # Note: Client cannot be guarantor for their own loan
+        # LOAN-002 belongs to CLI-002, so use CLI-003 as guarantor
         data = [
-            # Guarantors for Yaounde loans
-            {'loan_account_number': 'LOAN-001', 'borrower_name': 'Jean Dupont',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Thomas Mbele',
-             'guarantor_id': 'ID-12345678', 'guarantor_phone': '+237 677 88 99 00',
-             'guarantor_address': 'Mvan, Yaounde', 'relationship': 'Brother',
-             'guaranteed_amount': 250000, 'guarantee_date': '2024-02-10',
-             'employment': 'Civil Servant - Ministry of Education',
-             'employer_name': 'Government of Cameroon', 'monthly_income': 350000},
+            # CLIENT type guarantor - another client guarantees the loan
+            # (CLI-003 guarantees CLI-002's loan LOAN-002)
+            {'loan_external_id': 'LOAN-002', 'guarantor_type': 'CLIENT',
+             'client_external_id': 'CLI-003', 'amount': 250000},
 
-            {'loan_account_number': 'LOAN-002', 'borrower_name': 'Marie Kamga',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Christine Biaka',
-             'guarantor_id': 'ID-23456789', 'guarantor_phone': '+237 677 11 22 33',
-             'guarantor_address': 'Bastos, Yaounde', 'relationship': 'Business Partner',
-             'guaranteed_amount': 500000, 'guarantee_date': '2024-02-15',
-             'employment': 'Accountant - Private Sector',
-             'employer_name': 'ECOBANK Cameroun', 'monthly_income': 450000},
-
-            # Guarantors for Douala loans
-            {'loan_account_number': 'LOAN-003', 'borrower_name': 'Paul Ekambi',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Samuel Nkolo',
-             'guarantor_id': 'ID-34567890', 'guarantor_phone': '+237 677 22 33 44',
-             'guarantor_address': 'Bonapriso, Douala', 'relationship': 'Friend',
-             'guaranteed_amount': 375000, 'guarantee_date': '2024-02-12',
-             'employment': 'Business Owner - Import/Export',
-             'employer_name': 'Self-employed', 'monthly_income': 800000},
-
-            {'loan_account_number': 'LOAN-004', 'borrower_name': 'Grace Fotso',
-             'guarantor_type': 'Corporate', 'guarantor_name': 'Fotso Family Business Ltd',
-             'guarantor_id': 'RC-DLA-2020-1234', 'guarantor_phone': '+237 233 44 55 66',
-             'guarantor_address': 'Akwa, Douala', 'relationship': 'Family Business',
-             'guaranteed_amount': 1000000, 'guarantee_date': '2024-02-20',
-             'employment': 'Corporate Entity',
-             'employer_name': 'N/A', 'monthly_income': 0},
-
-            # Guarantors for Bafoussam loans
-            {'loan_account_number': 'LOAN-005', 'borrower_name': 'Pierre Tchuente',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Jean Kemayou',
-             'guarantor_id': 'ID-45678901', 'guarantor_phone': '+237 677 33 44 55',
-             'guarantor_address': 'Centre Ville, Bafoussam', 'relationship': 'Cousin',
-             'guaranteed_amount': 300000, 'guarantee_date': '2024-02-18',
-             'employment': 'Teacher - Secondary School',
-             'employer_name': 'Lycee de Bafoussam', 'monthly_income': 280000},
-
-            {'loan_account_number': 'LOAN-006', 'borrower_name': 'Justine Moukouri',
-             'guarantor_type': 'Individual', 'guarantor_name': 'Marie Fotso',
-             'guarantor_id': 'ID-56789012', 'guarantor_phone': '+237 677 44 55 66',
-             'guarantor_address': 'Djeleng, Bafoussam', 'relationship': 'Sister',
-             'guaranteed_amount': 400000, 'guarantee_date': '2024-02-25',
-             'employment': 'Nurse - Public Hospital',
-             'employer_name': 'Bafoussam Regional Hospital', 'monthly_income': 320000},
+            # EXTERNAL type guarantor - person not in system
+            {'loan_external_id': 'LOAN-006', 'guarantor_type': 'EXTERNAL',
+             'firstname': 'Jean', 'lastname': 'Kemayou',
+             'address_line_1': 'Centre Ville', 'city': 'Bafoussam', 'amount': 400000},
         ]
         return pd.DataFrame(data)
 
@@ -2713,8 +2912,17 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
             print("  Creating Staff sheet...")
             self.create_staff_sheet().to_excel(writer, sheet_name='Staff', index=False)
 
+            print("  Creating Users sheet...")
+            self.create_users_sheet().to_excel(writer, sheet_name='Users', index=False)
+
             print("  Creating Clients sheet...")
             self.create_clients_sheet().to_excel(writer, sheet_name='Clients', index=False)
+
+            print("  Creating Groups sheet...")
+            self.create_groups_sheet().to_excel(writer, sheet_name='Groups', index=False)
+
+            print("  Creating Centers sheet...")
+            self.create_centers_sheet().to_excel(writer, sheet_name='Centers', index=False)
 
             print("  Creating Loan Products sheet...")
             self.create_loan_products_sheet().to_excel(writer, sheet_name='Loan Products', index=False)
@@ -2782,6 +2990,9 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
             print("  Creating Tellers sheet...")
             self.create_tellers_sheet().to_excel(writer, sheet_name='Tellers', index=False)
 
+            print("  Creating Teller Accounting Rules sheet...")
+            self.create_teller_accounting_rules_sheet().to_excel(writer, sheet_name='Teller Accounting Rules', index=False)
+
             print("  Creating Roles and Permissions sheet...")
             self.create_roles_permissions_sheet().to_excel(writer, sheet_name='Roles Permissions', index=False)
 
@@ -2847,51 +3058,53 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
         self.format_excel(self.filename)
 
         print(f"\n✓ Excel template generated successfully: {self.filename}")
-        print(f"\nSheets created: 44")
+        print(f"\nSheets created: 46")
         print(f"  1. Offices (4 branches)")
         print(f"  2. Staff (12 members)")
         print(f"  3. Clients (12 clients)")
-        print(f"  4. Loan Products (3 products)")
-        print(f"  5. Savings Products (3 products)")
-        print(f"  6. Charges (11 fees)")
-        print(f"  7. Chart of Accounts (30 GL accounts)")
-        print(f"  8. Loan Accounts (6 sample loans)")
-        print(f"  9. Savings Accounts (12 sample accounts)")
-        print(f" 10. Fund Sources (6 sources)")
-        print(f" 11. Payment Types (5 channels)")
-        print(f" 12. Holidays (12 public holidays)")
-        print(f" 13. Loan Provisioning (5 COBAC categories)")
-        print(f" 14. Collateral Types (6 types)")
-        print(f" 15. Guarantor Types (6 types)")
-        print(f" 16. Floating Rates (3 rates - BEAC, Prime, SME)")
-        print(f" 17. Delinquency Buckets (5 buckets for arrears classification)")
-        print(f" 18. Tax Groups (2 groups - Savings WHT, Loan WHT)")
-        print(f" 19. Configuration (19 system settings)")
-        print(f" 20. Loan Product Accounting (39 mappings - 13 per product)")
-        print(f" 21. Savings Product Accounting (33 mappings - 11 per product)")
-        print(f" 22. Payment Type Accounting (5 mappings)")
-        print(f" 23. Financial Activity Mapping (6 mappings - inter-branch support)")
-        print(f" 24. Teller Cashier Mapping (4 GL account mappings per office)")
-        print(f" 25. Tellers (4 tellers - 1 per office)")
-        print(f" 26. Roles Permissions (3 roles with granular permissions)")
-        print(f" 27. Maker Checker Config (11 dual-authorization rules)")
-        print(f" 28. Currency Config (1 currency - XAF)")
-        print(f" 29. Working Days (7 days configuration)")
-        print(f" 30. Account Number Preferences (5 entity types)")
-        print(f" 31. Codes and Values (48 dropdown values across 10 code categories)")
-        print(f" 32. Scheduler Jobs (10 automated jobs)")
-        print(f" 33. Global Configuration (23 global settings)")
-        print(f" 34. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
-        print(f" 35. Notification Templates (16 templates - SMS/Email for all events)")
-        print(f" 36. Data Tables (24 custom fields - Client, Loan, Savings)")
-        print(f" 37. Savings Deposits (6 sample deposit transactions)")
-        print(f" 38. Savings Withdrawals (6 sample withdrawal transactions)")
-        print(f" 39. Loan Disbursements (6 sample disbursements)")
-        print(f" 40. Loan Repayments (6 sample repayment transactions)")
-        print(f" 41. Loan Collateral (6 collateral assignments - Land, Equipment, Vehicles)")
-        print(f" 42. Loan Guarantors (6 guarantor assignments - Individual & Corporate)")
-        print(f" 43. Inter-Branch Transfers (6 sample inter-branch cash transfers)")
-        print(f" 44. COBAC Reports (10 regulatory reports configuration)")
+        print(f"  4. Groups (5 solidarity groups)")
+        print(f"  5. Centers (3 centers)")
+        print(f"  6. Loan Products (3 products)")
+        print(f"  7. Savings Products (3 products)")
+        print(f"  8. Charges (11 fees)")
+        print(f"  9. Chart of Accounts (30 GL accounts)")
+        print(f" 10. Loan Accounts (6 sample loans)")
+        print(f" 11. Savings Accounts (12 sample accounts)")
+        print(f" 12. Fund Sources (6 sources)")
+        print(f" 13. Payment Types (5 channels)")
+        print(f" 14. Holidays (12 public holidays)")
+        print(f" 15. Loan Provisioning (5 COBAC categories)")
+        print(f" 16. Collateral Types (6 types)")
+        print(f" 17. Guarantor Types (6 types)")
+        print(f" 18. Floating Rates (3 rates - BEAC, Prime, SME)")
+        print(f" 19. Delinquency Buckets (5 buckets for arrears classification)")
+        print(f" 20. Tax Groups (2 groups - Savings WHT, Loan WHT)")
+        print(f" 21. Configuration (19 system settings)")
+        print(f" 22. Loan Product Accounting (39 mappings - 13 per product)")
+        print(f" 23. Savings Product Accounting (33 mappings - 11 per product)")
+        print(f" 24. Payment Type Accounting (5 mappings)")
+        print(f" 25. Financial Activity Mapping (6 mappings - inter-branch support)")
+        print(f" 26. Teller Cashier Mapping (4 GL account mappings per office)")
+        print(f" 27. Tellers (4 tellers - 1 per office)")
+        print(f" 28. Roles Permissions (3 roles with granular permissions)")
+        print(f" 29. Maker Checker Config (11 dual-authorization rules)")
+        print(f" 30. Currency Config (1 currency - XAF)")
+        print(f" 31. Working Days (7 days configuration)")
+        print(f" 32. Account Number Preferences (5 entity types)")
+        print(f" 33. Codes and Values (48 dropdown values across 10 code categories)")
+        print(f" 34. Scheduler Jobs (10 automated jobs)")
+        print(f" 35. Global Configuration (23 global settings)")
+        print(f" 36. SMS/Email Config (17 configuration items - Twilio, Gmail SMTP)")
+        print(f" 37. Notification Templates (16 templates - SMS/Email for all events)")
+        print(f" 38. Data Tables (24 custom fields - Client, Loan, Savings)")
+        print(f" 39. Savings Deposits (6 sample deposit transactions)")
+        print(f" 40. Savings Withdrawals (6 sample withdrawal transactions)")
+        print(f" 41. Loan Disbursements (6 sample disbursements)")
+        print(f" 42. Loan Repayments (6 sample repayment transactions)")
+        print(f" 43. Loan Collateral (6 collateral assignments - Land, Equipment, Vehicles)")
+        print(f" 44. Loan Guarantors (6 guarantor assignments - Individual & Corporate)")
+        print(f" 45. Inter-Branch Transfers (6 sample inter-branch cash transfers)")
+        print(f" 46. COBAC Reports (10 regulatory reports configuration)")
 
         return self.filename
 

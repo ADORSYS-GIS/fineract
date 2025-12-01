@@ -1,0 +1,103 @@
+package org.apache.fineract.config.model.product;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+
+import lombok.Data;
+
+/**
+ * Loan Product definition.
+ *
+ * <p>Defines loan product terms, interest rates, charges, and accounting rules.
+ */
+@Data
+public class LoanProduct {
+  private String name;
+  private String shortName;
+  private String description;
+  private String fundSourceName; // Reference to fund source
+  private String currencyCode;
+  private Integer digitsAfterDecimal;
+
+  // Principal limits
+  private BigDecimal principal;
+  private BigDecimal minPrincipal;
+  private BigDecimal maxPrincipal;
+
+  // Loan term limits
+  private Integer numberOfRepayments;
+  private Integer minNumberOfRepayments;
+  private Integer maxNumberOfRepayments;
+  private String repaymentFrequencyType; // DAYS, WEEKS, MONTHS, YEARS
+  private Integer repaymentEvery;
+
+  // Interest configuration
+  private BigDecimal interestRatePerPeriod;
+  private BigDecimal minInterestRatePerPeriod;
+  private BigDecimal maxInterestRatePerPeriod;
+  private String interestRateFrequencyType; // MONTH, YEAR
+  private String interestType; // FLAT, DECLINING_BALANCE
+  private String interestCalculationPeriodType; // DAILY, SAME_AS_REPAYMENT_PERIOD
+  private String amortizationType; // EQUAL_INSTALLMENTS, EQUAL_PRINCIPAL
+
+  // Charges
+  private List<String> chargeNames = new ArrayList<>();
+
+  // Accounting
+  private String accountingRule; // NONE, CASH_BASED, ACCRUAL_PERIODIC, ACCRUAL_UPFRONT
+  private String fundSourceAccountCode;
+  private String loanPortfolioAccountCode;
+  private String interestOnLoansAccountCode;
+  private String incomeFromFeesAccountCode;
+  private String incomeFromPenaltiesAccountCode;
+  private String writeOffAccountCode;
+
+  // Settings
+  private Boolean includeInBorrowerCycle;
+  private Boolean useBorrowerCycle;
+  private Boolean multiDisburseLoan;
+  private Integer maxTrancheCount;
+  private BigDecimal outstandingLoanBalance;
+
+  // Additional business logic fields
+  private Boolean allowPartialPeriodInterestCalculation;
+
+  @JsonAlias("minimumGapBetweenInstallments")
+  private Integer minimumDaysBetweenDisbursalAndFirstRepayment;
+
+  // Additional accounting fields (Code suffix for YAML -> resolution by loader)
+  private String receivableInterestAccountCode;
+  private String receivableFeeAccountCode;
+  private String receivablePenaltyAccountCode;
+  private String transfersInSuspenseAccountCode;
+  private String goodwillCreditAccountCode;
+  private String incomeFromRecoveryAccountCode;
+  private String overpaymentLiabilityAccountCode;
+
+  // Alias fields for the old naming (interestOnLoanAccountCode -> interestOnLoansAccountCode)
+  @JsonAlias("interestOnLoanAccountCode")
+  private String interestOnLoansAccountCodeAlias;
+
+  // Days in year/month types (mandatory for Fineract API)
+  private Integer daysInYearType; // 1, 360, 364, 365
+  private Integer daysInMonthType; // 1, 30
+  private Boolean isInterestRecalculationEnabled;
+
+  /**
+   * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when
+   * the YAML contains fields not mapped in the model class.
+   */
+  @com.fasterxml.jackson.annotation.JsonAnySetter
+  public void handleUnknownField(String key, Object value) {
+    org.slf4j.LoggerFactory.getLogger(this.getClass())
+        .warn(
+            "Unknown field '{}' with value '{}' in {} (will be ignored). "
+                + "This may indicate a missing field in the model class.",
+            key,
+            value,
+            this.getClass().getSimpleName());
+  }
+}

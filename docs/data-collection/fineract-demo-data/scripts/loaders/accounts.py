@@ -194,23 +194,42 @@ class AccountLoader:
                 response = self.client.post('/loans', data)
                 loan_id = response.get('resourceId') or response.get('loanId')
 
-                # Approve
-                approve_data = {
-                    'approvedOnDate': row['approved_on'],
-                    'dateFormat': 'yyyy-MM-dd',
-                    'locale': 'en'
-                }
-                self.client.post(f'/loans/{loan_id}?command=approve', approve_data)
+                # Handle workflow state
+                workflow_state = row.get('workflow_state', 'active')
 
-                # Disburse
-                disburse_data = {
-                    'actualDisbursementDate': row['disbursed_on'],
-                    'transactionAmount': row['principal'],
-                    'paymentTypeId': self.client.created_payment_types.get('Cash', 1),
-                    'dateFormat': 'yyyy-MM-dd',
-                    'locale': 'en'
-                }
-                self.client.post(f'/loans/{loan_id}?command=disburse', disburse_data)
+                if workflow_state == 'pending_approval':
+                    # Stop here - loan requires approval via maker-checker
+                    logger.info(f"⊙ Loan {row['external_id']} created - PENDING APPROVAL (maker-checker workflow)")
+                    logger.info(f"   → Checker must approve via: POST /loans/{loan_id}?command=approve")
+
+                elif workflow_state == 'pending_disbursal':
+                    # Approve, but stop before disbursal
+                    approve_data = {
+                        'approvedOnDate': row['approved_on'],
+                        'dateFormat': 'yyyy-MM-dd',
+                        'locale': 'en'
+                    }
+                    self.client.post(f'/loans/{loan_id}?command=approve', approve_data)
+                    logger.info(f"⊙ Loan {row['external_id']} approved - PENDING DISBURSAL (maker-checker workflow)")
+                    logger.info(f"   → Checker must disburse via: POST /loans/{loan_id}?command=disburse")
+
+                else:  # 'active' or default
+                    # Full workflow: Approve + Disburse
+                    approve_data = {
+                        'approvedOnDate': row['approved_on'],
+                        'dateFormat': 'yyyy-MM-dd',
+                        'locale': 'en'
+                    }
+                    self.client.post(f'/loans/{loan_id}?command=approve', approve_data)
+
+                    disburse_data = {
+                        'actualDisbursementDate': row['disbursed_on'],
+                        'transactionAmount': row['principal'],
+                        'paymentTypeId': self.client.created_payment_types.get('Cash', 1),
+                        'dateFormat': 'yyyy-MM-dd',
+                        'locale': 'en'
+                    }
+                    self.client.post(f'/loans/{loan_id}?command=disburse', disburse_data)
 
                 self.client.created_loan_accounts[row['external_id']] = loan_id
 
@@ -256,7 +275,10 @@ class AccountLoader:
                     # Data table might not exist or fields might not match - this is optional
                     logger.debug(f"  ⓘ Could not add loan data table info: {str(dt_error)}")
 
-                logger.info(f"✓ Created loan account: {row['external_id']} (ID: {loan_id})")
+                # Final status message (only if not already logged above for pending states)
+                if workflow_state == 'active':
+                    logger.info(f"✓ Created and disbursed loan account: {row['external_id']} (ID: {loan_id})")
+
                 time.sleep(0.7)
 
             except Exception as e:

@@ -58,12 +58,13 @@ class ProductLoader:
                     'description': row.get('description', '')
                 }
 
-                response = self.client.post('/glaccounts', data)
-                account_id = response.get('resourceId') or response.get('glAccountId')
+                # Use upsert to update existing GL account or create new one
+                response = self.client.upsert('/glaccounts', data, 'glCode', str(row['gl_code']))
+                account_id = response.get('resourceId') or response.get('glAccountId') or response.get('changes', {}).get('id')
 
                 self.client.created_gl_accounts[str(row['gl_code'])] = account_id
 
-                logger.info(f"✓ Created GL Account: {row['gl_code']} - {row['gl_name']} (ID: {account_id})")
+                logger.info(f"✓ Upserted GL Account: {row['gl_code']} - {row['gl_name']} (ID: {account_id})")
                 time.sleep(0.3)
 
             except Exception as e:
@@ -178,12 +179,13 @@ class ProductLoader:
                             if fee_on_day and pd.notna(fee_on_day):
                                 data['feeOnMonthDay'] = [int(fee_on_day)]
 
-                response = self.client.post('/charges', data)
-                charge_id = response.get('resourceId') or response.get('chargeId')
+                # Use upsert to update existing charge or create new one
+                response = self.client.upsert('/charges', data, 'name', row['charge_name'])
+                charge_id = response.get('resourceId') or response.get('chargeId') or response.get('changes', {}).get('id')
 
                 self.client.created_charges[row['charge_name']] = charge_id
 
-                logger.info(f"✓ Created charge: {row['charge_name']} (ID: {charge_id})")
+                logger.info(f"✓ Upserted charge: {row['charge_name']} (ID: {charge_id})")
                 time.sleep(0.3)
 
             except Exception as e:
@@ -353,12 +355,13 @@ class ProductLoader:
                     logger.warning(f"  ⚠ Some GL accounts not found for {row['short_name']}, using accountingRule=1 (None)")
                     data['accountingRule'] = 1
 
-                response = self.client.post('/loanproducts', data)
-                product_id = response.get('resourceId') or response.get('loanProductId')
+                # Use upsert to update existing product or create new one
+                response = self.client.upsert('/loanproducts', data, 'shortName', short_name)
+                product_id = response.get('resourceId') or response.get('loanProductId') or response.get('changes', {}).get('id')
 
                 self.client.created_loan_products[row['short_name']] = product_id
 
-                logger.info(f"✓ Created loan product: {row['product_name']} (ID: {product_id})")
+                logger.info(f"✓ Upserted loan product: {row['product_name']} (ID: {product_id})")
                 time.sleep(0.5)
 
             except Exception as e:
@@ -460,8 +463,9 @@ class ProductLoader:
                     logger.warning(f"  ⚠ Some GL accounts not found for {row['short_name']}, using accountingRule=1 (None)")
                     data['accountingRule'] = 1
 
-                response = self.client.post('/savingsproducts', data)
-                product_id = response.get('resourceId') or response.get('savingsProductId')
+                # Use upsert to update existing product or create new one
+                response = self.client.upsert('/savingsproducts', data, 'shortName', short_name)
+                product_id = response.get('resourceId') or response.get('savingsProductId') or response.get('changes', {}).get('id')
 
                 # Store with both original and shortened names
                 self.client.created_savings_products[row['short_name']] = product_id
@@ -518,7 +522,12 @@ class ProductLoader:
                 logger.error(f"✗ Failed to map financial activity {row['financial_activity']}: {str(e)}")
 
     def enable_maker_checker(self):
-        """Enable Maker-Checker (4-eyes principle) for critical operations"""
+        """Enable Maker-Checker (4-eyes principle) for critical operations
+
+        NOTE: Fineract's maker-checker is boolean-only (enabled/disabled).
+        When enabled, ALL operations of that type require approval.
+        Amount-based thresholds are NOT supported by Fineract's native API.
+        """
         logger.info("=" * 80)
         logger.info("ENABLING MAKER-CHECKER (DUAL AUTHORIZATION)")
         logger.info("=" * 80)
@@ -535,16 +544,28 @@ class ProductLoader:
 
         df = self._read_excel_sheet('Maker Checker Config')
 
+        # Filter only enabled permissions
+        enabled_df = df[df['enabled'] == True]
+        logger.info(f"Enabling {len(enabled_df)} out of {len(df)} configured maker-checker permissions")
+        logger.info("")
+
         # Try to enable each permission individually for better error handling
         successful_count = 0
         failed_permissions = []
+        skipped_count = 0
 
         for idx, row in df.iterrows():
+            # Skip if not enabled
+            if not row.get('enabled', False):
+                logger.debug(f"  Skipping disabled: {row['task_name']}")
+                skipped_count += 1
+                continue
+
             entity = row['entity'].upper()
             action = row['action'].upper()
             permission_code = f"{action}_{entity}"
 
-            logger.info(f"  Attempting to enable: {row['task_name']}")
+            logger.info(f"  Enabling: {row['task_name']}")
             logger.info(f"    Permission code: {permission_code}")
 
             # Check if permission exists in available permissions
@@ -569,8 +590,8 @@ class ProductLoader:
                 self.client.put('/permissions', data)
                 successful_count += 1
                 logger.info(f"    ✓ Enabled successfully")
-                logger.info(f"      Recommended Threshold: {row['threshold_amount']:,.0f} {row['threshold_currency']}")
                 logger.info(f"      Maker: {row['maker_role']}, Checker: {row['checker_role']}")
+                logger.info(f"      Note: ALL {action} operations on {entity} will require approval")
 
                 time.sleep(0.2)
 
@@ -588,7 +609,9 @@ class ProductLoader:
 
         # Summary
         logger.info("")
-        logger.info(f"✓ Successfully enabled maker-checker for {successful_count}/{len(df)} operations")
+        logger.info(f"✓ Successfully enabled maker-checker for {successful_count}/{len(enabled_df)} requested operations")
+        if skipped_count > 0:
+            logger.info(f"⊙ Skipped {skipped_count} disabled permissions")
 
         if failed_permissions:
             logger.info("")
@@ -600,9 +623,9 @@ class ProductLoader:
                     logger.info(f"  • {task_name} ({perm_code}) - Configuration error")
 
         logger.info("")
-        logger.info("NOTE: Maker-Checker has been configured for available operations.")
-        logger.info("      These operations will require dual authorization (maker + checker).")
-        logger.info("      Configure approval thresholds in: Admin → System → Manage Maker Checkers")
+        logger.info("IMPORTANT: Fineract's maker-checker is BOOLEAN (on/off).")
+        logger.info("           When enabled, ALL operations of that type require approval.")
+        logger.info("           Amount-based thresholds are NOT supported by Fineract's native API.")
         logger.info("")
         logger.info("      For unavailable permissions, check:")
         logger.info("        - Your Fineract version may not support all permission codes")
