@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - develop
+      - retry-66-write-a-docker-image-and-cicd-workflow-to-deploy-fineract-with-all-our-plugins-such-as-pentaho-and-sms-and-extensions
 permissions:
   contents: read
   packages: write
@@ -38,7 +39,7 @@ jobs:
           if [ "${{ github.ref_name }}" == "develop" ]; then
             TAGS="$TAGS,latest"
           fi
-          ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
+          ./gradlew --no-daemon --console=plain :custom:docker:jib -x test -x cucumber \
             -Djib.from.platforms=linux/amd64,linux/arm64 \
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
