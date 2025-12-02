@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - develop
-      - retry-66-write-a-docker-image-and-cicd-workflow-to-deploy-fineract-with-all-our-plugins-such-as-pentaho-and-sms-and-extensions
 permissions:
   contents: read
   packages: write
@@ -44,4 +43,6 @@ jobs:
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
             -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
-            -Djib.to.tags=$TAGS
+            -Djib.to.tags=$TAGS \
+            -Djib.sendTimeout=300000 \
+            -Djib.readTimeout=300000
