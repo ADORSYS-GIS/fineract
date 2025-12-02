@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - develop
-      - retry-66-write-a-docker-image-and-cicd-workflow-to-deploy-fineract-with-all-our-plugins-such-as-pentaho-and-sms-and-extensions
 permissions:
   contents: read
   packages: write
