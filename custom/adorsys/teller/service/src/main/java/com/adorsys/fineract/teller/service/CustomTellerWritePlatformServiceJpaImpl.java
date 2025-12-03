@@ -46,7 +46,6 @@ import org.apache.fineract.organisation.teller.domain.TellerRepositoryWrapper;
 import org.apache.fineract.organisation.teller.exception.CashierNotFoundException;
 import org.apache.fineract.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
 import org.apache.fineract.organisation.teller.service.TellerWritePlatformServiceJpaImpl;
-import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -60,7 +59,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatformServiceJpaImpl {
 
-    private final PlatformSecurityContext context;
     private final TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer;
     private final CashierRepository cashierRepository;
     private final CashierTransactionRepository cashierTxnRepository;
@@ -81,7 +79,6 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
         super(context, fromApiJsonDeserializer, tellerRepositoryWrapper, officeRepositoryWrapper, staffRepository,
                 cashierRepository, cashierTxnRepository, glJournalEntryRepository, financialActivityAccountRepositoryWrapper,
                 cashierTransactionDataValidator);
-        this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.cashierRepository = cashierRepository;
         this.cashierTxnRepository = cashierTxnRepository;
@@ -104,37 +101,10 @@ public CommandProcessingResult settleCashFromCashier(final Long cashierId, JsonC
 
 private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType, JsonCommand command) {
     try {
-        final AppUser currentUser = this.context.authenticatedUser();
-
         final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
-
         this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
-            // TODO: can we please remove this whole block?!? this is 20 lines of dead code!!!
-            final String entityType = command.stringValueOfParameterNamed("entityType");
-            if (entityType != null) {
-                if (entityType.equals("loan account")) {
-                    // TODO : Check if loan account exists
-                    // LoanAccount loan = null;
-                    // if (loan == null) { throw new
-                    // LoanAccountFoundException(entityId); }
-                } else if (entityType.equals("savings account")) {
-                    // TODO : Check if loan account exists
-                    // SavingsAccount savingsaccount = null;
-                    // if (savingsaccount == null) { throw new
-                    // SavingsAccountNotFoundException(entityId); }
 
-                }
-                if (entityType.equals("client")) {
-                    // TODO: Check if client exists
-                    // Client client = null;
-                    // if (client == null) { throw new
-                    // ClientNotFoundException(entityId); }
-                } else {
-                    // TODO : Invalid type handling
-                }
-            }
-
-            final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
+        final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
             cashierTxn.setTxnType(txnType.getId());
 
             this.cashierTxnRepository.save(cashierTxn);
