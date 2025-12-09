@@ -1,52 +1,48 @@
-name: Fineract Publish to GHCR
+name: Fineract Publish to GitHub Container Registry
 on:
   push:
     branches:
       - develop
-    tags:
-      - 1.*
 permissions:
   contents: read
+  packages: write
 jobs:
   build:
     runs-on: ubuntu-24.04
-    env:
-      DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+    timeout-minutes: 60
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
-
-      - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
+        uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
 
       - name: Get Git Hashes
         run: |
           echo "short_hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "long_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
         id: git_hashes
 
       - name: Build the Apache Fineract image
         run:  |
-          TAGS=${{ steps.extract_branch.outputs.branch }}
-          if [ "${{ steps.extract_branch.outputs.branch }}" == "develop" ]; then
-            TAGS="$TAGS,${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
+          TAGS="${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
+          if [ "${{ github.ref_name }}" == "develop" ]; then
+            TAGS="$TAGS,latest"
           fi
-          ./gradlew --no-daemon --console=plain :fineract-provider:jib -x test -x cucumber \
+          ./gradlew --no-daemon --console=plain :custom:docker:jib -x test -x cucumber \
+            -Djib.from.platforms=linux/amd64,linux/arm64 \
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-            -Djib.from.platforms=linux/amd64,linux/arm64 \
-            -Djib.to.image=ghcr.io/${{ github.repository }} \
-            -Djib.to.tags=$TAGS
+            -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
+            -Djib.to.tags=$TAGS \
+            -Djib.sendTimeout=300000 \
+            -Djib.readTimeout=300000
