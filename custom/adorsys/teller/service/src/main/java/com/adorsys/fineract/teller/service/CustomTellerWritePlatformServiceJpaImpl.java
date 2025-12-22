@@ -25,6 +25,7 @@ import org.apache.fineract.accounting.common.AccountingConstants.FinancialActivi
 import org.apache.fineract.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.apache.fineract.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
+import org.apache.fineract.accounting.glaccount.domain.GLAccountRepository;
 import org.apache.fineract.accounting.journalentry.domain.JournalEntry;
 import org.apache.fineract.accounting.journalentry.domain.JournalEntryRepository;
 import org.apache.fineract.accounting.journalentry.domain.JournalEntryType;
@@ -37,6 +38,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.StaffRepository;
 import org.apache.fineract.organisation.teller.data.CashierTransactionDataValidator;
+import org.apache.fineract.organisation.teller.data.CashierTransactionsWithSummaryData;
 import org.apache.fineract.organisation.teller.domain.Cashier;
 import org.apache.fineract.organisation.teller.domain.CashierRepository;
 import org.apache.fineract.organisation.teller.domain.CashierTransaction;
@@ -45,6 +47,7 @@ import org.apache.fineract.organisation.teller.domain.CashierTxnType;
 import org.apache.fineract.organisation.teller.domain.TellerRepositoryWrapper;
 import org.apache.fineract.organisation.teller.exception.CashierNotFoundException;
 import org.apache.fineract.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
+import org.apache.fineract.organisation.teller.service.TellerManagementReadPlatformService;
 import org.apache.fineract.organisation.teller.service.TellerWritePlatformServiceJpaImpl;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -53,6 +56,10 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.math.BigDecimal;
 
 @Service
 @Primary
@@ -65,6 +72,8 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
     private final JournalEntryRepository glJournalEntryRepository;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final CashierTransactionDataValidator cashierTransactionDataValidator;
+    private final GLAccountRepository glAccountRepository;
+    private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
 
     public CustomTellerWritePlatformServiceJpaImpl(PlatformSecurityContext context,
             TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer,
@@ -75,7 +84,9 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
             CashierTransactionRepository cashierTxnRepository,
             JournalEntryRepository glJournalEntryRepository,
             FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
-            CashierTransactionDataValidator cashierTransactionDataValidator) {
+            CashierTransactionDataValidator cashierTransactionDataValidator,
+            GLAccountRepository glAccountRepository,
+            TellerManagementReadPlatformService tellerManagementReadPlatformService) {
         super(context, fromApiJsonDeserializer, tellerRepositoryWrapper, officeRepositoryWrapper, staffRepository,
                 cashierRepository, cashierTxnRepository, glJournalEntryRepository, financialActivityAccountRepositoryWrapper,
                 cashierTransactionDataValidator);
@@ -85,6 +96,8 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.cashierTransactionDataValidator = cashierTransactionDataValidator;
+        this.glAccountRepository = glAccountRepository;
+        this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
     }
 
     @Override
@@ -99,6 +112,107 @@ public CommandProcessingResult settleCashFromCashier(final Long cashierId, JsonC
     return doTransactionForCashier(cashierId, CashierTxnType.SETTLE, command);
 }
 
+@Override
+public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonCommand command) {
+    log.info("Starting end-of-day settlement for cashier ID: {}", cashierId);
+    try {
+        // Validate end of day time (after 6:00 AM UTC for testing)
+        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+        LocalTime endOfDayTime = LocalTime.of(6, 0);
+        log.info("Current time: {}, Required time: {}", currentTime, endOfDayTime);
+        if (currentTime.isBefore(endOfDayTime)) {
+            throw new PlatformDataIntegrityException("error.msg.end.of.day.settlement.not.allowed",
+                    "End of day settlement is only allowed after 6:00 AM UTC", "time", currentTime.toString());
+        }
+
+        log.info("Time validation passed, retrieving cashier");
+        final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
+        this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+
+        // Get net cash
+        String currencyCode = command.stringValueOfParameterNamed("currencyCode");
+        log.info("Getting net cash for cashier {} with currency {}", cashierId, currencyCode);
+        CashierTransactionsWithSummaryData summary = this.tellerManagementReadPlatformService
+                .retrieveCashierTransactionsWithSummary(cashierId, false, null, null, currencyCode, null);
+        BigDecimal netCash = summary.getNetCash();
+        log.info("Net cash calculated: {}", netCash);
+
+        BigDecimal settlementAmount = BigDecimal.ZERO;
+        boolean hasShortage = false;
+        BigDecimal shortageAmount = BigDecimal.ZERO;
+
+        if (netCash.compareTo(BigDecimal.ZERO) >= 0) {
+            // Positive or zero: settle all
+            settlementAmount = netCash;
+        } else {
+            // Negative: shortage
+            hasShortage = true;
+            shortageAmount = netCash.negate(); // positive amount
+        }
+
+        // Create settlement transaction to record the end-of-day settlement
+        CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
+        cashierTxn.setTxnType(CashierTxnType.SETTLE.getId());
+        // Set the actual settlement amount (could be 0)
+        cashierTxn.setTxnAmount(settlementAmount);
+        this.cashierTxnRepository.save(cashierTxn);
+
+        // Journal entries
+        FinancialActivityAccount mainVaultAccount = this.financialActivityAccountRepositoryWrapper
+                .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_MAINVAULT.getValue());
+        FinancialActivityAccount tellerCashAccount = this.financialActivityAccountRepositoryWrapper
+                .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_TELLER.getValue());
+
+        final Office cashierOffice = cashier.getTeller().getOffice();
+        final String transactionId = UUID.randomUUID().toString();
+
+        if (settlementAmount.compareTo(BigDecimal.ZERO) > 0) {
+            // Debit main vault, credit teller cash
+            JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
+                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
+                    settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+            JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.CREDIT,
+                    settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+            this.glJournalEntryRepository.saveAndFlush(debitEntry);
+            this.glJournalEntryRepository.saveAndFlush(creditEntry);
+        }
+
+        if (hasShortage) {
+            // Shortage: debit shortage account, credit teller cash
+            GLAccount shortageAccount = this.glAccountRepository.findOneByGlCode("98")
+                    .orElseThrow(() -> new PlatformDataIntegrityException("error.msg.gl.account.not.found",
+                            "GL Account with code 98 not found", "glCode", "98"));
+
+            String shortageTxnId = UUID.randomUUID().toString();
+            JournalEntry debitShortage = JournalEntry.createNew(cashierOffice, null, shortageAccount,
+                    currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.DEBIT,
+                    shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
+            JournalEntry creditTeller = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                    currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.CREDIT,
+                    shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
+            this.glJournalEntryRepository.saveAndFlush(debitShortage);
+            this.glJournalEntryRepository.saveAndFlush(creditTeller);
+        }
+
+        // Delete cashier assignment
+        this.cashierRepository.delete(cashier);
+
+        return new CommandProcessingResultBuilder()
+                .withCommandId(command.commandId())
+                .withEntityId(cashier.getId())
+                .withSubEntityId(cashierTxn != null ? cashierTxn.getId() : null)
+                .build();
+    } catch (final JpaSystemException | DataIntegrityViolationException dve) {
+        handleTellerDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+        return CommandProcessingResult.empty();
+    } catch (final PersistenceException dve) {
+        Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+        handleTellerDataIntegrityIssues(command, throwable, dve);
+        return CommandProcessingResult.empty();
+    }
+}
+
 private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType, JsonCommand command) {
     try {
         final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
@@ -107,7 +221,7 @@ private CommandProcessingResult doTransactionForCashier(final Long cashierId, fi
         final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
             cashierTxn.setTxnType(txnType.getId());
 
-            this.cashierTxnRepository.save(cashierTxn);
+            this.cashierTxnRepository.saveAndFlush(cashierTxn);
 
             // Pass the journal entries
             FinancialActivityAccount mainVaultFinancialActivityAccount = this.financialActivityAccountRepositoryWrapper

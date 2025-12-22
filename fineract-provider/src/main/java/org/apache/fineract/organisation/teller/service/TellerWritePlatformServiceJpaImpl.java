@@ -341,10 +341,15 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         this.cashierTransactionDataValidator.validateSettleCashAndCashOutTransactions(cashierId, command);
 
         return doTransactionForCashier(cashierId, CashierTxnType.SETTLE, command); // For
-                                                                                   // fund
-                                                                                   // settlement
-                                                                                   // from
-                                                                                   // cashier
+                                                                                    // fund
+                                                                                    // settlement
+                                                                                    // from
+                                                                                    // cashier
+    }
+
+    @Override
+    public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonCommand command) {
+        throw new UnsupportedOperationException("End of day settlement not implemented in base service");
     }
 
     private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType, JsonCommand command) {

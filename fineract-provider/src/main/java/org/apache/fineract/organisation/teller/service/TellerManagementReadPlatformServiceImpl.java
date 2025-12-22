@@ -270,8 +270,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
     public CashierTransactionsWithSummaryData retrieveCashierTransactionsWithSummary(final Long cashierId, final boolean includeAllTellers,
             final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
 
-        sqlValidator.validate(searchParameters.getOrderBy());
-        sqlValidator.validate(searchParameters.getSortOrder());
+        final SearchParameters searchParams = searchParameters == null ? SearchParameters.builder().build() : searchParameters;
+        sqlValidator.validate(searchParams.getOrderBy());
+        sqlValidator.validate(searchParams.getSortOrder());
         final String nextDay = sqlGenerator.incrementDateByOneDay("c.end_date");
 
         final CashierTransactionSummaryMapper ctsm = new CashierTransactionSummaryMapper();
@@ -301,7 +302,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
         }
 
         final Page<CashierTransactionData> cashierTransactions = retrieveCashierTransactions(cashierId, includeAllTellers, fromDate, toDate,
-                currencyCode, searchParameters);
+                currencyCode, searchParams);
 
         CashierTransactionData cashierTxnTemplate = retrieveCashierTxnTemplate(cashierId);
 
@@ -315,8 +316,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
     public Page<CashierTransactionData> retrieveCashierTransactions(final Long cashierId, final boolean includeAllTellers,
             final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
 
-        sqlValidator.validate(searchParameters.getOrderBy());
-        sqlValidator.validate(searchParameters.getSortOrder());
+        final SearchParameters searchParams = searchParameters == null ? SearchParameters.builder().build() : searchParameters;
+        sqlValidator.validate(searchParams.getOrderBy());
+        sqlValidator.validate(searchParams.getSortOrder());
         final String nextDay = sqlGenerator.incrementDateByOneDay("c.end_date");
 
         final CashierTransactionMapper ctm = new CashierTransactionMapper();
@@ -336,12 +338,12 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 + " between c.start_date and  " + nextDay + " and renum.enum_value IN ('PAY_CHARGE', 'WAIVE_CHARGE') "
                 + " and (cli_txn.payment_detail_id IS NULL OR payType.is_cash_payment = true) ) " + " order by created_date ";
 
-        if (searchParameters.hasLimit()) {
+        if (searchParams.hasLimit()) {
             sql += " ";
-            if (searchParameters.hasOffset()) {
-                sql += sqlGenerator.limit(searchParameters.getLimit(), searchParameters.getOffset());
+            if (searchParams.hasOffset()) {
+                sql += sqlGenerator.limit(searchParams.getLimit(), searchParams.getOffset());
             } else {
-                sql += sqlGenerator.limit(searchParameters.getLimit());
+                sql += sqlGenerator.limit(searchParams.getLimit());
             }
         }
         // return this.jdbcTemplate.query(sql, ctm, new Object[] { cashierId,

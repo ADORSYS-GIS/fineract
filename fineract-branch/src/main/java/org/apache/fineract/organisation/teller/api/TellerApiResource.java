@@ -275,6 +275,23 @@ public class TellerApiResource {
         return this.commandWritePlatformService.logCommandSource(request);
     }
 
+    @POST
+    @Path("{tellerId}/cashiers/{cashierId}/endOfDaySettle")
+    @Consumes({ MediaType.TEXT_HTML, MediaType.APPLICATION_JSON })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "End of Day Settlement for Cashier", description = "Performs end of day settlement: settles all available cash, removes cashier assignment, records overreach/shortages. Mandatory Fields: Date, Currency, Notes/Comments")
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = TellerApiResourceSwagger.PostTellersTellerIdCashiersCashierIdSettleRequest.class)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TellerApiResourceSwagger.PostTellersTellerIdCashiersCashierIdSettleResponse.class))) })
+    public CommandProcessingResult endOfDaySettlement(@PathParam("tellerId") @Parameter(description = "tellerId") final Long tellerId,
+            @PathParam("cashierId") @Parameter(description = "cashierId") final Long cashierId,
+            @Parameter(hidden = true) CashierTransactionRequest cashierTxnData) {
+        final CommandWrapper request = new CommandWrapperBuilder().endOfDaySettlement(tellerId, cashierId)
+                .withJson(apiJsonSerializer.serialize(cashierTxnData)).build();
+
+        return this.commandWritePlatformService.logCommandSource(request);
+    }
+
     @GET
     @Path("{tellerId}/cashiers/{cashierId}/transactions")
     @Consumes({ MediaType.APPLICATION_JSON })

@@ -49,6 +49,10 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         if (StringUtils.isBlank(taskPermissionCode)) {
             throw new PermissionNotFoundException(taskPermissionCode);
         }
+        // Disable maker-checker for cash settlement tasks
+        if ("SETTLECASHFROMCASHIER_TELLER".equals(taskPermissionCode) || "ENDOFDAYSETTLEMENT_TELLER".equals(taskPermissionCode)) {
+            return false;
+        }
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.MAKER_CHECKER);
         if (property.isEnabled()) {
             final Permission thisTask = this.permissionRepository.findOneByCode(taskPermissionCode);

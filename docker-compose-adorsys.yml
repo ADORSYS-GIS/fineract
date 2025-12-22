@@ -28,7 +28,7 @@ services:
       file: ./config/docker/compose/fineract.yml
       service: fineract
     ports:
-      - "443:8443"
+      - "8443:8443"
     networks:
       - fineract-network
     depends_on:

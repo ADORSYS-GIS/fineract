@@ -2855,6 +2855,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder endOfDaySettlement(final Long tellerId, final Long cashierId) {
+        this.actionName = "ENDOFDAYSETTLEMENT";
+        this.entityName = "TELLER";
+        this.entityId = tellerId;
+        this.subentityId = cashierId;
+        this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId + "/endOfDaySettle";
+        return this;
+    }
+
     public CommandWrapperBuilder deleteRole(Long roleId) {
         this.actionName = "DELETE";
         this.entityName = "ROLE";
