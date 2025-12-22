@@ -896,6 +896,11 @@ roles:
   - READ
   - READ
   - CHECKER_SUPER_USER
+- name: Supervisor Accountant
+  description: Supervisor accountant with custom permissions
+  disabled: false
+  permissions:
+    - CREATE_JOURNALENTRY_CHECKER
 staff:
 - firstName: Thomas
   lastName: Ndongo
@@ -1065,6 +1070,18 @@ staff:
   - 2024
   - 2
   - 20
+- firstName: Supervisor
+  lastName: Accountant
+  officeName: Head Office
+  isLoanOfficer: false
+  isActive: true
+  externalId: STF-103
+  mobileNo: +237 677 33 33 33
+  emailAddress: s.accountant@mfi.cm
+  joiningDate:
+  - 2024
+  - 1
+  - 2
 users:
 - username: admin.system
   firstName: Thomas
@@ -1178,6 +1195,14 @@ users:
   roles:
   - Cashier
   staffName: Joseph Tanyi
+- username: supervisor
+  firstName: Supervisor
+  lastName: Accountant
+  email: s.accountant@mfi.cm
+  officeName: Head Office
+  roles:
+  - Supervisor Accountant
+  staffName: Supervisor Accountant
 chartOfAccounts:
 - name: Banks - Current Accounts
   glCode: 41
