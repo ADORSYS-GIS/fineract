@@ -166,17 +166,15 @@ public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonComm
         final Office cashierOffice = cashier.getTeller().getOffice();
         final String transactionId = UUID.randomUUID().toString();
 
-        if (settlementAmount.compareTo(BigDecimal.ZERO) > 0) {
-            // Debit main vault, credit teller cash
-            JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
-                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
-                    settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
-            JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
-                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.CREDIT,
-                    settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
-            this.glJournalEntryRepository.saveAndFlush(debitEntry);
-            this.glJournalEntryRepository.saveAndFlush(creditEntry);
-        }
+        // Always record the settlement transaction in journal entries
+        JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
+                cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
+                settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+        JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.CREDIT,
+                settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+        this.glJournalEntryRepository.saveAndFlush(debitEntry);
+        this.glJournalEntryRepository.saveAndFlush(creditEntry);
 
         if (hasShortage) {
             // Shortage: debit shortage account, credit teller cash
