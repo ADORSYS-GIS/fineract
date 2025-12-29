@@ -81,9 +81,13 @@ class FineractDemoDataGenerator:
             {'firstname': 'Christine', 'lastname': 'Biaka', 'office': 'Head Office', 'role': 'Accountant',
              'username': 'accountant', 'email': 'c.biaka@mfi.cm', 'mobile': '+237 677 22 22 22',
              'joining_date': '2024-01-02', 'external_id': 'STF-102'},
-
-            # Yaounde Branch Staff
-            {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
+ 
+            {'firstname': 'Supervisor', 'lastname': 'Accountant', 'office': 'Head Office', 'role': 'Supervisor Accountant',
+             'username': 'supervisor', 'email': 's.accountant@mfi.cm', 'mobile': '+237 677 33 33 33',
+             'joining_date': '2024-01-02', 'external_id': 'STF-103'},
+ 
+             # Yaounde Branch Staff
+             {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
              'username': 'manager.yaounde', 'email': 'j.mbarga@mfi.cm', 'mobile': '+237 677 12 34 56',
              'joining_date': '2024-01-15', 'external_id': 'STF-001'},
 
@@ -159,9 +163,14 @@ class FineractDemoDataGenerator:
              'email': 'c.biaka@mfi.cm', 'office_name': 'Head Office',
              'roles': 'Accountant', 'staff_name': 'Christine Biaka',
              'password': 'Ac0untant@2024!', 'password_never_expires': False},
-
-            # Yaounde Branch Users
-            {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
+ 
+            {'username': 'supervisor', 'first_name': 'Supervisor', 'last_name': 'Accountant',
+             'email': 's.accountant@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'Supervisor Accountant', 'staff_name': 'Supervisor Accountant',
+             'password': 'sUp3rV1sor@2024!', 'password_never_expires': False},
+ 
+             # Yaounde Branch Users
+             {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
              'email': 'j.mbarga@mfi.cm', 'office_name': 'Yaounde Branch',
              'roles': 'Branch Manager', 'staff_name': 'Jean Mbarga',
              'password': 'Man4ger@Yde2024', 'password_never_expires': False},
@@ -1421,6 +1430,8 @@ class FineractDemoDataGenerator:
              'description': 'View office information'},
             {'role_name': 'Accountant', 'permission_group': 'Checker', 'permission': 'CHECKER_SUPER_USER',
              'description': 'Can approve/reject pending accounting tasks'},
+            {'role_name': 'Supervisor Accountant', 'permission_group': 'Journal Entry', 'permission': 'CREATE_JOURNALENTRY_CHECKER',
+             'description': 'Supervisor accountant with custom permissions'},
         ]
         return pd.DataFrame(data)
 
