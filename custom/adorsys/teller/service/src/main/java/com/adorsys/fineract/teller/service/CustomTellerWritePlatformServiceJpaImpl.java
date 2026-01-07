@@ -134,30 +134,20 @@ public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonComm
         log.info("Getting net cash for cashier {} with currency {}", cashierId, currencyCode);
         CashierTransactionsWithSummaryData summary = this.tellerManagementReadPlatformService
                 .retrieveCashierTransactionsWithSummary(cashierId, false, null, null, currencyCode, null);
-        BigDecimal netCash = summary.getNetCash();
-        log.info("Net cash calculated: {}", netCash);
+        BigDecimal expectedBalance = summary.getNetCash();
+        log.info("Expected balance calculated: {}", expectedBalance);
 
-        BigDecimal settlementAmount = BigDecimal.ZERO;
-        boolean hasShortage = false;
-        BigDecimal shortageAmount = BigDecimal.ZERO;
-
-        if (netCash.compareTo(BigDecimal.ZERO) >= 0) {
-            // Positive or zero: settle all
-            settlementAmount = netCash;
-        } else {
-            // Negative: shortage
-            hasShortage = true;
-            shortageAmount = netCash.negate(); // positive amount
-        }
+        BigDecimal actualAmount = command.bigDecimalValueOfParameterNamed("txnAmount");
+        log.info("Actual cash amount retrieved: {}", actualAmount);
 
         // Create settlement transaction to record the end-of-day settlement
         CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
         cashierTxn.setTxnType(CashierTxnType.SETTLE.getId());
-        // Set the actual settlement amount (could be 0)
-        cashierTxn.setTxnAmount(settlementAmount);
+        // Set the actual settlement amount
+        cashierTxn.setTxnAmount(actualAmount);
         this.cashierTxnRepository.save(cashierTxn);
 
-        // Journal entries
+        // Journal entries for the settlement
         FinancialActivityAccount mainVaultAccount = this.financialActivityAccountRepositoryWrapper
                 .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_MAINVAULT.getValue());
         FinancialActivityAccount tellerCashAccount = this.financialActivityAccountRepositoryWrapper
@@ -166,18 +156,22 @@ public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonComm
         final Office cashierOffice = cashier.getTeller().getOffice();
         final String transactionId = UUID.randomUUID().toString();
 
-        // Always record the settlement transaction in journal entries
+        // Record the settlement transaction in journal entries
         JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
                 cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
-                settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+                actualAmount, "End of day settlement", null, null, null, null, null, null, null);
         JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
                 cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.CREDIT,
-                settlementAmount, "End of day settlement", null, null, null, null, null, null, null);
+                actualAmount, "End of day settlement", null, null, null, null, null, null, null);
         this.glJournalEntryRepository.saveAndFlush(debitEntry);
         this.glJournalEntryRepository.saveAndFlush(creditEntry);
 
-        if (hasShortage) {
-            // Shortage: debit shortage account, credit teller cash
+        // Additional journal entries for shortages or overrages
+
+        BigDecimal difference = actualAmount.subtract(expectedBalance);
+        if (difference.compareTo(BigDecimal.ZERO) < 0) {
+            // Shortage: actual < expected
+            BigDecimal shortageAmount = difference.negate();
             GLAccount shortageAccount = this.glAccountRepository.findOneByGlCode("98")
                     .orElseThrow(() -> new PlatformDataIntegrityException("error.msg.gl.account.not.found",
                             "GL Account with code 98 not found", "glCode", "98"));
@@ -191,6 +185,18 @@ public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonComm
                     shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
             this.glJournalEntryRepository.saveAndFlush(debitShortage);
             this.glJournalEntryRepository.saveAndFlush(creditTeller);
+        } else if (difference.compareTo(BigDecimal.ZERO) > 0) {
+            // Overage: actual > expected
+            BigDecimal overageAmount = difference;
+            String overageTxnId = UUID.randomUUID().toString();
+            JournalEntry debitTeller = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                    currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.DEBIT,
+                    overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
+            JournalEntry creditMainVault = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
+                    currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.CREDIT,
+                    overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
+            this.glJournalEntryRepository.saveAndFlush(debitTeller);
+            this.glJournalEntryRepository.saveAndFlush(creditMainVault);
         }
 
         // Delete cashier assignment
