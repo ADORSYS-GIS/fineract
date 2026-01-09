@@ -526,6 +526,7 @@ systemConfig:
     action: PROPOSETRANSFER
   - entity: JOURNALENTRY
     action: CREATE
+    enabled: true
   - entity: User
     action: CREATE
   - entity: User

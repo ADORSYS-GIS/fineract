@@ -63,6 +63,11 @@ class RolesPermissionsLoader:
         """
         permissions = []
 
+        if permission_group == 'Direct':
+            if permission_level:
+                permissions.append(permission_level)
+            return permissions
+
         # Fetch all available permissions
         all_perms = self._fetch_all_permissions()
         if not all_perms:

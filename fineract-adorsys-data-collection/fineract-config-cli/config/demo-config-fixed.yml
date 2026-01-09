@@ -509,6 +509,9 @@ systemConfig:
   - name: Add Periodic Accrual Transactions
     displayName: Add Periodic Accrual Transactions
     cronExpression: 0 0 0 1 * ? *
+  - name: Update Business Date
+    displayName: Update Business Date
+    cronExpression: 0 0 1 * * ?
   makerCheckerConfig:
   - entity: Loan
     action: APPROVE
@@ -844,10 +847,14 @@ roles:
   - ALL_FUNCTIONS
   - READ
   - READ
-  - READ
+  - ALL_FUNCTIONS
   - CREATE_READ
   - ALL_FUNCTIONS
   - CHECKER_SUPER_USER
+  - READ_LOAN_COLLATERAL_PRODUCT
+  - READ_CLIENT_COLLATERAL_PRODUCT
+  - READ_Active Loan Summary per Branch
+  - READ_CONFIGURATION
 - name: Loan Officer
   description: Create and update clients
   disabled: false
@@ -860,6 +867,15 @@ roles:
   - CREATE_READ
   - READ
   - READ
+  - READ_CLIENTIMAGE
+  - READ_DOCUMENT
+  - CREATE_EMAIL_CAMPAIGN
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - CLOSE_CLIENT
+  - CREATE_DOCUMENT
+  - READ_CONFIGURATION
 - name: Cashier
   description: View client information only
   disabled: false
@@ -870,6 +886,12 @@ roles:
   - CREATE_READ
   - READ
   - READ
+  - DEPOSIT_SAVINGSACCOUNT
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - WITHDRAW_SAVINGSACCOUNT
+  - REPAYMENT_LOAN
+  - READ_CONFIGURATION
 - name: System Administrator
   description: Create and manage offices/branches
   disabled: false
@@ -884,6 +906,8 @@ roles:
   - READ
   - READ
   - ENABLE_MAKERCHECKER
+  - ALL_FUNCTIONS
+  - READ_CONFIGURATION
 - name: Accountant
   description: Create and manage GL accounts and journal entries
   disabled: false
@@ -896,11 +920,182 @@ roles:
   - READ
   - READ
   - CHECKER_SUPER_USER
+  - READ_GLACCOUNT
+  - READ_JOURNALENTRY
+  - CREATE_JOURNALENTRY
+  - READ_ACCOUNTINGRULE
+  - READ_FINANCIALACTIVITYACCOUNT
+  - READ_GLCLOSURE
+  - READ_LOAN
+  - READ_SAVINGSACCOUNT
+  - READ_FIXEDDEPOSITACCOUNT
+  - READ_RECURRINGDEPOSITACCOUNT
+  - READTRANSACTION_CLIENT
+  - READ_ACCOUNTTRANSFER
+  - READ_OFFICE
+  - READ_OFFICETRANSACTION
+  - READ_CHARGE
+  - READ_FUND
+  - READ_LOANPRODUCT
+  - READ_SAVINGSPRODUCT
+  - READ_PAYMENTTYPE
+  - READ_CURRENCY
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_CALENDAR
+  - READ_WORKINGDAYS
+  - READ_CONFIGURATION
+  - READ_CONFIGURATION
+  - READ_DATATABLE
+  - READ_REPORT
+  - REPORTING_SUPER_USER
+  - READ_AUDIT
+  - ALL_FUNCTIONS_READ
+  - REPORTING_SUPER_USER
+  - READ_CLIENT
+  - READ_CLIENTCHARGE
+  - READ_CLIENTIDENTIFIER
+  - READ_CLIENTIMAGE
+  - READ_TEMPLATE
+  - READ_ACCOUNTNUMBERFORMAT
+  - READ_CACHE
+  - READ_HOOK
+  - READ_TWOFACTOR_CONFIGURATION
+  - READ_REPORTMAILINGJOB
+  - READ_RATE
+  - READ_FIXEDDEPOSITPRODUCT
+  - READ_RECURRINGDEPOSITPRODUCT
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Balance Sheet
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_General Ledger Report
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Income Statement
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_Trial Balance
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
 - name: Supervisor Accountant
   description: Supervisor accountant with custom permissions
   disabled: false
   permissions:
-    - CREATE_JOURNALENTRY_CHECKER
+  - CREATE_JOURNALENTRY_CHECKER
+  - READ_JOURNALENTRY
+  - READ_ACCOUNTNUMBERFORMAT
+  - READ_CODE
+  - READ_CODEVALUE
+  - UPDATEOPENINGBALANCE_JOURNALENTRY_CHECKER
+  - READ_CACHE
+  - ALL_FUNCTIONS_READ
+  - REPORTING_SUPER_USER
+  - READ_CALENDAR
+  - READ_GLCLOSURE
+  - READ_REPORT
+  - ALL_FUNCTIONS
+  - READ_FINANCIALACTIVITYACCOUNT
+  - READ_GLACCOUNT
+  - READ_AUDIT
+  - READ_CONFIGURATION
+  - CREATE_JOURNALENTRY_CHECKER
+  - READ_HOOK
+  - UPDATE_CACHE
+  - READ_CURRENCY
+  - READ_DATATABLE
+  - READ_CONFIGURATION
 staff:
 - firstName: Thomas
   lastName: Ndongo
@@ -922,6 +1117,18 @@ staff:
   externalId: STF-102
   mobileNo: +237 677 22 22 22
   emailAddress: c.biaka@mfi.cm
+  joiningDate:
+  - 2024
+  - 1
+  - 2
+- firstName: Supervisor
+  lastName: Accountant
+  officeName: Head Office
+  isLoanOfficer: true
+  isActive: true
+  externalId: STF-103
+  mobileNo: +237 677 33 33 33
+  emailAddress: s.accountant@mfi.cm
   joiningDate:
   - 2024
   - 1
@@ -1070,18 +1277,6 @@ staff:
   - 2024
   - 2
   - 20
-- firstName: Supervisor
-  lastName: Accountant
-  officeName: Head Office
-  isLoanOfficer: false
-  isActive: true
-  externalId: STF-103
-  mobileNo: +237 677 33 33 33
-  emailAddress: s.accountant@mfi.cm
-  joiningDate:
-  - 2024
-  - 1
-  - 2
 users:
 - username: admin.system
   firstname: Thomas
@@ -1102,6 +1297,15 @@ users:
   - Accountant
   password: Ac0untant@2024!
   staffName: Christine Biaka
+- username: supervisor
+  firstname: Supervisor
+  lastname: Accountant
+  email: s.accountant@mfi.cm
+  officeName: Head Office
+  roles:
+  - Supervisor Accountant
+  password: sUp3rV1sor@2024!
+  staffName: Supervisor Accountant
 - username: manager.yaounde
   firstname: Jean
   lastname: Mbarga
@@ -1210,14 +1414,6 @@ users:
   - Cashier
   password: Cash1er@Bam2024
   staffName: Joseph Tanyi
-- username: supervisor
-  firstName: Supervisor
-  lastName: Accountant
-  email: s.accountant@mfi.cm
-  officeName: Head Office
-  roles:
-  - Supervisor Accountant
-  staffName: Supervisor Accountant
 chartOfAccounts:
 - name: Banks - Current Accounts
   glCode: 41
@@ -2632,3 +2828,8 @@ tellerAccountingRules:
   cashOutGlCode: '42'
   description: Cash accounting rule for Bamenda main teller
   officeName: Bamenda Branch
+businessDate:
+  type: BUSINESS_DATE
+  date: 09 January 2026
+  dateFormat: dd MMMM yyyy
+  locale: en

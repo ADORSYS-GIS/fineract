@@ -21,6 +21,7 @@ import org.apache.fineract.config.model.ImportState;
 import org.apache.fineract.config.properties.ImportProperties;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.loader.AccountNumberPreferenceLoader;
+import org.apache.fineract.config.service.loader.BusinessDateLoader;
 import org.apache.fineract.config.service.loader.CenterLoader;
 import org.apache.fineract.config.service.loader.ChargeLoader;
 import org.apache.fineract.config.service.loader.ChartOfAccountsLoader;
@@ -143,6 +144,7 @@ public class ImportService {
   // Entity loaders (Phase 6: Transactions & Operations)
   private final SavingsTransactionLoader savingsTransactionLoader;
   private final LoanTransactionLoader loanTransactionLoader;
+  private final BusinessDateLoader businessDateLoader;
 
   public ImportService(
       YamlParserService yamlParser,
@@ -191,7 +193,8 @@ public class ImportService {
       LoanCollateralLoader loanCollateralLoader,
       LoanGuarantorLoader loanGuarantorLoader,
       SavingsTransactionLoader savingsTransactionLoader,
-      LoanTransactionLoader loanTransactionLoader) {
+      LoanTransactionLoader loanTransactionLoader,
+      BusinessDateLoader businessDateLoader) {
     this.yamlParser = yamlParser;
     this.validationService = validationService;
     this.checksumUtil = checksumUtil;
@@ -239,6 +242,7 @@ public class ImportService {
     this.loanGuarantorLoader = loanGuarantorLoader;
     this.savingsTransactionLoader = savingsTransactionLoader;
     this.loanTransactionLoader = loanTransactionLoader;
+    this.businessDateLoader = businessDateLoader;
   }
 
   /**
@@ -1017,6 +1021,17 @@ public class ImportService {
         log.info("  ✓ Loan transactions loaded");
       } catch (Exception ex) {
         log.error("  ✗ Failed to load loan transactions: {}", ex.getMessage());
+      }
+    }
+
+    // 3. Business Date (should be last to ensure all transactions are processed)
+    if (config.getBusinessDate() != null) {
+      log.info("  → Loading business date...");
+      try {
+        businessDateLoader.load(config.getBusinessDate());
+        log.info("  ✓ Business date loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load business date: {}", ex.getMessage());
       }
     }
   }

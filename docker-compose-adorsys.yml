@@ -179,3 +179,5 @@ networks:
   fineract-network:
     driver: bridge
     name: fineract-dev-network
+
+

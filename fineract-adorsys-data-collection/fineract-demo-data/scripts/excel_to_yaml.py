@@ -1772,6 +1772,13 @@ class ExcelToYamlConverter:
         self.convert_operations()
         self.convert_transactions()
 
+        # Convert Business Date
+        df = self._read_sheet('Business Date')
+        if not df.empty and len(df) > 0:
+            self.config['businessDate'] = df.to_dict('records')[0]
+            logger.info("  ✓ Business Date: Configured")
+
+
         # Validate converted data
         self._validate_conversion()
 

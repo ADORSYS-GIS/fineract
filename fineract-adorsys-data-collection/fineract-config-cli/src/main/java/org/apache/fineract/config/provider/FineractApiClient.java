@@ -2,6 +2,7 @@ package org.apache.fineract.config.provider;
 
 import java.time.Duration;
 
+import org.apache.fineract.config.domain.BusinessDate;
 import org.apache.fineract.config.exception.FineractApiException;
 import org.apache.fineract.config.properties.FineractProperties;
 import org.apache.fineract.config.provider.auth.AuthProvider;
@@ -190,6 +191,10 @@ public class FineractApiClient {
       log.error("Connection test failed: {}", ex.getMessage());
       return false;
     }
+  }
+
+  public void createBusinessDate(BusinessDate businessDate) {
+    post("/api/v1/businessdate", businessDate, Object.class);
   }
 
   /**
