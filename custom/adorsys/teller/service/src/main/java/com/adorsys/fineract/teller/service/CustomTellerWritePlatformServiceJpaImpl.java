@@ -64,7 +64,8 @@ import java.math.BigDecimal;
 @Service
 @Primary
 @Slf4j
-public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatformServiceJpaImpl {
+public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatformServiceJpaImpl
+        implements AdorsysTellerWritePlatformService {
 
     private final TellerCommandFromApiJsonDeserializer fromApiJsonDeserializer;
     private final CashierRepository cashierRepository;
@@ -88,7 +89,8 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
             GLAccountRepository glAccountRepository,
             TellerManagementReadPlatformService tellerManagementReadPlatformService) {
         super(context, fromApiJsonDeserializer, tellerRepositoryWrapper, officeRepositoryWrapper, staffRepository,
-                cashierRepository, cashierTxnRepository, glJournalEntryRepository, financialActivityAccountRepositoryWrapper,
+                cashierRepository, cashierTxnRepository, glJournalEntryRepository,
+                financialActivityAccountRepositoryWrapper,
                 cashierTransactionDataValidator);
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.cashierRepository = cashierRepository;
@@ -104,125 +106,136 @@ public class CustomTellerWritePlatformServiceJpaImpl extends TellerWritePlatform
     public CommandProcessingResult allocateCashToCashier(final Long cashierId, JsonCommand command) {
         return doTransactionForCashier(cashierId, CashierTxnType.ALLOCATE, command);
     }
-@Override
-public CommandProcessingResult settleCashFromCashier(final Long cashierId, JsonCommand command) {
 
-    this.cashierTransactionDataValidator.validateSettleCashAndCashOutTransactions(cashierId, command);
+    @Override
+    public CommandProcessingResult settleCashFromCashier(final Long cashierId, JsonCommand command) {
 
-    return doTransactionForCashier(cashierId, CashierTxnType.SETTLE, command);
-}
+        this.cashierTransactionDataValidator.validateSettleCashAndCashOutTransactions(cashierId, command);
 
-@Override
-public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonCommand command) {
-    log.info("Starting end-of-day settlement for cashier ID: {}", cashierId);
-    try {
-        // Validate end of day time (after 6:00 AM UTC for testing)
-        LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
-        LocalTime endOfDayTime = LocalTime.of(6, 0);
-        log.info("Current time: {}, Required time: {}", currentTime, endOfDayTime);
-        if (currentTime.isBefore(endOfDayTime)) {
-            throw new PlatformDataIntegrityException("error.msg.end.of.day.settlement.not.allowed",
-                    "End of day settlement is only allowed after 6:00 AM UTC", "time", currentTime.toString());
-        }
-
-        log.info("Time validation passed, retrieving cashier");
-        final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
-        this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
-
-        // Get net cash
-        String currencyCode = command.stringValueOfParameterNamed("currencyCode");
-        log.info("Getting net cash for cashier {} with currency {}", cashierId, currencyCode);
-        CashierTransactionsWithSummaryData summary = this.tellerManagementReadPlatformService
-                .retrieveCashierTransactionsWithSummary(cashierId, false, null, null, currencyCode, null);
-        BigDecimal expectedBalance = summary.getNetCash();
-        log.info("Expected balance calculated: {}", expectedBalance);
-
-        BigDecimal actualAmount = command.bigDecimalValueOfParameterNamed("txnAmount");
-        log.info("Actual cash amount retrieved: {}", actualAmount);
-
-        // Create settlement transaction to record the end-of-day settlement
-        CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
-        cashierTxn.setTxnType(CashierTxnType.SETTLE.getId());
-        // Set the actual settlement amount
-        cashierTxn.setTxnAmount(actualAmount);
-        this.cashierTxnRepository.save(cashierTxn);
-
-        // Journal entries for the settlement
-        FinancialActivityAccount mainVaultAccount = this.financialActivityAccountRepositoryWrapper
-                .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_MAINVAULT.getValue());
-        FinancialActivityAccount tellerCashAccount = this.financialActivityAccountRepositoryWrapper
-                .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_TELLER.getValue());
-
-        final Office cashierOffice = cashier.getTeller().getOffice();
-        final String transactionId = UUID.randomUUID().toString();
-
-        // Record the settlement transaction in journal entries
-        JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
-                cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
-                actualAmount, "End of day settlement", null, null, null, null, null, null, null);
-        JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
-                cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.CREDIT,
-                actualAmount, "End of day settlement", null, null, null, null, null, null, null);
-        this.glJournalEntryRepository.saveAndFlush(debitEntry);
-        this.glJournalEntryRepository.saveAndFlush(creditEntry);
-
-        // Additional journal entries for shortages or overrages
-
-        BigDecimal difference = actualAmount.subtract(expectedBalance);
-        if (difference.compareTo(BigDecimal.ZERO) < 0) {
-            // Shortage: actual < expected
-            BigDecimal shortageAmount = difference.negate();
-            GLAccount shortageAccount = this.glAccountRepository.findOneByGlCode("98")
-                    .orElseThrow(() -> new PlatformDataIntegrityException("error.msg.gl.account.not.found",
-                            "GL Account with code 98 not found", "glCode", "98"));
-
-            String shortageTxnId = UUID.randomUUID().toString();
-            JournalEntry debitShortage = JournalEntry.createNew(cashierOffice, null, shortageAccount,
-                    currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.DEBIT,
-                    shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
-            JournalEntry creditTeller = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
-                    currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.CREDIT,
-                    shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
-            this.glJournalEntryRepository.saveAndFlush(debitShortage);
-            this.glJournalEntryRepository.saveAndFlush(creditTeller);
-        } else if (difference.compareTo(BigDecimal.ZERO) > 0) {
-            // Overage: actual > expected
-            BigDecimal overageAmount = difference;
-            String overageTxnId = UUID.randomUUID().toString();
-            JournalEntry debitTeller = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
-                    currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.DEBIT,
-                    overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
-            JournalEntry creditMainVault = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
-                    currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"), JournalEntryType.CREDIT,
-                    overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
-            this.glJournalEntryRepository.saveAndFlush(debitTeller);
-            this.glJournalEntryRepository.saveAndFlush(creditMainVault);
-        }
-
-        // Delete cashier assignment
-        this.cashierRepository.delete(cashier);
-
-        return new CommandProcessingResultBuilder()
-                .withCommandId(command.commandId())
-                .withEntityId(cashier.getId())
-                .withSubEntityId(cashierTxn != null ? cashierTxn.getId() : null)
-                .build();
-    } catch (final JpaSystemException | DataIntegrityViolationException dve) {
-        handleTellerDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
-        return CommandProcessingResult.empty();
-    } catch (final PersistenceException dve) {
-        Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
-        handleTellerDataIntegrityIssues(command, throwable, dve);
-        return CommandProcessingResult.empty();
+        return doTransactionForCashier(cashierId, CashierTxnType.SETTLE, command);
     }
-}
 
-private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType, JsonCommand command) {
-    try {
-        final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
-        this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+    @Override
+    public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonCommand command) {
+        log.info("Starting end-of-day settlement for cashier ID: {}", cashierId);
+        try {
+            // Validate end of day time (after 6:00 AM UTC for testing)
+            LocalTime currentTime = LocalTime.now(ZoneOffset.UTC);
+            LocalTime endOfDayTime = LocalTime.of(6, 0);
+            log.info("Current time: {}, Required time: {}", currentTime, endOfDayTime);
+            if (currentTime.isBefore(endOfDayTime)) {
+                throw new PlatformDataIntegrityException("error.msg.end.of.day.settlement.not.allowed",
+                        "End of day settlement is only allowed after 6:00 AM UTC", "time", currentTime.toString());
+            }
 
-        final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
+            log.info("Time validation passed, retrieving cashier");
+            final Cashier cashier = this.cashierRepository.findById(cashierId)
+                    .orElseThrow(() -> new CashierNotFoundException(cashierId));
+            this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+
+            // Get net cash
+            String currencyCode = command.stringValueOfParameterNamed("currencyCode");
+            log.info("Getting net cash for cashier {} with currency {}", cashierId, currencyCode);
+            CashierTransactionsWithSummaryData summary = this.tellerManagementReadPlatformService
+                    .retrieveCashierTransactionsWithSummary(cashierId, false, null, null, currencyCode, null);
+            BigDecimal expectedBalance = summary.getNetCash();
+            log.info("Expected balance calculated: {}", expectedBalance);
+
+            BigDecimal actualAmount = command.bigDecimalValueOfParameterNamed("txnAmount");
+            log.info("Actual cash amount retrieved: {}", actualAmount);
+
+            // Create settlement transaction to record the end-of-day settlement
+            CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
+            cashierTxn.setTxnType(CashierTxnType.SETTLE.getId());
+            // Set the actual settlement amount
+            cashierTxn.setTxnAmount(actualAmount);
+            this.cashierTxnRepository.save(cashierTxn);
+
+            // Journal entries for the settlement
+            FinancialActivityAccount mainVaultAccount = this.financialActivityAccountRepositoryWrapper
+                    .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_MAINVAULT.getValue());
+            FinancialActivityAccount tellerCashAccount = this.financialActivityAccountRepositoryWrapper
+                    .findByFinancialActivityTypeWithNotFoundDetection(FinancialActivity.CASH_AT_TELLER.getValue());
+
+            final Office cashierOffice = cashier.getTeller().getOffice();
+            final String transactionId = UUID.randomUUID().toString();
+
+            // Record the settlement transaction in journal entries
+            JournalEntry debitEntry = JournalEntry.createNew(cashierOffice, null, mainVaultAccount.getGlAccount(),
+                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(), JournalEntryType.DEBIT,
+                    actualAmount, "End of day settlement", null, null, null, null, null, null, null);
+            JournalEntry creditEntry = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                    cashierTxn.getCurrencyCode(), transactionId, false, cashierTxn.getTxnDate(),
+                    JournalEntryType.CREDIT,
+                    actualAmount, "End of day settlement", null, null, null, null, null, null, null);
+            this.glJournalEntryRepository.saveAndFlush(debitEntry);
+            this.glJournalEntryRepository.saveAndFlush(creditEntry);
+
+            // Additional journal entries for shortages or overrages
+
+            BigDecimal difference = actualAmount.subtract(expectedBalance);
+            if (difference.compareTo(BigDecimal.ZERO) < 0) {
+                // Shortage: actual < expected
+                BigDecimal shortageAmount = difference.negate();
+                GLAccount shortageAccount = this.glAccountRepository.findOneByGlCode("98")
+                        .orElseThrow(() -> new PlatformDataIntegrityException("error.msg.gl.account.not.found",
+                                "GL Account with code 98 not found", "glCode", "98"));
+
+                String shortageTxnId = UUID.randomUUID().toString();
+                JournalEntry debitShortage = JournalEntry.createNew(cashierOffice, null, shortageAccount,
+                        currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"),
+                        JournalEntryType.DEBIT,
+                        shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
+                JournalEntry creditTeller = JournalEntry.createNew(cashierOffice, null,
+                        tellerCashAccount.getGlAccount(),
+                        currencyCode, shortageTxnId, false, command.localDateValueOfParameterNamed("txnDate"),
+                        JournalEntryType.CREDIT,
+                        shortageAmount, "Cash shortage at end of day", null, null, null, null, null, null, null);
+                this.glJournalEntryRepository.saveAndFlush(debitShortage);
+                this.glJournalEntryRepository.saveAndFlush(creditTeller);
+            } else if (difference.compareTo(BigDecimal.ZERO) > 0) {
+                // Overage: actual > expected
+                BigDecimal overageAmount = difference;
+                String overageTxnId = UUID.randomUUID().toString();
+                JournalEntry debitTeller = JournalEntry.createNew(cashierOffice, null, tellerCashAccount.getGlAccount(),
+                        currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"),
+                        JournalEntryType.DEBIT,
+                        overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
+                JournalEntry creditMainVault = JournalEntry.createNew(cashierOffice, null,
+                        mainVaultAccount.getGlAccount(),
+                        currencyCode, overageTxnId, false, command.localDateValueOfParameterNamed("txnDate"),
+                        JournalEntryType.CREDIT,
+                        overageAmount, "Cash overage at end of day", null, null, null, null, null, null, null);
+                this.glJournalEntryRepository.saveAndFlush(debitTeller);
+                this.glJournalEntryRepository.saveAndFlush(creditMainVault);
+            }
+
+            // Delete cashier assignment
+            this.cashierRepository.delete(cashier);
+
+            return new CommandProcessingResultBuilder()
+                    .withCommandId(command.commandId())
+                    .withEntityId(cashier.getId())
+                    .withSubEntityId(cashierTxn != null ? cashierTxn.getId() : null)
+                    .build();
+        } catch (final JpaSystemException | DataIntegrityViolationException dve) {
+            handleTellerDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        } catch (final PersistenceException dve) {
+            Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
+            handleTellerDataIntegrityIssues(command, throwable, dve);
+            return CommandProcessingResult.empty();
+        }
+    }
+
+    private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType,
+            JsonCommand command) {
+        try {
+            final Cashier cashier = this.cashierRepository.findById(cashierId)
+                    .orElseThrow(() -> new CashierNotFoundException(cashierId));
+            this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+
+            final CashierTransaction cashierTxn = CashierTransaction.fromJson(cashier, command);
             cashierTxn.setTxnType(txnType.getId());
 
             this.cashierTxnRepository.saveAndFlush(cashierTxn);
@@ -247,28 +260,29 @@ private CommandProcessingResult doTransactionForCashier(final Long cashierId, fi
             final String transactionId = UUID.randomUUID().toString();
 
             final JournalEntry debitJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
-                                                                                                // detail
+                                                                                               // detail
                     debitAccount, cashierTxn.getCurrencyCode(),
 
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.DEBIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
                     null, null, null, // entity Type, entityId, reference number
                     null, null, null, null); // Loan
-                                              // and
-                                              // Savings
-                                              // Txn
+                                             // and
+                                             // Savings
+                                             // Txn
 
             final JournalEntry creditJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
-                                                                                                 // detail
+                                                                                                // detail
                     creditAccount, cashierTxn.getCurrencyCode(),
 
                     transactionId, false, // manual entry
-                    cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
+                    cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(),
+                    cashierTxn.getTxnNote(), // Description
                     null, null, null, // entity Type, entityId, reference number
                     null, null, null, null); // Loan
-                                              // and
-                                              // Savings
-                                              // Txn
+                                             // and
+                                             // Savings
+                                             // Txn
 
             this.glJournalEntryRepository.saveAndFlush(debitJournalEntry);
             this.glJournalEntryRepository.saveAndFlush(creditJournalEntry);
@@ -288,10 +302,12 @@ private CommandProcessingResult doTransactionForCashier(final Long cashierId, fi
         }
     }
 
-    private void handleTellerDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
+    private void handleTellerDataIntegrityIssues(final JsonCommand command, final Throwable realCause,
+            final Exception dve) {
         if (realCause.getMessage().contains("m_tellers_name_unq")) {
             final String name = command.stringValueOfParameterNamed("name");
-            throw new PlatformDataIntegrityException("error.msg.teller.duplicate.name", "Teller with name `" + name + "` already exists",
+            throw new PlatformDataIntegrityException("error.msg.teller.duplicate.name",
+                    "Teller with name `" + name + "` already exists",
                     "name", name);
         }
 

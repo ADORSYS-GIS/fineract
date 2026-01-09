@@ -3892,7 +3892,7 @@ INSERT INTO `m_permission` (`id`, `grouping`, `code`, `entity_name`, `action_nam
     (650, 'portfolio', 'UPDATE_PAYMENTTYPE', 'PAYMENTTYPE', 'UPDATE', 0),
     (651, 'portfolio', 'DELETE_PAYMENTTYPE', 'PAYMENTTYPE', 'DELETE', 0),
     (652, 'cash_mgmt', 'DELETE_TELLER', 'TELLER', 'DELETE', 1),
-    (653, 'cash_mgmt', 'ENDOFDAYSETTLEMENT_TELLER', 'TELLER', 'ENDOFDAYSETTLEMENT', 0),
+
     (654, 'report', 'READ_General Ledger Report', 'General Ledger Report', 'READ', 0),
     (654, 'portfolio', 'READ_STAFFIMAGE', 'STAFFIMAGE', 'READ', 0),
     (655, 'portfolio', 'CREATE_STAFFIMAGE', 'STAFFIMAGE', 'CREATE', 1),

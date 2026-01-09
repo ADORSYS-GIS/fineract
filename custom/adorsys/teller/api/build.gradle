@@ -1,0 +1,9 @@
+description = 'Adorsys Fineract Teller API'
+
+group = 'com.adorsys.fineract'
+
+base {
+    archivesName = 'adorsys-fineract-teller-api'
+}
+
+apply from: 'dependencies.gradle'

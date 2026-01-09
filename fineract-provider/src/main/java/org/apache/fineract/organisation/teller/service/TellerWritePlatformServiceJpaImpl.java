@@ -143,7 +143,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
     }
 
     /*
-     * used to restrict modifying operations to office that are either the users office or lower (child) in the office
+     * used to restrict modifying operations to office that are either the users
+     * office or lower (child) in the office
      * hierarchy
      */
     private Teller validateUserPriviledgeOnTellerAndRetrieve(final AppUser currentUser, final Long tellerId) {
@@ -153,7 +154,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         final Teller tellerToReturn = this.tellerRepositoryWrapper.findOneWithNotFoundDetection(tellerId);
         final Long tellerOfficeId = tellerToReturn.officeId();
         if (userOffice.doesNotHaveAnOfficeInHierarchyWithId(tellerOfficeId)) {
-            throw new NoAuthorizationException("User does not have sufficient priviledges to act on the provided office.");
+            throw new NoAuthorizationException(
+                    "User does not have sufficient priviledges to act on the provided office.");
         }
         return tellerToReturn;
     }
@@ -182,10 +184,12 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
     /*
      * Guaranteed to throw an exception no matter what the data integrity issue is.
      */
-    private void handleTellerDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
+    private void handleTellerDataIntegrityIssues(final JsonCommand command, final Throwable realCause,
+            final Exception dve) {
         if (realCause.getMessage().contains("m_tellers_name_unq")) {
             final String name = command.stringValueOfParameterNamed("name");
-            throw new PlatformDataIntegrityException("error.msg.teller.duplicate.name", "Teller with name `" + name + "` already exists",
+            throw new PlatformDataIntegrityException("error.msg.teller.duplicate.name",
+                    "Teller with name `" + name + "` already exists",
                     "name", name);
         }
 
@@ -211,7 +215,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             this.fromApiJsonDeserializer.validateForAllocateCashier(command.json());
 
-            final Staff staff = this.staffRepository.findById(staffId).orElseThrow(() -> new StaffNotFoundException(staffId));
+            final Staff staff = this.staffRepository.findById(staffId)
+                    .orElseThrow(() -> new StaffNotFoundException(staffId));
             final Boolean isFullDay = command.booleanObjectValueOfParameterNamed("isFullDay");
             if (!isFullDay) {
                 hourStartTime = command.longValueOfParameterNamed("hourStartTime");
@@ -261,7 +266,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             this.fromApiJsonDeserializer.validateForAllocateCashier(command.json());
 
             final Long staffId = command.longValueOfParameterNamed("staffId");
-            final Staff staff = this.staffRepository.findById(staffId).orElseThrow(() -> new StaffNotFoundException(staffId));
+            final Staff staff = this.staffRepository.findById(staffId)
+                    .orElseThrow(() -> new StaffNotFoundException(staffId));
 
             final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
 
@@ -291,7 +297,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         }
     }
 
-    private Cashier validateUserPriviledgeOnCashierAndRetrieve(final AppUser currentUser, final Long tellerId, final Long cashierId) {
+    private Cashier validateUserPriviledgeOnCashierAndRetrieve(final AppUser currentUser, final Long tellerId,
+            final Long cashierId) {
 
         validateUserPriviledgeOnTellerAndRetrieve(currentUser, tellerId);
 
@@ -321,8 +328,10 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
     }
 
     /*
-     * @Override public CommandProcessingResult inwardCashToCashier (final Long cashierId, final CashierTransaction
-     * cashierTxn) { CashierTxnType txnType = CashierTxnType.INWARD_CASH_TXN; // pre save to generate id for use in
+     * @Override public CommandProcessingResult inwardCashToCashier (final Long
+     * cashierId, final CashierTransaction
+     * cashierTxn) { CashierTxnType txnType = CashierTxnType.INWARD_CASH_TXN; // pre
+     * save to generate id for use in
      * office hierarchy this.cashierTxnRepository.save(cashierTxn); }
      */
 
@@ -341,26 +350,24 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         this.cashierTransactionDataValidator.validateSettleCashAndCashOutTransactions(cashierId, command);
 
         return doTransactionForCashier(cashierId, CashierTxnType.SETTLE, command); // For
-                                                                                    // fund
-                                                                                    // settlement
-                                                                                    // from
-                                                                                    // cashier
+                                                                                   // fund
+                                                                                   // settlement
+                                                                                   // from
+                                                                                   // cashier
     }
 
-    @Override
-    public CommandProcessingResult endOfDaySettlement(final Long cashierId, JsonCommand command) {
-        throw new UnsupportedOperationException("End of day settlement not implemented in base service");
-    }
-
-    private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType, JsonCommand command) {
+    private CommandProcessingResult doTransactionForCashier(final Long cashierId, final CashierTxnType txnType,
+            JsonCommand command) {
         try {
             final AppUser currentUser = this.context.authenticatedUser();
 
-            final Cashier cashier = this.cashierRepository.findById(cashierId).orElseThrow(() -> new CashierNotFoundException(cashierId));
+            final Cashier cashier = this.cashierRepository.findById(cashierId)
+                    .orElseThrow(() -> new CashierNotFoundException(cashierId));
 
             this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
 
-            // TODO: can we please remove this whole block?!? this is 20 lines of dead code!!!
+            // TODO: can we please remove this whole block?!? this is 20 lines of dead
+            // code!!!
             final String entityType = command.stringValueOfParameterNamed("entityType");
             if (entityType != null) {
                 if (entityType.equals("loan account")) {
@@ -428,7 +435,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
                     creditAccount, cashierTxn.getCurrencyCode(),
 
                     transactionId, false, // manual entry
-                    cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
+                    cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(),
+                    cashierTxn.getTxnNote(), // Description
                     null, null, null, // entity Type, entityId, reference number
                     null, null, null, null); // Loan
                                              // and

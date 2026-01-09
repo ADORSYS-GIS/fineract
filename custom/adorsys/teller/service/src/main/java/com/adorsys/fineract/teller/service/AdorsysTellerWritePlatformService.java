@@ -16,22 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.adorsys.fineract.teller.starter;
+package com.adorsys.fineract.teller.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.ComponentScan;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
-@AutoConfiguration
-@ComponentScan("com.adorsys.fineract.teller")
-@ConditionalOnProperty("adorsys.teller.extended.enabled")
-public class TellerEmptyMethodImplementationAutoConfiguration {
+public interface AdorsysTellerWritePlatformService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TellerEmptyMethodImplementationAutoConfiguration.class);
-
-    public TellerEmptyMethodImplementationAutoConfiguration() {
-        LOG.info("Custom Teller Auto-Configuration has been loaded.");
-    }
+    CommandProcessingResult endOfDaySettlement(Long cashierId, JsonCommand command);
 }

@@ -15,35 +15,29 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
-package org.apache.fineract.organisation.teller.handler;
+package com.adorsys.fineract.teller.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.commands.annotation.CommandType;
 import org.apache.fineract.commands.handler.NewCommandSourceHandler;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.organisation.teller.service.TellerWritePlatformService;
+import com.adorsys.fineract.teller.service.AdorsysTellerWritePlatformService;
 import org.springframework.stereotype.Service;
 
 /**
  * Handles an end of day settlement command for tellers.
- *
- * @author Custom Implementation
- * @see org.apache.fineract.organisation.teller.service.TellerWritePlatformService
- * @since 1.0.0
  */
 @Service
 @RequiredArgsConstructor
 @CommandType(entity = "TELLER", action = "ENDOFDAYSETTLEMENT")
 public class EndOfDaySettlementCommandHandler implements NewCommandSourceHandler {
 
-    private final TellerWritePlatformService writePlatformService;
+    private final AdorsysTellerWritePlatformService writePlatformService;
 
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-
         return this.writePlatformService.endOfDaySettlement(command.subentityId(), command);
     }
 }

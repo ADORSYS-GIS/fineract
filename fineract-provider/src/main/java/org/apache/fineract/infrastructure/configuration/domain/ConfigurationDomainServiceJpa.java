@@ -50,10 +50,11 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
             throw new PermissionNotFoundException(taskPermissionCode);
         }
         // Disable maker-checker for cash settlement tasks
-        if ("SETTLECASHFROMCASHIER_TELLER".equals(taskPermissionCode) || "ENDOFDAYSETTLEMENT_TELLER".equals(taskPermissionCode)) {
+        if ("SETTLECASHFROMCASHIER_TELLER".equals(taskPermissionCode)) {
             return false;
         }
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.MAKER_CHECKER);
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.MAKER_CHECKER);
         if (property.isEnabled()) {
             final Permission thisTask = this.permissionRepository.findOneByCode(taskPermissionCode);
             if (thisTask == null) {
@@ -99,7 +100,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.fineract.infrastructure.configuration.domain. ConfigurationDomainService#isHolidaysEnabled()
+     * @see org.apache.fineract.infrastructure.configuration.domain.
+     * ConfigurationDomainService#isHolidaysEnabled()
      */
     @Override
     public boolean isRescheduleRepaymentsOnHolidaysEnabled() {
@@ -225,7 +227,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     @Override
     public int getRoundingMode() {
         int defaultValue = 6; // 6 Stands for HALF-EVEN
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ROUNDING_MODE);
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.ROUNDING_MODE);
         if (property.isEnabled()) {
             int value = property.getValue().intValue();
             if (value < 0 || value > 6) {
@@ -266,24 +269,28 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public boolean isSkippingMeetingOnFirstDayOfMonthEnabled() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.SKIP_REPAYMENT_ON_FIRST_DAY_OF_MONTH).isEnabled();
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.SKIP_REPAYMENT_ON_FIRST_DAY_OF_MONTH)
+                .isEnabled();
     }
 
     @Override
     public boolean isFirstRepaymentDateAfterRescheduleAllowedOnHoliday() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.LOAN_RESCHEDULE_IS_FIRST_PAYDAY_ALLOWED_ON_HOLIDAY)
+        return getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.LOAN_RESCHEDULE_IS_FIRST_PAYDAY_ALLOWED_ON_HOLIDAY)
                 .isEnabled();
     }
 
     @Override
     public boolean isInterestToBeRecoveredFirstWhenGreaterThanEMI() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.IS_INTEREST_TO_BE_RECOVERED_FIRST_WHEN_GREATER_THAN_EMI)
+        return getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.IS_INTEREST_TO_BE_RECOVERED_FIRST_WHEN_GREATER_THAN_EMI)
                 .isEnabled();
     }
 
     @Override
     public boolean isPrincipalCompoundingDisabledForOverdueLoans() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.IS_PRINCIPAL_COMPOUNDING_DISABLED_FOR_OVERDUE_LOANS)
+        return getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.IS_PRINCIPAL_COMPOUNDING_DISABLED_FOR_OVERDUE_LOANS)
                 .isEnabled();
     }
 
@@ -311,7 +318,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public boolean isDailyTPTLimitEnabled() {
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.DAILY_TPT_LIMIT);
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.DAILY_TPT_LIMIT);
         return property.isEnabled();
     }
 
@@ -444,7 +452,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public boolean isCOBDateAdjustmentEnabled() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ENABLE_AUTOMATIC_COB_DATE_ADJUSTMENT).isEnabled();
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ENABLE_AUTOMATIC_COB_DATE_ADJUSTMENT)
+                .isEnabled();
     }
 
     @Override
@@ -493,7 +502,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public boolean isAddressEnabled() {
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ENABLE_ADDRESS);
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.ENABLE_ADDRESS);
         return property.isEnabled();
     }
 
@@ -544,12 +554,14 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public boolean isImmediateChargeAccrualPostMaturityEnabled() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ENABLE_IMMEDIATE_CHARGE_ACCRUAL_POST_MATURITY).isEnabled();
+        return getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.ENABLE_IMMEDIATE_CHARGE_ACCRUAL_POST_MATURITY).isEnabled();
     }
 
     @Override
     public String getAssetOwnerTransferOustandingInterestStrategy() {
         return getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ASSET_OWNER_TRANSFER_OUTSTANDING_INTEREST_CALCULATION_STRATEGY).getStringValue();
+                GlobalConfigurationConstants.ASSET_OWNER_TRANSFER_OUTSTANDING_INTEREST_CALCULATION_STRATEGY)
+                .getStringValue();
     }
 }

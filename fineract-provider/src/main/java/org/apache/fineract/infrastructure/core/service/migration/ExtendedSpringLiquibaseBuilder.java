@@ -68,8 +68,8 @@ public class ExtendedSpringLiquibaseBuilder {
         this.databaseChangeLogTable = liquibaseProperties.getDatabaseChangeLogTable();
         this.databaseChangeLogLockTable = liquibaseProperties.getDatabaseChangeLogLockTable();
         this.shouldRun = liquibaseProperties.isEnabled();
-        if (liquibaseProperties.getContexts() != null) {
-            this.contexts.addAll(liquibaseProperties.getLabelFilter());
+        if (liquibaseProperties.getLabelFilter() != null) {
+            this.labelFilter.addAll(liquibaseProperties.getLabelFilter());
         }
         this.rollbackFile = liquibaseProperties.getRollbackFile();
         this.testRollbackOnUpdate = liquibaseProperties.isTestRollbackOnUpdate();

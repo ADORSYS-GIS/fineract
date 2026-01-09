@@ -1,6 +1,7 @@
 dependencies {
     implementation project(':fineract-provider')
     implementation project(':custom:adorsys:teller:service')
+    implementation project(':custom:adorsys:teller:api')
     implementation 'org.springframework.boot:spring-boot-starter'
     compileOnly('org.springframework.boot:spring-boot-autoconfigure')
 }

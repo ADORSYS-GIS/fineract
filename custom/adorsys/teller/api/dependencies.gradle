@@ -1,0 +1,18 @@
+dependencies {
+    implementation project(':fineract-command')
+    implementation project(':fineract-branch')
+    implementation project(':fineract-core')
+    implementation project(':fineract-provider')
+    implementation project(':custom:adorsys:teller:service')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.20'
+    implementation('org.springframework.boot:spring-boot-starter-data-jpa') {
+        exclude group: 'org.hibernate'
+    }
+    implementation('org.eclipse.persistence:org.eclipse.persistence.jpa') {
+        exclude group: 'org.eclipse.persistence', module: 'jakarta.persistence'
+    }
+    implementation('org.springframework.boot:spring-boot-starter-security')
+    implementation 'com.google.code.gson:gson'
+}
