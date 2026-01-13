@@ -1,6 +1,8 @@
 package org.apache.fineract.config.provider;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.fineract.config.domain.BusinessDate;
 import org.apache.fineract.config.exception.FineractApiException;
@@ -194,7 +196,15 @@ public class FineractApiClient {
   }
 
   public void createBusinessDate(BusinessDate businessDate) {
-    post("/api/v1/businessdate", businessDate, Object.class);
+    // Check if a business date is already configured
+    List<Map<String, Object>> existingBusinessDates = get("/api/v1/businessdate", List.class);
+    if (existingBusinessDates != null && !existingBusinessDates.isEmpty()) {
+      // Update existing business date
+      put("/api/v1/businessdate", businessDate, Object.class);
+    } else {
+      // Create new business date
+      post("/api/v1/businessdate", businessDate, Object.class);
+    }
   }
 
   /**

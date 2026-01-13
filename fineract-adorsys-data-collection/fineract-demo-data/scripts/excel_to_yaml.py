@@ -345,8 +345,9 @@ class ExcelToYamlConverter:
                         job['cronExpression'] = row['cron_expression']
 
                     # Active status
-                    if row.get('is_active'):
-                        job['active'] = self._parse_boolean(row['is_active'])
+                    if row.get('active') and not pd.isna(row.get('active')):
+                        job['active'] = self._parse_boolean(row['active'])
+
 
                     # Job parameters (if any)
                     if row.get('job_parameters') and not pd.isna(row.get('job_parameters')):
@@ -510,6 +511,7 @@ class ExcelToYamlConverter:
                 role_name = row.get('role_name')
                 if not role_name or pd.isna(role_name):
                     continue
+                role_name = str(role_name).strip()
 
                 if role_name not in roles_dict:
                     roles_dict[role_name] = {
@@ -521,8 +523,15 @@ class ExcelToYamlConverter:
 
                 # Add permission
                 permission = row.get('permission_code') or row.get('permission')
+                group = row.get('permission_group')
+                
                 if permission and not pd.isna(permission):
-                    roles_dict[role_name]['permissions'].append(permission)
+                    permission = str(permission).strip()
+                    if group and not pd.isna(group):
+                         group = str(group).strip()
+                    from permission_mappings import expand_permissions
+                    expanded_perms = expand_permissions(group, permission)
+                    roles_dict[role_name]['permissions'].extend(expanded_perms)
 
             self.config['roles'] = list(roles_dict.values())
             logger.info(f"  ✓ Roles: {len(roles_dict)} roles")
@@ -1772,11 +1781,43 @@ class ExcelToYamlConverter:
         self.convert_operations()
         self.convert_transactions()
 
+
         # Convert Business Date
         df = self._read_sheet('Business Date')
         if not df.empty and len(df) > 0:
-            self.config['businessDate'] = df.to_dict('records')[0]
-            logger.info("  ✓ Business Date: Configured")
+            row = df.iloc[0]
+            # Parse the date string and convert to "dd MMMM yyyy" format
+            import datetime
+            date_str = row.get('date')
+            if date_str and not pd.isna(date_str):
+                # Handle different date formats
+                if isinstance(date_str, str):
+                    # Try parsing yyyy-MM-dd format
+                    try:
+                        parsed_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+                    except ValueError:
+                        # Try parsing dd MMMM yyyy format
+                        try:
+                            parsed_date = datetime.datetime.strptime(date_str, '%d %B %Y')
+                        except ValueError:
+                            logger.warning(f"Could not parse business date: {date_str}")
+                            parsed_date = datetime.datetime.now()
+                elif isinstance(date_str, datetime.datetime):
+                    parsed_date = date_str
+                else:
+                    parsed_date = datetime.datetime.now()
+                
+                # Convert to string format "dd MMMM yyyy" (e.g., "13 January 2026")
+                formatted_date = parsed_date.strftime('%d %B %Y')
+                self.config['businessDate'] = {
+                    'type': row.get('type', 'BUSINESS_DATE'),
+                    'date': formatted_date,
+                    'dateFormat': 'dd MMMM yyyy',
+                    'locale': row.get('locale', 'en')
+                }
+                logger.info(f"  ✓ Business Date: {formatted_date}")
+
+
 
 
         # Validate converted data

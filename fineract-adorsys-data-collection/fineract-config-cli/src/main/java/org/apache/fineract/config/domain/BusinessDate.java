@@ -1,41 +1,39 @@
 package org.apache.fineract.config.domain;
 
-public class BusinessDate {
-  private String type;
-  private String date;
-  private String dateFormat;
-  private String locale;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  // Getters and setters
-  public String getType() {
-    return type;
+public class BusinessDate {
+  private final String type;
+  private final String date;
+  private final String dateFormat;
+  private final String locale;
+
+  @JsonCreator
+  public BusinessDate(
+      @JsonProperty("type") String type,
+      @JsonProperty("date") String date,
+      @JsonProperty("dateFormat") String dateFormat,
+      @JsonProperty("locale") String locale) {
+    this.type = type;
+    this.date = date;
+    this.dateFormat = dateFormat;
+    this.locale = locale;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public String getType() {
+    return type;
   }
 
   public String getDate() {
     return date;
   }
 
-  public void setDate(String date) {
-    this.date = date;
-  }
-
   public String getDateFormat() {
     return dateFormat;
   }
 
-  public void setDateFormat(String dateFormat) {
-    this.dateFormat = dateFormat;
-  }
-
   public String getLocale() {
     return locale;
-  }
-
-  public void setLocale(String locale) {
-    this.locale = locale;
   }
 }
