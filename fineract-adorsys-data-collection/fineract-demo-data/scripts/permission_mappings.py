@@ -100,6 +100,8 @@ def expand_permissions(group, shorthand):
             perms.extend(['CREATE_LOAN', 'READ_LOAN', 'UPDATE_LOAN', 'REPAYMENT_LOAN', 'DISBURSE_LOAN', 'DISBURSETOSAVINGS_LOAN', 'READ_LOANNOTE'])
             # Savings
             perms.extend(['READ_SAVINGSACCOUNT'])
+            # Client Charges
+            perms.extend(['READ_CLIENTCHARGE'])
             # Portfolio Reports (Sample list)
             perms.extend(['READ_Client Listing', 'READ_Active Loans - Summary', 'READ_Loans Awaiting Disbursal', 'READ_Portfolio at Risk'])
             return perms
@@ -128,6 +130,8 @@ def expand_permissions(group, shorthand):
             perms.extend(['READ_Balance Sheet', 'READ_Income Statement', 'READ_Trial Balance', 'READ_General Ledger Report'])
             # Organization
             perms.extend(['READ_OFFICE', 'READ_STAFF', 'READ_CURRENCY'])
+            # Audit
+            perms.extend(['READ_AUDIT'])
             return perms
             
         elif shorthand == 'SUPERVISOR_ACCOUNTANT':
@@ -136,12 +140,15 @@ def expand_permissions(group, shorthand):
             perms.extend([
                 'CREATE_GLACCOUNT', 'READ_GLACCOUNT', 'UPDATE_GLACCOUNT', 'DELETE_GLACCOUNT',
                 'READ_JOURNALENTRY', 'REVERSE_JOURNALENTRY', # NO CREATE_JOURNALENTRY
+                'CREATE_JOURNALENTRY_CHECKER', # Checker permission to approve journal entries
                 'DEFINEOPENINGBALANCE_JOURNALENTRY', 'UPDATEOPENINGBALANCE_JOURNALENTRY',
                 'CREATE_GLCLOSURE', 'READ_GLCLOSURE', 'UPDATE_GLCLOSURE', 'DELETE_GLCLOSURE',
                 'CREATE_ACCOUNTINGRULE', 'READ_ACCOUNTINGRULE', 'UPDATE_ACCOUNTINGRULE', 'DELETE_ACCOUNTINGRULE'
             ])
             # Reports
             perms.extend(['READ_Balance Sheet', 'READ_Income Statement', 'READ_Trial Balance', 'READ_General Ledger Report'])
+            # Audit
+            perms.extend(['READ_AUDIT'])
             return perms
 
     # specific direct mappings

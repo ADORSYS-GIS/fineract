@@ -525,20 +525,25 @@ systemConfig:
   makerCheckerConfig:
   - entity: Loan
     action: APPROVE
+    enabled: true
   - entity: Loan
     action: DISBURSE
+    enabled: true
   - entity: Loan
     action: WRITEOFF
   - entity: RESCHEDULELOAN
     action: CREATE
   - entity: SAVINGSACCOUNT
     action: CLOSE
+    enabled: true
   - entity: Client
     action: ACTIVATE
   - entity: Client
     action: PROPOSETRANSFER
+    enabled: true
   - entity: JOURNALENTRY
     action: CREATE
+    enabled: true
   - entity: User
     action: CREATE
   - entity: User
@@ -867,6 +872,7 @@ roles:
   - READ_ROLE
   - READ_CODE
   - READ_CODEVALUE
+  - READ_BUSINESS_DATE
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -900,6 +906,7 @@ roles:
   - READ_ROLE
   - READ_CODE
   - READ_CODEVALUE
+  - READ_BUSINESS_DATE
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -911,6 +918,7 @@ roles:
   - DISBURSETOSAVINGS_LOAN
   - READ_LOANNOTE
   - READ_SAVINGSACCOUNT
+  - READ_CLIENTCHARGE
   - READ_Client Listing
   - READ_Active Loans - Summary
   - READ_Loans Awaiting Disbursal
@@ -930,6 +938,7 @@ roles:
   - READ_ROLE
   - READ_CODE
   - READ_CODEVALUE
+  - READ_BUSINESS_DATE
   - DEPOSIT_SAVINGSACCOUNT
   - WITHDRAWAL_SAVINGSACCOUNT
   - READ_SAVINGSACCOUNT
@@ -955,6 +964,7 @@ roles:
   - READ_ROLE
   - READ_CODE
   - READ_CODEVALUE
+  - READ_BUSINESS_DATE
   - CREATE_GLACCOUNT
   - READ_GLACCOUNT
   - UPDATE_GLACCOUNT
@@ -979,6 +989,7 @@ roles:
   - READ_OFFICE
   - READ_STAFF
   - READ_CURRENCY
+  - READ_AUDIT
 - name: Supervisor Accountant
   description: Senior accountant for audit and approval (Checker)
   disabled: false
@@ -994,12 +1005,14 @@ roles:
   - READ_ROLE
   - READ_CODE
   - READ_CODEVALUE
+  - READ_BUSINESS_DATE
   - CREATE_GLACCOUNT
   - READ_GLACCOUNT
   - UPDATE_GLACCOUNT
   - DELETE_GLACCOUNT
   - READ_JOURNALENTRY
   - REVERSE_JOURNALENTRY
+  - CREATE_JOURNALENTRY_CHECKER
   - DEFINEOPENINGBALANCE_JOURNALENTRY
   - UPDATEOPENINGBALANCE_JOURNALENTRY
   - CREATE_GLCLOSURE
@@ -1014,6 +1027,7 @@ roles:
   - READ_Income Statement
   - READ_Trial Balance
   - READ_General Ledger Report
+  - READ_AUDIT
 staff:
 - firstName: Thomas
   lastName: Ndongo
@@ -2748,6 +2762,6 @@ tellerAccountingRules:
   officeName: Bamenda Branch
 businessDate:
   type: BUSINESS_DATE
-  date: 13 January 2026
+  date: 14 January 2026
   dateFormat: dd MMMM yyyy
   locale: en

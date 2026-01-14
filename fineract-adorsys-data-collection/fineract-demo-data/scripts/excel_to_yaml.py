@@ -379,8 +379,8 @@ class ExcelToYamlConverter:
                         config['action'] = row['action']
 
                     # Enabled status
-                    if row.get('maker_checker_enabled'):
-                        config['enabled'] = self._parse_boolean(row['maker_checker_enabled'])
+                    if row.get('enabled'):
+                        config['enabled'] = self._parse_boolean(row['enabled'])
 
                     maker_checker.append(config)
 
