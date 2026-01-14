@@ -1417,6 +1417,17 @@ class FineractDemoDataGenerator:
              'maker_role': 'Accountant', 'checker_role': 'Supervisor Accountant',
              'description': 'Manual journal entries require supervisor approval (disabled by default)'},
 
+            # Teller/Cashier operations
+            {'task_name': 'Allocate Cash to Cashier', 'entity': 'TELLER', 'action': 'ALLOCATECASHTOCASHIER',
+             'enabled': True,
+             'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
+             'description': 'Cash allocation to cashier requires cashier confirmation'},
+
+            {'task_name': 'Settle Cash from Cashier', 'entity': 'TELLER', 'action': 'SETTLECASHFROMCASHIER',
+             'enabled': True,
+             'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
+             'description': 'Cash settlement from cashier requires cashier confirmation'},
+
             # User/System operations
             {'task_name': 'Create User', 'entity': 'User', 'action': 'CREATE',
              'enabled': False,
