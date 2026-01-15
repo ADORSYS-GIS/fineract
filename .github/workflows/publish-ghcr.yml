@@ -42,7 +42,7 @@ jobs:
             -Djib.from.platforms=linux/amd64,linux/arm64 \
             -Djib.to.auth.username=${{ github.actor }} \
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-            -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
+            -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract-custom \
             -Djib.to.tags=$TAGS \
             -Djib.sendTimeout=300000 \
             -Djib.readTimeout=300000
