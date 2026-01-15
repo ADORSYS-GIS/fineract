@@ -6,7 +6,7 @@ on:
       - main
       - develop
       - config-demo
-      - yaml-data
+      - update/activate-maker-checker-for-manual-journal-entries
   pull_request:
     branches:
       - main

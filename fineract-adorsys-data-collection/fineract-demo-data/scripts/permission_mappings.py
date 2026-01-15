@@ -80,17 +80,22 @@ def expand_permissions(group, shorthand):
         elif shorthand == 'BRANCH_MANAGER':
             perms = list(COMMON_READ_PERMISSIONS)
             # Clients
-            perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT', 'ACTIVATE_CLIENT', 'CLOSE_CLIENT', 'REJECT_CLIENT'])
+            perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT', 'ACTIVATE_CLIENT', 'CLOSE_CLIENT', 'REJECT_CLIENT', 'READ_client_additional_info'])
             # Loans
-            perms.extend(['APPROVE_LOAN', 'DISBURSE_LOAN', 'REJECT_LOAN', 'WITHDRAW_LOAN', 'READ_LOAN', 'REPAYMENT_LOAN'])
+            perms.extend(['APPROVE_LOAN', 'DISBURSE_LOAN', 'REJECT_LOAN', 'WITHDRAW_LOAN', 'READ_LOAN', 'REPAYMENT_LOAN', "READ_loan_additional_info", "CREATE_loan_additional_info"])
             # Savings
-            perms.extend(['APPROVE_SAVINGSACCOUNT', 'ACTIVATE_SAVINGSACCOUNT', 'REJECT_SAVINGSACCOUNT', 'WITHDRAW_SAVINGSACCOUNT', 'READ_SAVINGSACCOUNT'])
+            perms.extend([
+                'READ_SAVINGSACCOUNT',
+                'APPROVE_SAVINGSACCOUNT',
+                'REJECT_SAVINGSACCOUNT', 'WITHDRAW_SAVINGSACCOUNT',
+                'READ_SAVINGSADDITIONALINFO', 'UPDATE_SAVINGSADDITIONALINFO', 'CREATE_SAVINGSADDITIONALINFO', "READ_savings_additional_info", "UPDATE_savings_additional_info"
+            ])
             # Client Charges
             perms.extend(['READ_CLIENTCHARGE'])
             # Teller/Cashier Management
             perms.extend([
-                'READ_TELLER',  # Required for menu visibility in UI
-                'READ_CASHIER', # Required for cashier data access
+                'READ_TELLER',  
+                'READ_CASHIER',
                 'CREATE_TELLER', 'UPDATE_TELLER', 'DELETE_TELLER',
                 'ALLOCATECASHIER_TELLER', 'ALLOCATECASHTOCASHIER_TELLER',
                 'SETTLECASHFROMCASHIER_TELLER', 'UPDATECASHIERALLOCATION_TELLER',
@@ -110,7 +115,7 @@ def expand_permissions(group, shorthand):
             # Loans
             perms.extend(['CREATE_LOAN', 'READ_LOAN', 'UPDATE_LOAN', 'REPAYMENT_LOAN', 'DISBURSE_LOAN', 'DISBURSETOSAVINGS_LOAN', 'READ_LOANNOTE'])
             # Savings
-            perms.extend(['READ_SAVINGSACCOUNT'])
+            perms.extend(['READ_SAVINGSACCOUNT','ACTIVATE_SAVINGSACCOUNT', 'CREATE_SAVINGSACCOUNT', 'UPDATE_SAVINGSACCOUNT'])
             # Client Charges
             perms.extend(['READ_CLIENTCHARGE'])
             # Portfolio Reports (Sample list)
@@ -121,12 +126,12 @@ def expand_permissions(group, shorthand):
             perms = list(COMMON_READ_PERMISSIONS)
             # Clients
             perms.extend(['READ_CLIENT'])
+            # Client Charges
+            perms.extend(['READ_CLIENTCHARGE'])
             # Savings
             perms.extend(['DEPOSIT_SAVINGSACCOUNT', 'WITHDRAWAL_SAVINGSACCOUNT', 'READ_SAVINGSACCOUNT'])
             # Loans
             perms.extend(['REPAYMENT_LOAN', 'READ_LOAN'])
-            # Teller
-            perms.extend(['CREATE_TELLER', 'UPDATE_TELLER', 'ALLOCATECASHIER_TELLER', 'ALLOCATECASHTOCASHIER_TELLER', 'SETTLECASHFROMCASHIER_TELLER'])
             # Teller Checker Permissions (for self-approval workflow)
             perms.extend(['ALLOCATECASHIER_TELLER_CHECKER', 'SETTLECASHFROMCASHIER_TELLER_CHECKER', 'UPDATECASHIERALLOCATION_TELLER_CHECKER'])
             return perms

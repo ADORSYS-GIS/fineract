@@ -2093,7 +2093,8 @@ class ExcelToYamlConverter:
 
         # 4.2 Loan Products
         loan_products = self.config.get('loanProducts', [])
-        loans_no_accounting = [p['name'] for p in loan_products if not p.get('accounting')]
+        # Check if accounting fields are present (they get merged directly into product)
+        loans_no_accounting = [p['name'] for p in loan_products if p.get('accountingRule') == 'NONE' or not p.get('fundSourceAccountCode')]
         loans_incomplete = []
         for p in loan_products:
             if not p.get('shortName') or not p.get('currencyCode'):
@@ -2106,16 +2107,18 @@ class ExcelToYamlConverter:
             validation_results.append(('Loan Products', False, f"{len(loan_products)} products, {len(loans_no_accounting)} no accounting"))
             warnings.append(f"⚠️  {len(loans_no_accounting)} loan products missing GL mappings")
         elif len(loan_products) > 0:
-            total_mappings = sum(len(p.get('accounting', {})) for p in loan_products)
-            validation_results.append(('Loan Products', True, f"{len(loan_products)} products, {total_mappings} GL mappings"))
-            logger.info(f"  ✓ Loan Products: {len(loan_products)} products with {total_mappings} GL mappings")
+            # Count products with accounting fields (merged directly)
+            products_with_accounting = sum(1 for p in loan_products if p.get('accountingRule') != 'NONE' and p.get('fundSourceAccountCode'))
+            validation_results.append(('Loan Products', True, f"{len(loan_products)} products, {products_with_accounting} with GL mappings"))
+            logger.info(f"  ✓ Loan Products: {len(loan_products)} products with {products_with_accounting} having GL mappings")
         else:
             validation_results.append(('Loan Products', False, "Empty"))
             warnings.append("⚠️  No loan products defined")
 
         # 4.3 Savings Products
         savings_products = self.config.get('savingsProducts', [])
-        savings_no_accounting = [p['name'] for p in savings_products if not p.get('accounting')]
+        # Check if accounting fields are present (they get merged directly into product)
+        savings_no_accounting = [p['name'] for p in savings_products if p.get('accountingRule') == 'NONE' or not p.get('savingsReferenceAccountCode')]
         savings_incomplete = []
         for p in savings_products:
             if not p.get('shortName') or not p.get('currencyCode'):
@@ -2128,9 +2131,10 @@ class ExcelToYamlConverter:
             validation_results.append(('Savings Products', False, f"{len(savings_products)} products, {len(savings_no_accounting)} no accounting"))
             warnings.append(f"⚠️  {len(savings_no_accounting)} savings products missing GL mappings")
         elif len(savings_products) > 0:
-            total_mappings = sum(len(p.get('accounting', {})) for p in savings_products)
-            validation_results.append(('Savings Products', True, f"{len(savings_products)} products, {total_mappings} GL mappings"))
-            logger.info(f"  ✓ Savings Products: {len(savings_products)} products with {total_mappings} GL mappings")
+            # Count products with accounting fields (merged directly)
+            products_with_accounting = sum(1 for p in savings_products if p.get('accountingRule') != 'NONE' and p.get('savingsReferenceAccountCode'))
+            validation_results.append(('Savings Products', True, f"{len(savings_products)} products, {products_with_accounting} with GL mappings"))
+            logger.info(f"  ✓ Savings Products: {len(savings_products)} products with {products_with_accounting} having GL mappings")
         else:
             validation_results.append(('Savings Products', False, "Empty"))
             warnings.append("⚠️  No savings products defined")
