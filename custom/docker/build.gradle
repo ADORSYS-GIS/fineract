@@ -53,6 +53,23 @@ jib {
         ports = ['8080/tcp', '8443/tcp']
         labels = [maintainer: 'Aleksandar Vidakovic <aleks@apache.org>']
         user = 'nobody:nogroup'
+        environment = [
+            'FINERACT_PENTAHO_REPORTS_PATH': '/pentahoReports/Postgresql/',
+            'JAVA_TOOL_OPTIONS': '-Dloader.path=/app/plugins/'
+        ]
+    }
+
+    extraDirectories {
+        paths {
+            path {
+                from = file("${rootDir}/pentaho-dist/plugins")
+                into = '/app/plugins'
+            }
+            path {
+                from = file("${rootDir}/pentaho-dist/reports")
+                into = '/pentahoReports'
+            }
+        }
     }
 
     allowInsecureRegistries = true
