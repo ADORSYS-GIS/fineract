@@ -3,12 +3,10 @@ package com.adorsys.fineract.userandstaff.starter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 
 @AutoConfiguration
 @ComponentScan({"com.adorsys.fineract.userandstaff.service", "com.adorsys.fineract.userandstaff.api"})
-@ConditionalOnProperty("adorsys.userandstaff.extended.enabled")
 public class AdorsysUserAndStaffAutoConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdorsysUserAndStaffAutoConfiguration.class);
