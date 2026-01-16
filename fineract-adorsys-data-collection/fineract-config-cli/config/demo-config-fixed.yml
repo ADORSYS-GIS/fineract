@@ -485,47 +485,71 @@ systemConfig:
   - name: Post Interest For Savings
     displayName: Post Interest For Savings
     cronExpression: 0 0 0 1/1 * ? *
+    active: true
   - name: Transfer Fee For Loans From Savings
     displayName: Transfer Fee For Loans From Savings
     cronExpression: 0 0 1 * * ?
+    active: true
   - name: Update Loan Arrears Ageing
     displayName: Update Loan Arrears Ageing
     cronExpression: 0 0 0 1/1 * ? *
+    active: true
   - name: Add Accrual Transactions
     displayName: Add Accrual Transactions
     cronExpression: 0 0 2 * * ?
+    active: true
   - name: Apply Annual Fee For Savings
     displayName: Apply Annual Fee For Savings
     cronExpression: 0 0 0 1 1 ? *
+    active: true
   - name: Apply penalty to overdue loans
     displayName: Apply penalty to overdue loans
     cronExpression: 0 0 3 * * ?
+    active: true
   - name: Update Savings Dormant Accounts
     displayName: Update Savings Dormant Accounts
     cronExpression: 0 0 0 1/1 * ? *
+    active: true
   - name: Execute Standing Instruction
     displayName: Execute Standing Instruction
     cronExpression: 0 0 0 1/1 * ? *
+    active: true
   - name: Add Periodic Accrual Transactions
     displayName: Add Periodic Accrual Transactions
     cronExpression: 0 0 0 1 * ? *
+    active: true
+  - name: Update Business Date
+    displayName: Update Business Date
+    cronExpression: 0 0 1 * * ?
+    active: true
   makerCheckerConfig:
   - entity: Loan
     action: APPROVE
+    enabled: true
   - entity: Loan
     action: DISBURSE
+    enabled: true
   - entity: Loan
     action: WRITEOFF
   - entity: RESCHEDULELOAN
     action: CREATE
   - entity: SAVINGSACCOUNT
     action: CLOSE
+    enabled: true
   - entity: Client
     action: ACTIVATE
   - entity: Client
     action: PROPOSETRANSFER
+    enabled: true
   - entity: JOURNALENTRY
     action: CREATE
+    enabled: true
+  - entity: TELLER
+    action: ALLOCATECASHTOCASHIER
+    enabled: true
+  - entity: TELLER
+    action: SETTLECASHFROMCASHIER
+    enabled: true
   - entity: User
     action: CREATE
   - entity: User
@@ -834,68 +858,203 @@ offices:
   externalId: BR-BAM-001
   parentName: Head Office
 roles:
-- name: Branch Manager
-  description: Full client management
-  disabled: false
-  permissions:
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - READ
-  - READ
-  - READ
-  - CREATE_READ
-  - ALL_FUNCTIONS
-  - CHECKER_SUPER_USER
-- name: Loan Officer
-  description: Create and update clients
-  disabled: false
-  permissions:
-  - CREATE_UPDATE_READ
-  - CREATE_UPDATE_READ
-  - DELETE_FUNCTIONS
-  - DISBURSE_REPAYMENT
-  - CREATE_UPDATE_READ
-  - CREATE_READ
-  - READ
-  - READ
-- name: Cashier
-  description: View client information only
-  disabled: false
-  permissions:
-  - READ
-  - READ
-  - TRANSACTION
-  - CREATE_READ
-  - READ
-  - READ
 - name: System Administrator
-  description: Create and manage offices/branches
+  description: Super user with full system access
   disabled: false
   permissions:
   - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - ALL_FUNCTIONS
-  - CREATE_UPDATE_READ
-  - READ
-  - READ
-  - READ
-  - ENABLE_MAKERCHECKER
+- name: Branch Manager
+  description: Branch manager with approval authority
+  disabled: false
+  permissions:
+  - READ_PAYMENTTYPE
+  - READ_CONFIGURATION
+  - READ_CALENDAR
+  - READ_CHARGE
+  - READ_EMAIL
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_USER
+  - READ_ROLE
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_BUSINESS_DATE
+  - CREATE_CLIENT
+  - READ_CLIENT
+  - UPDATE_CLIENT
+  - ACTIVATE_CLIENT
+  - CLOSE_CLIENT
+  - REJECT_CLIENT
+  - READ_client_additional_info
+  - APPROVE_LOAN
+  - DISBURSE_LOAN
+  - REJECT_LOAN
+  - WITHDRAW_LOAN
+  - READ_LOAN
+  - REPAYMENT_LOAN
+  - READ_loan_additional_info
+  - CREATE_loan_additional_info
+  - READ_SAVINGSACCOUNT
+  - APPROVE_SAVINGSACCOUNT
+  - REJECT_SAVINGSACCOUNT
+  - WITHDRAW_SAVINGSACCOUNT
+  - READ_SAVINGSADDITIONALINFO
+  - UPDATE_SAVINGSADDITIONALINFO
+  - CREATE_SAVINGSADDITIONALINFO
+  - READ_savings_additional_info
+  - UPDATE_savings_additional_info
+  - READ_CLIENTCHARGE
+  - READ_TELLER
+  - READ_CASHIER
+  - CREATE_TELLER
+  - UPDATE_TELLER
+  - DELETE_TELLER
+  - ALLOCATECASHIER_TELLER
+  - ALLOCATECASHTOCASHIER_TELLER
+  - SETTLECASHFROMCASHIER_TELLER
+  - UPDATECASHIERALLOCATION_TELLER
+  - DELETECASHIERALLOCATION_TELLER
+  - READ_REPORT
+- name: Loan Officer
+  description: Loan officer for client and loan management
+  disabled: false
+  permissions:
+  - READ_PAYMENTTYPE
+  - READ_CONFIGURATION
+  - READ_CALENDAR
+  - READ_CHARGE
+  - READ_EMAIL
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_USER
+  - READ_ROLE
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_BUSINESS_DATE
+  - CREATE_CLIENT
+  - READ_CLIENT
+  - UPDATE_CLIENT
+  - CREATE_LOAN
+  - READ_LOAN
+  - UPDATE_LOAN
+  - REPAYMENT_LOAN
+  - DISBURSE_LOAN
+  - DISBURSETOSAVINGS_LOAN
+  - READ_LOANNOTE
+  - READ_SAVINGSACCOUNT
+  - ACTIVATE_SAVINGSACCOUNT
+  - CREATE_SAVINGSACCOUNT
+  - UPDATE_SAVINGSACCOUNT
+  - READ_CLIENTCHARGE
+  - READ_Client Listing
+  - READ_Active Loans - Summary
+  - READ_Loans Awaiting Disbursal
+  - READ_Portfolio at Risk
+- name: Cashier
+  description: Cashier for handling cash transactions
+  disabled: false
+  permissions:
+  - READ_PAYMENTTYPE
+  - READ_CONFIGURATION
+  - READ_CALENDAR
+  - READ_CHARGE
+  - READ_EMAIL
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_USER
+  - READ_ROLE
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_BUSINESS_DATE
+  - READ_CLIENT
+  - READ_CLIENTCHARGE
+  - DEPOSIT_SAVINGSACCOUNT
+  - WITHDRAWAL_SAVINGSACCOUNT
+  - READ_SAVINGSACCOUNT
+  - REPAYMENT_LOAN
+  - READ_LOAN
+  - ALLOCATECASHIER_TELLER_CHECKER
+  - SETTLECASHFROMCASHIER_TELLER_CHECKER
+  - UPDATECASHIERALLOCATION_TELLER_CHECKER
 - name: Accountant
-  description: Create and manage GL accounts and journal entries
+  description: Accountant for financial management (Maker)
   disabled: false
   permissions:
-  - ALL_FUNCTIONS
-  - READ
-  - READ
-  - READ
-  - READ
-  - READ
-  - READ
-  - CHECKER_SUPER_USER
+  - READ_PAYMENTTYPE
+  - READ_CONFIGURATION
+  - READ_CALENDAR
+  - READ_CHARGE
+  - READ_EMAIL
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_USER
+  - READ_ROLE
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_BUSINESS_DATE
+  - CREATE_GLACCOUNT
+  - READ_GLACCOUNT
+  - UPDATE_GLACCOUNT
+  - DELETE_GLACCOUNT
+  - CREATE_JOURNALENTRY
+  - READ_JOURNALENTRY
+  - REVERSE_JOURNALENTRY
+  - DEFINEOPENINGBALANCE_JOURNALENTRY
+  - UPDATEOPENINGBALANCE_JOURNALENTRY
+  - CREATE_GLCLOSURE
+  - READ_GLCLOSURE
+  - UPDATE_GLCLOSURE
+  - DELETE_GLCLOSURE
+  - CREATE_ACCOUNTINGRULE
+  - READ_ACCOUNTINGRULE
+  - UPDATE_ACCOUNTINGRULE
+  - DELETE_ACCOUNTINGRULE
+  - READ_Balance Sheet
+  - READ_Income Statement
+  - READ_Trial Balance
+  - READ_General Ledger Report
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_CURRENCY
+  - READ_AUDIT
+- name: Supervisor Accountant
+  description: Senior accountant for audit and approval (Checker)
+  disabled: false
+  permissions:
+  - READ_PAYMENTTYPE
+  - READ_CONFIGURATION
+  - READ_CALENDAR
+  - READ_CHARGE
+  - READ_EMAIL
+  - READ_OFFICE
+  - READ_STAFF
+  - READ_USER
+  - READ_ROLE
+  - READ_CODE
+  - READ_CODEVALUE
+  - READ_BUSINESS_DATE
+  - CREATE_GLACCOUNT
+  - READ_GLACCOUNT
+  - UPDATE_GLACCOUNT
+  - DELETE_GLACCOUNT
+  - READ_JOURNALENTRY
+  - REVERSE_JOURNALENTRY
+  - CREATE_JOURNALENTRY_CHECKER
+  - DEFINEOPENINGBALANCE_JOURNALENTRY
+  - UPDATEOPENINGBALANCE_JOURNALENTRY
+  - CREATE_GLCLOSURE
+  - READ_GLCLOSURE
+  - UPDATE_GLCLOSURE
+  - DELETE_GLCLOSURE
+  - CREATE_ACCOUNTINGRULE
+  - READ_ACCOUNTINGRULE
+  - UPDATE_ACCOUNTINGRULE
+  - DELETE_ACCOUNTINGRULE
+  - READ_Balance Sheet
+  - READ_Income Statement
+  - READ_Trial Balance
+  - READ_General Ledger Report
+  - READ_AUDIT
 staff:
 - firstName: Thomas
   lastName: Ndongo
@@ -917,6 +1076,18 @@ staff:
   externalId: STF-102
   mobileNo: +237 677 22 22 22
   emailAddress: c.biaka@mfi.cm
+  joiningDate:
+  - 2024
+  - 1
+  - 2
+- firstName: Supervisor
+  lastName: Accountant
+  officeName: Head Office
+  isLoanOfficer: true
+  isActive: true
+  externalId: STF-103
+  mobileNo: +237 677 33 33 33
+  emailAddress: s.accountant@mfi.cm
   joiningDate:
   - 2024
   - 1
@@ -1085,6 +1256,15 @@ users:
   - Accountant
   password: Ac0untant@2024!
   staffName: Christine Biaka
+- username: supervisor
+  firstname: Supervisor
+  lastname: Accountant
+  email: s.accountant@mfi.cm
+  officeName: Head Office
+  roles:
+  - Supervisor Accountant
+  password: sUp3rV1sor@2024!
+  staffName: Supervisor Accountant
 - username: manager.yaounde
   firstname: Jean
   lastname: Mbarga
@@ -2607,3 +2787,8 @@ tellerAccountingRules:
   cashOutGlCode: '42'
   description: Cash accounting rule for Bamenda main teller
   officeName: Bamenda Branch
+businessDate:
+  type: BUSINESS_DATE
+  date: 15 January 2026
+  dateFormat: dd MMMM yyyy
+  locale: en

@@ -345,8 +345,9 @@ class ExcelToYamlConverter:
                         job['cronExpression'] = row['cron_expression']
 
                     # Active status
-                    if row.get('is_active'):
-                        job['active'] = self._parse_boolean(row['is_active'])
+                    if row.get('active') and not pd.isna(row.get('active')):
+                        job['active'] = self._parse_boolean(row['active'])
+
 
                     # Job parameters (if any)
                     if row.get('job_parameters') and not pd.isna(row.get('job_parameters')):
@@ -378,8 +379,8 @@ class ExcelToYamlConverter:
                         config['action'] = row['action']
 
                     # Enabled status
-                    if row.get('maker_checker_enabled'):
-                        config['enabled'] = self._parse_boolean(row['maker_checker_enabled'])
+                    if row.get('enabled'):
+                        config['enabled'] = self._parse_boolean(row['enabled'])
 
                     maker_checker.append(config)
 
@@ -510,6 +511,7 @@ class ExcelToYamlConverter:
                 role_name = row.get('role_name')
                 if not role_name or pd.isna(role_name):
                     continue
+                role_name = str(role_name).strip()
 
                 if role_name not in roles_dict:
                     roles_dict[role_name] = {
@@ -521,8 +523,15 @@ class ExcelToYamlConverter:
 
                 # Add permission
                 permission = row.get('permission_code') or row.get('permission')
+                group = row.get('permission_group')
+                
                 if permission and not pd.isna(permission):
-                    roles_dict[role_name]['permissions'].append(permission)
+                    permission = str(permission).strip()
+                    if group and not pd.isna(group):
+                         group = str(group).strip()
+                    from permission_mappings import expand_permissions
+                    expanded_perms = expand_permissions(group, permission)
+                    roles_dict[role_name]['permissions'].extend(expanded_perms)
 
             self.config['roles'] = list(roles_dict.values())
             logger.info(f"  ✓ Roles: {len(roles_dict)} roles")
@@ -1772,6 +1781,45 @@ class ExcelToYamlConverter:
         self.convert_operations()
         self.convert_transactions()
 
+
+        # Convert Business Date
+        df = self._read_sheet('Business Date')
+        if not df.empty and len(df) > 0:
+            row = df.iloc[0]
+            # Parse the date string and convert to "dd MMMM yyyy" format
+            import datetime
+            date_str = row.get('date')
+            if date_str and not pd.isna(date_str):
+                # Handle different date formats
+                if isinstance(date_str, str):
+                    # Try parsing yyyy-MM-dd format
+                    try:
+                        parsed_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+                    except ValueError:
+                        # Try parsing dd MMMM yyyy format
+                        try:
+                            parsed_date = datetime.datetime.strptime(date_str, '%d %B %Y')
+                        except ValueError:
+                            logger.warning(f"Could not parse business date: {date_str}")
+                            parsed_date = datetime.datetime.now()
+                elif isinstance(date_str, datetime.datetime):
+                    parsed_date = date_str
+                else:
+                    parsed_date = datetime.datetime.now()
+                
+                # Convert to string format "dd MMMM yyyy" (e.g., "13 January 2026")
+                formatted_date = parsed_date.strftime('%d %B %Y')
+                self.config['businessDate'] = {
+                    'type': row.get('type', 'BUSINESS_DATE'),
+                    'date': formatted_date,
+                    'dateFormat': 'dd MMMM yyyy',
+                    'locale': row.get('locale', 'en')
+                }
+                logger.info(f"  ✓ Business Date: {formatted_date}")
+
+
+
+
         # Validate converted data
         self._validate_conversion()
 
@@ -2045,7 +2093,8 @@ class ExcelToYamlConverter:
 
         # 4.2 Loan Products
         loan_products = self.config.get('loanProducts', [])
-        loans_no_accounting = [p['name'] for p in loan_products if not p.get('accounting')]
+        # Check if accounting fields are present (they get merged directly into product)
+        loans_no_accounting = [p['name'] for p in loan_products if p.get('accountingRule') == 'NONE' or not p.get('fundSourceAccountCode')]
         loans_incomplete = []
         for p in loan_products:
             if not p.get('shortName') or not p.get('currencyCode'):
@@ -2058,16 +2107,18 @@ class ExcelToYamlConverter:
             validation_results.append(('Loan Products', False, f"{len(loan_products)} products, {len(loans_no_accounting)} no accounting"))
             warnings.append(f"⚠️  {len(loans_no_accounting)} loan products missing GL mappings")
         elif len(loan_products) > 0:
-            total_mappings = sum(len(p.get('accounting', {})) for p in loan_products)
-            validation_results.append(('Loan Products', True, f"{len(loan_products)} products, {total_mappings} GL mappings"))
-            logger.info(f"  ✓ Loan Products: {len(loan_products)} products with {total_mappings} GL mappings")
+            # Count products with accounting fields (merged directly)
+            products_with_accounting = sum(1 for p in loan_products if p.get('accountingRule') != 'NONE' and p.get('fundSourceAccountCode'))
+            validation_results.append(('Loan Products', True, f"{len(loan_products)} products, {products_with_accounting} with GL mappings"))
+            logger.info(f"  ✓ Loan Products: {len(loan_products)} products with {products_with_accounting} having GL mappings")
         else:
             validation_results.append(('Loan Products', False, "Empty"))
             warnings.append("⚠️  No loan products defined")
 
         # 4.3 Savings Products
         savings_products = self.config.get('savingsProducts', [])
-        savings_no_accounting = [p['name'] for p in savings_products if not p.get('accounting')]
+        # Check if accounting fields are present (they get merged directly into product)
+        savings_no_accounting = [p['name'] for p in savings_products if p.get('accountingRule') == 'NONE' or not p.get('savingsReferenceAccountCode')]
         savings_incomplete = []
         for p in savings_products:
             if not p.get('shortName') or not p.get('currencyCode'):
@@ -2080,9 +2131,10 @@ class ExcelToYamlConverter:
             validation_results.append(('Savings Products', False, f"{len(savings_products)} products, {len(savings_no_accounting)} no accounting"))
             warnings.append(f"⚠️  {len(savings_no_accounting)} savings products missing GL mappings")
         elif len(savings_products) > 0:
-            total_mappings = sum(len(p.get('accounting', {})) for p in savings_products)
-            validation_results.append(('Savings Products', True, f"{len(savings_products)} products, {total_mappings} GL mappings"))
-            logger.info(f"  ✓ Savings Products: {len(savings_products)} products with {total_mappings} GL mappings")
+            # Count products with accounting fields (merged directly)
+            products_with_accounting = sum(1 for p in savings_products if p.get('accountingRule') != 'NONE' and p.get('savingsReferenceAccountCode'))
+            validation_results.append(('Savings Products', True, f"{len(savings_products)} products, {products_with_accounting} with GL mappings"))
+            logger.info(f"  ✓ Savings Products: {len(savings_products)} products with {products_with_accounting} having GL mappings")
         else:
             validation_results.append(('Savings Products', False, "Empty"))
             warnings.append("⚠️  No savings products defined")

@@ -205,63 +205,58 @@ public class RoleLoader {
     log.debug("Checking permissions for role ID {}", roleId);
 
     try {
-      // Get all available permissions
-      List<Map<String, Object>> allPermissions = apiClient.get("/api/v1/permissions", List.class);
+      // Get current permissions for the role from the API (to ensure we have Fresh
+      // status)
+      Map<String, Object> roleWithPerms =
+          apiClient.get("/api/v1/roles/" + roleId + "/permissions", Map.class);
+      List<Map<String, Object>> usageData =
+          (List<Map<String, Object>>) roleWithPerms.get("permissionUsageData");
 
-      // Map permission codes to permission IDs
-      List<Long> desiredPermissionIds = new ArrayList<>();
-      for (String code : permissionCodes) {
-        Map<String, Object> permission =
-            allPermissions.stream()
-                .filter(p -> code.equals(p.get("code")))
-                .findFirst()
-                .orElse(null);
-
-        if (permission != null) {
-          desiredPermissionIds.add(((Number) permission.get("id")).longValue());
-        } else {
-          log.warn("Permission not found: {}", code);
-        }
-      }
-
-      // Get current permissions for the role
-      List<Long> currentPermissionIds = new ArrayList<>();
-      if (existingRole != null && existingRole.containsKey("permissions")) {
-        List<Map<String, Object>> permissions =
-            (List<Map<String, Object>>) existingRole.get("permissions");
-        for (Map<String, Object> perm : permissions) {
-          if (perm.containsKey("id")) {
-            currentPermissionIds.add(((Number) perm.get("id")).longValue());
-          }
-        }
-      }
-
-      // Check if permissions have changed
-      if (currentPermissionIds.size() == desiredPermissionIds.size()
-          && currentPermissionIds.containsAll(desiredPermissionIds)) {
-        log.debug("Permissions unchanged for role ID {}", roleId);
+      if (usageData == null) {
+        log.warn("No permission usage data found for role {}", roleId);
         return false;
       }
 
-      // Permissions changed - update them
-      if (!desiredPermissionIds.isEmpty()) {
+      // Identify permissions that need to be enabled
+      Map<String, Boolean> permissionsToEnable = new HashMap<>();
+
+      for (String code : permissionCodes) {
+        // Find the permission in usageData
+        Map<String, Object> permissionInfo =
+            usageData.stream().filter(p -> code.equals(p.get("code"))).findFirst().orElse(null);
+
+        if (permissionInfo != null) {
+          Boolean selected = (Boolean) permissionInfo.get("selected");
+          if (selected == null || !selected) {
+            permissionsToEnable.put(code, true);
+          }
+        } else {
+          log.warn("Permission code not found in system: {}", code);
+          // Optionally still try to enable it if it's valid but missing from response
+          // (unlikely)
+        }
+      }
+
+      if (!permissionsToEnable.isEmpty()) {
         Map<String, Object> request = new HashMap<>();
-        request.put("permissions", desiredPermissionIds);
+        request.put("permissions", permissionsToEnable);
 
         apiClient.put("/api/v1/roles/" + roleId + "/permissions", request, Map.class);
 
         log.info(
-            "Updated permissions for role ID {} ({} → {} permissions)",
+            "Updated permissions for role ID {} (enabling {} permissions)",
             roleId,
-            currentPermissionIds.size(),
-            desiredPermissionIds.size());
+            permissionsToEnable.size());
         return true;
       }
 
+      log.debug("Permissions unchanged for role ID {}", roleId);
       return false;
 
     } catch (Exception ex) {
       log.error("Failed to check/assign permissions to role {}: {}", roleId, ex.getMessage());
+      // Print stack trace for debugging
+      ex.printStackTrace();
       return false;
     }
   }

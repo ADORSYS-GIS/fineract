@@ -3,6 +3,7 @@ package org.apache.fineract.config.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.fineract.config.domain.BusinessDate;
 import org.apache.fineract.config.model.account.LoanAccount;
 import org.apache.fineract.config.model.account.LoanCollateral;
 import org.apache.fineract.config.model.account.LoanGuarantor;
@@ -169,6 +170,16 @@ public class FineractConfig {
 
   /** Phase 6: Loan Transactions (repayments, waivers, writeoffs) */
   private List<LoanTransaction> loanTransactions = new ArrayList<>();
+
+  private BusinessDate businessDate;
+
+  public BusinessDate getBusinessDate() {
+    return businessDate;
+  }
+
+  public void setBusinessDate(BusinessDate businessDate) {
+    this.businessDate = businessDate;
+  }
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

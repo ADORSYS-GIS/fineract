@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - yaml-data
+      - update/activate-maker-checker-for-manual-journal-entries
     paths:
       - 'src/**'
       - 'pom.xml'
