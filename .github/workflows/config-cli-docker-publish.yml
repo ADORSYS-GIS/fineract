@@ -17,7 +17,7 @@ on:
       - main
       - develop
     paths:
-      - 'docs/data-collection/fineract-config-cli/Dockerfile'
+      - 'fineract-adorsys-data-collection/fineract-config-cli/Dockerfile'
 
   schedule:
     # Run weekly on Monday at 00:00 UTC
@@ -64,8 +64,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: docs/data-collection/fineract-config-cli
-          file: docs/data-collection/fineract-config-cli/Dockerfile
+          context: fineract-adorsys-data-collection/fineract-config-cli
+          file: fineract-adorsys-data-collection/fineract-config-cli/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
