@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.adorsys.fineract.teller.service;
+package com.adorsys.fineract.userandstaff.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
