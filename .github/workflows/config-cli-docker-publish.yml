@@ -5,11 +5,11 @@ on:
     branches:
       - main
       - develop
-      - yaml-data
+      - fix/config-cli-workflow
     paths:
-      - 'docs/data-collection/fineract-config-cli/src/**'
-      - 'docs/data-collection/fineract-config-cli/pom.xml'
-      - 'docs/data-collection/fineract-config-cli/Dockerfile'
+      - 'fineract-adorsys-data-collection/fineract-config-cli/src/**'
+      - 'fineract-adorsys-data-collection/fineract-config-cli/pom.xml'
+      - 'fineract-adorsys-data-collection/fineract-config-cli/Dockerfile'
       - '.github/workflows/config-cli-docker-publish.yml'
 
   pull_request:
@@ -17,7 +17,7 @@ on:
       - main
       - develop
     paths:
-      - 'docs/data-collection/fineract-config-cli/Dockerfile'
+      - 'fineract-adorsys-data-collection/fineract-config-cli/Dockerfile'
 
   schedule:
     # Run weekly on Monday at 00:00 UTC
@@ -40,11 +40,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.3.0
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3.2.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Extract metadata for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v5.5.1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -62,10 +62,10 @@ jobs:
             type=raw,value=snapshot,enable={{is_default_branch}}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.4.0
         with:
-          context: docs/data-collection/fineract-config-cli
-          file: docs/data-collection/fineract-config-cli/Dockerfile
+          context: fineract-adorsys-data-collection/fineract-config-cli
+          file: fineract-adorsys-data-collection/fineract-config-cli/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
