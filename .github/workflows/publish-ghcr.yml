@@ -32,6 +32,31 @@ jobs:
           echo "owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
         id: git_hashes
 
+      - name: Prepare Pentaho Plugin
+        run: |
+          echo "Preparing Pentaho Plugin..."
+          mkdir -p pentaho-dist/plugins
+          mkdir -p pentaho-dist/reports
+          
+          # Unzip the plugin
+          unzip -o fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1.zip -d pentaho-temp
+          
+          # Copy JARs (Handling potential internal folder structure)
+          if [ -d "pentaho-temp/MifosSecurityPlugin-1.12.1/lib" ]; then
+            echo "Found lib directory, copying JARs..."
+            cp pentaho-temp/MifosSecurityPlugin-1.12.1/lib/*.jar pentaho-dist/plugins/
+          else
+            echo "Copying JARs from root..."
+            cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"
+          fi
+          
+          # Copy Reports (From the repo folder using Postgresql)
+          echo "Copying Reports..."
+          cp -r fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1/Postgresql pentaho-dist/reports/
+          
+          echo "Pentaho preparation complete."
+          ls -R pentaho-dist
+
       - name: Build the Apache Fineract image
         run:  |
           TAGS="${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
