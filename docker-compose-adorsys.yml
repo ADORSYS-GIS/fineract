@@ -181,6 +181,17 @@ services:
   #   networks:
   #     - fineract-network
 
+  community-app:
+    image: openmf/web-app:master
+    container_name: mifos-web-app
+    restart: always
+    ports:
+      - 4200:80
+    environment:
+      - FINERACT_API_URL=https://localhost
+    networks:
+      - fineract-network
+
 networks:
   fineract-network:
     driver: bridge
