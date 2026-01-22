@@ -81,6 +81,8 @@ services:
         condition: service_healthy
     env_file:
       - ./config/docker/env/fineract-adorsys.env
+    environment:
+      - IMPORT_FILES_LOCATIONS=/config/*.yml
     volumes:
       - ./fineract-adorsys-data-collection/fineract-config-cli/config:/config
       - ./fineract-adorsys-data-collection/fineract-config-cli/data:/data
