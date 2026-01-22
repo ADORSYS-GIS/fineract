@@ -45,6 +45,7 @@ public class OAuth2Provider implements AuthProvider {
     String token = getToken();
     if (token != null) {
       headers.setBearerAuth(token);
+      headers.set("Fineract-Platform-TenantId", fineractProperties.getTenant());
     }
   }
 
