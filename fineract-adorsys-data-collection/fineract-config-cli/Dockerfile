@@ -17,7 +17,7 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 
 # Build the application (skip tests for faster builds)
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests -Dspotless.check.skip=true -B
 
 # Verify the JAR was created
 RUN ls -lh target/ && \

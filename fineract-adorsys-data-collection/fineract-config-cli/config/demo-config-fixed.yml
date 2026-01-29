@@ -525,7 +525,7 @@ systemConfig:
   makerCheckerConfig:
   - entity: Loan
     action: APPROVE
-    enabled: true
+    enabled: false
   - entity: Loan
     action: DISBURSE
     enabled: true
@@ -536,8 +536,12 @@ systemConfig:
   - entity: SAVINGSACCOUNT
     action: CLOSE
     enabled: true
+  - entity: SAVINGSACCOUNT
+    action: APPROVE
+    enabled: false
   - entity: Client
     action: ACTIVATE
+    enabled: true
   - entity: Client
     action: PROPOSETRANSFER
     enabled: true
@@ -879,6 +883,8 @@ roles:
   - READ_CODE
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
+  - READ_CURRENCY
+  - ALL_FUNCTIONS_READ
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -894,7 +900,11 @@ roles:
   - REPAYMENT_LOAN
   - READ_loan_additional_info
   - CREATE_loan_additional_info
+  - READ_GUARANTOR
+  - READ_COLLATERAL
   - READ_SAVINGSACCOUNT
+  - READ_SAVINGSPRODUCT
+  - UPDATE_SAVINGSACCOUNT
   - APPROVE_SAVINGSACCOUNT
   - REJECT_SAVINGSACCOUNT
   - WITHDRAW_SAVINGSACCOUNT
@@ -915,6 +925,11 @@ roles:
   - UPDATECASHIERALLOCATION_TELLER
   - DELETECASHIERALLOCATION_TELLER
   - READ_REPORT
+  - APPROVE_LOAN_CHECKER
+  - APPROVE_SAVINGSACCOUNT_CHECKER
+  - ACTIVATE_CLIENT_CHECKER
+  - CLOSE_SAVINGSACCOUNT_CHECKER
+  - PROPOSETRANSFER_CLIENT_CHECKER
 - name: Loan Officer
   description: Loan officer for client and loan management
   disabled: false
@@ -931,6 +946,7 @@ roles:
   - READ_CODE
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
+  - ALL_FUNCTIONS_READ
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -941,7 +957,16 @@ roles:
   - DISBURSE_LOAN
   - DISBURSETOSAVINGS_LOAN
   - READ_LOANNOTE
+  - READ_GUARANTOR
+  - CREATE_GUARANTOR
+  - UPDATE_GUARANTOR
+  - DELETE_GUARANTOR
+  - READ_COLLATERAL
+  - CREATE_COLLATERAL
+  - UPDATE_COLLATERAL
+  - DELETE_COLLATERAL
   - READ_SAVINGSACCOUNT
+  - READ_SAVINGSPRODUCT
   - ACTIVATE_SAVINGSACCOUNT
   - CREATE_SAVINGSACCOUNT
   - UPDATE_SAVINGSACCOUNT
@@ -964,6 +989,7 @@ roles:
   - READ_USER
   - READ_ROLE
   - READ_CODE
+  - READ_CURRENCY
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
   - READ_CLIENT

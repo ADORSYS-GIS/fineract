@@ -49,7 +49,8 @@ COMMON_READ_PERMISSIONS = [
     'READ_ROLE',
     'READ_CODE',
     'READ_CODEVALUE',
-    'READ_BUSINESS_DATE'
+    'READ_BUSINESS_DATE',
+    'READ_CURRENCY'
 ]
 
 def expand_permissions(group, shorthand):
@@ -86,6 +87,7 @@ def expand_permissions(group, shorthand):
             # Savings
             perms.extend([
                 'READ_SAVINGSACCOUNT',
+                'READ_SAVINGSPRODUCT',
                 'APPROVE_SAVINGSACCOUNT',
                 'REJECT_SAVINGSACCOUNT', 'WITHDRAW_SAVINGSACCOUNT',
                 'READ_SAVINGSADDITIONALINFO', 'UPDATE_SAVINGSADDITIONALINFO', 'CREATE_SAVINGSADDITIONALINFO', "READ_savings_additional_info", "UPDATE_savings_additional_info"
@@ -115,7 +117,7 @@ def expand_permissions(group, shorthand):
             # Loans
             perms.extend(['CREATE_LOAN', 'READ_LOAN', 'UPDATE_LOAN', 'REPAYMENT_LOAN', 'DISBURSE_LOAN', 'DISBURSETOSAVINGS_LOAN', 'READ_LOANNOTE'])
             # Savings
-            perms.extend(['READ_SAVINGSACCOUNT','ACTIVATE_SAVINGSACCOUNT', 'CREATE_SAVINGSACCOUNT', 'UPDATE_SAVINGSACCOUNT'])
+            perms.extend(['READ_SAVINGSACCOUNT', 'READ_SAVINGSPRODUCT', 'ACTIVATE_SAVINGSACCOUNT', 'CREATE_SAVINGSACCOUNT', 'UPDATE_SAVINGSACCOUNT'])
             # Client Charges
             perms.extend(['READ_CLIENTCHARGE'])
             # Portfolio Reports (Sample list)
