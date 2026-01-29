@@ -525,23 +525,19 @@ systemConfig:
   makerCheckerConfig:
   - entity: Loan
     action: APPROVE
-    enabled: false
   - entity: Loan
     action: DISBURSE
-    enabled: true
   - entity: Loan
     action: WRITEOFF
   - entity: RESCHEDULELOAN
     action: CREATE
   - entity: SAVINGSACCOUNT
+    action: APPROVE
+  - entity: SAVINGSACCOUNT
     action: CLOSE
     enabled: true
-  - entity: SAVINGSACCOUNT
-    action: APPROVE
-    enabled: false
   - entity: Client
     action: ACTIVATE
-    enabled: true
   - entity: Client
     action: PROPOSETRANSFER
     enabled: true
@@ -550,10 +546,8 @@ systemConfig:
     enabled: true
   - entity: TELLER
     action: ALLOCATECASHTOCASHIER
-    enabled: true
   - entity: TELLER
     action: SETTLECASHFROMCASHIER
-    enabled: true
   - entity: User
     action: CREATE
   - entity: User
@@ -666,85 +660,85 @@ systemConfig:
   holidays:
   - name: New Year's Day
     fromDate:
-    - 2024
+    - 2025
     - 1
     - 1
     toDate:
-    - 2024
+    - 2025
     - 1
     - 1
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 1
     - 2
     description: New Year Holiday
   - name: Youth Day
     fromDate:
-    - 2024
+    - 2025
     - 2
     - 11
     toDate:
-    - 2024
+    - 2025
     - 2
     - 11
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 2
     - 12
     description: Youth Day Holiday
   - name: Labour Day
     fromDate:
-    - 2024
+    - 2025
     - 5
     - 1
     toDate:
-    - 2024
+    - 2025
     - 5
     - 1
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 5
     - 2
     description: International Labour Day
   - name: National Day
     fromDate:
-    - 2024
+    - 2025
     - 5
     - 20
     toDate:
-    - 2024
+    - 2025
     - 5
     - 20
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 5
     - 21
     description: Cameroon National Day
   - name: Assumption Day
     fromDate:
-    - 2024
+    - 2025
     - 8
     - 15
     toDate:
-    - 2024
+    - 2025
     - 8
     - 15
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 8
     - 16
     description: Assumption of Mary
   - name: Christmas Day
     fromDate:
-    - 2024
+    - 2025
     - 12
     - 25
     toDate:
-    - 2024
+    - 2025
     - 12
     - 25
     repaymentsRescheduledTo:
-    - 2024
+    - 2025
     - 12
     - 26
     description: Christmas Holiday
@@ -835,28 +829,28 @@ systemConfig:
 offices:
 - name: Yaounde Branch
   openingDate:
-  - 2024
+  - 2025
   - 1
   - 15
   externalId: BR-YDE-001
   parentName: Head Office
 - name: Douala Branch
   openingDate:
-  - 2024
+  - 2025
   - 1
   - 15
   externalId: BR-DLA-001
   parentName: Head Office
 - name: Bafoussam Branch
   openingDate:
-  - 2024
+  - 2025
   - 2
   - 1
   externalId: BR-BAF-001
   parentName: Head Office
 - name: Bamenda Branch
   openingDate:
-  - 2024
+  - 2025
   - 2
   - 15
   externalId: BR-BAM-001
@@ -884,7 +878,133 @@ roles:
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
   - READ_CURRENCY
-  - ALL_FUNCTIONS_READ
+  - READ_REPORT
+  - READ_Loan Transaction Receipt
+  - READ_Savings Transaction Receipt
+  - READ_Income Statement (Profit & Loss)
+  - READ_Balance Sheet
+  - READ_General Ledger Report
+  - READ_Trial Balance
+  - READ_Income Statement
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Active Clients Summary
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loan Summary per Branch
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_GroupNamesByStaff
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_Loan Repayment Collections
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Overdue Loans Report
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Accounts Summary
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
+  - READ_COBAC R01 - Portfolio Quality
+  - READ_COBAC R02 - Loan Provisioning
+  - READ_COBAC R03 - Capital Adequacy
+  - READ_COBAC R04 - Liquidity Position
+  - READ_COBAC R05 - Large Exposures
+  - READ_COBAC R06 - Balance Sheet
+  - READ_COBAC R07 - Income Statement
+  - READ_COBAC R08 - Arrears Report
+  - READ_COBAC R09 - Portfolio at Risk
+  - READ_COBAC R10 - Related Party Transactions
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -900,11 +1020,8 @@ roles:
   - REPAYMENT_LOAN
   - READ_loan_additional_info
   - CREATE_loan_additional_info
-  - READ_GUARANTOR
-  - READ_COLLATERAL
   - READ_SAVINGSACCOUNT
   - READ_SAVINGSPRODUCT
-  - UPDATE_SAVINGSACCOUNT
   - APPROVE_SAVINGSACCOUNT
   - REJECT_SAVINGSACCOUNT
   - WITHDRAW_SAVINGSACCOUNT
@@ -914,6 +1031,8 @@ roles:
   - READ_savings_additional_info
   - UPDATE_savings_additional_info
   - READ_CLIENTCHARGE
+  - READ_GUARANTOR
+  - READ_COLLATERAL
   - READ_TELLER
   - READ_CASHIER
   - CREATE_TELLER
@@ -924,12 +1043,12 @@ roles:
   - SETTLECASHFROMCASHIER_TELLER
   - UPDATECASHIERALLOCATION_TELLER
   - DELETECASHIERALLOCATION_TELLER
-  - READ_REPORT
-  - APPROVE_LOAN_CHECKER
-  - APPROVE_SAVINGSACCOUNT_CHECKER
-  - ACTIVATE_CLIENT_CHECKER
-  - CLOSE_SAVINGSACCOUNT_CHECKER
-  - PROPOSETRANSFER_CLIENT_CHECKER
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Active Clients Summary
+  - READ_Balance Sheet
+  - READ_Income Statement (Profit & Loss)
 - name: Loan Officer
   description: Loan officer for client and loan management
   disabled: false
@@ -946,7 +1065,134 @@ roles:
   - READ_CODE
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
-  - ALL_FUNCTIONS_READ
+  - READ_CURRENCY
+  - READ_REPORT
+  - READ_Loan Transaction Receipt
+  - READ_Savings Transaction Receipt
+  - READ_Income Statement (Profit & Loss)
+  - READ_Balance Sheet
+  - READ_General Ledger Report
+  - READ_Trial Balance
+  - READ_Income Statement
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Active Clients Summary
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loan Summary per Branch
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_GroupNamesByStaff
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_Loan Repayment Collections
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Overdue Loans Report
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Accounts Summary
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
+  - READ_COBAC R01 - Portfolio Quality
+  - READ_COBAC R02 - Loan Provisioning
+  - READ_COBAC R03 - Capital Adequacy
+  - READ_COBAC R04 - Liquidity Position
+  - READ_COBAC R05 - Large Exposures
+  - READ_COBAC R06 - Balance Sheet
+  - READ_COBAC R07 - Income Statement
+  - READ_COBAC R08 - Arrears Report
+  - READ_COBAC R09 - Portfolio at Risk
+  - READ_COBAC R10 - Related Party Transactions
   - CREATE_CLIENT
   - READ_CLIENT
   - UPDATE_CLIENT
@@ -957,20 +1203,24 @@ roles:
   - DISBURSE_LOAN
   - DISBURSETOSAVINGS_LOAN
   - READ_LOANNOTE
-  - READ_GUARANTOR
-  - CREATE_GUARANTOR
-  - UPDATE_GUARANTOR
-  - DELETE_GUARANTOR
-  - READ_COLLATERAL
-  - CREATE_COLLATERAL
-  - UPDATE_COLLATERAL
-  - DELETE_COLLATERAL
   - READ_SAVINGSACCOUNT
   - READ_SAVINGSPRODUCT
   - ACTIVATE_SAVINGSACCOUNT
   - CREATE_SAVINGSACCOUNT
   - UPDATE_SAVINGSACCOUNT
   - READ_CLIENTCHARGE
+  - CREATE_GUARANTOR
+  - READ_GUARANTOR
+  - UPDATE_GUARANTOR
+  - DELETE_GUARANTOR
+  - CREATE_COLLATERAL
+  - READ_COLLATERAL
+  - UPDATE_COLLATERAL
+  - DELETE_COLLATERAL
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Active Clients Summary
   - READ_Client Listing
   - READ_Active Loans - Summary
   - READ_Loans Awaiting Disbursal
@@ -989,9 +1239,136 @@ roles:
   - READ_USER
   - READ_ROLE
   - READ_CODE
-  - READ_CURRENCY
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
+  - READ_CURRENCY
+  - READ_REPORT
+  - READ_Loan Transaction Receipt
+  - READ_Savings Transaction Receipt
+  - READ_Income Statement (Profit & Loss)
+  - READ_Balance Sheet
+  - READ_General Ledger Report
+  - READ_Trial Balance
+  - READ_Income Statement
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Active Clients Summary
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loan Summary per Branch
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_GroupNamesByStaff
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_Loan Repayment Collections
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Overdue Loans Report
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Accounts Summary
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
+  - READ_COBAC R01 - Portfolio Quality
+  - READ_COBAC R02 - Loan Provisioning
+  - READ_COBAC R03 - Capital Adequacy
+  - READ_COBAC R04 - Liquidity Position
+  - READ_COBAC R05 - Large Exposures
+  - READ_COBAC R06 - Balance Sheet
+  - READ_COBAC R07 - Income Statement
+  - READ_COBAC R08 - Arrears Report
+  - READ_COBAC R09 - Portfolio at Risk
+  - READ_COBAC R10 - Related Party Transactions
   - READ_CLIENT
   - READ_CLIENTCHARGE
   - DEPOSIT_SAVINGSACCOUNT
@@ -1018,6 +1395,134 @@ roles:
   - READ_CODE
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
+  - READ_CURRENCY
+  - READ_REPORT
+  - READ_Loan Transaction Receipt
+  - READ_Savings Transaction Receipt
+  - READ_Income Statement (Profit & Loss)
+  - READ_Balance Sheet
+  - READ_General Ledger Report
+  - READ_Trial Balance
+  - READ_Income Statement
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Active Clients Summary
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loan Summary per Branch
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_GroupNamesByStaff
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_Loan Repayment Collections
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Overdue Loans Report
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Accounts Summary
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
+  - READ_COBAC R01 - Portfolio Quality
+  - READ_COBAC R02 - Loan Provisioning
+  - READ_COBAC R03 - Capital Adequacy
+  - READ_COBAC R04 - Liquidity Position
+  - READ_COBAC R05 - Large Exposures
+  - READ_COBAC R06 - Balance Sheet
+  - READ_COBAC R07 - Income Statement
+  - READ_COBAC R08 - Arrears Report
+  - READ_COBAC R09 - Portfolio at Risk
+  - READ_COBAC R10 - Related Party Transactions
   - CREATE_GLACCOUNT
   - READ_GLACCOUNT
   - UPDATE_GLACCOUNT
@@ -1036,7 +1541,7 @@ roles:
   - UPDATE_ACCOUNTINGRULE
   - DELETE_ACCOUNTINGRULE
   - READ_Balance Sheet
-  - READ_Income Statement
+  - READ_Income Statement (Profit & Loss)
   - READ_Trial Balance
   - READ_General Ledger Report
   - READ_OFFICE
@@ -1059,6 +1564,134 @@ roles:
   - READ_CODE
   - READ_CODEVALUE
   - READ_BUSINESS_DATE
+  - READ_CURRENCY
+  - READ_REPORT
+  - READ_Loan Transaction Receipt
+  - READ_Savings Transaction Receipt
+  - READ_Income Statement (Profit & Loss)
+  - READ_Balance Sheet
+  - READ_General Ledger Report
+  - READ_Trial Balance
+  - READ_Income Statement
+  - READ_Portfolio Performance Statistics
+  - READ_Portfolio Analysis by Product
+  - READ_Portfolio Analysis by Branch
+  - READ_Portfolio at Risk
+  - READ_Portfolio at Risk(Pentaho)
+  - READ_Portfolio at Risk by Branch
+  - READ_Portfolio at Risk by Branch(Pentaho)
+  - READ_Active Clients Summary
+  - READ_Active Clients - Email
+  - READ_Active Group Leaders - Email
+  - READ_Active Loan Clients - Email
+  - READ_Active Loan Summary per Branch
+  - READ_Active Loans - Details
+  - READ_Active Loans - Summary
+  - READ_Active Loans - Summary(Pentaho)
+  - READ_Active Loans by Disbursal Period
+  - READ_Active Loans by Disbursal Period(Pentaho)
+  - READ_Active Loans in last installment
+  - READ_Active Loans in last installment Summary
+  - READ_Active Loans in last installment Summary(Pentaho)
+  - READ_Active Loans in last installment(Pentaho)
+  - READ_Active Loans Passed Final Maturity
+  - READ_Active Loans Passed Final Maturity Summary
+  - READ_Active Loans Passed Final Maturity Summary(Pentaho)
+  - READ_Active Loans Passed Final Maturity(Pentaho)
+  - READ_Aging Detail
+  - READ_Aging Detail(Pentaho)
+  - READ_Aging Summary (Arrears in Months)
+  - READ_Aging Summary (Arrears in Months)(Pentaho)
+  - READ_Aging Summary (Arrears in Weeks)
+  - READ_Aging Summary (Arrears in Weeks)(Pentaho)
+  - READ_Balance Outstanding
+  - READ_Branch Expected Cash Flow
+  - READ_BranchManagerStats
+  - READ_ChildrenStaffList
+  - READ_Client Listing
+  - READ_Client Listing(Pentaho)
+  - READ_Client Loan Account Schedule
+  - READ_Client Loans Listing
+  - READ_Client Loans Listing(Pentaho)
+  - READ_Client Saving Transactions
+  - READ_Client Savings Summary
+  - 'READ_ClientSummary '
+  - READ_ClientTrendsByDay
+  - READ_ClientTrendsByMonth
+  - READ_ClientTrendsByWeek
+  - READ_Collection Report
+  - READ_CoordinatorStats
+  - READ_Demand_Vs_Collection
+  - READ_Disbursal Report
+  - READ_Disbursal_Vs_Awaitingdisbursal
+  - READ_Dormant Prospects - Email
+  - READ_Expected Payments By Date - Basic
+  - READ_Expected Payments By Date - Basic(Pentaho)
+  - READ_Expected Payments By Date - Formatted
+  - READ_FieldAgentPrograms
+  - READ_FieldAgentStats
+  - READ_Funds Disbursed Between Dates Summary
+  - READ_Funds Disbursed Between Dates Summary(Pentaho)
+  - READ_Funds Disbursed Between Dates Summary by Office
+  - READ_Funds Disbursed Between Dates Summary by Office(Pentaho)
+  - READ_GroupNamesByStaff
+  - READ_GroupSavingSummary
+  - READ_GroupSummaryAmounts
+  - READ_GroupSummaryCounts
+  - READ_Happy Birthday - Email
+  - READ_Loan Account Schedule
+  - READ_Loan Approved - Email
+  - READ_Loan Fully Repaid - Email
+  - READ_Loan payments due - Email
+  - READ_Loan Payments Due (Overdue Loans) - Email
+  - READ_Loan Payments Received (Active Loans) - Email
+  - READ_Loan Payments Received (Overdue Loans)  - Email
+  - READ_Loan Rejected - Email
+  - READ_Loan Repayment - Email
+  - READ_Loan Repayment Collections
+  - READ_LoanCyclePerProduct
+  - READ_Loans Awaiting Disbursal
+  - READ_Loans Awaiting Disbursal(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary
+  - READ_Loans Awaiting Disbursal Summary(Pentaho)
+  - READ_Loans Awaiting Disbursal Summary by Month
+  - READ_Loans Awaiting Disbursal Summary by Month(Pentaho)
+  - READ_Loans disbursed to clients - Email
+  - READ_Loans in arrears - Email
+  - READ_Loans Outstanding after final instalment date - Email
+  - READ_Loans Pending Approval
+  - READ_Loans Pending Approval(Pentaho)
+  - READ_LoanTrendsByDay
+  - READ_LoanTrendsByMonth
+  - READ_LoanTrendsByWeek
+  - READ_Obligation Met Loans Details
+  - READ_Obligation Met Loans Details(Pentaho)
+  - READ_Obligation Met Loans Summary
+  - READ_Obligation Met Loans Summary(Pentaho)
+  - READ_Overdue Loans Report
+  - READ_ProgramDetails
+  - READ_ProgramDirectorStats
+  - READ_ProgramStats
+  - READ_Prospective Clients - Email
+  - READ_Rescheduled Loans
+  - READ_Rescheduled Loans(Pentaho)
+  - READ_Savings Accounts Summary
+  - READ_Savings Transactions
+  - READ_Staff Assignment History(Pentaho)
+  - READ_TxnRunningBalances
+  - READ_TxnRunningBalances(Pentaho)
+  - READ_Written-Off Loans
+  - READ_Written-Off Loans(Pentaho)
+  - READ_COBAC R01 - Portfolio Quality
+  - READ_COBAC R02 - Loan Provisioning
+  - READ_COBAC R03 - Capital Adequacy
+  - READ_COBAC R04 - Liquidity Position
+  - READ_COBAC R05 - Large Exposures
+  - READ_COBAC R06 - Balance Sheet
+  - READ_COBAC R07 - Income Statement
+  - READ_COBAC R08 - Arrears Report
+  - READ_COBAC R09 - Portfolio at Risk
+  - READ_COBAC R10 - Related Party Transactions
   - CREATE_GLACCOUNT
   - READ_GLACCOUNT
   - UPDATE_GLACCOUNT
@@ -1091,7 +1724,7 @@ staff:
   mobileNo: +237 677 11 11 11
   emailAddress: t.ndongo@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 2
 - firstName: Christine
@@ -1103,7 +1736,7 @@ staff:
   mobileNo: +237 677 22 22 22
   emailAddress: c.biaka@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 2
 - firstName: Supervisor
@@ -1115,7 +1748,7 @@ staff:
   mobileNo: +237 677 33 33 33
   emailAddress: s.accountant@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 2
 - firstName: Jean
@@ -1127,7 +1760,7 @@ staff:
   mobileNo: +237 677 12 34 56
   emailAddress: j.mbarga@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 15
 - firstName: Marie
@@ -1139,7 +1772,7 @@ staff:
   mobileNo: +237 677 23 45 67
   emailAddress: m.ngoballa@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 20
 - firstName: Paul
@@ -1151,7 +1784,7 @@ staff:
   mobileNo: +237 677 34 56 78
   emailAddress: p.atangana@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 20
 - firstName: Grace
@@ -1163,7 +1796,7 @@ staff:
   mobileNo: +237 677 45 67 89
   emailAddress: g.douala@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 15
 - firstName: Emmanuel
@@ -1175,7 +1808,7 @@ staff:
   mobileNo: +237 677 56 78 90
   emailAddress: e.ewondo@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 20
 - firstName: Francine
@@ -1187,7 +1820,7 @@ staff:
   mobileNo: +237 677 67 89 01
   emailAddress: f.makang@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 1
   - 20
 - firstName: Bernard
@@ -1199,7 +1832,7 @@ staff:
   mobileNo: +237 677 78 90 12
   emailAddress: b.kamga@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 1
 - firstName: Justine
@@ -1211,7 +1844,7 @@ staff:
   mobileNo: +237 677 89 01 23
   emailAddress: j.tchuente@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 5
 - firstName: David
@@ -1223,7 +1856,7 @@ staff:
   mobileNo: +237 677 90 12 34
   emailAddress: d.fotso@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 5
 - firstName: Peter
@@ -1235,7 +1868,7 @@ staff:
   mobileNo: +237 677 01 23 45
   emailAddress: p.nkeng@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 15
 - firstName: Alice
@@ -1247,7 +1880,7 @@ staff:
   mobileNo: +237 677 13 35 57
   emailAddress: a.fon@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 20
 - firstName: Joseph
@@ -1259,7 +1892,7 @@ staff:
   mobileNo: +237 677 24 46 68
   emailAddress: j.tanyi@mfi.cm
   joiningDate:
-  - 2024
+  - 2025
   - 2
   - 20
 users:
@@ -1270,7 +1903,7 @@ users:
   officeName: Head Office
   roles:
   - System Administrator
-  password: Adm1n$yst3m@2024
+  password: Adm1n$yst3m@2025
   staffName: Thomas Ndongo
   passwordNeverExpires: true
 - username: accountant
@@ -1280,7 +1913,7 @@ users:
   officeName: Head Office
   roles:
   - Accountant
-  password: Ac0untant@2024!
+  password: Ac0untant@2025!
   staffName: Christine Biaka
 - username: supervisor
   firstname: Supervisor
@@ -1289,7 +1922,7 @@ users:
   officeName: Head Office
   roles:
   - Supervisor Accountant
-  password: sUp3rV1sor@2024!
+  password: sUp3rV1sor@2025!
   staffName: Supervisor Accountant
 - username: manager.yaounde
   firstname: Jean
@@ -1298,7 +1931,7 @@ users:
   officeName: Yaounde Branch
   roles:
   - Branch Manager
-  password: Man4ger@Yde2024
+  password: Man4ger@Yde2025
   staffName: Jean Mbarga
 - username: loan.yaounde
   firstname: Marie
@@ -1316,7 +1949,7 @@ users:
   officeName: Yaounde Branch
   roles:
   - Cashier
-  password: Cash1er@Yde2024
+  password: Cash1er@Yde2025
   staffName: Paul Atangana
 - username: manager.douala
   firstname: Grace
@@ -1325,7 +1958,7 @@ users:
   officeName: Douala Branch
   roles:
   - Branch Manager
-  password: Man4ger@Dla2024
+  password: Man4ger@Dla2025
   staffName: Grace Douala
 - username: loan.douala
   firstname: Emmanuel
@@ -1343,7 +1976,7 @@ users:
   officeName: Douala Branch
   roles:
   - Cashier
-  password: Cash1er@Dla2024
+  password: Cash1er@Dla2025
   staffName: Francine Makang
 - username: manager.bafoussam
   firstname: Bernard
@@ -1352,7 +1985,7 @@ users:
   officeName: Bafoussam Branch
   roles:
   - Branch Manager
-  password: Man4ger@Baf2024
+  password: Man4ger@Baf2025
   staffName: Bernard Kamga
 - username: loan.bafoussam
   firstname: Justine
@@ -1370,7 +2003,7 @@ users:
   officeName: Bafoussam Branch
   roles:
   - Cashier
-  password: Cash1er@Baf2024
+  password: Cash1er@Baf2025
   staffName: David Fotso
 - username: manager.bamenda
   firstname: Peter
@@ -1379,7 +2012,7 @@ users:
   officeName: Bamenda Branch
   roles:
   - Branch Manager
-  password: Man4ger@Bam2024
+  password: Man4ger@Bam2025
   staffName: Peter Nkeng
 - username: loan.bamenda
   firstname: Alice
@@ -1397,8 +2030,124 @@ users:
   officeName: Bamenda Branch
   roles:
   - Cashier
-  password: Cash1er@Bam2024
+  password: Cash1er@Bam2025
   staffName: Joseph Tanyi
+reports:
+- reportName: Loan Transaction Receipt
+  reportType: Pentaho
+  reportCategory: Loan
+  description: Receipt for loan transactions
+  reportSql: SELECT 1
+  useReport: true
+- reportName: Savings Transaction Receipt
+  reportType: Pentaho
+  reportCategory: Savings
+  description: Receipt for savings transactions
+  reportSql: SELECT 1
+  useReport: true
+- reportName: Income Statement (Profit & Loss)
+  reportType: Table
+  reportCategory: Financial
+  description: Revenue, expenses, and net profit analysis
+  reportSql: "\nSELECT\n    'REVENUE' as category,\n    'Interest Income' as line_item,\n    SUM(l.interest_charged_derived)\
+    \ as amount\nFROM m_loan l\nWHERE l.loan_status_id = 300\nUNION ALL\nSELECT\n    'REVENUE' as category,\n\
+    \    'Fee Income' as line_item,\n    SUM(l.fee_charges_charged_derived) as amount\nFROM m_loan l\n\
+    WHERE l.loan_status_id = 300\nUNION ALL\nSELECT\n    'EXPENSES' as category,\n    'Loan Loss Provision'\
+    \ as line_item,\n    SUM(CASE\n        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived) > 180\
+    \ THEN l.principal_outstanding_derived * 1.0\n        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived)\
+    \ > 90 THEN l.principal_outstanding_derived * 0.75\n        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived)\
+    \ > 30 THEN l.principal_outstanding_derived * 0.50\n        WHEN DATEDIFF(CURDATE(), l.overdue_since_date_derived)\
+    \ > 0 THEN l.principal_outstanding_derived * 0.25\n        ELSE 0\n    END) as amount\nFROM m_loan\
+    \ l\nWHERE l.loan_status_id = 300\n"
+  useReport: true
+- reportName: Balance Sheet
+  reportType: Table
+  reportCategory: Financial
+  description: Assets, liabilities, and equity position
+  reportSql: "\nSELECT\n    'ASSETS' as section,\n    'Gross Loan Portfolio' as line_item,\n    SUM(l.principal_outstanding_derived)\
+    \ as amount\nFROM m_loan l\nWHERE l.loan_status_id = 300\nUNION ALL\nSELECT\n    'ASSETS' as section,\n\
+    \    'Cash and Bank Balances' as line_item,\n    SUM(gl.amount) as amount\nFROM acc_gl_journal_entry\
+    \ gl\nJOIN acc_gl_account a ON gl.account_id = a.id\nWHERE a.classification_enum = 1\nUNION ALL\n\
+    SELECT\n    'LIABILITIES' as section,\n    'Savings Deposits' as line_item,\n    SUM(s.account_balance_derived)\
+    \ as amount\nFROM m_savings_account s\nWHERE s.status_enum = 300\n"
+  useReport: true
+- reportName: Portfolio Performance Statistics
+  reportType: Table
+  reportCategory: Portfolio
+  description: Loan portfolio performance metrics and statistics
+  reportSql: "\nSELECT\n    COUNT(DISTINCT l.id) as total_loans,\n    COUNT(DISTINCT CASE WHEN l.loan_status_id\
+    \ = 300 THEN l.id END) as active_loans,\n    SUM(l.principal_disbursed_derived) as total_disbursed,\n\
+    \    SUM(l.principal_outstanding_derived) as total_outstanding,\n    SUM(l.principal_repaid_derived)\
+    \ as total_repaid,\n    AVG(l.principal_amount) as avg_loan_size,\n    (SUM(l.principal_repaid_derived)\
+    \ / SUM(l.principal_disbursed_derived) * 100) as repayment_rate,\n    p.name as product_name\nFROM\
+    \ m_loan l\nJOIN m_product_loan p ON l.product_id = p.id\nGROUP BY p.name\n"
+  useReport: true
+- reportName: Portfolio Analysis by Product
+  reportType: Table
+  reportCategory: Portfolio
+  description: Loan portfolio breakdown by product
+  reportSql: "\nSELECT\n    p.name as product_name,\n    COUNT(l.id) as loan_count,\n    SUM(l.principal_amount)\
+    \ as total_principal,\n    SUM(l.principal_outstanding_derived) as outstanding,\n    SUM(l.principal_repaid_derived)\
+    \ as repaid,\n    AVG(l.annual_nominal_interest_rate) as avg_interest_rate\nFROM m_loan l\nJOIN m_product_loan\
+    \ p ON l.product_id = p.id\nWHERE l.loan_status_id IN (200, 300)\nGROUP BY p.name\nORDER BY total_principal\
+    \ DESC\n"
+  useReport: true
+- reportName: Portfolio Analysis by Branch
+  reportType: Table
+  reportCategory: Portfolio
+  description: Loan portfolio breakdown by office/branch
+  reportSql: "\nSELECT\n    o.name as office_name,\n    COUNT(l.id) as loan_count,\n    SUM(l.principal_amount)\
+    \ as total_principal,\n    SUM(l.principal_outstanding_derived) as outstanding,\n    SUM(l.principal_repaid_derived)\
+    \ as repaid,\n    COUNT(DISTINCT l.client_id) as unique_clients\nFROM m_loan l\nJOIN m_office o ON\
+    \ l.office_id = o.id\nWHERE l.loan_status_id IN (200, 300)\nGROUP BY o.name\nORDER BY total_principal\
+    \ DESC\n"
+  useReport: true
+- reportName: Active Clients Summary
+  reportType: Table
+  reportCategory: Client
+  description: Summary of active clients with account balances
+  reportSql: "\nSELECT\n    c.display_name as client_name,\n    c.account_no as client_account,\n    o.name\
+    \ as office_name,\n    COUNT(DISTINCT l.id) as total_loans,\n    SUM(l.principal_outstanding_derived)\
+    \ as loan_balance,\n    COUNT(DISTINCT s.id) as total_savings,\n    SUM(s.account_balance_derived)\
+    \ as savings_balance\nFROM m_client c\nLEFT JOIN m_loan l ON c.id = l.client_id AND l.loan_status_id\
+    \ = 300\nLEFT JOIN m_savings_account s ON c.id = s.client_id AND s.status_enum = 300\nJOIN m_office\
+    \ o ON c.office_id = o.id\nWHERE c.status_enum = 300\nGROUP BY c.id, c.display_name, c.account_no,\
+    \ o.name\nORDER BY loan_balance DESC\n"
+  useReport: true
+- reportName: Savings Accounts Summary
+  reportType: Table
+  reportCategory: Savings
+  description: Summary of all savings accounts by product
+  reportSql: "\nSELECT\n    p.name as product_name,\n    COUNT(s.id) as account_count,\n    SUM(s.account_balance_derived)\
+    \ as total_balance,\n    AVG(s.account_balance_derived) as avg_balance,\n    SUM(s.total_deposits_derived)\
+    \ as total_deposits,\n    SUM(s.total_withdrawals_derived) as total_withdrawals\nFROM m_savings_account\
+    \ s\nJOIN m_savings_product p ON s.product_id = p.id\nWHERE s.status_enum = 300\nGROUP BY p.name\n\
+    ORDER BY total_balance DESC\n"
+  useReport: true
+- reportName: Loan Repayment Collections
+  reportType: Table
+  reportCategory: Transaction
+  description: Daily/monthly loan repayment collections
+  reportSql: "\nSELECT\n    DATE(t.transaction_date) as collection_date,\n    pt.value as payment_type,\n\
+    \    COUNT(t.id) as transaction_count,\n    SUM(t.amount) as total_collected,\n    SUM(t.principal_portion_derived)\
+    \ as principal_collected,\n    SUM(t.interest_portion_derived) as interest_collected\nFROM m_loan_transaction\
+    \ t\nLEFT JOIN m_payment_type pt ON t.payment_detail_id = pt.id\nWHERE t.transaction_type_enum = 2\n\
+    \    AND t.is_reversed = 0\n    AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)\nGROUP\
+    \ BY DATE(t.transaction_date), pt.value\nORDER BY collection_date DESC\n"
+  useReport: true
+- reportName: Overdue Loans Report
+  reportType: Table
+  reportCategory: Collection
+  description: List of all overdue loans with days past due
+  reportSql: "\nSELECT\n    c.display_name as client_name,\n    c.account_no as client_account,\n    l.account_no\
+    \ as loan_account,\n    p.name as product_name,\n    o.name as office_name,\n    l.principal_outstanding_derived\
+    \ as outstanding_principal,\n    l.interest_outstanding_derived as outstanding_interest,\n    DATEDIFF(CURDATE(),\
+    \ l.overdue_since_date_derived) as days_overdue,\n    s.display_name as loan_officer\nFROM m_loan\
+    \ l\nJOIN m_client c ON l.client_id = c.id\nJOIN m_product_loan p ON l.product_id = p.id\nJOIN m_office\
+    \ o ON l.office_id = o.id\nLEFT JOIN m_staff s ON l.loan_officer_id = s.id\nWHERE l.loan_status_id\
+    \ = 300\n    AND l.overdue_since_date_derived IS NOT NULL\nORDER BY days_overdue DESC, outstanding_principal\
+    \ DESC\n"
+  useReport: true
 chartOfAccounts:
 - name: Banks - Current Accounts
   glCode: 41
@@ -1644,7 +2393,7 @@ taxGroups:
   taxComponents:
   - name: Withholding Tax on Interest
     startDate:
-    - 2024
+    - 2025
     - 1
     - 1
     creditAccountType: Liability
@@ -1652,7 +2401,7 @@ taxGroups:
   taxComponents:
   - name: Withholding Tax on Loan Interest
     startDate:
-    - 2024
+    - 2025
     - 1
     - 1
     creditAccountType: Liability
@@ -1661,7 +2410,7 @@ tellers:
   officeName: Yaounde Branch
   description: Main teller counter at Yaounde branch
   startDate:
-  - 2024
+  - 2025
   - 1
   - 15
   endDate:
@@ -1673,7 +2422,7 @@ tellers:
   officeName: Douala Branch
   description: Main teller counter at Douala branch
   startDate:
-  - 2024
+  - 2025
   - 1
   - 15
   endDate:
@@ -1685,7 +2434,7 @@ tellers:
   officeName: Bafoussam Branch
   description: Main teller counter at Bafoussam branch
   startDate:
-  - 2024
+  - 2025
   - 2
   - 1
   endDate:
@@ -1697,7 +2446,7 @@ tellers:
   officeName: Bamenda Branch
   description: Main teller counter at Bamenda branch
   startDate:
-  - 2024
+  - 2025
   - 2
   - 15
   endDate:
@@ -2053,7 +2802,7 @@ clients:
   active: true
   externalId: CLI-001
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 20
   mobileNo: +237 690 12 34 56
@@ -2073,7 +2822,7 @@ clients:
   active: true
   externalId: CLI-002
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 25
   mobileNo: +237 690 23 45 67
@@ -2093,7 +2842,7 @@ clients:
   active: true
   externalId: CLI-003
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 1
   mobileNo: +237 690 34 56 78
@@ -2113,7 +2862,7 @@ clients:
   active: true
   externalId: CLI-004
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 5
   mobileNo: +237 690 45 67 89
@@ -2133,7 +2882,7 @@ clients:
   active: true
   externalId: CLI-005
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 10
   mobileNo: +237 690 56 78 90
@@ -2153,7 +2902,7 @@ clients:
   active: true
   externalId: CLI-006
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 15
   mobileNo: +237 690 67 89 01
@@ -2173,7 +2922,7 @@ clients:
   active: true
   externalId: CLI-007
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 20
   mobileNo: +237 690 78 90 12
@@ -2193,7 +2942,7 @@ clients:
   active: true
   externalId: CLI-008
   activationDate:
-  - 2024
+  - 2025
   - 3
   - 1
   mobileNo: +237 690 89 01 23
@@ -2213,7 +2962,7 @@ clients:
   active: true
   externalId: CLI-009
   activationDate:
-  - 2024
+  - 2025
   - 3
   - 5
   mobileNo: +237 690 90 12 34
@@ -2233,7 +2982,7 @@ clients:
   active: true
   externalId: CLI-010
   activationDate:
-  - 2024
+  - 2025
   - 3
   - 10
   mobileNo: +237 690 01 23 45
@@ -2253,7 +3002,7 @@ clients:
   active: true
   externalId: CLI-011
   activationDate:
-  - 2024
+  - 2025
   - 3
   - 15
   mobileNo: +237 691 12 34 56
@@ -2273,7 +3022,7 @@ clients:
   active: true
   externalId: CLI-012
   activationDate:
-  - 2024
+  - 2025
   - 3
   - 20
   mobileNo: +237 691 23 45 67
@@ -2293,11 +3042,11 @@ groups:
   active: true
   externalId: GRP-001
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 25
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 20
   staffName: loan.douala
@@ -2311,11 +3060,11 @@ groups:
   active: true
   externalId: GRP-002
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 25
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 20
   staffName: loan.yaounde
@@ -2329,11 +3078,11 @@ groups:
   active: true
   externalId: GRP-003
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 10
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 5
   staffName: loan.bafoussam
@@ -2345,11 +3094,11 @@ groups:
   active: true
   externalId: GRP-004
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 20
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 16
   staffName: loan.bamenda
@@ -2361,11 +3110,11 @@ groups:
   active: true
   externalId: GRP-005
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 20
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 16
   staffName: loan.douala
@@ -2379,11 +3128,11 @@ centers:
   active: true
   externalId: CTR-001
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 20
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 16
   staffName: loan.douala
@@ -2392,11 +3141,11 @@ centers:
   active: true
   externalId: CTR-002
   activationDate:
-  - 2024
+  - 2025
   - 1
   - 20
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 16
   staffName: loan.yaounde
@@ -2405,11 +3154,11 @@ centers:
   active: true
   externalId: CTR-003
   activationDate:
-  - 2024
+  - 2025
   - 2
   - 5
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 2
   staffName: loan.bafoussam
@@ -2417,7 +3166,7 @@ loanAccounts:
 - clientExternalId: CLI-001
   productShortName: MSOL
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 1
   principal: 200000.0
@@ -2428,7 +3177,7 @@ loanAccounts:
 - clientExternalId: CLI-002
   productShortName: SBIZ
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 5
   principal: 2000000.0
@@ -2439,7 +3188,7 @@ loanAccounts:
 - clientExternalId: CLI-003
   productShortName: MSOL
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 10
   principal: 150000.0
@@ -2450,7 +3199,7 @@ loanAccounts:
 - clientExternalId: CLI-004
   productShortName: ASEA
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 12
   principal: 500000.0
@@ -2461,7 +3210,7 @@ loanAccounts:
 - clientExternalId: CLI-005
   productShortName: MSOL
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 15
   principal: 180000.0
@@ -2472,7 +3221,7 @@ loanAccounts:
 - clientExternalId: CLI-006
   productShortName: SBIZ
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 18
   principal: 3000000.0
@@ -2484,7 +3233,7 @@ savingsAccounts:
 - clientExternalId: CLI-001
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 20
   externalId: SAV-001
@@ -2492,7 +3241,7 @@ savingsAccounts:
 - clientExternalId: CLI-002
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 1
   - 25
   externalId: SAV-002
@@ -2500,7 +3249,7 @@ savingsAccounts:
 - clientExternalId: CLI-002
   productShortName: FDEP
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 1
   externalId: SAV-003
@@ -2508,7 +3257,7 @@ savingsAccounts:
 - clientExternalId: CLI-003
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 1
   externalId: SAV-004
@@ -2516,7 +3265,7 @@ savingsAccounts:
 - clientExternalId: CLI-004
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 5
   externalId: SAV-005
@@ -2524,7 +3273,7 @@ savingsAccounts:
 - clientExternalId: CLI-005
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 10
   externalId: SAV-006
@@ -2532,7 +3281,7 @@ savingsAccounts:
 - clientExternalId: CLI-006
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 15
   externalId: SAV-007
@@ -2540,7 +3289,7 @@ savingsAccounts:
 - clientExternalId: CLI-006
   productShortName: FDEP
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 20
   externalId: SAV-008
@@ -2548,7 +3297,7 @@ savingsAccounts:
 - clientExternalId: CLI-007
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 2
   - 20
   externalId: SAV-009
@@ -2556,7 +3305,7 @@ savingsAccounts:
 - clientExternalId: CLI-008
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 3
   - 1
   externalId: SAV-010
@@ -2564,7 +3313,7 @@ savingsAccounts:
 - clientExternalId: CLI-009
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 3
   - 5
   externalId: SAV-011
@@ -2572,7 +3321,7 @@ savingsAccounts:
 - clientExternalId: CLI-010
   productShortName: VSAV
   submittedOnDate:
-  - 2024
+  - 2025
   - 3
   - 10
   externalId: SAV-012
@@ -2581,7 +3330,7 @@ savingsTransactions:
 - accountExternalId: SAV-001
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 1
   transactionAmount: 50000.0
@@ -2590,7 +3339,7 @@ savingsTransactions:
 - accountExternalId: SAV-002
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 5
   transactionAmount: 25000.0
@@ -2599,7 +3348,7 @@ savingsTransactions:
 - accountExternalId: SAV-004
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 2
   transactionAmount: 30000.0
@@ -2608,7 +3357,7 @@ savingsTransactions:
 - accountExternalId: SAV-005
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 10
   transactionAmount: 15000.0
@@ -2617,7 +3366,7 @@ savingsTransactions:
 - accountExternalId: SAV-006
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 3
   transactionAmount: 40000.0
@@ -2626,7 +3375,7 @@ savingsTransactions:
 - accountExternalId: SAV-007
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 12
   transactionAmount: 35000.0
@@ -2635,7 +3384,7 @@ savingsTransactions:
 - accountExternalId: SAV-001
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 20
   transactionAmount: 35000.0
@@ -2644,7 +3393,7 @@ savingsTransactions:
 - accountExternalId: SAV-004
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 22
   transactionAmount: 20000.0
@@ -2653,7 +3402,7 @@ savingsTransactions:
 - accountExternalId: SAV-002
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 25
   transactionAmount: 20000.0
@@ -2662,7 +3411,7 @@ savingsTransactions:
 - accountExternalId: SAV-005
   transactionType: DEPOSIT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 28
   transactionAmount: 25000.0
@@ -2671,7 +3420,7 @@ savingsTransactions:
 - accountExternalId: SAV-001
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 15
   transactionAmount: 5000.0
@@ -2680,7 +3429,7 @@ savingsTransactions:
 - accountExternalId: SAV-002
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 18
   transactionAmount: 5000.0
@@ -2689,7 +3438,7 @@ savingsTransactions:
 - accountExternalId: SAV-004
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 16
   transactionAmount: 5000.0
@@ -2698,7 +3447,7 @@ savingsTransactions:
 - accountExternalId: SAV-005
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 20
   transactionAmount: 5000.0
@@ -2707,7 +3456,7 @@ savingsTransactions:
 - accountExternalId: SAV-011
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 17
   transactionAmount: 5000.0
@@ -2716,7 +3465,7 @@ savingsTransactions:
 - accountExternalId: SAV-012
   transactionType: WITHDRAWAL
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 22
   transactionAmount: 5000.0
@@ -2726,7 +3475,7 @@ loanTransactions:
 - loanExternalId: LOAN-001
   transactionType: REPAYMENT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 15
   transactionAmount: 25000.0
@@ -2736,7 +3485,7 @@ loanTransactions:
 - loanExternalId: LOAN-003
   transactionType: REPAYMENT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 18
   transactionAmount: 38000.0
@@ -2746,7 +3495,7 @@ loanTransactions:
 - loanExternalId: LOAN-004
   transactionType: REPAYMENT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 25
   transactionAmount: 102000.0
@@ -2756,7 +3505,7 @@ loanTransactions:
 - loanExternalId: LOAN-005
   transactionType: REPAYMENT
   transactionDate:
-  - 2024
+  - 2025
   - 3
   - 22
   transactionAmount: 31500.0
@@ -2783,7 +3532,7 @@ loanCollaterals:
 loanGuarantors:
 - loanExternalId: LOAN-002
   guarantorType: CLIENT
-  clientExternalId: CLI-003
+  clientExternalId: CLI-001
   amount: 250000.0
 - loanExternalId: LOAN-006
   guarantorType: EXTERNAL
@@ -2815,6 +3564,6 @@ tellerAccountingRules:
   officeName: Bamenda Branch
 businessDate:
   type: BUSINESS_DATE
-  date: 16 January 2026
+  date: 29 January 2026
   dateFormat: dd MMMM yyyy
   locale: en

@@ -33,6 +33,7 @@ import org.apache.fineract.config.model.security.Teller;
 import org.apache.fineract.config.model.security.TellerCashierMapping;
 import org.apache.fineract.config.model.security.User;
 import org.apache.fineract.config.model.systemconfig.Holiday;
+import org.apache.fineract.config.model.systemconfig.Report;
 import org.apache.fineract.config.model.systemconfig.SchedulerJob;
 import org.apache.fineract.config.model.systemconfig.SystemConfig;
 import org.apache.fineract.config.model.transaction.LoanTransaction;
@@ -44,12 +45,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
- * Root configuration model representing the complete Fineract configuration YAML file.
+ * Root configuration model representing the complete Fineract configuration
+ * YAML file.
  *
- * <p>This is the top-level object that gets parsed from YAML and contains all entity configurations
+ * <p>
+ * This is the top-level object that gets parsed from YAML and contains all
+ * entity configurations
  * organized by phase.
  *
- * <p>Example YAML structure:
+ * <p>
+ * Example YAML structure:
  *
  * <pre>
  * tenant: default
@@ -99,8 +104,10 @@ public class FineractConfig {
   private List<TellerAccountingRule> tellerAccountingRules = new ArrayList<>();
 
   /** Phase 3: Maker-Checker Configuration */
-  private List<Object> makerCheckerConfig =
-      new ArrayList<>(); // TODO: Create MakerCheckerConfig model
+  private List<Object> makerCheckerConfig = new ArrayList<>(); // TODO: Create MakerCheckerConfig model
+
+  /** Phase 3: Reports */
+  private List<Report> reports = new ArrayList<>();
 
   /** Phase 3: Scheduler Jobs */
   private List<SchedulerJob> schedulerJobs = new ArrayList<>();
@@ -182,7 +189,8 @@ public class FineractConfig {
   }
 
   /**
-   * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when
+   * Captures unknown fields from YAML to warn about potential model gaps. This
+   * helps identify when
    * the YAML contains fields not mapped in the model class.
    */
   @com.fasterxml.jackson.annotation.JsonAnySetter

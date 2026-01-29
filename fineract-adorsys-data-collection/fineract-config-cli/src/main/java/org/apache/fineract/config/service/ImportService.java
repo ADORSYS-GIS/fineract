@@ -50,6 +50,7 @@ import org.apache.fineract.config.service.loader.NotificationTemplateLoader;
 import org.apache.fineract.config.service.loader.OfficeLoader;
 import org.apache.fineract.config.service.loader.PaymentTypeAccountingMappingLoader;
 import org.apache.fineract.config.service.loader.PaymentTypeLoader;
+import org.apache.fineract.config.service.loader.ReportLoader;
 import org.apache.fineract.config.service.loader.RoleLoader;
 import org.apache.fineract.config.service.loader.SavingsAccountLoader;
 import org.apache.fineract.config.service.loader.SavingsProductLoader;
@@ -70,15 +71,16 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Main service for orchestrating configuration import.
  *
- * <p>Executes the import process:
+ * <p>
+ * Executes the import process:
  *
  * <ol>
- *   <li>Parse YAML configuration
- *   <li>Validate configuration
- *   <li>Calculate checksum
- *   <li>Check for changes (compare with previous checksum)
- *   <li>Execute entity loaders in dependency order
- *   <li>Save state
+ * <li>Parse YAML configuration
+ * <li>Validate configuration
+ * <li>Calculate checksum
+ * <li>Check for changes (compare with previous checksum)
+ * <li>Execute entity loaders in dependency order
+ * <li>Save state
  * </ol>
  */
 @Slf4j
@@ -107,6 +109,7 @@ public class ImportService {
 
   // Entity loaders (Phase 2: Security & Organization)
   private final OfficeLoader officeLoader;
+  private final ReportLoader reportLoader;
   private final RoleLoader roleLoader;
   private final UserLoader userLoader;
   private final StaffLoader staffLoader;
@@ -165,6 +168,7 @@ public class ImportService {
       SchedulerJobLoader schedulerJobLoader,
       MakerCheckerConfigLoader makerCheckerConfigLoader,
       OfficeLoader officeLoader,
+      ReportLoader reportLoader,
       RoleLoader roleLoader,
       UserLoader userLoader,
       StaffLoader staffLoader,
@@ -213,6 +217,7 @@ public class ImportService {
     this.schedulerJobLoader = schedulerJobLoader;
     this.makerCheckerConfigLoader = makerCheckerConfigLoader;
     this.officeLoader = officeLoader;
+    this.reportLoader = reportLoader;
     this.roleLoader = roleLoader;
     this.userLoader = userLoader;
     this.staffLoader = staffLoader;
@@ -388,7 +393,8 @@ public class ImportService {
   }
 
   /**
-   * Calculates checksum of configuration files with support for multiple files, glob patterns, and
+   * Calculates checksum of configuration files with support for multiple files,
+   * glob patterns, and
    * directories.
    *
    * @return combined checksum of all configuration files
@@ -430,7 +436,8 @@ public class ImportService {
   }
 
   /**
-   * Parses file locations supporting comma-separated paths, glob patterns, and directories.
+   * Parses file locations supporting comma-separated paths, glob patterns, and
+   * directories.
    *
    * @param locations file location specification
    * @return list of resolved files
@@ -453,8 +460,7 @@ public class ImportService {
           allFiles.add(file);
         } else if (file.isDirectory()) {
           // Add all .yml and .yaml files in directory
-          File[] yamlFiles =
-              file.listFiles((dir, name) -> name.endsWith(".yml") || name.endsWith(".yaml"));
+          File[] yamlFiles = file.listFiles((dir, name) -> name.endsWith(".yml") || name.endsWith(".yaml"));
           if (yamlFiles != null) {
             allFiles.addAll(Arrays.asList(yamlFiles));
           }
@@ -513,8 +519,7 @@ public class ImportService {
         basePathStr = basePathStr.substring(0, basePathStr.length() - 1);
       }
       // Get parent directory
-      int lastSeparator =
-          Math.max(basePathStr.lastIndexOf('/'), basePathStr.lastIndexOf(File.separator));
+      int lastSeparator = Math.max(basePathStr.lastIndexOf('/'), basePathStr.lastIndexOf(File.separator));
       if (lastSeparator > 0) {
         basePathStr = basePathStr.substring(0, lastSeparator);
       }
@@ -527,10 +532,10 @@ public class ImportService {
   /**
    * Executes entity loaders in dependency order.
    *
-   * @param config configuration
+   * @param config  configuration
    * @param context import context
-   * @param result import result
-   * @param dryRun dry-run mode flag
+   * @param result  import result
+   * @param dryRun  dry-run mode flag
    */
   private void executeLoaders(
       FineractConfig config, ImportContext context, ImportResult result, boolean dryRun) {
@@ -689,7 +694,18 @@ public class ImportService {
       }
     }
 
-    // 2. Roles (must be before users)
+    // 2. Reports (must be before roles so permissions exist)
+    if (config.getReports() != null && !config.getReports().isEmpty()) {
+      log.info("  → Loading reports...");
+      try {
+        reportLoader.load(config.getReports(), context, result);
+        log.info("  ✓ Reports loaded");
+      } catch (Exception ex) {
+        log.error("  ✗ Failed to load reports: {}", ex.getMessage());
+      }
+    }
+
+    // 3. Roles (must be before users)
     if (config.getRoles() != null && !config.getRoles().isEmpty()) {
       log.info("  → Loading roles...");
       try {
@@ -793,7 +809,8 @@ public class ImportService {
       }
     }
 
-    // 5. Payment Type Accounting Mappings (depends on payment types and GL accounts)
+    // 5. Payment Type Accounting Mappings (depends on payment types and GL
+    // accounts)
     if (config.getPaymentTypeAccountingMappings() != null
         && !config.getPaymentTypeAccountingMappings().isEmpty()) {
       log.info("  → Loading payment type accounting mappings...");
@@ -897,7 +914,8 @@ public class ImportService {
       }
     }
 
-    // 6. Loan Products (depends on charges, GL accounts, fund sources, floating rates, delinquency)
+    // 6. Loan Products (depends on charges, GL accounts, fund sources, floating
+    // rates, delinquency)
     if (config.getLoanProducts() != null && !config.getLoanProducts().isEmpty()) {
       log.info("  → Loading loan products...");
       try {

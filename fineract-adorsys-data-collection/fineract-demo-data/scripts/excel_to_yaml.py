@@ -1562,6 +1562,38 @@ class ExcelToYamlConverter:
                 self.config['savingsAccounts'] = savings_accounts
                 logger.info(f"  ✓ Savings Accounts: {len(savings_accounts)} accounts")
 
+    def convert_reports(self):
+        """Convert Phase 3: Reports"""
+        logger.info("Converting Phase 3: Reports...")
+
+        df = self._read_sheet('Financial Reports')
+        if not df.empty:
+            reports = []
+            for _, row in df.iterrows():
+                if not row.get('report_name') or pd.isna(row.get('report_name')):
+                    continue
+
+                report = {
+                    'reportName': row['report_name'],
+                    'reportType': row.get('report_type', 'Table'),
+                    'reportSubType': row.get('report_subtype'),
+                    'reportCategory': row.get('report_category'),
+                    'description': row.get('description'),
+                    'reportSql': row.get('sql_query'),
+                    'useReport': self._parse_boolean(row.get('use_report', True))
+                }
+
+                # Clean up None values
+                report = {k: v for k, v in report.items() if v is not None}
+                
+                reports.append(report)
+
+            if reports:
+                self.config['reports'] = reports
+                logger.info(f"  ✓ Reports: {len(reports)} reports")
+        else:
+            logger.info("  ℹ No Financial Reports sheet found or empty")
+
     def convert_transactions(self):
         """Convert Phase 6: Transactions & Operations"""
         logger.info("Converting Phase 6: Transactions...")
@@ -1776,6 +1808,7 @@ class ExcelToYamlConverter:
 
         self.convert_system_config()
         self.convert_security_organization()
+        self.convert_reports()  # Added Report Conversion
         self.convert_accounting()
         self.convert_products()
         self.convert_operations()

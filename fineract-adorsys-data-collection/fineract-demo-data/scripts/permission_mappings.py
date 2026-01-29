@@ -50,7 +50,137 @@ COMMON_READ_PERMISSIONS = [
     'READ_CODE',
     'READ_CODEVALUE',
     'READ_BUSINESS_DATE',
-    'READ_CURRENCY'
+    'READ_CURRENCY',
+    'READ_REPORT',
+    'READ_Loan Transaction Receipt',
+    'READ_Savings Transaction Receipt',
+    # Financial Reports
+    'READ_Income Statement (Profit & Loss)',
+    'READ_Balance Sheet',
+    'READ_General Ledger Report',
+    'READ_Trial Balance',
+    'READ_Income Statement',
+    # Portfolio Reports
+    'READ_Portfolio Performance Statistics',
+    'READ_Portfolio Analysis by Product',
+    'READ_Portfolio Analysis by Branch',
+    'READ_Portfolio at Risk',
+    'READ_Portfolio at Risk(Pentaho)',
+    'READ_Portfolio at Risk by Branch',
+    'READ_Portfolio at Risk by Branch(Pentaho)',
+    'READ_Active Clients Summary',
+    'READ_Active Clients - Email',
+    'READ_Active Group Leaders - Email',
+    'READ_Active Loan Clients - Email',
+    'READ_Active Loan Summary per Branch',
+    'READ_Active Loans - Details',
+    'READ_Active Loans - Summary',
+    'READ_Active Loans - Summary(Pentaho)',
+    'READ_Active Loans by Disbursal Period',
+    'READ_Active Loans by Disbursal Period(Pentaho)',
+    'READ_Active Loans in last installment',
+    'READ_Active Loans in last installment Summary',
+    'READ_Active Loans in last installment Summary(Pentaho)',
+    'READ_Active Loans in last installment(Pentaho)',
+    'READ_Active Loans Passed Final Maturity',
+    'READ_Active Loans Passed Final Maturity Summary',
+    'READ_Active Loans Passed Final Maturity Summary(Pentaho)',
+    'READ_Active Loans Passed Final Maturity(Pentaho)',
+    'READ_Aging Detail',
+    'READ_Aging Detail(Pentaho)',
+    'READ_Aging Summary (Arrears in Months)',
+    'READ_Aging Summary (Arrears in Months)(Pentaho)',
+    'READ_Aging Summary (Arrears in Weeks)',
+    'READ_Aging Summary (Arrears in Weeks)(Pentaho)',
+    'READ_Balance Outstanding',
+    'READ_Branch Expected Cash Flow',
+    'READ_BranchManagerStats',
+    'READ_ChildrenStaffList',
+    'READ_Client Listing',
+    'READ_Client Listing(Pentaho)',
+    'READ_Client Loan Account Schedule',
+    'READ_Client Loans Listing',
+    'READ_Client Loans Listing(Pentaho)',
+    'READ_Client Saving Transactions',
+    'READ_Client Savings Summary',
+    'READ_ClientSummary ',
+    'READ_ClientTrendsByDay',
+    'READ_ClientTrendsByMonth',
+    'READ_ClientTrendsByWeek',
+    'READ_Collection Report',
+    'READ_CoordinatorStats',
+    'READ_Demand_Vs_Collection',
+    'READ_Disbursal Report',
+    'READ_Disbursal_Vs_Awaitingdisbursal',
+    'READ_Dormant Prospects - Email',
+    'READ_Expected Payments By Date - Basic',
+    'READ_Expected Payments By Date - Basic(Pentaho)',
+    'READ_Expected Payments By Date - Formatted',
+    'READ_FieldAgentPrograms',
+    'READ_FieldAgentStats',
+    'READ_Funds Disbursed Between Dates Summary',
+    'READ_Funds Disbursed Between Dates Summary(Pentaho)',
+    'READ_Funds Disbursed Between Dates Summary by Office',
+    'READ_Funds Disbursed Between Dates Summary by Office(Pentaho)',
+    'READ_GroupNamesByStaff',
+    'READ_GroupSavingSummary',
+    'READ_GroupSummaryAmounts',
+    'READ_GroupSummaryCounts',
+    'READ_Happy Birthday - Email',
+    'READ_Loan Account Schedule',
+    'READ_Loan Approved - Email',
+    'READ_Loan Fully Repaid - Email',
+    'READ_Loan payments due - Email',
+    'READ_Loan Payments Due (Overdue Loans) - Email',
+    'READ_Loan Payments Received (Active Loans) - Email',
+    'READ_Loan Payments Received (Overdue Loans)  - Email',
+    'READ_Loan Rejected - Email',
+    'READ_Loan Repayment - Email',
+    'READ_Loan Repayment Collections',
+    'READ_LoanCyclePerProduct',
+    'READ_Loans Awaiting Disbursal',
+    'READ_Loans Awaiting Disbursal(Pentaho)',
+    'READ_Loans Awaiting Disbursal Summary',
+    'READ_Loans Awaiting Disbursal Summary(Pentaho)',
+    'READ_Loans Awaiting Disbursal Summary by Month',
+    'READ_Loans Awaiting Disbursal Summary by Month(Pentaho)',
+    'READ_Loans disbursed to clients - Email',
+    'READ_Loans in arrears - Email',
+    'READ_Loans Outstanding after final instalment date - Email',
+    'READ_Loans Pending Approval',
+    'READ_Loans Pending Approval(Pentaho)',
+    'READ_LoanTrendsByDay',
+    'READ_LoanTrendsByMonth',
+    'READ_LoanTrendsByWeek',
+    'READ_Obligation Met Loans Details',
+    'READ_Obligation Met Loans Details(Pentaho)',
+    'READ_Obligation Met Loans Summary',
+    'READ_Obligation Met Loans Summary(Pentaho)',
+    'READ_Overdue Loans Report',
+    'READ_ProgramDetails',
+    'READ_ProgramDirectorStats',
+    'READ_ProgramStats',
+    'READ_Prospective Clients - Email',
+    'READ_Rescheduled Loans',
+    'READ_Rescheduled Loans(Pentaho)',
+    'READ_Savings Accounts Summary',
+    'READ_Savings Transactions',
+    'READ_Staff Assignment History(Pentaho)',
+    'READ_TxnRunningBalances',
+    'READ_TxnRunningBalances(Pentaho)',
+    'READ_Written-Off Loans',
+    'READ_Written-Off Loans(Pentaho)',
+    # Regulatory Reports (COBAC)
+    'READ_COBAC R01 - Portfolio Quality',
+    'READ_COBAC R02 - Loan Provisioning',
+    'READ_COBAC R03 - Capital Adequacy',
+    'READ_COBAC R04 - Liquidity Position',
+    'READ_COBAC R05 - Large Exposures',
+    'READ_COBAC R06 - Balance Sheet',
+    'READ_COBAC R07 - Income Statement',
+    'READ_COBAC R08 - Arrears Report',
+    'READ_COBAC R09 - Portfolio at Risk',
+    'READ_COBAC R10 - Related Party Transactions'
 ]
 
 def expand_permissions(group, shorthand):
@@ -94,6 +224,8 @@ def expand_permissions(group, shorthand):
             ])
             # Client Charges
             perms.extend(['READ_CLIENTCHARGE'])
+            # Guarantor & Collateral (Read only)
+            perms.extend(['READ_GUARANTOR', 'READ_COLLATERAL'])
             # Teller/Cashier Management
             perms.extend([
                 'READ_TELLER',  
@@ -103,11 +235,15 @@ def expand_permissions(group, shorthand):
                 'SETTLECASHFROMCASHIER_TELLER', 'UPDATECASHIERALLOCATION_TELLER',
                 'DELETECASHIERALLOCATION_TELLER'
             ])
-            # Reports (All Read)
-            perms.extend(['READ_REPORT']) # This might be too broad if specific reports needed, but "READ (All)" usually implies this + specific report reads
-            # We add ALL read reports just in case, or rely on ALL_FUNCTIONS_READ for reports? 
-            # Fineract has specific report permissions e.g. 'READ_Client Listing'
-            # For simplicity, we might leave specific report permissions for now or map 'READ_REPORT'
+            # Reports
+            perms.extend([
+                'READ_Portfolio Performance Statistics',
+                'READ_Portfolio Analysis by Product',
+                'READ_Portfolio Analysis by Branch',
+                'READ_Active Clients Summary',
+                'READ_Balance Sheet',
+                'READ_Income Statement (Profit & Loss)'
+            ])
             return perms
             
         elif shorthand == 'LOAN_OFFICER':
@@ -120,8 +256,21 @@ def expand_permissions(group, shorthand):
             perms.extend(['READ_SAVINGSACCOUNT', 'READ_SAVINGSPRODUCT', 'ACTIVATE_SAVINGSACCOUNT', 'CREATE_SAVINGSACCOUNT', 'UPDATE_SAVINGSACCOUNT'])
             # Client Charges
             perms.extend(['READ_CLIENTCHARGE'])
-            # Portfolio Reports (Sample list)
-            perms.extend(['READ_Client Listing', 'READ_Active Loans - Summary', 'READ_Loans Awaiting Disbursal', 'READ_Portfolio at Risk'])
+            # Guarantor (CRUD)
+            perms.extend(['CREATE_GUARANTOR', 'READ_GUARANTOR', 'UPDATE_GUARANTOR', 'DELETE_GUARANTOR'])
+            # Collateral (CRUD)
+            perms.extend(['CREATE_COLLATERAL', 'READ_COLLATERAL', 'UPDATE_COLLATERAL', 'DELETE_COLLATERAL'])
+            # Portfolio Reports
+            perms.extend([
+                'READ_Portfolio Performance Statistics',
+                'READ_Portfolio Analysis by Product',
+                'READ_Portfolio Analysis by Branch',
+                'READ_Active Clients Summary',
+                'READ_Client Listing', 
+                'READ_Active Loans - Summary', 
+                'READ_Loans Awaiting Disbursal', 
+                'READ_Portfolio at Risk'
+            ])
             return perms
             
         elif shorthand == 'CASHIER':
@@ -148,8 +297,13 @@ def expand_permissions(group, shorthand):
                 'CREATE_GLCLOSURE', 'READ_GLCLOSURE', 'UPDATE_GLCLOSURE', 'DELETE_GLCLOSURE',
                 'CREATE_ACCOUNTINGRULE', 'READ_ACCOUNTINGRULE', 'UPDATE_ACCOUNTINGRULE', 'DELETE_ACCOUNTINGRULE'
             ])
-            # Reports
-            perms.extend(['READ_Balance Sheet', 'READ_Income Statement', 'READ_Trial Balance', 'READ_General Ledger Report'])
+            # Reports (Financials)
+            perms.extend([
+                'READ_Balance Sheet', 
+                'READ_Income Statement (Profit & Loss)', 
+                'READ_Trial Balance', 
+                'READ_General Ledger Report'
+            ])
             # Organization
             perms.extend(['READ_OFFICE', 'READ_STAFF', 'READ_CURRENCY'])
             # Audit

@@ -26,7 +26,7 @@ class FineractDemoDataGenerator:
             {
                 'office_name': 'Yaounde Branch',
                 'parent_office': 'Head Office',
-                'opening_date': '2024-01-15',
+                'opening_date': '2025-01-15',
                 'external_id': 'BR-YDE-001',
                 'address': 'Avenue Kennedy, Quartier Bastos',
                 'city': 'Yaounde',
@@ -37,7 +37,7 @@ class FineractDemoDataGenerator:
             {
                 'office_name': 'Douala Branch',
                 'parent_office': 'Head Office',
-                'opening_date': '2024-01-15',
+                'opening_date': '2025-01-15',
                 'external_id': 'BR-DLA-001',
                 'address': 'Boulevard de la Liberte, Akwa',
                 'city': 'Douala',
@@ -48,7 +48,7 @@ class FineractDemoDataGenerator:
             {
                 'office_name': 'Bafoussam Branch',
                 'parent_office': 'Head Office',
-                'opening_date': '2024-02-01',
+                'opening_date': '2025-02-01',
                 'external_id': 'BR-BAF-001',
                 'address': 'Marche A, Centre Ville',
                 'city': 'Bafoussam',
@@ -59,7 +59,7 @@ class FineractDemoDataGenerator:
             {
                 'office_name': 'Bamenda Branch',
                 'parent_office': 'Head Office',
-                'opening_date': '2024-02-15',
+                'opening_date': '2025-02-15',
                 'external_id': 'BR-BAM-001',
                 'address': 'Commercial Avenue, Nkwen',
                 'city': 'Bamenda',
@@ -76,67 +76,67 @@ class FineractDemoDataGenerator:
             # Head Office Staff - Administrative
             {'firstname': 'Thomas', 'lastname': 'Ndongo', 'office': 'Head Office', 'role': 'System Administrator',
              'username': 'admin.system', 'email': 't.ndongo@mfi.cm', 'mobile': '+237 677 11 11 11',
-             'joining_date': '2024-01-02', 'external_id': 'STF-101'},
+             'joining_date': '2025-01-02', 'external_id': 'STF-101'},
 
             {'firstname': 'Christine', 'lastname': 'Biaka', 'office': 'Head Office', 'role': 'Accountant',
              'username': 'accountant', 'email': 'c.biaka@mfi.cm', 'mobile': '+237 677 22 22 22',
-             'joining_date': '2024-01-02', 'external_id': 'STF-102'},
+             'joining_date': '2025-01-02', 'external_id': 'STF-102'},
  
             {'firstname': 'Supervisor', 'lastname': 'Accountant', 'office': 'Head Office', 'role': 'Supervisor Accountant',
              'username': 'supervisor', 'email': 's.accountant@mfi.cm', 'mobile': '+237 677 33 33 33',
-             'joining_date': '2024-01-02', 'external_id': 'STF-103'},
+             'joining_date': '2025-01-02', 'external_id': 'STF-103'},
  
              # Yaounde Branch Staff
              {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
              'username': 'manager.yaounde', 'email': 'j.mbarga@mfi.cm', 'mobile': '+237 677 12 34 56',
-             'joining_date': '2024-01-15', 'external_id': 'STF-001'},
+             'joining_date': '2025-01-15', 'external_id': 'STF-001'},
 
             {'firstname': 'Marie', 'lastname': 'Ngo Balla', 'office': 'Yaounde Branch', 'role': 'Loan Officer',
              'username': 'loan.yaounde', 'email': 'm.ngoballa@mfi.cm', 'mobile': '+237 677 23 45 67',
-             'joining_date': '2024-01-20', 'external_id': 'STF-002'},
+             'joining_date': '2025-01-20', 'external_id': 'STF-002'},
 
             {'firstname': 'Paul', 'lastname': 'Atangana', 'office': 'Yaounde Branch', 'role': 'Cashier',
              'username': 'cashier.yaounde', 'email': 'p.atangana@mfi.cm', 'mobile': '+237 677 34 56 78',
-             'joining_date': '2024-01-20', 'external_id': 'STF-003'},
+             'joining_date': '2025-01-20', 'external_id': 'STF-003'},
 
             # Douala Branch Staff
             {'firstname': 'Grace', 'lastname': 'Douala', 'office': 'Douala Branch', 'role': 'Branch Manager',
              'username': 'manager.douala', 'email': 'g.douala@mfi.cm', 'mobile': '+237 677 45 67 89',
-             'joining_date': '2024-01-15', 'external_id': 'STF-004'},
+             'joining_date': '2025-01-15', 'external_id': 'STF-004'},
 
             {'firstname': 'Emmanuel', 'lastname': 'Ewondo', 'office': 'Douala Branch', 'role': 'Loan Officer',
              'username': 'loan.douala', 'email': 'e.ewondo@mfi.cm', 'mobile': '+237 677 56 78 90',
-             'joining_date': '2024-01-20', 'external_id': 'STF-005'},
+             'joining_date': '2025-01-20', 'external_id': 'STF-005'},
 
             {'firstname': 'Francine', 'lastname': 'Makang', 'office': 'Douala Branch', 'role': 'Cashier',
              'username': 'cashier.douala', 'email': 'f.makang@mfi.cm', 'mobile': '+237 677 67 89 01',
-             'joining_date': '2024-01-20', 'external_id': 'STF-006'},
+             'joining_date': '2025-01-20', 'external_id': 'STF-006'},
 
             # Bafoussam Branch Staff
             {'firstname': 'Bernard', 'lastname': 'Kamga', 'office': 'Bafoussam Branch', 'role': 'Branch Manager',
              'username': 'manager.bafoussam', 'email': 'b.kamga@mfi.cm', 'mobile': '+237 677 78 90 12',
-             'joining_date': '2024-02-01', 'external_id': 'STF-007'},
+             'joining_date': '2025-02-01', 'external_id': 'STF-007'},
 
             {'firstname': 'Justine', 'lastname': 'Tchuente', 'office': 'Bafoussam Branch', 'role': 'Loan Officer',
              'username': 'loan.bafoussam', 'email': 'j.tchuente@mfi.cm', 'mobile': '+237 677 89 01 23',
-             'joining_date': '2024-02-05', 'external_id': 'STF-008'},
+             'joining_date': '2025-02-05', 'external_id': 'STF-008'},
 
             {'firstname': 'David', 'lastname': 'Fotso', 'office': 'Bafoussam Branch', 'role': 'Cashier',
              'username': 'cashier.bafoussam', 'email': 'd.fotso@mfi.cm', 'mobile': '+237 677 90 12 34',
-             'joining_date': '2024-02-05', 'external_id': 'STF-009'},
+             'joining_date': '2025-02-05', 'external_id': 'STF-009'},
 
             # Bamenda Branch Staff
             {'firstname': 'Peter', 'lastname': 'Nkeng', 'office': 'Bamenda Branch', 'role': 'Branch Manager',
              'username': 'manager.bamenda', 'email': 'p.nkeng@mfi.cm', 'mobile': '+237 677 01 23 45',
-             'joining_date': '2024-02-15', 'external_id': 'STF-010'},
+             'joining_date': '2025-02-15', 'external_id': 'STF-010'},
 
             {'firstname': 'Alice', 'lastname': 'Fon', 'office': 'Bamenda Branch', 'role': 'Loan Officer',
              'username': 'loan.bamenda', 'email': 'a.fon@mfi.cm', 'mobile': '+237 677 13 35 57',
-             'joining_date': '2024-02-20', 'external_id': 'STF-011'},
+             'joining_date': '2025-02-20', 'external_id': 'STF-011'},
 
             {'firstname': 'Joseph', 'lastname': 'Tanyi', 'office': 'Bamenda Branch', 'role': 'Cashier',
              'username': 'cashier.bamenda', 'email': 'j.tanyi@mfi.cm', 'mobile': '+237 677 24 46 68',
-             'joining_date': '2024-02-20', 'external_id': 'STF-012'},
+             'joining_date': '2025-02-20', 'external_id': 'STF-012'},
         ]
         return pd.DataFrame(data)
 
@@ -157,23 +157,23 @@ class FineractDemoDataGenerator:
             {'username': 'admin.system', 'first_name': 'Thomas', 'last_name': 'Ndongo',
              'email': 't.ndongo@mfi.cm', 'office_name': 'Head Office',
              'roles': 'System Administrator', 'staff_name': 'Thomas Ndongo',
-             'password': 'Adm1n$yst3m@2024', 'password_never_expires': True},
+             'password': 'Adm1n$yst3m@2025', 'password_never_expires': True},
 
             {'username': 'accountant', 'first_name': 'Christine', 'last_name': 'Biaka',
              'email': 'c.biaka@mfi.cm', 'office_name': 'Head Office',
              'roles': 'Accountant', 'staff_name': 'Christine Biaka',
-             'password': 'Ac0untant@2024!', 'password_never_expires': False},
+             'password': 'Ac0untant@2025!', 'password_never_expires': False},
  
             {'username': 'supervisor', 'first_name': 'Supervisor', 'last_name': 'Accountant',
              'email': 's.accountant@mfi.cm', 'office_name': 'Head Office',
              'roles': 'Supervisor Accountant', 'staff_name': 'Supervisor Accountant',
-             'password': 'sUp3rV1sor@2024!', 'password_never_expires': False},
+             'password': 'sUp3rV1sor@2025!', 'password_never_expires': False},
  
              # Yaounde Branch Users
              {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
              'email': 'j.mbarga@mfi.cm', 'office_name': 'Yaounde Branch',
              'roles': 'Branch Manager', 'staff_name': 'Jean Mbarga',
-             'password': 'Man4ger@Yde2024', 'password_never_expires': False},
+             'password': 'Man4ger@Yde2025', 'password_never_expires': False},
 
             {'username': 'loan.yaounde', 'first_name': 'Marie', 'last_name': 'Ngo Balla',
              'email': 'm.ngoballa@mfi.cm', 'office_name': 'Yaounde Branch',
@@ -183,13 +183,13 @@ class FineractDemoDataGenerator:
             {'username': 'cashier.yaounde', 'first_name': 'Paul', 'last_name': 'Atangana',
              'email': 'p.atangana@mfi.cm', 'office_name': 'Yaounde Branch',
              'roles': 'Cashier', 'staff_name': 'Paul Atangana',
-             'password': 'Cash1er@Yde2024', 'password_never_expires': False},
+             'password': 'Cash1er@Yde2025', 'password_never_expires': False},
 
             # Douala Branch Users
             {'username': 'manager.douala', 'first_name': 'Grace', 'last_name': 'Douala',
              'email': 'g.douala@mfi.cm', 'office_name': 'Douala Branch',
              'roles': 'Branch Manager', 'staff_name': 'Grace Douala',
-             'password': 'Man4ger@Dla2024', 'password_never_expires': False},
+             'password': 'Man4ger@Dla2025', 'password_never_expires': False},
 
             {'username': 'loan.douala', 'first_name': 'Emmanuel', 'last_name': 'Ewondo',
              'email': 'e.ewondo@mfi.cm', 'office_name': 'Douala Branch',
@@ -199,13 +199,13 @@ class FineractDemoDataGenerator:
             {'username': 'cashier.douala', 'first_name': 'Francine', 'last_name': 'Makang',
              'email': 'f.makang@mfi.cm', 'office_name': 'Douala Branch',
              'roles': 'Cashier', 'staff_name': 'Francine Makang',
-             'password': 'Cash1er@Dla2024', 'password_never_expires': False},
+             'password': 'Cash1er@Dla2025', 'password_never_expires': False},
 
             # Bafoussam Branch Users
             {'username': 'manager.bafoussam', 'first_name': 'Bernard', 'last_name': 'Kamga',
              'email': 'b.kamga@mfi.cm', 'office_name': 'Bafoussam Branch',
              'roles': 'Branch Manager', 'staff_name': 'Bernard Kamga',
-             'password': 'Man4ger@Baf2024', 'password_never_expires': False},
+             'password': 'Man4ger@Baf2025', 'password_never_expires': False},
 
             {'username': 'loan.bafoussam', 'first_name': 'Justine', 'last_name': 'Tchuente',
              'email': 'j.tchuente@mfi.cm', 'office_name': 'Bafoussam Branch',
@@ -215,13 +215,13 @@ class FineractDemoDataGenerator:
             {'username': 'cashier.bafoussam', 'first_name': 'David', 'last_name': 'Fotso',
              'email': 'd.fotso@mfi.cm', 'office_name': 'Bafoussam Branch',
              'roles': 'Cashier', 'staff_name': 'David Fotso',
-             'password': 'Cash1er@Baf2024', 'password_never_expires': False},
+             'password': 'Cash1er@Baf2025', 'password_never_expires': False},
 
             # Bamenda Branch Users
             {'username': 'manager.bamenda', 'first_name': 'Peter', 'last_name': 'Nkeng',
              'email': 'p.nkeng@mfi.cm', 'office_name': 'Bamenda Branch',
              'roles': 'Branch Manager', 'staff_name': 'Peter Nkeng',
-             'password': 'Man4ger@Bam2024', 'password_never_expires': False},
+             'password': 'Man4ger@Bam2025', 'password_never_expires': False},
 
             {'username': 'loan.bamenda', 'first_name': 'Alice', 'last_name': 'Fon',
              'email': 'a.fon@mfi.cm', 'office_name': 'Bamenda Branch',
@@ -231,7 +231,7 @@ class FineractDemoDataGenerator:
             {'username': 'cashier.bamenda', 'first_name': 'Joseph', 'last_name': 'Tanyi',
              'email': 'j.tanyi@mfi.cm', 'office_name': 'Bamenda Branch',
              'roles': 'Cashier', 'staff_name': 'Joseph Tanyi',
-             'password': 'Cash1er@Bam2024', 'password_never_expires': False},
+             'password': 'Cash1er@Bam2025', 'password_never_expires': False},
         ]
         return pd.DataFrame(data)
 
@@ -246,7 +246,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Akoumba', 'lastname': 'Ngono', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Female', 'mobile': '+237 690 12 34 56', 'email': 'a.ngono@gmail.com',
              'date_of_birth': '1985-03-15', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-001', 'activation_date': '2024-01-20', 'national_id': 'CM1234567890',
+             'external_id': 'CLI-001', 'activation_date': '2025-01-20', 'national_id': 'CM1234567890',
              'address': 'Bonaberi, Rue des Fleurs', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 3, 'occupation': 'Petty Trader', 'business_type': 'Retail Trade',
              'monthly_income': 150000, 'risk_rating': 'B'},
@@ -254,7 +254,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Ibrahim', 'lastname': 'Mahamat', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 690 23 45 67', 'email': 'i.mahamat@yahoo.fr',
              'date_of_birth': '1978-07-22', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-002', 'activation_date': '2024-01-25', 'national_id': 'CM2345678901',
+             'external_id': 'CLI-002', 'activation_date': '2025-01-25', 'national_id': 'CM2345678901',
              'address': 'Ndokoti, Carrefour Ange Raphael', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 5, 'occupation': 'Transport Owner', 'business_type': 'Transportation',
              'monthly_income': 300000, 'risk_rating': 'A'},
@@ -262,7 +262,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Marie Claire', 'lastname': 'Tchouta', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Female', 'mobile': '+237 690 34 56 78', 'email': 'm.tchouta@gmail.com',
              'date_of_birth': '1990-11-10', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-003', 'activation_date': '2024-02-01', 'national_id': 'CM3456789012',
+             'external_id': 'CLI-003', 'activation_date': '2025-02-01', 'national_id': 'CM3456789012',
              'address': 'Melen, Quartier Fouda', 'city': 'Yaounde', 'marital_status': 'Single',
              'number_of_dependents': 1, 'occupation': 'Hairdresser', 'business_type': 'Services',
              'monthly_income': 120000, 'risk_rating': 'B'},
@@ -270,7 +270,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Jean Paul', 'lastname': 'Kamdem', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
              'gender': 'Male', 'mobile': '+237 690 45 67 89', 'email': 'jp.kamdem@yahoo.fr',
              'date_of_birth': '1982-05-18', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-004', 'activation_date': '2024-02-05', 'national_id': 'CM4567890123',
+             'external_id': 'CLI-004', 'activation_date': '2025-02-05', 'national_id': 'CM4567890123',
              'address': 'Tamdja, Marche des Vivres', 'city': 'Bafoussam', 'marital_status': 'Married',
              'number_of_dependents': 4, 'occupation': 'Farmer', 'business_type': 'Agriculture',
              'monthly_income': 200000, 'risk_rating': 'B'},
@@ -278,7 +278,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Claudine', 'lastname': 'Ekotto', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Female', 'mobile': '+237 690 56 78 90', 'email': 'c.ekotto@gmail.com',
              'date_of_birth': '1988-09-25', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-005', 'activation_date': '2024-02-10', 'national_id': 'CM5678901234',
+             'external_id': 'CLI-005', 'activation_date': '2025-02-10', 'national_id': 'CM5678901234',
              'address': 'New Bell, Rue Joffre', 'city': 'Douala', 'marital_status': 'Widow',
              'number_of_dependents': 2, 'occupation': 'Restaurant Owner', 'business_type': 'Food Services',
              'monthly_income': 180000, 'risk_rating': 'B'},
@@ -286,7 +286,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Patrick', 'lastname': 'Ndongo', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Male', 'mobile': '+237 690 67 89 01', 'email': 'p.ndongo@hotmail.com',
              'date_of_birth': '1975-12-03', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-006', 'activation_date': '2024-02-15', 'national_id': 'CM6789012345',
+             'external_id': 'CLI-006', 'activation_date': '2025-02-15', 'national_id': 'CM6789012345',
              'address': 'Omnisport, Carrefour Warda', 'city': 'Yaounde', 'marital_status': 'Married',
              'number_of_dependents': 6, 'occupation': 'Wholesaler', 'business_type': 'Wholesale Trade',
              'monthly_income': 500000, 'risk_rating': 'A'},
@@ -294,7 +294,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Beatrice', 'lastname': 'Nana', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
              'gender': 'Female', 'mobile': '+237 690 78 90 12', 'email': 'b.nana@gmail.com',
              'date_of_birth': '1992-04-14', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-007', 'activation_date': '2024-02-20', 'national_id': 'CM7890123456',
+             'external_id': 'CLI-007', 'activation_date': '2025-02-20', 'national_id': 'CM7890123456',
              'address': 'Nkwen, Mile 4', 'city': 'Bamenda', 'marital_status': 'Single',
              'number_of_dependents': 0, 'occupation': 'Seamstress', 'business_type': 'Services',
              'monthly_income': 100000, 'risk_rating': 'C'},
@@ -302,7 +302,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Samuel', 'lastname': 'Ebong', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 690 89 01 23', 'email': 's.ebong@yahoo.fr',
              'date_of_birth': '1980-08-30', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-008', 'activation_date': '2024-03-01', 'national_id': 'CM8901234567',
+             'external_id': 'CLI-008', 'activation_date': '2025-03-01', 'national_id': 'CM8901234567',
              'address': 'Bepanda, Rond Point', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 3, 'occupation': 'Mechanic', 'business_type': 'Services',
              'monthly_income': 160000, 'risk_rating': 'B'},
@@ -310,7 +310,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Bernadette', 'lastname': 'Fotso', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
              'gender': 'Female', 'mobile': '+237 690 90 12 34', 'email': 'b.fotso@gmail.com',
              'date_of_birth': '1987-06-20', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-009', 'activation_date': '2024-03-05', 'national_id': 'CM9012345678',
+             'external_id': 'CLI-009', 'activation_date': '2025-03-05', 'national_id': 'CM9012345678',
              'address': 'Famla, Marche Central', 'city': 'Bafoussam', 'marital_status': 'Married',
              'number_of_dependents': 2, 'occupation': 'Vegetable Seller', 'business_type': 'Retail Trade',
              'monthly_income': 90000, 'risk_rating': 'C'},
@@ -318,7 +318,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Francois', 'lastname': 'Manga', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
              'gender': 'Male', 'mobile': '+237 690 01 23 45', 'email': 'f.manga@hotmail.com',
              'date_of_birth': '1983-02-28', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-010', 'activation_date': '2024-03-10', 'national_id': 'CM0123456789',
+             'external_id': 'CLI-010', 'activation_date': '2025-03-10', 'national_id': 'CM0123456789',
              'address': 'Elig-Essono, Nouvelle Route', 'city': 'Yaounde', 'marital_status': 'Divorced',
              'number_of_dependents': 2, 'occupation': 'Carpenter', 'business_type': 'Services',
              'monthly_income': 140000, 'risk_rating': 'B'},
@@ -326,7 +326,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Agnes', 'lastname': 'Fon', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
              'gender': 'Female', 'mobile': '+237 691 12 34 56', 'email': 'a.fon@gmail.com',
              'date_of_birth': '1991-10-05', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-011', 'activation_date': '2024-03-15', 'national_id': 'CM1234567891',
+             'external_id': 'CLI-011', 'activation_date': '2025-03-15', 'national_id': 'CM1234567891',
              'address': 'Ntarikon, Junction', 'city': 'Bamenda', 'marital_status': 'Single',
              'number_of_dependents': 1, 'occupation': 'Boutique Owner', 'business_type': 'Retail Trade',
              'monthly_income': 110000, 'risk_rating': 'C'},
@@ -334,7 +334,7 @@ class FineractDemoDataGenerator:
             {'firstname': 'Robert', 'lastname': 'Essomba', 'office': 'Douala Branch', 'staff': 'loan.douala',
              'gender': 'Male', 'mobile': '+237 691 23 45 67', 'email': 'r.essomba@yahoo.fr',
              'date_of_birth': '1979-01-17', 'client_type': 'Individual', 'legal_form_id': 1, 'client_classification': 'Active',
-             'external_id': 'CLI-012', 'activation_date': '2024-03-20', 'national_id': 'CM2345678902',
+             'external_id': 'CLI-012', 'activation_date': '2025-03-20', 'national_id': 'CM2345678902',
              'address': 'Akwa, Boulevard de la Republique', 'city': 'Douala', 'marital_status': 'Married',
              'number_of_dependents': 4, 'occupation': 'Electronics Trader', 'business_type': 'Retail Trade',
              'monthly_income': 250000, 'risk_rating': 'A'},
@@ -345,34 +345,34 @@ class FineractDemoDataGenerator:
         """Create sample groups (solidarity groups)
 
         IMPORTANT: Group activation dates must be >= parent office opening date
-        - Douala Branch opened: 2024-01-15
-        - Yaounde Branch opened: 2024-01-15
-        - Bafoussam Branch opened: 2024-02-01
-        - Bamenda Branch opened: 2024-02-15
+        - Douala Branch opened: 2025-01-15
+        - Yaounde Branch opened: 2025-01-15
+        - Bafoussam Branch opened: 2025-02-01
+        - Bamenda Branch opened: 2025-02-15
         """
         data = [
             {'group_name': 'Femmes Solidaires Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
-             'external_id': 'GRP-001', 'activation_date': '2024-01-25', 'submitted_on_date': '2024-01-20',
+             'external_id': 'GRP-001', 'activation_date': '2025-01-25', 'submitted_on_date': '2025-01-20',
              'active': 'Yes', 'center_name': 'Centre Commercial Douala',
              'client_external_ids': 'CLI-001,CLI-005,CLI-008'},
 
             {'group_name': 'Commercants Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
-             'external_id': 'GRP-002', 'activation_date': '2024-01-25', 'submitted_on_date': '2024-01-20',
+             'external_id': 'GRP-002', 'activation_date': '2025-01-25', 'submitted_on_date': '2025-01-20',
              'active': 'Yes', 'center_name': 'Centre Melen Yaounde',
              'client_external_ids': 'CLI-003,CLI-006,CLI-010'},
 
             {'group_name': 'Agriculteurs Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
-             'external_id': 'GRP-003', 'activation_date': '2024-02-10', 'submitted_on_date': '2024-02-05',
+             'external_id': 'GRP-003', 'activation_date': '2025-02-10', 'submitted_on_date': '2025-02-05',
              'active': 'Yes', 'center_name': '',
              'client_external_ids': 'CLI-004,CLI-009'},
 
             {'group_name': 'Artisans Bamenda', 'office': 'Bamenda Branch', 'staff': 'loan.bamenda',
-             'external_id': 'GRP-004', 'activation_date': '2024-02-20', 'submitted_on_date': '2024-02-16',
+             'external_id': 'GRP-004', 'activation_date': '2025-02-20', 'submitted_on_date': '2025-02-16',
              'active': 'Yes', 'center_name': '',
              'client_external_ids': 'CLI-007,CLI-011'},
 
             {'group_name': 'Transporteurs Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
-             'external_id': 'GRP-005', 'activation_date': '2024-02-20', 'submitted_on_date': '2024-02-16',
+             'external_id': 'GRP-005', 'activation_date': '2025-02-20', 'submitted_on_date': '2025-02-16',
              'active': 'Yes', 'center_name': 'Centre Commercial Douala',
              'client_external_ids': 'CLI-002,CLI-012'},
         ]
@@ -382,22 +382,22 @@ class FineractDemoDataGenerator:
         """Create sample centers (collection of groups)
 
         IMPORTANT: Center activation dates must be >= parent office opening date
-        - Douala Branch opened: 2024-01-15
-        - Yaounde Branch opened: 2024-01-15
-        - Bafoussam Branch opened: 2024-02-01
-        - Bamenda Branch opened: 2024-02-15
+        - Douala Branch opened: 2025-01-15
+        - Yaounde Branch opened: 2025-01-15
+        - Bafoussam Branch opened: 2025-02-01
+        - Bamenda Branch opened: 2025-02-15
         """
         data = [
             {'center_name': 'Centre Commercial Douala', 'office': 'Douala Branch', 'staff': 'loan.douala',
-             'external_id': 'CTR-001', 'activation_date': '2024-01-20', 'submitted_on_date': '2024-01-16',
+             'external_id': 'CTR-001', 'activation_date': '2025-01-20', 'submitted_on_date': '2025-01-16',
              'active': 'Yes'},
 
             {'center_name': 'Centre Melen Yaounde', 'office': 'Yaounde Branch', 'staff': 'loan.yaounde',
-             'external_id': 'CTR-002', 'activation_date': '2024-01-20', 'submitted_on_date': '2024-01-16',
+             'external_id': 'CTR-002', 'activation_date': '2025-01-20', 'submitted_on_date': '2025-01-16',
              'active': 'Yes'},
 
             {'center_name': 'Centre Tamdja Bafoussam', 'office': 'Bafoussam Branch', 'staff': 'loan.bafoussam',
-             'external_id': 'CTR-003', 'activation_date': '2024-02-05', 'submitted_on_date': '2024-02-02',
+             'external_id': 'CTR-003', 'activation_date': '2025-02-05', 'submitted_on_date': '2025-02-02',
              'active': 'Yes'},
         ]
         return pd.DataFrame(data)
@@ -767,8 +767,8 @@ class FineractDemoDataGenerator:
         - 'pending_disbursal': Create and approve loan, stop at disbursal (demonstrates maker-checker)
         """
         data = [
-            {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2024-02-01',
-             'approved_on': '2024-02-05', 'disbursed_on': '2024-02-09', 'principal': 200000,
+            {'client_external_id': 'CLI-001', 'product': 'MSOL', 'submitted_on': '2025-02-01',
+             'approved_on': '2025-02-05', 'disbursed_on': '2025-02-09', 'principal': 200000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-001',
              'workflow_state': 'active',
@@ -776,8 +776,8 @@ class FineractDemoDataGenerator:
              'repayment_source': 'Business Income', 'credit_score': 72,
              'previous_loan_history': 'Good History'},
 
-            {'client_external_id': 'CLI-002', 'product': 'SBIZ', 'submitted_on': '2024-02-05',
-             'approved_on': '2024-02-08', 'disbursed_on': '2024-02-12', 'principal': 2000000,
+            {'client_external_id': 'CLI-002', 'product': 'SBIZ', 'submitted_on': '2025-02-05',
+             'approved_on': '2025-02-08', 'disbursed_on': '2025-02-12', 'principal': 2000000,
              'loan_term': 12, 'interest_rate': 20.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-002',
              'workflow_state': 'pending_approval',
@@ -785,8 +785,8 @@ class FineractDemoDataGenerator:
              'repayment_source': 'Business Income', 'credit_score': 85,
              'previous_loan_history': 'First Loan'},
 
-            {'client_external_id': 'CLI-003', 'product': 'MSOL', 'submitted_on': '2024-02-10',
-             'approved_on': '2024-02-12', 'disbursed_on': '2024-02-15', 'principal': 150000,
+            {'client_external_id': 'CLI-003', 'product': 'MSOL', 'submitted_on': '2025-02-10',
+             'approved_on': '2025-02-12', 'disbursed_on': '2025-02-15', 'principal': 150000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-003',
              'workflow_state': 'active',
@@ -794,8 +794,8 @@ class FineractDemoDataGenerator:
              'repayment_source': 'Business Income', 'credit_score': 68,
              'previous_loan_history': 'First Loan'},
 
-            {'client_external_id': 'CLI-004', 'product': 'ASEA', 'submitted_on': '2024-02-12',
-             'approved_on': '2024-02-15', 'disbursed_on': '2024-02-19', 'principal': 500000,
+            {'client_external_id': 'CLI-004', 'product': 'ASEA', 'submitted_on': '2025-02-12',
+             'approved_on': '2025-02-15', 'disbursed_on': '2025-02-19', 'principal': 500000,
              'loan_term': 6, 'interest_rate': 18.0, 'loan_officer': 'loan.bafoussam',
              'fund_source': 'Donor - AfDB', 'external_id': 'LOAN-004',
              'workflow_state': 'active',
@@ -803,8 +803,8 @@ class FineractDemoDataGenerator:
              'repayment_source': 'Business Income', 'credit_score': 75,
              'previous_loan_history': 'Good History'},
 
-            {'client_external_id': 'CLI-005', 'product': 'MSOL', 'submitted_on': '2024-02-15',
-             'approved_on': '2024-02-18', 'disbursed_on': '2024-02-20', 'principal': 180000,
+            {'client_external_id': 'CLI-005', 'product': 'MSOL', 'submitted_on': '2025-02-15',
+             'approved_on': '2025-02-18', 'disbursed_on': '2025-02-20', 'principal': 180000,
              'loan_term': 6, 'interest_rate': 24.0, 'loan_officer': 'loan.douala',
              'fund_source': 'Own Capital', 'external_id': 'LOAN-005',
              'workflow_state': 'active',
@@ -812,8 +812,8 @@ class FineractDemoDataGenerator:
              'repayment_source': 'Business Income', 'credit_score': 70,
              'previous_loan_history': 'Some Delays'},
 
-            {'client_external_id': 'CLI-006', 'product': 'SBIZ', 'submitted_on': '2024-02-18',
-             'approved_on': '2024-02-20', 'disbursed_on': '2024-02-26', 'principal': 3000000,
+            {'client_external_id': 'CLI-006', 'product': 'SBIZ', 'submitted_on': '2025-02-18',
+             'approved_on': '2025-02-20', 'disbursed_on': '2025-02-26', 'principal': 3000000,
              'loan_term': 18, 'interest_rate': 18.0, 'loan_officer': 'loan.yaounde',
              'fund_source': 'Bank Loan - Ecobank', 'external_id': 'LOAN-006',
              'workflow_state': 'pending_disbursal',
@@ -826,88 +826,88 @@ class FineractDemoDataGenerator:
     def create_savings_accounts_sheet(self):
         """Create sample savings accounts"""
         data = [
-            {'client_external_id': 'CLI-001', 'product': 'VSAV', 'submitted_on': '2024-01-20',
-             'approved_on': '2024-01-20', 'activated_on': '2024-01-20', 'initial_deposit': 25000,
+            {'client_external_id': 'CLI-001', 'product': 'VSAV', 'submitted_on': '2025-01-20',
+             'approved_on': '2025-01-20', 'activated_on': '2025-01-20', 'initial_deposit': 25000,
              'field_officer': 'loan.douala', 'external_id': 'SAV-001',
              'savings_goal': 'School fees for children', 'target_amount': 500000,
-             'target_date': '2024-09-01', 'monthly_commitment': 50000,
+             'target_date': '2025-09-01', 'monthly_commitment': 50000,
              'preferred_transaction_channel': 'Branch'},
 
-            {'client_external_id': 'CLI-002', 'product': 'VSAV', 'submitted_on': '2024-01-25',
-             'approved_on': '2024-01-25', 'activated_on': '2024-01-25', 'initial_deposit': 50000,
+            {'client_external_id': 'CLI-002', 'product': 'VSAV', 'submitted_on': '2025-01-25',
+             'approved_on': '2025-01-25', 'activated_on': '2025-01-25', 'initial_deposit': 50000,
              'field_officer': 'loan.douala', 'external_id': 'SAV-002',
              'savings_goal': 'Emergency fund', 'target_amount': 1000000,
-             'target_date': '2024-12-31', 'monthly_commitment': 100000,
+             'target_date': '2025-12-31', 'monthly_commitment': 100000,
              'preferred_transaction_channel': 'Mobile Money'},
 
-            {'client_external_id': 'CLI-002', 'product': 'FDEP', 'submitted_on': '2024-02-01',
-             'approved_on': '2024-02-01', 'activated_on': '2024-02-01', 'initial_deposit': 100000,
+            {'client_external_id': 'CLI-002', 'product': 'FDEP', 'submitted_on': '2025-02-01',
+             'approved_on': '2025-02-01', 'activated_on': '2025-02-01', 'initial_deposit': 100000,
              'field_officer': 'loan.douala', 'external_id': 'SAV-003',
              'savings_goal': 'Business expansion capital', 'target_amount': 5000000,
              'target_date': '2025-02-01', 'monthly_commitment': 200000,
              'preferred_transaction_channel': 'Bank Transfer'},
 
-            {'client_external_id': 'CLI-003', 'product': 'VSAV', 'submitted_on': '2024-02-01',
-             'approved_on': '2024-02-01', 'activated_on': '2024-02-01', 'initial_deposit': 15000,
+            {'client_external_id': 'CLI-003', 'product': 'VSAV', 'submitted_on': '2025-02-01',
+             'approved_on': '2025-02-01', 'activated_on': '2025-02-01', 'initial_deposit': 15000,
              'field_officer': 'loan.yaounde', 'external_id': 'SAV-004',
              'savings_goal': 'Buy salon equipment', 'target_amount': 300000,
-             'target_date': '2024-08-01', 'monthly_commitment': 40000,
+             'target_date': '2025-08-01', 'monthly_commitment': 40000,
              'preferred_transaction_channel': 'Branch'},
 
-            {'client_external_id': 'CLI-004', 'product': 'VSAV', 'submitted_on': '2024-02-05',
-             'approved_on': '2024-02-05', 'activated_on': '2024-02-05', 'initial_deposit': 20000,
+            {'client_external_id': 'CLI-004', 'product': 'VSAV', 'submitted_on': '2025-02-05',
+             'approved_on': '2025-02-05', 'activated_on': '2025-02-05', 'initial_deposit': 20000,
              'field_officer': 'loan.bafoussam', 'external_id': 'SAV-005',
              'savings_goal': 'Purchase farm inputs', 'target_amount': 400000,
-             'target_date': '2024-10-01', 'monthly_commitment': 50000,
+             'target_date': '2025-10-01', 'monthly_commitment': 50000,
              'preferred_transaction_channel': 'Agent'},
 
-            {'client_external_id': 'CLI-005', 'product': 'VSAV', 'submitted_on': '2024-02-10',
-             'approved_on': '2024-02-10', 'activated_on': '2024-02-10', 'initial_deposit': 18000,
+            {'client_external_id': 'CLI-005', 'product': 'VSAV', 'submitted_on': '2025-02-10',
+             'approved_on': '2025-02-10', 'activated_on': '2025-02-10', 'initial_deposit': 18000,
              'field_officer': 'loan.douala', 'external_id': 'SAV-006',
              'savings_goal': 'Home renovation', 'target_amount': 600000,
-             'target_date': '2024-12-31', 'monthly_commitment': 60000,
+             'target_date': '2025-12-31', 'monthly_commitment': 60000,
              'preferred_transaction_channel': 'Mobile Money'},
 
-            {'client_external_id': 'CLI-006', 'product': 'VSAV', 'submitted_on': '2024-02-15',
-             'approved_on': '2024-02-15', 'activated_on': '2024-02-15', 'initial_deposit': 75000,
+            {'client_external_id': 'CLI-006', 'product': 'VSAV', 'submitted_on': '2025-02-15',
+             'approved_on': '2025-02-15', 'activated_on': '2025-02-15', 'initial_deposit': 75000,
              'field_officer': 'loan.yaounde', 'external_id': 'SAV-007',
              'savings_goal': 'Business inventory buffer', 'target_amount': 2000000,
              'target_date': '2025-02-15', 'monthly_commitment': 150000,
              'preferred_transaction_channel': 'Bank Transfer'},
 
-            {'client_external_id': 'CLI-006', 'product': 'FDEP', 'submitted_on': '2024-02-20',
-             'approved_on': '2024-02-20', 'activated_on': '2024-02-20', 'initial_deposit': 200000,
+            {'client_external_id': 'CLI-006', 'product': 'FDEP', 'submitted_on': '2025-02-20',
+             'approved_on': '2025-02-20', 'activated_on': '2025-02-20', 'initial_deposit': 200000,
              'field_officer': 'loan.yaounde', 'external_id': 'SAV-008',
              'savings_goal': 'Fixed investment for returns', 'target_amount': 10000000,
              'target_date': '2026-02-20', 'monthly_commitment': 300000,
              'preferred_transaction_channel': 'Branch'},
 
-            {'client_external_id': 'CLI-007', 'product': 'VSAV', 'submitted_on': '2024-02-20',
-             'approved_on': '2024-02-20', 'activated_on': '2024-02-20', 'initial_deposit': 12000,
+            {'client_external_id': 'CLI-007', 'product': 'VSAV', 'submitted_on': '2025-02-20',
+             'approved_on': '2025-02-20', 'activated_on': '2025-02-20', 'initial_deposit': 12000,
              'field_officer': 'loan.bamenda', 'external_id': 'SAV-009',
              'savings_goal': 'Wedding expenses', 'target_amount': 800000,
-             'target_date': '2024-12-01', 'monthly_commitment': 80000,
+             'target_date': '2025-12-01', 'monthly_commitment': 80000,
              'preferred_transaction_channel': 'Mobile Money'},
 
-            {'client_external_id': 'CLI-008', 'product': 'VSAV', 'submitted_on': '2024-03-01',
-             'approved_on': '2024-03-01', 'activated_on': '2024-03-01', 'initial_deposit': 16000,
+            {'client_external_id': 'CLI-008', 'product': 'VSAV', 'submitted_on': '2025-03-01',
+             'approved_on': '2025-03-01', 'activated_on': '2025-03-01', 'initial_deposit': 16000,
              'field_officer': 'loan.douala', 'external_id': 'SAV-010',
              'savings_goal': 'Tools and equipment', 'target_amount': 350000,
-             'target_date': '2024-10-01', 'monthly_commitment': 45000,
+             'target_date': '2025-10-01', 'monthly_commitment': 45000,
              'preferred_transaction_channel': 'Agent'},
 
-            {'client_external_id': 'CLI-009', 'product': 'VSAV', 'submitted_on': '2024-03-05',
-             'approved_on': '2024-03-05', 'activated_on': '2024-03-05', 'initial_deposit': 10000,
+            {'client_external_id': 'CLI-009', 'product': 'VSAV', 'submitted_on': '2025-03-05',
+             'approved_on': '2025-03-05', 'activated_on': '2025-03-05', 'initial_deposit': 10000,
              'field_officer': 'loan.bafoussam', 'external_id': 'SAV-011',
              'savings_goal': 'Market stall expansion', 'target_amount': 250000,
-             'target_date': '2024-09-01', 'monthly_commitment': 35000,
+             'target_date': '2025-09-01', 'monthly_commitment': 35000,
              'preferred_transaction_channel': 'Branch'},
 
-            {'client_external_id': 'CLI-010', 'product': 'VSAV', 'submitted_on': '2024-03-10',
-             'approved_on': '2024-03-10', 'activated_on': '2024-03-10', 'initial_deposit': 14000,
+            {'client_external_id': 'CLI-010', 'product': 'VSAV', 'submitted_on': '2025-03-10',
+             'approved_on': '2025-03-10', 'activated_on': '2025-03-10', 'initial_deposit': 14000,
              'field_officer': 'loan.yaounde', 'external_id': 'SAV-012',
              'savings_goal': 'Buy woodworking tools', 'target_amount': 400000,
-             'target_date': '2024-11-01', 'monthly_commitment': 50000,
+             'target_date': '2025-11-01', 'monthly_commitment': 50000,
              'preferred_transaction_channel': 'Mobile Money'},
         ]
         return pd.DataFrame(data)
@@ -938,12 +938,12 @@ class FineractDemoDataGenerator:
     def create_holidays_sheet(self):
         """Create Cameroon public holidays"""
         data = [
-            {'holiday_name': "New Year's Day", 'date': '2024-01-01', 'rescheduled_to': '2024-01-02', 'description': 'New Year Holiday'},
-            {'holiday_name': 'Youth Day', 'date': '2024-02-11', 'rescheduled_to': '2024-02-12', 'description': 'Youth Day Holiday'},
-            {'holiday_name': 'Labour Day', 'date': '2024-05-01', 'rescheduled_to': '2024-05-02', 'description': 'International Labour Day'},
-            {'holiday_name': 'National Day', 'date': '2024-05-20', 'rescheduled_to': '2024-05-21', 'description': 'Cameroon National Day'},
-            {'holiday_name': 'Assumption Day', 'date': '2024-08-15', 'rescheduled_to': '2024-08-16', 'description': 'Assumption of Mary'},
-            {'holiday_name': 'Christmas Day', 'date': '2024-12-25', 'rescheduled_to': '2024-12-26', 'description': 'Christmas Holiday'},
+            {'holiday_name': "New Year's Day", 'date': '2025-01-01', 'rescheduled_to': '2025-01-02', 'description': 'New Year Holiday'},
+            {'holiday_name': 'Youth Day', 'date': '2025-02-11', 'rescheduled_to': '2025-02-12', 'description': 'Youth Day Holiday'},
+            {'holiday_name': 'Labour Day', 'date': '2025-05-01', 'rescheduled_to': '2025-05-02', 'description': 'International Labour Day'},
+            {'holiday_name': 'National Day', 'date': '2025-05-20', 'rescheduled_to': '2025-05-21', 'description': 'Cameroon National Day'},
+            {'holiday_name': 'Assumption Day', 'date': '2025-08-15', 'rescheduled_to': '2025-08-16', 'description': 'Assumption of Mary'},
+            {'holiday_name': 'Christmas Day', 'date': '2025-12-25', 'rescheduled_to': '2025-12-26', 'description': 'Christmas Holiday'},
             {'holiday_name': "New Year's Day", 'date': '2025-01-01', 'rescheduled_to': '2025-01-02', 'description': 'New Year Holiday'},
             {'holiday_name': 'Youth Day', 'date': '2025-02-11', 'rescheduled_to': '2025-02-12', 'description': 'Youth Day Holiday'},
             {'holiday_name': 'Labour Day', 'date': '2025-05-01', 'rescheduled_to': '2025-05-02', 'description': 'International Labour Day'},
@@ -996,15 +996,15 @@ class FineractDemoDataGenerator:
         """Create floating interest rates"""
         data = [
             {'rate_name': 'BEAC Base Rate', 'is_base_rate': 'Yes', 'is_active': 'Yes',
-             'rate_value': 3.50, 'from_date': '2024-01-01',
+             'rate_value': 3.50, 'from_date': '2025-01-01',
              'description': 'Central African Bank (BEAC) reference rate'},
 
             {'rate_name': 'Prime Lending Rate', 'is_base_rate': 'No', 'is_active': 'Yes',
-             'rate_value': 7.50, 'from_date': '2024-01-01',
+             'rate_value': 7.50, 'from_date': '2025-01-01',
              'description': 'Prime rate for best customers (BEAC + 4%)'},
 
             {'rate_name': 'SME Lending Rate', 'is_base_rate': 'No', 'is_active': 'Yes',
-             'rate_value': 9.50, 'from_date': '2024-01-01',
+             'rate_value': 9.50, 'from_date': '2025-01-01',
              'description': 'Rate for SME loans (BEAC + 6%)'},
         ]
         return pd.DataFrame(data)
@@ -1044,13 +1044,13 @@ class FineractDemoDataGenerator:
         data = [
             # Tax Group 1: Savings Interest WHT
             {'tax_group_name': 'Savings Interest Tax', 'tax_component_name': 'Withholding Tax on Interest',
-             'tax_type': 'Savings Interest', 'tax_percentage': 15.0, 'start_date': '2024-01-01',
+             'tax_type': 'Savings Interest', 'tax_percentage': 15.0, 'start_date': '2025-01-01',
              'credit_account_type': 'Liability', 'credit_gl_code': '141', 'credit_gl_name': 'Tax Payable - WHT',
              'description': '15% WHT on savings interest (Cameroon tax law)'},
 
             # Tax Group 2: Loan Interest WHT (if applicable)
             {'tax_group_name': 'Loan Interest Tax', 'tax_component_name': 'Withholding Tax on Loan Interest',
-             'tax_type': 'Loan Interest', 'tax_percentage': 5.5, 'start_date': '2024-01-01',
+             'tax_type': 'Loan Interest', 'tax_percentage': 5.5, 'start_date': '2025-01-01',
              'credit_account_type': 'Liability', 'credit_gl_code': '141', 'credit_gl_name': 'Tax Payable - WHT',
              'description': '5.5% WHT on interest income from loans'},
         ]
@@ -1277,25 +1277,25 @@ class FineractDemoDataGenerator:
             # Yaounde Branch
             {'office_name': 'Yaounde Branch', 'teller_name': 'Teller 1 - Yaounde',
              'description': 'Main teller counter at Yaounde branch',
-             'start_date': '2024-01-15', 'end_date': '2030-12-31',
+             'start_date': '2025-01-15', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Douala Branch
             {'office_name': 'Douala Branch', 'teller_name': 'Teller 1 - Douala',
              'description': 'Main teller counter at Douala branch',
-             'start_date': '2024-01-15', 'end_date': '2030-12-31',
+             'start_date': '2025-01-15', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Bafoussam Branch
             {'office_name': 'Bafoussam Branch', 'teller_name': 'Teller 1 - Bafoussam',
              'description': 'Main teller counter at Bafoussam branch',
-             'start_date': '2024-02-01', 'end_date': '2030-12-31',
+             'start_date': '2025-02-01', 'end_date': '2030-12-31',
              'status': 'Active'},
 
             # Bamenda Branch
             {'office_name': 'Bamenda Branch', 'teller_name': 'Teller 1 - Bamenda',
              'description': 'Main teller counter at Bamenda branch',
-             'start_date': '2024-02-15', 'end_date': '2030-12-31',
+             'start_date': '2025-02-15', 'end_date': '2030-12-31',
              'status': 'Active'},
         ]
         return pd.DataFrame(data)
@@ -1375,12 +1375,12 @@ class FineractDemoDataGenerator:
         data = [
             # Loan operations
             {'task_name': 'Loan Approval', 'entity': 'Loan', 'action': 'APPROVE',
-             'enabled': True,
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'All loan approvals require manager authorization (demonstrates workflow)'},
 
             {'task_name': 'Loan Disbursement', 'entity': 'Loan', 'action': 'DISBURSE',
-             'enabled': True,
+             'enabled': False,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'All loan disbursements require manager authorization (demonstrates workflow)'},
 
@@ -1395,6 +1395,11 @@ class FineractDemoDataGenerator:
              'description': 'Loan rescheduling requires manager approval (disabled by default)'},
 
             # Savings operations
+            {'task_name': 'Approve Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'APPROVE',
+             'enabled': False,
+             'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
+             'description': 'Savings account approval (disabled by default)'},
+
             {'task_name': 'Close Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'CLOSE',
              'enabled': True,
              'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
@@ -1419,12 +1424,12 @@ class FineractDemoDataGenerator:
 
             # Teller/Cashier operations
             {'task_name': 'Allocate Cash to Cashier', 'entity': 'TELLER', 'action': 'ALLOCATECASHTOCASHIER',
-             'enabled': True,
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
              'description': 'Cash allocation to cashier requires cashier confirmation'},
 
             {'task_name': 'Settle Cash from Cashier', 'entity': 'TELLER', 'action': 'SETTLECASHFROMCASHIER',
-             'enabled': True,
+             'enabled': False,
              'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
              'description': 'Cash settlement from cashier requires cashier confirmation'},
 
@@ -2312,56 +2317,56 @@ class FineractDemoDataGenerator:
         data = [
             # Regular deposits (using actual account external IDs)
             {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
-             'transaction_date': '2024-03-01', 'transaction_amount': 50000,
+             'transaction_date': '2025-03-01', 'transaction_amount': 50000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-001',
              'note': 'Monthly deposit', 'office': 'Douala Branch'},
 
             {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
-             'transaction_date': '2024-03-05', 'transaction_amount': 25000,
+             'transaction_date': '2025-03-05', 'transaction_amount': 25000,
              'payment_type': 'Bank Transfer', 'receipt_number': 'RCP-002',
              'note': 'Monthly savings', 'office': 'Douala Branch'},
 
             {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
-             'transaction_date': '2024-03-02', 'transaction_amount': 30000,
+             'transaction_date': '2025-03-02', 'transaction_amount': 30000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-003',
              'note': 'Weekly deposit', 'office': 'Yaounde Branch'},
 
             {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
-             'transaction_date': '2024-03-10', 'transaction_amount': 15000,
+             'transaction_date': '2025-03-10', 'transaction_amount': 15000,
              'payment_type': 'MTN Mobile Money', 'receipt_number': 'RCP-004',
              'note': 'Mobile money deposit', 'office': 'Bafoussam Branch'},
 
             {'client_name': 'François Nkomo', 'savings_account_number': 'SAV-006',
-             'transaction_date': '2024-03-03', 'transaction_amount': 40000,
+             'transaction_date': '2025-03-03', 'transaction_amount': 40000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-005',
              'note': 'Business savings', 'office': 'Douala Branch'},
 
             {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-007',
-             'transaction_date': '2024-03-12', 'transaction_amount': 35000,
+             'transaction_date': '2025-03-12', 'transaction_amount': 35000,
              'payment_type': 'Cheque', 'receipt_number': 'RCP-006',
              'note': 'Farm income deposit', 'office': 'Yaounde Branch'},
 
             # Inter-branch deposits (Client from Branch A deposits at Branch B)
             {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
-             'transaction_date': '2024-03-20', 'transaction_amount': 35000,
+             'transaction_date': '2025-03-20', 'transaction_amount': 35000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-007',
              'note': 'Cross-branch deposit - Douala client depositing at Yaounde',
              'office': 'Yaounde Branch'},
 
             {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
-             'transaction_date': '2024-03-22', 'transaction_amount': 20000,
+             'transaction_date': '2025-03-22', 'transaction_amount': 20000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-008',
              'note': 'Cross-branch deposit - Yaounde client depositing at Douala',
              'office': 'Douala Branch'},
 
             {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
-             'transaction_date': '2024-03-25', 'transaction_amount': 20000,
+             'transaction_date': '2025-03-25', 'transaction_amount': 20000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-009',
              'note': 'Cross-branch deposit - Douala client depositing at Bafoussam',
              'office': 'Bafoussam Branch'},
 
             {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
-             'transaction_date': '2024-03-28', 'transaction_amount': 25000,
+             'transaction_date': '2025-03-28', 'transaction_amount': 25000,
              'payment_type': 'Cash', 'receipt_number': 'RCP-010',
              'note': 'Cross-branch deposit - Bafoussam client depositing at Yaounde',
              'office': 'Yaounde Branch'},
@@ -2377,34 +2382,34 @@ class FineractDemoDataGenerator:
         data = [
             # Withdrawals for Yaounde clients
             {'client_name': 'Jean Dupont', 'savings_account_number': 'SAV-001',
-             'transaction_date': '2024-03-15', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-15', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-001',
              'note': 'Emergency withdrawal', 'office': 'Yaounde Branch'},
 
             {'client_name': 'Marie Kamga', 'savings_account_number': 'SAV-002',
-             'transaction_date': '2024-03-18', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-18', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-002',
              'note': 'Cash withdrawal', 'office': 'Yaounde Branch'},
 
             # Withdrawals for Douala clients
             {'client_name': 'Paul Ekambi', 'savings_account_number': 'SAV-004',
-             'transaction_date': '2024-03-16', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-16', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-003',
              'note': 'Personal expense', 'office': 'Douala Branch'},
 
             {'client_name': 'Grace Fotso', 'savings_account_number': 'SAV-005',
-             'transaction_date': '2024-03-20', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-20', 'transaction_amount': 5000,
              'payment_type': 'Bank Transfer', 'receipt_number': 'WDL-004',
              'note': 'Supplier payment', 'office': 'Douala Branch'},
 
             # Withdrawals for Bafoussam clients
             {'client_name': 'Pierre Tchuente', 'savings_account_number': 'SAV-011',
-             'transaction_date': '2024-03-17', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-17', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-005',
              'note': 'School fees', 'office': 'Bafoussam Branch'},
 
             {'client_name': 'Justine Moukouri', 'savings_account_number': 'SAV-012',
-             'transaction_date': '2024-03-22', 'transaction_amount': 5000,
+             'transaction_date': '2025-03-22', 'transaction_amount': 5000,
              'payment_type': 'Cash', 'receipt_number': 'WDL-006',
              'note': 'Medical expenses', 'office': 'Bafoussam Branch'},
         ]
@@ -2420,24 +2425,24 @@ class FineractDemoDataGenerator:
         data = [
             # Repayments for Yaounde clients - LOAN-001 (Overpaid)
             {'client_name': 'Jean Dupont', 'loan_account_number': 'LOAN-001',
-             'transaction_date': '2024-03-15', 'principal_amount': 20000, 'interest_amount': 5000,
+             'transaction_date': '2025-03-15', 'principal_amount': 20000, 'interest_amount': 5000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-001', 'note': 'Monthly repayment', 'office': 'Yaounde Branch'},
 
             # Repayments for Douala clients - LOAN-003 (Overpaid)
             {'client_name': 'Paul Ekambi', 'loan_account_number': 'LOAN-003',
-             'transaction_date': '2024-03-18', 'principal_amount': 30000, 'interest_amount': 8000,
+             'transaction_date': '2025-03-18', 'principal_amount': 30000, 'interest_amount': 8000,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-003', 'note': 'Monthly repayment', 'office': 'Douala Branch'},
 
             {'client_name': 'Grace Fotso', 'loan_account_number': 'LOAN-004',
-             'transaction_date': '2024-03-25', 'principal_amount': 80000, 'interest_amount': 20000,
+             'transaction_date': '2025-03-25', 'principal_amount': 80000, 'interest_amount': 20000,
              'fee_amount': 0, 'penalty_amount': 2000, 'payment_type': 'Bank Transfer',
              'receipt_number': 'REP-004', 'note': 'Late payment with penalty', 'office': 'Douala Branch'},
 
             # Repayments for Bafoussam clients - LOAN-005 (Overpaid)
             {'client_name': 'Pierre Tchuente', 'loan_account_number': 'LOAN-005',
-             'transaction_date': '2024-03-22', 'principal_amount': 25000, 'interest_amount': 6500,
+             'transaction_date': '2025-03-22', 'principal_amount': 25000, 'interest_amount': 6500,
              'fee_amount': 0, 'penalty_amount': 0, 'payment_type': 'Cash',
              'receipt_number': 'REP-005', 'note': 'Monthly repayment', 'office': 'Bafoussam Branch'},
         ]
@@ -2491,12 +2496,12 @@ class FineractDemoDataGenerator:
         # Only use loans with "Submitted and pending approval" status: LOAN-002, LOAN-006
         # Cannot add guarantors to closed/overpaid loans
         # Note: Client cannot be guarantor for their own loan
-        # LOAN-002 belongs to CLI-002, so use CLI-003 as guarantor
+        # LOAN-002 belongs to CLI-002, so use CLI-001 as guarantor (same branch - Douala)
         data = [
             # CLIENT type guarantor - another client guarantees the loan
-            # (CLI-003 guarantees CLI-002's loan LOAN-002)
+            # (CLI-001 guarantees CLI-002's loan LOAN-002 - both in Douala Branch)
             {'loan_external_id': 'LOAN-002', 'guarantor_type': 'CLIENT',
-             'client_external_id': 'CLI-003', 'amount': 250000},
+             'client_external_id': 'CLI-001', 'amount': 250000},
 
             # EXTERNAL type guarantor - person not in system
             {'loan_external_id': 'LOAN-006', 'guarantor_type': 'EXTERNAL',
@@ -2509,42 +2514,42 @@ class FineractDemoDataGenerator:
         """Create sample inter-branch transfer transactions"""
         data = [
             # Transfer 1: Yaounde to Douala
-            {'transfer_date': '2024-03-10', 'from_office': 'Yaounde Branch', 'to_office': 'Douala Branch',
+            {'transfer_date': '2025-03-10', 'from_office': 'Yaounde Branch', 'to_office': 'Douala Branch',
              'transfer_amount': 5000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-001', 'initiated_by': 'Jean Mbarga',
              'description': 'Branch liquidity management - Cash transfer to Douala',
              'status': 'Completed'},
 
             # Transfer 2: Douala to Bafoussam
-            {'transfer_date': '2024-03-12', 'from_office': 'Douala Branch', 'to_office': 'Bafoussam Branch',
+            {'transfer_date': '2025-03-12', 'from_office': 'Douala Branch', 'to_office': 'Bafoussam Branch',
              'transfer_amount': 3000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-002', 'initiated_by': 'Grace Douala',
              'description': 'Weekly cash replenishment to Bafoussam branch',
              'status': 'Completed'},
 
             # Transfer 3: Bafoussam to Bamenda
-            {'transfer_date': '2024-03-15', 'from_office': 'Bafoussam Branch', 'to_office': 'Bamenda Branch',
+            {'transfer_date': '2025-03-15', 'from_office': 'Bafoussam Branch', 'to_office': 'Bamenda Branch',
              'transfer_amount': 2000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-003', 'initiated_by': 'Samuel Kenmogne',
              'description': 'Opening cash allocation for Bamenda branch',
              'status': 'Completed'},
 
             # Transfer 4: Douala to Yaounde (reverse flow)
-            {'transfer_date': '2024-03-18', 'from_office': 'Douala Branch', 'to_office': 'Yaounde Branch',
+            {'transfer_date': '2025-03-18', 'from_office': 'Douala Branch', 'to_office': 'Yaounde Branch',
              'transfer_amount': 4000000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-004', 'initiated_by': 'Grace Douala',
              'description': 'Excess liquidity transfer to Head Office region',
              'status': 'Completed'},
 
             # Transfer 5: Yaounde to Bafoussam
-            {'transfer_date': '2024-03-20', 'from_office': 'Yaounde Branch', 'to_office': 'Bafoussam Branch',
+            {'transfer_date': '2025-03-20', 'from_office': 'Yaounde Branch', 'to_office': 'Bafoussam Branch',
              'transfer_amount': 2500000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-005', 'initiated_by': 'Jean Mbarga',
              'description': 'Agricultural season loan disbursement support',
              'status': 'Completed'},
 
             # Transfer 6: Bamenda to Douala
-            {'transfer_date': '2024-03-22', 'from_office': 'Bamenda Branch', 'to_office': 'Douala Branch',
+            {'transfer_date': '2025-03-22', 'from_office': 'Bamenda Branch', 'to_office': 'Douala Branch',
              'transfer_amount': 1500000, 'currency': 'XAF', 'transfer_type': 'Cash Transfer',
              'reference_number': 'IBT-006', 'initiated_by': 'David Tanko',
              'description': 'Deposit surplus transfer to main vault',
@@ -2555,6 +2560,23 @@ class FineractDemoDataGenerator:
     def create_financial_reports_sheet(self):
         """Create Financial Overview Reports (to be registered in Fineract)"""
         data = [
+            # Receipt Reports (Pentaho/Pentium)
+            {'report_name': 'Loan Transaction Receipt',
+             'report_category': 'Loan',
+             'report_type': 'Pentaho',
+             'description': 'Receipt for loan transactions',
+             'sql_query': 'SELECT 1',
+             'parameters': None,
+             'use_report': 'Yes'},
+
+            {'report_name': 'Savings Transaction Receipt',
+             'report_category': 'Savings',
+             'report_type': 'Pentaho',
+             'description': 'Receipt for savings transactions',
+             'sql_query': 'SELECT 1',
+             'parameters': None,
+             'use_report': 'Yes'},
+
             # Income Statement Report
             {'report_name': 'Income Statement (Profit & Loss)',
              'report_category': 'Financial',
