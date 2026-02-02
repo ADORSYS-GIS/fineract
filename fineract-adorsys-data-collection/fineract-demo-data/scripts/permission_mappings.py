@@ -22,6 +22,9 @@ def get_entity_name(group):
         'Accounting': 'GLACCOUNT', # Partial mapping, Accounting is complex
         'Report': 'REPORT',
         'Teller': 'TELLER',
+        'Client Identifier': 'CLIENTIDENTIFIER',
+        'Client Image': 'CLIENTIMAGE',
+        'Staff Image': 'STAFFIMAGE',
     }
     return mapping.get(group)
 
@@ -52,6 +55,10 @@ COMMON_READ_PERMISSIONS = [
     'READ_BUSINESS_DATE',
     'READ_CURRENCY',
     'READ_REPORT',
+    'READ_CLIENTIDENTIFIER',
+    'READ_CLIENTIMAGE',
+    'READ_STAFFIMAGE',
+    'REPORTING_SUPER_USER',
     'READ_Loan Transaction Receipt',
     'READ_Savings Transaction Receipt',
     # Financial Reports
@@ -249,7 +256,7 @@ def expand_permissions(group, shorthand):
         elif shorthand == 'LOAN_OFFICER':
             perms = list(COMMON_READ_PERMISSIONS)
             # Clients
-            perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT'])
+            perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT', 'ACTIVATE_CLIENT'])
             # Loans
             perms.extend(['CREATE_LOAN', 'READ_LOAN', 'UPDATE_LOAN', 'REPAYMENT_LOAN', 'DISBURSE_LOAN', 'DISBURSETOSAVINGS_LOAN', 'READ_LOANNOTE'])
             # Savings

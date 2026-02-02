@@ -1340,26 +1340,58 @@ class FineractDemoDataGenerator:
             # System Administrator
             {'role_name': 'System Administrator', 'permission_group': 'Role', 'permission': 'SUPER_USER',
              'description': 'Super user with full system access'},
+            {'role_name': 'System Administrator', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
 
             # Branch Manager
             {'role_name': 'Branch Manager', 'permission_group': 'Role', 'permission': 'BRANCH_MANAGER',
              'description': 'Branch manager with approval authority'},
+            {'role_name': 'Branch Manager', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
+            {'role_name': 'Branch Manager', 'permission_group': 'Client Identifier', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Full access to client identifiers'},
+            {'role_name': 'Branch Manager', 'permission_group': 'Client Image', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Full access to client images'},
 
             # Loan Officer
             {'role_name': 'Loan Officer', 'permission_group': 'Role', 'permission': 'LOAN_OFFICER',
              'description': 'Loan officer for client and loan management'},
+            {'role_name': 'Loan Officer', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
+            {'role_name': 'Loan Officer', 'permission_group': 'Client Identifier', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Full access to client identifiers'},
+            {'role_name': 'Loan Officer', 'permission_group': 'Client Image', 'permission': 'ALL_FUNCTIONS',
+             'description': 'Full access to client images'},
 
             # Cashier
             {'role_name': 'Cashier', 'permission_group': 'Role', 'permission': 'CASHIER',
              'description': 'Cashier for handling cash transactions'},
+            {'role_name': 'Cashier', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
+            {'role_name': 'Cashier', 'permission_group': 'Client Identifier', 'permission': 'READ',
+             'description': 'Read access to client identifiers'},
+            {'role_name': 'Cashier', 'permission_group': 'Client Image', 'permission': 'READ',
+             'description': 'Read access to client images'},
 
             # Accountant
             {'role_name': 'Accountant', 'permission_group': 'Role', 'permission': 'ACCOUNTANT',
              'description': 'Accountant for financial management (Maker)'},
+            {'role_name': 'Accountant', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
+            {'role_name': 'Accountant', 'permission_group': 'Client Identifier', 'permission': 'READ',
+             'description': 'Read access to client identifiers'},
+            {'role_name': 'Accountant', 'permission_group': 'Client Image', 'permission': 'READ',
+             'description': 'Read access to client images'},
 
             # Supervisor Accountant
             {'role_name': 'Supervisor Accountant', 'permission_group': 'Role', 'permission': 'SUPERVISOR_ACCOUNTANT',
              'description': 'Senior accountant for audit and approval (Checker)'},
+            {'role_name': 'Supervisor Accountant', 'permission_group': 'special', 'permission': 'REPORTING_SUPER_USER',
+             'description': 'Reporting super user access'},
+            {'role_name': 'Supervisor Accountant', 'permission_group': 'Client Identifier', 'permission': 'READ',
+             'description': 'Read access to client identifiers'},
+            {'role_name': 'Supervisor Accountant', 'permission_group': 'Client Image', 'permission': 'READ',
+             'description': 'Read access to client images'},
         ]
         return pd.DataFrame(data)
 
