@@ -219,6 +219,8 @@ def expand_permissions(group, shorthand):
             perms = list(COMMON_READ_PERMISSIONS)
             # Clients
             perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT', 'ACTIVATE_CLIENT', 'CLOSE_CLIENT', 'REJECT_CLIENT', 'READ_client_additional_info'])
+            # Documents
+            perms.extend(['READ_DOCUMENT'])
             # Loans
             perms.extend(['APPROVE_LOAN', 'DISBURSE_LOAN', 'REJECT_LOAN', 'WITHDRAW_LOAN', 'READ_LOAN', 'REPAYMENT_LOAN', "READ_loan_additional_info", "CREATE_loan_additional_info"])
             # Savings
@@ -257,6 +259,8 @@ def expand_permissions(group, shorthand):
             perms = list(COMMON_READ_PERMISSIONS)
             # Clients
             perms.extend(['CREATE_CLIENT', 'READ_CLIENT', 'UPDATE_CLIENT', 'ACTIVATE_CLIENT'])
+            # Documents
+            perms.extend(['READ_DOCUMENT'])
             # Loans
             perms.extend(['CREATE_LOAN', 'READ_LOAN', 'UPDATE_LOAN', 'REPAYMENT_LOAN', 'DISBURSE_LOAN', 'DISBURSETOSAVINGS_LOAN', 'READ_LOANNOTE'])
             # Savings
