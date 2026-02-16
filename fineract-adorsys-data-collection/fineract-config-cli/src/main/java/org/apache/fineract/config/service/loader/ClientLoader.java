@@ -199,7 +199,14 @@ public class ClientLoader {
     // 1. Gender
     String genderLabel = client.getGender();
     if (genderLabel != null) {
-      builder.put("genderId", FineractEnumMapper.mapGender(genderLabel));
+      Long genderId = context.resolveEntityId("codeValue", "Gender:" + genderLabel);
+      if (genderId != null) {
+        builder.put("genderId", genderId);
+      } else {
+        log.warn(
+            "Gender label '{}' not found in cache, using hardcoded mapping fallback", genderLabel);
+        builder.put("genderId", FineractEnumMapper.mapGender(genderLabel));
+      }
     }
 
     // 2. Client Type
@@ -326,7 +333,10 @@ public class ClientLoader {
       // Resolve gender, prioritizing label over hardcoded ID
       String genderLabel = client.getGender();
       if (genderLabel != null) {
-        builder.put("genderId", FineractEnumMapper.mapGender(genderLabel));
+        Long genderId = context.resolveEntityId("codeValue", "Gender:" + genderLabel);
+        if (genderId != null) {
+          builder.put("genderId", genderId);
+        }
       }
 
       // Client Type
