@@ -7,6 +7,7 @@ import org.apache.fineract.config.model.ImportContext;
 import org.apache.fineract.config.model.ImportResult;
 import org.apache.fineract.config.model.PlannedChange;
 import org.apache.fineract.config.provider.FineractApiClient;
+import org.apache.fineract.config.util.ConfigUtil;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -175,8 +176,17 @@ public class UpsertService {
       // Search for matching entity
       for (Map<String, Object> entity : entities) {
         Object fieldValue = entity.get(searchField);
-        if (fieldValue != null && fieldValue.toString().equals(searchValue)) {
-          return entity;
+        if (fieldValue != null) {
+          String fieldValueStr = fieldValue.toString();
+          // Use case-insensitive and whitespace-insensitive matching for name and code fields
+          // to handle system vs. custom naming mismatches (e.g., "AddressType" vs "ADDRESS_TYPE")
+          if (searchField.equalsIgnoreCase("name") || searchField.equalsIgnoreCase("glCode")) {
+            if (ConfigUtil.normalize(fieldValueStr).equals(ConfigUtil.normalize(searchValue))) {
+              return entity;
+            }
+          } else if (fieldValueStr.equals(searchValue)) {
+            return entity;
+          }
         }
       }
 
@@ -246,6 +256,26 @@ public class UpsertService {
 
     Map<String, PlannedChange.FieldChange> changes =
         changeDetectionService.detectChangesForEntityType(entityType, existing, requestData);
+
+    // Filter out changes that are just casing/punctuation differences in identifier fields
+    // to avoid trying to rename system-defined entities (which Fineract often prohibits)
+    if (!changes.isEmpty()) {
+      changes
+          .entrySet()
+          .removeIf(
+              entry -> {
+                String field = entry.getKey();
+                if (field.equalsIgnoreCase("name")
+                    || field.equalsIgnoreCase("glCode")
+                    || field.equalsIgnoreCase("shortName")) {
+                  Object oldVal = entry.getValue().getOldValue();
+                  Object newVal = entry.getValue().getNewValue();
+                  return ConfigUtil.normalize(oldVal != null ? oldVal.toString() : "")
+                      .equals(ConfigUtil.normalize(newVal != null ? newVal.toString() : ""));
+                }
+                return false;
+              });
+    }
 
     if (!changes.isEmpty()) {
       log.debug("Detected {} changes for {}", changes.size(), entityType);

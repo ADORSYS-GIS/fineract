@@ -2,6 +2,8 @@ package org.apache.fineract.config.model.client;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 /**
@@ -17,7 +19,9 @@ public class Client {
   private String middleName;
   private String lastName;
   private LocalDate dateOfBirth;
-  private String gender; // MALE, FEMALE, OTHER
+
+  private String gender; // MALE, FEMALE, OTHER (For YAML convenience)
+
   private String mobileNo;
   private String emailAddress;
   private Boolean active;
@@ -29,18 +33,16 @@ public class Client {
   private Integer legalFormId;
 
   // Client classification
+  @JsonProperty("clienttypeId")
   private Long clientTypeId;
+
   private Long clientClassificationId;
+
   private String clientType; // For YAML convenience (will need resolution to ID)
   private String clientClassification; // For YAML convenience (will need resolution to ID)
 
   // Address
-  private String addressLine1;
-  private String addressLine2;
-  private String city;
-  private String stateProvince;
-  private String countryCode;
-  private String postalCode;
+  private Address address;
 
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when

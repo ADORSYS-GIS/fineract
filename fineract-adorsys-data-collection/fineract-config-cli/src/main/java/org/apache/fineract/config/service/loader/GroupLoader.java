@@ -109,6 +109,13 @@ public class GroupLoader {
         log.debug("Group unchanged: {}", group.getName());
         result.recordEntity("group", ImportResult.EntityAction.UNCHANGED);
       }
+
+      // Activate group if requested and not already active
+      if (Boolean.TRUE.equals(group.getActive())
+          && group.getActivationDate() != null
+          && !isActive(existingGroup)) {
+        activateGroup(groupId, group);
+      }
     } else {
       // Create new group
       Map<String, Object> request = buildRequest(group, context);
@@ -208,6 +215,22 @@ public class GroupLoader {
   }
 
   /**
+   * Checks if group is active.
+   *
+   * @param groupData group data from API
+   * @return true if active
+   */
+  private boolean isActive(Map<String, Object> groupData) {
+    Object statusObj = groupData.get("status");
+    if (statusObj instanceof Map) {
+      Map<String, Object> status = (Map<String, Object>) statusObj;
+      String statusValue = (String) status.get("value");
+      return "Active".equalsIgnoreCase(statusValue);
+    }
+    return false;
+  }
+
+  /**
    * Builds API request for group update.
    *
    * <p>According to ChangeDetectionService, groups can update staffId and externalId even when
@@ -224,13 +247,7 @@ public class GroupLoader {
     Map<String, Object> request = new HashMap<>();
 
     // Check if group is active
-    Object statusObj = existingGroup.get("status");
-    boolean isActive = false;
-    if (statusObj != null) {
-      Map<String, Object> status = (Map<String, Object>) statusObj;
-      String statusValue = (String) status.get("value");
-      isActive = "Active".equalsIgnoreCase(statusValue);
-    }
+    boolean isActive = isActive(existingGroup);
 
     if (isActive) {
       // Group is active - only update allowed fields (staffId, externalId)

@@ -10,6 +10,7 @@ import org.apache.fineract.config.model.systemconfig.Code;
 import org.apache.fineract.config.model.systemconfig.CodeValue;
 import org.apache.fineract.config.provider.FineractApiClient;
 import org.apache.fineract.config.service.UpsertService;
+import org.apache.fineract.config.util.ConfigUtil;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +79,7 @@ public class CodesLoader {
     Long codeId = upsertResult.getEntityId();
 
     // Store code ID for reference (important for dependency resolution)
-    context.registerEntity("code", code.getName(), codeId);
+    context.registerEntity("code_group", code.getName(), codeId);
 
     if (upsertResult.wasCreated()) {
       log.info("✓ Created code: {} (ID: {})", code.getName(), codeId);
@@ -170,10 +171,13 @@ public class CodesLoader {
       request.put("isActive", codeValue.getIsActive());
     }
 
-    // Check if code value already exists
+    // Check if code value already exists (case-insensitive)
     Map<String, Object> existingValue =
         existingValues.stream()
-            .filter(v -> codeValue.getName().equals(v.get("name")))
+            .filter(
+                v ->
+                    ConfigUtil.normalize(codeValue.getName())
+                        .equals(ConfigUtil.normalize((String) v.get("name"))))
             .findFirst()
             .orElse(null);
 
@@ -200,6 +204,11 @@ public class CodesLoader {
     // Register with both simple name and qualified name (CodeName:ValueName)
     context.registerEntity("codeValue", codeValue.getName(), codeValueId);
     context.registerEntity("codeValue", codeName + ":" + codeValue.getName(), codeValueId);
+
+    // Register both with original name and normalized system name (e.g. COUNTRY:Cameroon)
+    context.registerEntity("codeValue", codeName + ":" + codeValue.getName(), codeValueId);
+    context.registerEntity(
+        "codeValue", codeName.replace("_", "") + ":" + codeValue.getName(), codeValueId);
 
     if (created) {
       log.info("  ✓ Created code value: {} (ID: {})", codeValue.getName(), codeValueId);

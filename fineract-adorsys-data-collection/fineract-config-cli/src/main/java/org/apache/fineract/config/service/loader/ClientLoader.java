@@ -194,18 +194,45 @@ public class ClientLoader {
       builder.put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
     }
 
-    // Resolve gender from code values (Gender code)
-    if (client.getGender() != null) {
-      Long genderId = resolveGenderId(client.getGender());
+    // Resolve IDs using labels from YAML, ignoring hardcoded IDs which are often incorrect for the
+    // current DB state.
+    // 1. Gender
+    String genderLabel = client.getGender();
+    if (genderLabel != null) {
+      Long genderId = context.resolveEntityId("codeValue", "Gender:" + genderLabel);
       if (genderId != null) {
         builder.put("genderId", genderId);
       } else {
-        // Fall back to enum mapper if retrieval fails
         log.warn(
-            "Gender code value '{}' not found via API, falling back to hardcoded mapping",
-            client.getGender());
-        builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
+            "Gender label '{}' not found in cache, using hardcoded mapping fallback", genderLabel);
+        builder.put("genderId", FineractEnumMapper.mapGender(genderLabel));
       }
+    }
+
+    // 2. Client Type
+    String typeLabel = client.getClientType();
+    if (typeLabel != null) {
+      Long clientTypeId = context.resolveEntityId("codeValue", "ClientType:" + typeLabel);
+      if (clientTypeId != null) {
+        builder.put("clientTypeId", clientTypeId);
+      } else {
+        log.warn("ClientType label '{}' not found in cache", typeLabel);
+      }
+    } else if (client.getClientTypeId() != null) {
+      builder.put("clientTypeId", client.getClientTypeId());
+    }
+
+    // 3. Client Classification
+    String classLabel = client.getClientClassification();
+    if (classLabel != null) {
+      Long classId = context.resolveEntityId("codeValue", "ClientClassification:" + classLabel);
+      if (classId != null) {
+        builder.put("clientClassificationId", classId);
+      } else {
+        log.warn("ClientClassification label '{}' not found in cache", classLabel);
+      }
+    } else if (client.getClientClassificationId() != null) {
+      builder.put("clientClassificationId", client.getClientClassificationId());
     }
 
     builder.putIfNotNull("mobileNo", client.getMobileNo());
@@ -227,20 +254,43 @@ public class ClientLoader {
     }
 
     // Address information
-    if (client.getAddressLine1() != null
-        || client.getAddressLine2() != null
-        || client.getCity() != null) {
-      Map<String, Object> address =
-          RequestBuilder.create()
-              .putIfNotNull("addressLine1", client.getAddressLine1())
-              .putIfNotNull("addressLine2", client.getAddressLine2())
-              .putIfNotNull("city", client.getCity())
-              .putIfNotNull("stateProvince", client.getStateProvince())
-              .putIfNotNull("countryCode", client.getCountryCode())
-              .putIfNotNull("postalCode", client.getPostalCode())
-              .build();
+    if (client.getAddress() != null) {
+      RequestBuilder addressBuilder = RequestBuilder.create();
+      addressBuilder.putIfNotNull("addressLine1", client.getAddress().getAddressLine1());
+      addressBuilder.putIfNotNull("addressLine2", client.getAddress().getAddressLine2());
+      addressBuilder.putIfNotNull("city", client.getAddress().getCity());
+      addressBuilder.putIfNotNull("postalCode", client.getAddress().getPostalCode());
 
-      builder.put("address", address);
+      // Resolve IDs for address fields, prioritizing labels to avoid using incorrect hardcoded IDs
+      String addrTypeLabel = client.getAddress().getAddressType();
+      if (addrTypeLabel != null) {
+        Long typeId = context.resolveEntityId("codeValue", "AddressType:" + addrTypeLabel);
+        if (typeId != null) {
+          addressBuilder.put("addressTypeId", typeId);
+        } else {
+          log.warn("AddressType label '{}' not found in cache", addrTypeLabel);
+        }
+      } else if (client.getAddress().getAddressTypeId() != null) {
+        addressBuilder.put("addressTypeId", client.getAddress().getAddressTypeId());
+      }
+
+      String stateLabel = client.getAddress().getStateProvince();
+      if (stateLabel != null) {
+        Long stateId = context.resolveEntityId("codeValue", "State:" + stateLabel);
+        if (stateId != null) {
+          addressBuilder.put("stateProvinceId", stateId);
+        }
+      }
+
+      String countryLabel = client.getAddress().getCountry();
+      if (countryLabel != null) {
+        Long countryId = context.resolveEntityId("codeValue", "Country:" + countryLabel);
+        if (countryId != null) {
+          addressBuilder.put("countryId", countryId);
+        }
+      }
+
+      builder.put("address", List.of(addressBuilder.build()));
     }
 
     return builder.build();
@@ -271,8 +321,6 @@ public class ClientLoader {
 
     if (isActive) {
       // Client is active - only update allowed fields
-      // According to ChangeDetectionService: staffId, savingsProductId, genderId,
-      // clientTypeId
       log.debug("Client is active - limiting updateable fields");
 
       if (client.getStaffName() != null) {
@@ -282,21 +330,27 @@ public class ClientLoader {
         }
       }
 
-      if (client.getGender() != null) {
-        // Resolve gender from code values cache first
-        Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+      // Resolve gender, prioritizing label over hardcoded ID
+      String genderLabel = client.getGender();
+      if (genderLabel != null) {
+        Long genderId = context.resolveEntityId("codeValue", "Gender:" + genderLabel);
         if (genderId != null) {
           builder.put("genderId", genderId);
-        } else {
-          log.warn("Gender '{}' not found in cache for active client update", client.getGender());
         }
       }
 
-      // Note: savingsProductId and clientTypeId would go here if supported in Client
-      // model
+      // Client Type
+      String typeLabel = client.getClientType();
+      if (typeLabel != null) {
+        Long clientTypeId = context.resolveEntityId("codeValue", "ClientType:" + typeLabel);
+        if (clientTypeId != null) {
+          builder.put("clientTypeId", clientTypeId);
+        }
+      } else if (client.getClientTypeId() != null) {
+        builder.put("clientTypeId", client.getClientTypeId());
+      }
     } else {
       // Client not active - can update most fields (excluding immutables)
-      // Immutable: id, externalId, accountNo, activationDate
       builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
 
       builder.putIfNotNull("middlename", client.getMiddleName());
@@ -324,13 +378,12 @@ public class ClientLoader {
             .put("dateOfBirth", client.getDateOfBirth().format(DATE_FORMATTER));
       }
 
-      if (client.getGender() != null) {
-        // Resolve gender from code values cache first
-        Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+      // Resolve gender, prioritizing label over hardcoded ID
+      String genderLabel = client.getGender();
+      if (genderLabel != null) {
+        Long genderId = context.resolveEntityId("codeValue", "Gender:" + genderLabel);
         if (genderId != null) {
           builder.put("genderId", genderId);
-        } else {
-          log.warn("Gender '{}' not found in cache for client update", client.getGender());
         }
       }
 
@@ -365,49 +418,5 @@ public class ClientLoader {
     } catch (Exception ex) {
       log.warn("Failed to activate client {}: {}", clientId, ex.getMessage());
     }
-  }
-
-  private final java.util.Map<String, Long> genderCache = new java.util.HashMap<>();
-
-  private Long resolveGenderId(String genderName) {
-    if (genderName == null) {
-      return null;
-    }
-
-    if (genderCache.isEmpty()) {
-      try {
-        // 1. Find Gender Code ID
-        Long genderCodeId = 4L; // Default for system defined Gender
-        try {
-          List<?> codes = apiClient.get("/api/v1/codes", List.class);
-          if (codes != null) {
-            for (Object obj : codes) {
-              Map<String, Object> code = (Map<String, Object>) obj;
-              if ("Gender".equalsIgnoreCase((String) code.get("name"))) {
-                genderCodeId = ((Number) code.get("id")).longValue();
-                break;
-              }
-            }
-          }
-        } catch (Exception e) {
-          log.warn("Failed to lookup Gender code ID, using default 4: {}", e.getMessage());
-        }
-
-        // 2. Fetch Code Values
-        List<?> values = apiClient.get("/api/v1/codes/" + genderCodeId + "/codevalues", List.class);
-        if (values != null) {
-          for (Object obj : values) {
-            Map<String, Object> val = (Map<String, Object>) obj;
-            String name = (String) val.get("name");
-            Long id = ((Number) val.get("id")).longValue();
-            genderCache.put(name.toUpperCase(), id);
-          }
-        }
-      } catch (Exception e) {
-        log.warn("Failed to populate gender cache: {}", e.getMessage());
-      }
-    }
-
-    return genderCache.get(genderName.toUpperCase());
   }
 }

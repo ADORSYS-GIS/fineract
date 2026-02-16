@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.fineract.config.util.ConfigUtil;
+
 import lombok.Data;
 
 /**
@@ -62,6 +64,12 @@ public class ImportContext {
    * @throws IllegalStateException if cache limits exceeded
    */
   public void registerEntity(String entityType, String identifier, Long id) {
+    if (identifier == null) return;
+    // Normalize both the type and identifier for robust lookups (handles AddressType vs
+    // ADDRESS_TYPE)
+    String normalizedType = ConfigUtil.normalize(entityType);
+    String normalizedIdentifier = ConfigUtil.normalize(identifier);
+
     // Check total cache size limit
     int totalEntries = entityIdCache.values().stream().mapToInt(Map::size).sum();
     if (totalEntries >= MAX_TOTAL_ENTRIES) {
@@ -74,7 +82,7 @@ public class ImportContext {
 
     // Get or create type cache
     Map<String, Long> typeCache =
-        entityIdCache.computeIfAbsent(entityType, k -> new ConcurrentHashMap<>());
+        entityIdCache.computeIfAbsent(normalizedType, k -> new ConcurrentHashMap<>());
 
     // Check per-type cache size limit
     if (typeCache.size() >= MAX_ENTRIES_PER_TYPE) {
@@ -85,7 +93,7 @@ public class ImportContext {
               entityType, typeCache.size(), MAX_ENTRIES_PER_TYPE));
     }
 
-    typeCache.put(identifier, id);
+    typeCache.put(normalizedIdentifier, id);
     cacheStats.recordCachePut(entityType);
   }
 
@@ -97,8 +105,12 @@ public class ImportContext {
    * @return entity ID, or null if not found
    */
   public Long getEntityId(String entityType, String identifier) {
-    Map<String, Long> typeCache = entityIdCache.get(entityType);
-    Long result = typeCache != null ? typeCache.get(identifier) : null;
+    if (identifier == null) return null;
+    String normalizedType = ConfigUtil.normalize(entityType);
+    String normalizedIdentifier = ConfigUtil.normalize(identifier);
+
+    Map<String, Long> typeCache = entityIdCache.get(normalizedType);
+    Long result = typeCache != null ? typeCache.get(normalizedIdentifier) : null;
 
     // Record cache hit/miss
     if (result != null) {

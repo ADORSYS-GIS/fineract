@@ -108,6 +108,13 @@ public class CenterLoader {
         log.debug("Center unchanged: {}", center.getName());
         result.recordEntity("center", ImportResult.EntityAction.UNCHANGED);
       }
+
+      // Activate center if requested and not already active
+      if (Boolean.TRUE.equals(center.getActive())
+          && center.getActivationDate() != null
+          && !isActive(existingCenter)) {
+        activateCenter(centerId, center);
+      }
     } else {
       // Create new center
       Map<String, Object> request = buildRequest(center, context);
@@ -182,6 +189,22 @@ public class CenterLoader {
   }
 
   /**
+   * Checks if center is active.
+   *
+   * @param centerData center data from API
+   * @return true if active
+   */
+  private boolean isActive(Map<String, Object> centerData) {
+    Object statusObj = centerData.get("status");
+    if (statusObj instanceof Map) {
+      Map<String, Object> status = (Map<String, Object>) statusObj;
+      String statusValue = (String) status.get("value");
+      return "Active".equalsIgnoreCase(statusValue);
+    }
+    return false;
+  }
+
+  /**
    * Builds API request for center update.
    *
    * <p>According to ChangeDetectionService, centers can update staffId and externalId even when
@@ -198,13 +221,7 @@ public class CenterLoader {
     Map<String, Object> request = new HashMap<>();
 
     // Check if center is active
-    Object statusObj = existingCenter.get("status");
-    boolean isActive = false;
-    if (statusObj != null) {
-      Map<String, Object> status = (Map<String, Object>) statusObj;
-      String statusValue = (String) status.get("value");
-      isActive = "Active".equalsIgnoreCase(statusValue);
-    }
+    boolean isActive = isActive(existingCenter);
 
     if (isActive) {
       // Center is active - only update allowed fields (staffId, externalId)

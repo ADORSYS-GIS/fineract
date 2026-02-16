@@ -342,8 +342,8 @@ public class FineractEnumMapper {
    */
   public static Integer mapGender(String value) {
     if (value == null || value.isBlank()) {
-      log.warn("Gender value is null/empty, defaulting to MALE (22)");
-      return 22;
+      log.warn("Gender value is null/empty, defaulting to MALE (15)");
+      return 15;
     }
 
     try {
@@ -353,12 +353,12 @@ public class FineractEnumMapper {
     }
 
     return switch (value.toUpperCase().trim()) {
-      case "MALE", "M" -> 22;
-      case "FEMALE", "F" -> 23;
-      case "OTHER", "O" -> 24;
+      case "MALE", "M" -> 15;
+      case "FEMALE", "F" -> 16;
+      case "OTHER", "O" -> 17;
       default -> {
-        log.warn("Unknown Gender value: '{}', defaulting to MALE (22)", value);
-        yield 22;
+        log.warn("Unknown Gender value: '{}', defaulting to MALE (15)", value);
+        yield 15;
       }
     };
   }

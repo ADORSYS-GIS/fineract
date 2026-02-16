@@ -45,6 +45,8 @@ systemConfig:
   - name: penalty-wait-period
     enabled: true
     value: 0
+  - name: enable-address
+    enabled: true
   codes:
   - name: Gender
     values:
@@ -194,6 +196,74 @@ systemConfig:
       isActive: true
     - name: Community Leader
       position: 5
+      isActive: true
+  - name: AddressType
+    values:
+    - name: Residential
+      position: 1
+      isActive: true
+    - name: Business
+      position: 2
+      isActive: true
+    - name: Other
+      position: 3
+      isActive: true
+  - name: Country
+    values:
+    - name: Cameroon
+      position: 1
+      isActive: true
+  - name: LoanCollateral
+    values:
+    - name: Land Title
+      description: Land ownership document
+      position: 1
+    - name: Vehicle Registration
+      description: Vehicle ownership papers
+      position: 2
+    - name: Household Goods
+      description: Furniture, appliances
+      position: 3
+    - name: Shop/Business Equipment
+      description: Business machinery and equipment
+      position: 4
+    - name: Savings Account Lien
+      description: Lien on savings account
+      position: 5
+    - name: Group Guarantee
+      description: Solidarity group guarantee
+      position: 6
+  - name: State
+    values:
+    - name: Adamaoua
+      position: 1
+      isActive: true
+    - name: Centre
+      position: 2
+      isActive: true
+    - name: East
+      position: 3
+      isActive: true
+    - name: Far North
+      position: 4
+      isActive: true
+    - name: Littoral
+      position: 5
+      isActive: true
+    - name: North
+      position: 6
+      isActive: true
+    - name: North-West
+      position: 7
+      isActive: true
+    - name: South
+      position: 8
+      isActive: true
+    - name: South-West
+      position: 9
+      isActive: true
+    - name: West
+      position: 10
       isActive: true
   accountNumberPreferences:
   - accountType: CLIENT
@@ -1975,25 +2045,6 @@ loanProvisioning:
   provisioningPercentage: 100.0
   liabilityAccountId: 62
   expenseAccountId: 92
-collateralTypes:
-- name: Land Title
-  description: Land ownership document
-  requiresValuation: true
-- name: Vehicle Registration
-  description: Vehicle ownership papers
-  requiresValuation: true
-- name: Household Goods
-  description: Furniture, appliances
-  requiresValuation: true
-- name: Shop/Business Equipment
-  description: Business machinery and equipment
-  requiresValuation: true
-- name: Savings Account Lien
-  description: Lien on savings account
-  requiresValuation: false
-- name: Group Guarantee
-  description: Solidarity group guarantee
-  requiresValuation: false
 guarantorTypes:
 - name: Spouse
   description: Client spouse as guarantor
@@ -2037,10 +2088,14 @@ clients:
   - 15
   gender: Female
   emailAddress: a.ngono@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Douala
+  address:
+    addressType: "Residential"
+    city: Douala
+    stateProvince: "Littoral"
+    country: "Cameroon"
 - firstName: Ibrahim
   lastName: Mahamat
   officeName: Douala Branch
@@ -2057,10 +2112,14 @@ clients:
   - 22
   gender: Male
   emailAddress: i.mahamat@yahoo.fr
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Douala
+  address:
+    addressType: "Residential"
+    city: Douala
+    stateProvince: "Littoral"
+    country: "Cameroon"
 - firstName: Marie Claire
   lastName: Tchouta
   officeName: Yaounde Branch
@@ -2077,10 +2136,14 @@ clients:
   - 10
   gender: Female
   emailAddress: m.tchouta@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Yaounde
+  address:
+    addressType: "Residential"
+    city: Yaounde
+    stateProvince: "Centre"
+    country: "Cameroon"
 - firstName: Jean Paul
   lastName: Kamdem
   officeName: Bafoussam Branch
@@ -2097,10 +2160,14 @@ clients:
   - 18
   gender: Male
   emailAddress: jp.kamdem@yahoo.fr
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Bafoussam
+  address:
+    addressType: "Residential"
+    city: Bafoussam
+    stateProvince: "West"
+    country: "Cameroon"
 - firstName: Claudine
   lastName: Ekotto
   officeName: Douala Branch
@@ -2117,10 +2184,14 @@ clients:
   - 25
   gender: Female
   emailAddress: c.ekotto@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Douala
+  address:
+    addressType: "Residential"
+    city: Douala
+    stateProvince: "Littoral"
+    country: "Cameroon"
 - firstName: Patrick
   lastName: Ndongo
   officeName: Yaounde Branch
@@ -2137,10 +2208,14 @@ clients:
   - 3
   gender: Male
   emailAddress: p.ndongo@hotmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Yaounde
+  address:
+    addressType: "Residential"
+    city: Yaounde
+    stateProvince: "Centre"
+    country: "Cameroon"
 - firstName: Beatrice
   lastName: Nana
   officeName: Bamenda Branch
@@ -2157,10 +2232,14 @@ clients:
   - 14
   gender: Female
   emailAddress: b.nana@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Bamenda
+  address:
+    addressType: "Residential"
+    city: Bamenda
+    stateProvince: "North-West"
+    country: "Cameroon"
 - firstName: Samuel
   lastName: Ebong
   officeName: Douala Branch
@@ -2177,10 +2256,14 @@ clients:
   - 30
   gender: Male
   emailAddress: s.ebong@yahoo.fr
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Douala
+  address:
+    addressType: "Residential"
+    city: Douala
+    stateProvince: "Littoral"
+    country: "Cameroon"
 - firstName: Bernadette
   lastName: Fotso
   officeName: Bafoussam Branch
@@ -2197,10 +2280,14 @@ clients:
   - 20
   gender: Female
   emailAddress: b.fotso@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Bafoussam
+  address:
+    addressType: "Residential"
+    city: Bafoussam
+    stateProvince: "West"
+    country: "Cameroon"
 - firstName: Francois
   lastName: Manga
   officeName: Yaounde Branch
@@ -2217,10 +2304,14 @@ clients:
   - 28
   gender: Male
   emailAddress: f.manga@hotmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Yaounde
+  address:
+    addressType: "Residential"
+    city: Yaounde
+    stateProvince: "Centre"
+    country: "Cameroon"
 - firstName: Agnes
   lastName: Fon
   officeName: Bamenda Branch
@@ -2237,10 +2328,14 @@ clients:
   - 5
   gender: Female
   emailAddress: a.fon@gmail.com
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Bamenda
+  address:
+    addressType: "Residential"
+    city: Bamenda
+    stateProvince: "North-West"
+    country: "Cameroon"
 - firstName: Robert
   lastName: Essomba
   officeName: Douala Branch
@@ -2257,10 +2352,14 @@ clients:
   - 17
   gender: Male
   emailAddress: r.essomba@yahoo.fr
-  clientType: Individual
-  clientClassification: Active
+  clienttypeId: 1
+  clientClassificationId: 1
   legalFormId: 1
-  city: Douala
+  address:
+    addressType: "Residential"
+    city: Douala
+    stateProvince: "Littoral"
+    country: "Cameroon"
 groups:
 - name: Femmes Solidaires Douala
   officeName: Douala Branch
@@ -2792,3 +2891,4 @@ businessDate:
   date: 16 January 2026
   dateFormat: dd MMMM yyyy
   locale: en
+

@@ -217,14 +217,26 @@ public class StateService {
   private String getStateJson() {
     try {
       // Get state for office ID 1 (head office)
-      Map<String, Object> response =
-          apiClient.get(
-              "/api/v1/datatables/" + STATE_TABLE_NAME + "/" + STATE_APP_TABLE + "/1", Map.class);
+      // Note: Fineract 1.x DataTable entry URL is /datatables/{table}/{entityId}
+      Object response =
+          apiClient.get("/api/v1/datatables/" + STATE_TABLE_NAME + "/1", Object.class);
 
-      if (response != null && !response.isEmpty()) {
-        List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
-        if (data != null && !data.isEmpty()) {
-          return (String) data.get(0).get("state_json");
+      if (response instanceof List) {
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) response;
+        if (!rows.isEmpty()) {
+          return (String) rows.get(0).get("state_json");
+        }
+      } else if (response instanceof Map) {
+        Map<String, Object> responseMap = (Map<String, Object>) response;
+        // Some Fineract versions return a wrapper with a 'data' array
+        if (responseMap.containsKey("data")) {
+          List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+          if (data != null && !data.isEmpty()) {
+            return (String) data.get(0).get("state_json");
+          }
+        } else if (responseMap.containsKey("state_json")) {
+          // Direct object
+          return (String) responseMap.get("state_json");
         }
       }
     } catch (Exception ex) {
@@ -266,18 +278,16 @@ public class StateService {
 
     try {
       // Try to update existing state
-      apiClient.put(
-          "/api/v1/datatables/" + STATE_TABLE_NAME + "/" + STATE_APP_TABLE + "/1",
-          request,
-          Map.class);
+      // Note: Fineract 1.x DataTable entry URL is /datatables/{table}/{entityId}
+      apiClient.put("/api/v1/datatables/" + STATE_TABLE_NAME + "/1", request, Map.class);
       log.debug("State updated with version {}", expectedVersion + 1);
     } catch (Exception ex) {
       // If update fails, create new state entry
       log.debug("State update failed, creating new entry");
-      apiClient.post(
-          "/api/v1/datatables/" + STATE_TABLE_NAME + "/" + STATE_APP_TABLE + "/1",
-          request,
-          Map.class);
+      // For single-row tables, we POST to the table resource with the entityId in the path or body
+      // depending on version, but /datatables/{table}/{entityId} is common for creation if it
+      // doesn't exist.
+      apiClient.post("/api/v1/datatables/" + STATE_TABLE_NAME + "/1", request, Map.class);
       log.debug("State created");
     }
   }
