@@ -1,0 +1,4 @@
+dependencies {
+    implementation(project(':custom:adorsys:monetary:service'))
+    implementation('org.springframework.boot:spring-boot-starter')
+}

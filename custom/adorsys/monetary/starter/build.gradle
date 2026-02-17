@@ -1,0 +1,9 @@
+description = 'Adorsys Custom Currency Starter'
+
+group = 'com.adorsys.fineract.monetary'
+
+base {
+    archivesName = 'adorsys-fineract-currency-starter'
+}
+
+apply from: 'dependencies.gradle'
