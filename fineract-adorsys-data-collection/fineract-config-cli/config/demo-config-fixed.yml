@@ -1022,6 +1022,8 @@ roles:
   - DISBURSE_LOAN
   - REJECT_LOAN
   - WITHDRAW_LOAN
+  - CREATE_LOAN
+  - UPDATE_LOAN
   - READ_LOAN
   - REPAYMENT_LOAN
   - READ_loan_additional_info
@@ -1588,6 +1590,8 @@ roles:
   - READ_OFFICE
   - READ_STAFF
   - READ_CURRENCY
+  - READ_LOAN
+  - READ_CLIENT
   - READ_AUDIT
   - REPORTING_SUPER_USER
   - READ_CLIENTIDENTIFIER
@@ -3615,6 +3619,6 @@ tellerAccountingRules:
   officeName: Bamenda Branch
 businessDate:
   type: BUSINESS_DATE
-  date: 03 February 2026
+  date: 12 February 2026
   dateFormat: dd MMMM yyyy
   locale: en

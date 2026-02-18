@@ -222,7 +222,7 @@ def expand_permissions(group, shorthand):
             # Documents
             perms.extend(['READ_DOCUMENT'])
             # Loans
-            perms.extend(['APPROVE_LOAN', 'DISBURSE_LOAN', 'REJECT_LOAN', 'WITHDRAW_LOAN', 'READ_LOAN', 'REPAYMENT_LOAN', "READ_loan_additional_info", "CREATE_loan_additional_info"])
+            perms.extend(['APPROVE_LOAN', 'DISBURSE_LOAN', 'REJECT_LOAN', 'WITHDRAW_LOAN', 'CREATE_LOAN', 'UPDATE_LOAN', 'READ_LOAN', 'REPAYMENT_LOAN', "READ_loan_additional_info", "CREATE_loan_additional_info"])
             # Savings
             perms.extend([
                 'READ_SAVINGSACCOUNT',
@@ -317,6 +317,8 @@ def expand_permissions(group, shorthand):
             ])
             # Organization
             perms.extend(['READ_OFFICE', 'READ_STAFF', 'READ_CURRENCY'])
+            # Loans & Clients (Read Access)
+            perms.extend(['READ_LOAN', 'READ_CLIENT'])
             # Audit
             perms.extend(['READ_AUDIT'])
             return perms
