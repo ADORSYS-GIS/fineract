@@ -134,12 +134,17 @@ public class ClientLoader {
       Map<String, Object> response = apiClient.post("/api/v1/clients", request, Map.class);
       clientId = ((Number) response.get("clientId")).longValue();
 
-      log.info(
-          "Client created: {} {} {} (ID: {})",
-          client.getFirstName(),
-          client.getMiddleName() != null ? client.getMiddleName() + " " : "",
-          client.getLastName(),
-          clientId);
+      boolean isEntityClient = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+      if (isEntityClient && client.getFullname() != null) {
+        log.info("Client created: {} (ID: {})", client.getFullname(), clientId);
+      } else {
+        log.info(
+            "Client created: {} {} {} (ID: {})",
+            client.getFirstName(),
+            client.getMiddleName() != null ? client.getMiddleName() + " " : "",
+            client.getLastName(),
+            clientId);
+      }
       result.recordEntity("client", ImportResult.EntityAction.CREATED);
 
       // Activate client if requested
@@ -164,10 +169,15 @@ public class ClientLoader {
   private Map<String, Object> buildRequest(Client client, ImportContext context) {
     RequestBuilder builder = RequestBuilder.create().withLocaleDateFormat();
 
-    // Basic information
-    builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+    // Name fields depend on legal form: entity clients use fullname, persons use firstname/lastname
+    boolean isEntity = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+    if (isEntity && client.getFullname() != null) {
+      builder.put("fullname", client.getFullname());
+    } else {
+      builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+      builder.putIfNotNull("middlename", client.getMiddleName());
+    }
 
-    builder.putIfNotNull("middlename", client.getMiddleName());
     builder.putIfNotNull("externalId", client.getExternalId());
 
     // Resolve office
@@ -297,9 +307,13 @@ public class ClientLoader {
     } else {
       // Client not active - can update most fields (excluding immutables)
       // Immutable: id, externalId, accountNo, activationDate
-      builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
-
-      builder.putIfNotNull("middlename", client.getMiddleName());
+      boolean isEntity = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+      if (isEntity && client.getFullname() != null) {
+        builder.put("fullname", client.getFullname());
+      } else {
+        builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+        builder.putIfNotNull("middlename", client.getMiddleName());
+      }
 
       // Resolve office
       if (client.getOfficeName() != null) {

@@ -16,6 +16,7 @@ public class Client {
   private String firstName;
   private String middleName;
   private String lastName;
+  private String fullname; // For entity clients (legalFormId=2)
   private LocalDate dateOfBirth;
   private String gender; // MALE, FEMALE, OTHER
   private String mobileNo;
