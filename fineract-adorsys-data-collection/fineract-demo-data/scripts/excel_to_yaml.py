@@ -511,7 +511,7 @@ class ExcelToYamlConverter:
                 role_name = row.get('role_name')
                 if not role_name or pd.isna(role_name):
                     continue
-                role_name = str(role_name).strip()
+                role_name = str(role_name).strip().lower().replace(' ', '-')
 
                 if role_name not in roles_dict:
                     roles_dict[role_name] = {
@@ -573,7 +573,7 @@ class ExcelToYamlConverter:
                     'lastname': row['last_name'],    # lowercase to match User.java model
                     'email': row['email'],
                     'officeName': row['office_name'],
-                    'roles': [r.strip() for r in row['roles'].split(',')] if row.get('roles') else []
+                    'roles': [r.strip().lower().replace(' ', '-') for r in row['roles'].split(',')] if row.get('roles') else []
                 }
                 # Password is required for user creation
                 if row.get('password'):
