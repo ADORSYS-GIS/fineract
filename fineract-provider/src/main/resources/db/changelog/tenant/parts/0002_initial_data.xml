@@ -1172,7 +1172,7 @@
             <column name="is_deleted" valueBoolean="false"/>
             <column name="office_id" valueNumeric="1"/>
             <column name="staff_id"/>
-            <column name="username" value="demo"/>
+            <column name="username" value="mifos"/>
             <column name="firstname" value="App"/>
             <column name="lastname" value="Administrator"/>
             <column name="password"
