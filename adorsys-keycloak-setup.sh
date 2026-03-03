@@ -39,4 +39,28 @@ $KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername $USERNAME --cclientid rea
 echo "👑 Granting 'view-realm' role..."
 $KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername $USERNAME --cclientid realm-management --rolename view-realm
 
+
+# Create demo user
+echo "🔧 Creating user 'demo'..."
+$KEYCLOAK_BIN/kcadm.sh create users -r $REALM \
+    -s username=demo \
+    -s enabled=true \
+    -s emailVerified=true \
+    -s email="demo@example.com" \
+    -s firstName="Demo" \
+    -s lastName="User"
+
+# Get demo user ID
+DEMO_USER_INTERNAL_ID=$($KEYCLOAK_BIN/kcadm.sh get users -r $REALM --query username=demo --fields id --format csv --noquotes)
+
+# Set password for demo user
+echo "🔒 Setting password for demo user..."
+$KEYCLOAK_BIN/kcadm.sh set-password -r $REALM --userid $DEMO_USER_INTERNAL_ID --new-password password --temporary=false
+
+# Assign realm-management role to the demo user
+echo "👑 Granting 'manage-users' role to demo user..."
+$KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername demo --cclientid realm-management --rolename manage-users
+echo "👑 Granting 'view-realm' role to demo user..."
+$KEYCLOAK_BIN/kcadm.sh add-roles -r $REALM --uusername demo --cclientid realm-management --rolename view-realm
+
 echo "✅ User creation complete!"
