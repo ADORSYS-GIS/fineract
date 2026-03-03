@@ -1230,6 +1230,27 @@
             <column name="is_self_service_user" valueBoolean="false"/>
             <column name="cannot_change_password"/>
         </insert>
+        <insert tableName="m_appuser">
+            <column name="id" valueNumeric="4"/>
+            <column name="is_deleted" valueBoolean="false"/>
+            <column name="office_id" valueNumeric="1"/>
+            <column name="staff_id"/>
+            <column name="username" value="demo"/>
+            <column name="firstname" value="Demo"/>
+            <column name="lastname" value="User"/>
+            <column name="password"
+                    value="{SHA-256}{4}5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"/>
+            <column name="email" value="demo@mifos.org"/>
+            <column name="firsttime_login_remaining" valueBoolean="false"/>
+            <column name="nonexpired" valueBoolean="true"/>
+            <column name="nonlocked" valueBoolean="true"/>
+            <column name="nonexpired_credentials" valueBoolean="true"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="last_time_password_updated" valueDate="${current_date}"/>
+            <column name="password_never_expires" valueBoolean="false"/>
+            <column name="is_self_service_user" valueBoolean="false"/>
+            <column name="cannot_change_password"/>
+        </insert>
     </changeSet>
     <changeSet author="fineract" id="27">
         <insert tableName="m_role">
@@ -1252,6 +1273,10 @@
         </insert>
         <insert tableName="m_appuser_role">
             <column name="appuser_id" valueNumeric="3"/>
+            <column name="role_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="m_appuser_role">
+            <column name="appuser_id" valueNumeric="4"/>
             <column name="role_id" valueNumeric="1"/>
         </insert>
     </changeSet>
