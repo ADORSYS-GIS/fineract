@@ -1,10 +1,6 @@
 # Multi-stage Dockerfile for Fineract Config CLI
 # Stage 1: Build the application
-FROM maven:3.9-eclipse-temurin-17 AS builder
-
-LABEL maintainer="Fineract Config CLI Team"
-LABEL description="Build stage for Fineract Config CLI"
-
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
 
 # Copy pom.xml first for better layer caching
@@ -24,8 +20,7 @@ RUN ls -lh target/ && \
     test -f target/fineract-config-cli.jar || (echo "JAR file not found!" && exit 1)
 
 # Stage 2: Create the runtime image
-# Using Debian-based image for multi-platform support (amd64 and arm64)
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre-alpine
 
 LABEL maintainer="Fineract Config CLI Team"
 LABEL description="Fineract Config CLI - Configuration-as-Code tool for Apache Fineract"
@@ -34,16 +29,9 @@ LABEL org.opencontainers.image.source="https://github.com/apache/fineract"
 LABEL org.opencontainers.image.documentation="https://github.com/apache/fineract/tree/develop/docs/data-collection/fineract-config-cli"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
-# Install additional tools for debugging (optional)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    bash \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Create non-root user for security
-RUN groupadd -g 1000 fineract && \
-    useradd -r -u 1000 -g fineract fineract
+RUN addgroup -g 1000 fineract && \
+    adduser -u 1000 -G fineract -D fineract
 
 # Set working directory
 WORKDIR /app
@@ -66,15 +54,5 @@ ENV FINERACT_BASE_URL=http://localhost:8443/fineract-provider \
     JAVA_OPTS="-Xmx512m -Xms256m" \
     SPRING_PROFILES_ACTIVE=default
 
-# Expose volume for configuration files
-VOLUME ["/config", "/data"]
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD java -version || exit 1
-
 # Set the entrypoint to run the Spring Shell CLI
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/fineract-config-cli.jar"]
-
-# Default command (can be overridden)
-CMD []
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/fineract-config-cli.jar"]
