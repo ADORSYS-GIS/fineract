@@ -16,9 +16,9 @@
       And Admin does write-off the loan on "29 January 2023"
       Then Loan status will be "CLOSED_WRITTEN_OFF"
       Then Loan Transactions tab has a transaction with date: "29 January 2023", and with the following data:
-        | Transaction Type | Amount | Principal | Interest | Fees | Penalties | Loan Balance |
+        | Transaction Type       | Amount | Principal | Interest | Fees | Penalties | Loan Balance |
         | Close (as written-off) | 650.0  | 650.0     | 0.0      | 0.0  | 0.0       | 0.0          |
-      Then Admin fails to undo "1"th transaction made on "22 January 2023"
+      Then Customer undo "1"th transaction made on "22 January 2023" results a 403 error and "update not allowed as loan status is written off" error message
 
 
     @TestRailId:C2935
@@ -56,9 +56,9 @@
       And Admin does write-off the loan on "29 January 2023"
       Then Loan status will be "CLOSED_WRITTEN_OFF"
       Then Loan Transactions tab has a transaction with date: "29 January 2023", and with the following data:
-        | Transaction Type | Amount | Principal | Interest | Fees | Penalties | Loan Balance |
+        | Transaction Type       | Amount | Principal | Interest | Fees | Penalties | Loan Balance |
         | Close (as written-off) | 650.0  | 650.0     | 0.0      | 0.0  | 0.0       | 0.0          |
-      Then Admin fails to undo "1"th transaction made on "29 January 2023"
+      Then Customer undo "1"th transaction made on "29 January 2023" results a 403 error and "update not allowed as loan status is written off" error message
 
     @TestRailId:C4006
     Scenario: Verify accounting journal entries are not duplicated during write-off in case the cumulative loan was already charged-off
@@ -226,6 +226,7 @@
         | 100           | 2.05     | 0    | 0         | 102.05 | 17.01 | 0          | 0    | 85.04       |
       When Admin sets the business date to "1 March 2024"
       And Admin does charge-off the loan on "1 March 2024"
+      Then LoanBalanceChangedBusinessEvent is created on "01 March 2024"
       Then Loan Repayment schedule has 6 periods, with the following data for periods:
         | Nr | Days | Date             | Paid date        | Balance of loan | Principal due | Interest | Fees | Penalties | Due   | Paid  | In advance | Late | Outstanding |
         |    |      | 01 January 2024  |                  | 100.0           |               |          | 0.0  |           | 0.0   | 0.0   |            |      |             |
@@ -300,6 +301,7 @@
       Then Admin can successfully set Fraud flag to the loan
       When Admin sets the business date to "03 February 2024"
       And Admin does charge-off the loan with reason "DELINQUENT" on "03 February 2024"
+      Then LoanBalanceChangedBusinessEvent is created on "03 February 2024"
       Then Loan Transactions tab has a "CHARGE_OFF" transaction with date "03 February 2024" which has the following Journal entries:
         | Type    | Account code | Account name               | Debit | Credit |
         | ASSET   | 112601       | Loans Receivable           |       | 100.0  |

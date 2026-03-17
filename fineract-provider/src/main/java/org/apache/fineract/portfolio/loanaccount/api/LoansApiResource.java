@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -165,6 +166,8 @@ import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformS
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanSummaryDataProvider;
 import org.apache.fineract.portfolio.loanaccount.service.LoanSummaryProviderDelegate;
+import org.apache.fineract.portfolio.loanorigination.data.LoanOriginatorData;
+import org.apache.fineract.portfolio.loanorigination.service.LoanOriginatorReadPlatformService;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
 import org.apache.fineract.portfolio.loanproduct.data.TransactionProcessingStrategyData;
@@ -220,7 +223,7 @@ import org.springframework.util.CollectionUtils;
         + "Example Values: 0=Equal principle payments, 1=Equal installments\n" + "interestType\n"
         + "Used like: interestRatePerPeriod% interestRateFrequencyType - interestType\n" + "e.g. 12.0000% Per year - Declining Balance \n"
         + "Example Values: 0=Declining Balance, 1=Flat\n" + "interestCalculationPeriodType\n"
-        + "Example Values: 0=Daily, 1=Same as repayment period\n" + "allowPartialPeriodInterestCalcualtion\n"
+        + "Example Values: 0=Daily, 1=Same as repayment period\n" + "allowPartialPeriodInterestCalculation\n"
         + "This value will be supported along with interestCalculationPeriodType as Same as repayment period to calculate interest for partial periods. Example: Interest charged from is 5th of April , Principal is 10000 and interest is 1% per month then the interest will be (10000 * 1%)* (25/30) , it calculates for the month first then calculates exact periods between start date and end date(can be a decimal)\n"
         + "inArrearsTolerance\n" + "The amount that can be 'waived' at end of all loan payments because it is too small to worry about.\n"
         + "This is also the tolerance amount assessed when determining if a loan is in arrears.\n" + "transactionProcessingStrategyCode\n"
@@ -255,9 +258,9 @@ public class LoansApiResource {
             "repaymentFrequencyNthDayTypeOptions", "repaymentFrequencyDaysOfWeekTypeOptions", "termFrequencyTypeOptions",
             "interestRateFrequencyTypeOptions", "fundOptions", "repaymentStrategyOptions", "chargeOptions", "loanOfficerOptions",
             "loanPurposeOptions", "loanCollateralOptions", "chargeTemplate", "calendarOptions", "syncDisbursementWithMeeting",
-            "loanCounter", "loanProductCounter", "notes", "accountLinkingOptions", "linkedAccount", "interestRateDifferential",
-            "isFloatingInterestRate", "interestRatesPeriods", "lastClosedBusinessDate", LoanApiConstants.canUseForTopup,
-            LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.topupAmount,
+            "loanCounter", "loanProductCounter", "notes", "originators", "accountLinkingOptions", "linkedAccount",
+            "interestRateDifferential", "isFloatingInterestRate", "interestRatesPeriods", "lastClosedBusinessDate",
+            LoanApiConstants.canUseForTopup, LoanApiConstants.isTopup, LoanApiConstants.loanIdToClose, LoanApiConstants.topupAmount,
             LoanApiConstants.clientActiveLoanOptions, LoanApiConstants.datatables, LoanProductConstants.RATES_PARAM_NAME,
             LoanApiConstants.MULTIDISBURSE_DETAILS_PARAMNAME, LoanApiConstants.EMI_AMOUNT_VARIATIONS_PARAMNAME,
             LoanApiConstants.COLLECTION_PARAMNAME, LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE,
@@ -310,6 +313,7 @@ public class LoansApiResource {
     private final LoanSummaryProviderDelegate loanSummaryProviderDelegate;
     private final LoanCapitalizedIncomeBalanceRepository loanCapitalizedIncomeBalanceRepository;
     private final LoanApprovedAmountHistoryRepository loanApprovedAmountHistoryRepository;
+    private final Optional<LoanOriginatorReadPlatformService> loanOriginatorReadPlatformService;
 
     /*
      * This template API is used for loan approval, ideally this should be invoked on loan that are pending for
@@ -527,7 +531,8 @@ public class LoansApiResource {
 
                     RepaymentScheduleRelatedLoanData repaymentScheduleRelatedData = new RepaymentScheduleRelatedLoanData(
                             i.getTimeline().getExpectedDisbursementDate(), i.getTimeline().getActualDisbursementDate(), i.getCurrency(),
-                            i.getPrincipal(), i.getInArrearsTolerance(), i.getFeeChargesAtDisbursementCharged());
+                            i.getPrincipal(), i.getInArrearsTolerance(), i.getFeeChargesAtDisbursementCharged(),
+                            Boolean.TRUE.equals(i.getAllowFullTermForTranche()));
                     LoanScheduleData repaymentSchedule = loanReadPlatformService.retrieveRepaymentSchedule(loanId,
                             repaymentScheduleRelatedData, disbursementData, capitalizedIncomeData, i.isInterestRecalculationEnabled(),
                             LoanScheduleType.fromEnumOptionData(i.getLoanScheduleType()));
@@ -552,7 +557,7 @@ public class LoansApiResource {
     @Operation(summary = "Calculate loan repayment schedule | Submit a new Loan Application", description = "It calculates the loan repayment Schedule\n"
             + "Submits a new loan application\n"
             + "Mandatory Fields: clientId, productId, principal, loanTermFrequency, loanTermFrequencyType, loanType, numberOfRepayments, repaymentEvery, repaymentFrequencyType, interestRatePerPeriod, amortizationType, interestType, interestCalculationPeriodType, transactionProcessingStrategyCode, expectedDisbursementDate, submittedOnDate, loanType\n"
-            + "Optional Fields: graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, linkAccountId, allowPartialPeriodInterestCalcualtion, fixedEmiAmount, maxOutstandingLoanBalance, disbursementData, graceOnArrearsAgeing, createStandingInstructionAtDisbursement (requires linkedAccountId if set to true)\n"
+            + "Optional Fields: graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, linkAccountId, allowPartialPeriodInterestCalculation, fixedEmiAmount, maxOutstandingLoanBalance, disbursementData, graceOnArrearsAgeing, createStandingInstructionAtDisbursement (requires linkedAccountId if set to true)\n"
             + "Additional Mandatory Fields if interest recalculation is enabled for product and Rest frequency not same as repayment period: recalculationRestFrequencyDate\n"
             + "Additional Mandatory Fields if interest recalculation with interest/fee compounding is enabled for product and compounding frequency not same as repayment period: recalculationCompoundingFrequencyDate\n"
             + "Additional Mandatory Field if Entity-Datatable Check is enabled for the entity of type loan: datatables")
@@ -1023,6 +1028,8 @@ public class LoansApiResource {
                 loanBasicDetails = loanBasicDetails.setMeeting(calendarData);
             }
         }
+        loanBasicDetails.setActualNoTerm(
+                loanReadPlatformService.countInstallmentsByLoanIdWhereIsAdditionalFalseAndIsDownPaymentFalse(resolvedLoanId));
         Collection<InterestRatePeriodData> interestRatesPeriods = this.loanReadPlatformService
                 .retrieveLoanInterestRatePeriodData(loanBasicDetails);
         Collection<LoanTransactionData> loanRepayments = null;
@@ -1049,7 +1056,7 @@ public class LoansApiResource {
                         DataTableApiConstant.guarantorsAssociateParamName, DataTableApiConstant.collateralAssociateParamName,
                         DataTableApiConstant.notesAssociateParamName, DataTableApiConstant.linkedAccountAssociateParamName,
                         DataTableApiConstant.multiDisburseDetailsAssociateParamName, DataTableApiConstant.collectionAssociateParamName,
-                        DataTableApiConstant.loanTermVariationsAssociateParamName));
+                        DataTableApiConstant.loanTermVariationsAssociateParamName, DataTableApiConstant.originatorsAssociateParamName));
             }
 
             ApiParameterHelper.excludeAssociationsForResponseIfProvided(exclude, associationParameters);
@@ -1098,7 +1105,8 @@ public class LoansApiResource {
                         loanBasicDetails.getTimeline().getExpectedDisbursementDate(),
                         loanBasicDetails.getTimeline().getActualDisbursementDate(), loanBasicDetails.getCurrency(),
                         loanBasicDetails.getPrincipal(), loanBasicDetails.getInArrearsTolerance(),
-                        loanBasicDetails.getFeeChargesAtDisbursementCharged());
+                        loanBasicDetails.getFeeChargesAtDisbursementCharged(),
+                        Boolean.TRUE.equals(loanBasicDetails.getAllowFullTermForTranche()));
                 repaymentSchedule = this.loanReadPlatformService.retrieveRepaymentSchedule(resolvedLoanId, repaymentScheduleRelatedData,
                         disbursementData, capitalizedIncomeData, loanBasicDetails.isInterestRecalculationEnabled(),
                         LoanScheduleType.fromEnumOptionData(loanBasicDetails.getLoanScheduleType()));
@@ -1153,6 +1161,14 @@ public class LoansApiResource {
             if (associationParameters.contains(DataTableApiConstant.linkedAccountAssociateParamName)) {
                 mandatoryResponseParameters.add(DataTableApiConstant.linkedAccountAssociateParamName);
                 linkedAccount = this.accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(resolvedLoanId);
+            }
+
+            if (associationParameters.contains(DataTableApiConstant.originatorsAssociateParamName)) {
+                mandatoryResponseParameters.add(DataTableApiConstant.originatorsAssociateParamName);
+                if (loanOriginatorReadPlatformService.isPresent()) {
+                    List<LoanOriginatorData> originatorList = loanOriginatorReadPlatformService.get().retrieveByLoanId(resolvedLoanId);
+                    loanBasicDetails.setOriginators(originatorList.isEmpty() ? Collections.emptyList() : originatorList);
+                }
             }
         }
 

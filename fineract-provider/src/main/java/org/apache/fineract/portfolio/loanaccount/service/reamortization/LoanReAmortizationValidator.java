@@ -21,7 +21,6 @@ package org.apache.fineract.portfolio.loanaccount.service.reamortization;
 import static org.apache.fineract.infrastructure.core.service.DateUtils.getBusinessLocalDate;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +34,12 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.api.LoanReAmortizationApiConstants;
+import org.apache.fineract.portfolio.loanaccount.api.request.ReAmortizationPreviewRequest;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.reamortization.LoanReAmortizationInterestHandlingType;
+import org.apache.fineract.portfolio.loanaccount.domain.reamortization.LoanReAmortizationParameter;
 import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.AdvancedPaymentScheduleTransactionProcessor;
-import org.apache.fineract.portfolio.loanaccount.domain.transactionprocessor.impl.ChangeOperation;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +51,9 @@ public class LoanReAmortizationValidator {
 
     public void validateReAmortize(Loan loan, JsonCommand command) {
         validateReAmortizeRequest(command);
-        validateReAmortizeBusinessRules(loan);
+        LoanReAmortizationInterestHandlingType interestHandlingType = command.enumValueOfParameterNamed(
+                LoanReAmortizationApiConstants.reAmortizationInterestHandlingParamName, LoanReAmortizationInterestHandlingType.class);
+        validateReAmortizeBusinessRules(loan, interestHandlingType);
     }
 
     private void validateReAmortizeRequest(JsonCommand command) {
@@ -82,7 +84,7 @@ public class LoanReAmortizationValidator {
         throwExceptionIfValidationErrorsExist(dataValidationErrors);
     }
 
-    private void validateReAmortizeBusinessRules(Loan loan) {
+    private void validateReAmortizeBusinessRules(Loan loan, LoanReAmortizationInterestHandlingType interestHandlingType) {
         // validate reamortization shouldn't happen after maturity
         if (DateUtils.isAfter(getBusinessLocalDate(), loan.getMaturityDate())) {
             throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.cannot.be.submitted.after.maturity",
@@ -103,10 +105,10 @@ public class LoanReAmortizationValidator {
                     loan.getId());
         }
 
-        // validate reamortization is only done on an active loan
+        // validate re-amortization is only done on an active loan
         if (!loan.getStatus().isActive()) {
             throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.supported.only.for.active.loans",
-                    "Loan reamortization can only be done on active loans", loan.getId());
+                    "Loan re-amortization can only be done on active loans", loan.getId());
         }
 
         // validate if there's already a re-amortization transaction for today
@@ -117,28 +119,57 @@ public class LoanReAmortizationValidator {
                     "Loan reamortization can only be done once a day. There has already been a reamortization done for today",
                     loan.getId());
         }
+
+        // validate if there is active re-amortization transaction, it should have the same interest handling strategy
+        Optional<LoanTransaction> previousReAmortizationTransaction = loan.getLoanTransactions().stream()
+                .filter(LoanTransaction::isNotReversed).filter(LoanTransaction::isReAmortize).findAny();
+        if (previousReAmortizationTransaction.isPresent()) {
+            LoanReAmortizationInterestHandlingType previousInterestHandlingType = Optional
+                    .ofNullable(previousReAmortizationTransaction.get().getLoanReAmortizationParameter())
+                    .map(LoanReAmortizationParameter::getInterestHandlingType).orElse(LoanReAmortizationInterestHandlingType.DEFAULT);
+            LoanReAmortizationInterestHandlingType currentInterestHandlingType = Optional.ofNullable(interestHandlingType)
+                    .orElse(LoanReAmortizationInterestHandlingType.DEFAULT);
+            if (!previousInterestHandlingType.equals(currentInterestHandlingType)) {
+                throw new GeneralPlatformDomainRuleException(
+                        "error.msg.loan.reamortize.reamortize.transaction.interest.handling.strategy.missmatch",
+                        "Previous active reamortization transactiuon has different interest handling strategy.", loan.getId());
+            }
+        }
+
+        // validate loan is not charged-off
+        if (loan.isChargedOff()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.not.allowed.on.charged.off",
+                    "Loan re-amortization is not allowed on charged-off loan.", loan.getId());
+        }
+
+        // validate loan is not contract terminated
+        if (loan.isContractTermination()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.not.allowed.on.contract.terminated",
+                    "Loan re-amortization is not allowed on contract terminated loan.", loan.getId());
+        }
+
+        // validate there are overdue installments to re-amortize
+        boolean hasOverdueInstallments = loan.getRepaymentScheduleInstallments().stream()
+                .anyMatch(installment -> installment.getDueDate().isBefore(getBusinessLocalDate())
+                        && installment.getPrincipalOutstanding(loan.getCurrency()).isGreaterThanZero());
+        if (!hasOverdueInstallments) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.no.overdue.amount",
+                    "Re-amortization cannot be executed: no overdue amount exists.", loan.getId());
+        }
     }
 
-    public void validateUndoReAmortize(Loan loan, JsonCommand command) {
-        validateUndoReAmortizeBusinessRules(loan);
-    }
-
-    private void validateUndoReAmortizeBusinessRules(Loan loan) {
-        // validate if there's a reamortization transaction already
-        Optional<LoanTransaction> optionalReAmortizationTx = loan.getLoanTransactions().stream().filter(tx -> tx.getTypeOf().isReAmortize())
-                .min(Comparator.comparing(LoanTransaction::getTransactionDate));
+    public LoanTransaction findAndValidateReAmortizeTransactionForUndo(Loan loan) {
+        // validate if there's a non-reversed reamortization transaction already
+        final Optional<LoanTransaction> optionalReAmortizationTx = loan.getLoanTransactions().stream() //
+                .filter(LoanTransaction::isNotReversed) //
+                .filter(tx -> tx.getTypeOf().isReAmortize()) //
+                .findAny();
         if (optionalReAmortizationTx.isEmpty()) {
             throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.reamortization.transaction.missing",
-                    "Undoing a reamortization can only be done if there was a reamortization already", loan.getId());
+                    "Undoing a reamortization can only be done if there was a non-reversed reamortization already", loan.getId());
         }
 
-        // validate if there's no payment between the reamortization and today
-        boolean repaymentExistsAfterReAmortization = loan.getLoanTransactions().stream().anyMatch(tx -> tx.getTypeOf().isRepaymentType()
-                && !tx.isReversed() && transactionHappenedAfterOther(tx, optionalReAmortizationTx.get()));
-        if (repaymentExistsAfterReAmortization) {
-            throw new GeneralPlatformDomainRuleException("error.msg.loan.reamortize.repayment.exists.after.reamortization",
-                    "Undoing a reamortization can only be done if there hasn't been any repayment afterwards", loan.getId());
-        }
+        return optionalReAmortizationTx.get();
     }
 
     private void throwExceptionIfValidationErrorsExist(List<ApiParameterError> dataValidationErrors) {
@@ -148,7 +179,9 @@ public class LoanReAmortizationValidator {
         }
     }
 
-    private boolean transactionHappenedAfterOther(LoanTransaction transaction, LoanTransaction otherTransaction) {
-        return new ChangeOperation(transaction).compareTo(new ChangeOperation(otherTransaction)) > 0;
+    public void validateReAmortize(Loan loan, ReAmortizationPreviewRequest reAmortizationPreviewRequest) {
+        LoanReAmortizationInterestHandlingType interestHandlingType = LoanReAmortizationInterestHandlingType
+                .valueOf(reAmortizationPreviewRequest.getReAmortizationInterestHandling());
+        validateReAmortizeBusinessRules(loan, interestHandlingType);
     }
 }

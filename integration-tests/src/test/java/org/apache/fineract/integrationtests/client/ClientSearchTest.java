@@ -36,6 +36,7 @@ import org.apache.fineract.client.models.PostOfficesResponse;
 import org.apache.fineract.client.models.SortOrder;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
+import org.apache.fineract.integrationtests.common.system.CodeHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -198,8 +199,12 @@ public class ClientSearchTest extends IntegrationTest {
         clientHelper.createClient(request1);
 
         PostClientsRequest request2 = ClientHelper.defaultClientCreationRequest();
+        String uniqueFirstName = Utils.randomStringGenerator("FN_", 10);
+        String uniqueLastName = Utils.randomStringGenerator("LN_", 10);
+        request2.setFirstname(uniqueFirstName);
+        request2.setLastname(uniqueLastName);
         clientHelper.createClient(request2);
-        String client2DisplayName = "%s %s".formatted(request2.getFirstname(), request2.getLastname());
+        String client2DisplayName = "%s %s".formatted(uniqueFirstName, uniqueLastName);
 
         PostClientsRequest request3 = ClientHelper.defaultClientCreationRequest();
         clientHelper.createClient(request3);
@@ -269,6 +274,36 @@ public class ClientSearchTest extends IntegrationTest {
         // then
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getMobileNo()).isEqualTo(request1.getMobileNo());
+    }
+
+    @Test
+    public void testClientSearchDoesNotDuplicateResults_WhenIdentifierHasMultipleMatches() {
+        // given
+        PostClientsRequest request = ClientHelper.defaultClientCreationRequest();
+        PostClientsResponse clientResponse = clientHelper.createClient(request);
+
+        Integer codeId = (Integer) CodeHelper.createCode(requestSpec, responseSpec, Utils.randomStringGenerator("ClientIdentifierTest_", 6),
+                CodeHelper.RESPONSE_ID_ATTRIBUTE_NAME);
+        Integer documentTypeIdOne = CodeHelper.createCodeValue(requestSpec, responseSpec, codeId,
+                Utils.randomStringGenerator("DocType_", 6), 1);
+        Integer documentTypeIdTwo = CodeHelper.createCodeValue(requestSpec, responseSpec, codeId,
+                Utils.randomStringGenerator("DocType_", 6), 2);
+
+        String documentKeyToken = Utils.randomStringGenerator("DUP_ID_", 6);
+        PostClientsClientIdIdentifiersRequest identifierOne = new PostClientsClientIdIdentifiersRequest()
+                .documentTypeId(documentTypeIdOne.longValue()).documentKey(documentKeyToken + "_A").description("Test").status("Active");
+        PostClientsClientIdIdentifiersRequest identifierTwo = new PostClientsClientIdIdentifiersRequest()
+                .documentTypeId(documentTypeIdTwo.longValue()).documentKey(documentKeyToken + "_B").description("Test").status("Active");
+        clientHelper.createClientIdentifer(clientResponse.getClientId(), identifierOne);
+        clientHelper.createClientIdentifer(clientResponse.getClientId(), identifierTwo);
+
+        // when
+        PageClientSearchData result = clientHelper.searchClients(documentKeyToken);
+
+        // then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().size()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getExternalId().getValue()).isEqualTo(request.getExternalId());
     }
 
     @Test

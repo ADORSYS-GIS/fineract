@@ -36,15 +36,18 @@ public class FeignClientHelper {
         this.fineractClient = fineractClient;
     }
 
-    public Long createClient(String firstName, String lastName) {
+    public Long createClient() {
+        return createClient(Utils.dateFormatter.format(Utils.getLocalDateOfTenant()));
+    }
+
+    public Long createClient(String activationDate) {
         String externalId = Utils.randomStringGenerator("EXT_", 7);
-        String activationDate = Utils.dateFormatter.format(Utils.getLocalDateOfTenant());
 
         PostClientsRequest request = new PostClientsRequest()//
                 .officeId(1L)//
                 .legalFormId(1L)//
-                .firstname(firstName)//
-                .lastname(lastName)//
+                .firstname(Utils.randomFirstNameGenerator())//
+                .lastname(Utils.randomLastNameGenerator())//
                 .externalId(externalId)//
                 .active(true)//
                 .activationDate(activationDate)//

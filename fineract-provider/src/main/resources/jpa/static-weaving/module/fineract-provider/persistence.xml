@@ -34,10 +34,8 @@
         <!-- Core Module Entities -->
         <class>org.apache.fineract.useradministration.domain.Role</class>
         <class>org.apache.fineract.portfolio.fund.domain.Fund</class>
-        <class>org.apache.fineract.infrastructure.documentmanagement.domain.Image</class>
         <class>org.apache.fineract.organisation.workingdays.domain.WorkingDays</class>
         <class>org.apache.fineract.useradministration.domain.Permission</class>
-        <class>org.apache.fineract.useradministration.domain.AppUserClientMapping</class>
         <class>org.apache.fineract.commands.domain.CommandSource</class>
         <class>org.apache.fineract.useradministration.domain.AppUser</class>
         <class>org.apache.fineract.accounting.glaccount.domain.GLAccount</class>
@@ -145,17 +143,6 @@
         <class>org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityToEntityMapping</class>
         <class>org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityAccess</class>
 
-        <!-- Self Service Module Entities -->
-        <class>org.apache.fineract.portfolio.self.account.domain.SelfBeneficiariesTPT</class>
-        <class>org.apache.fineract.portfolio.self.device.domain.DeviceRegistration</class>
-        <class>org.apache.fineract.portfolio.self.pockets.domain.Pocket</class>
-        <class>org.apache.fineract.portfolio.self.pockets.domain.PocketAccountMapping</class>
-        <class>org.apache.fineract.portfolio.self.registration.domain.SelfServiceRegistration</class>
-
-        <!-- Command Module Entities -->
-
-        <class>org.apache.fineract.command.persistence.domain.CommandEntity</class>
-        <class>org.apache.fineract.command.persistence.converter.JsonAttributeConverter</class>
 
         <!-- Charge Module Entities -->
         <class>org.apache.fineract.portfolio.charge.domain.Charge</class>
@@ -224,6 +211,15 @@
         <class>org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain</class>
         <class>org.apache.fineract.portfolio.collateral.domain.LoanCollateral</class>
 
+        <!-- Working Capital Loan Module Entities -->
+        <class>org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProduct</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductPaymentAllocationRule</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductConfigurableAttributes</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBalance</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanDisbursementDetails</class>
+        <class>org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPaymentAllocationRule</class>
+
         <!-- Loan Module Converters -->
         <class>org.apache.fineract.portfolio.loanproduct.domain.AllocationTypeListConverter</class>
         <class>org.apache.fineract.portfolio.loanaccount.domain.AccountingRuleTypeConverter</class>
@@ -233,8 +229,8 @@
         <class>org.apache.fineract.portfolio.loanproduct.domain.SupportedInterestRefundTypesListConverter</class>
         <class>org.apache.fineract.portfolio.loanaccount.domain.LoanStatusConverter</class>
 
-        <!-- Document Module Entities -->
-        <class>org.apache.fineract.infrastructure.documentmanagement.domain.Document</class>
+        <!-- Working Capital Loan Module Converters -->
+        <class>org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalPaymentAllocationTypeListConverter</class>
 
         <!-- Tax Module Entities -->
         <class>org.apache.fineract.portfolio.tax.domain.TaxComponent</class>
@@ -281,6 +277,7 @@
         <class>org.apache.fineract.portfolio.account.domain.AccountTransferTransaction</class>
 
         <!-- Provider Module Entities -->
+
         <!-- Notification -->
         <class>org.apache.fineract.notification.domain.NotificationMapper</class>
         <class>org.apache.fineract.notification.domain.Notification</class>
@@ -288,11 +285,7 @@
         <!-- AdHocQuery -->
         <class>org.apache.fineract.adhocquery.domain.AdHoc</class>
 
-        <!-- Mix -->
-        <class>org.apache.fineract.mix.domain.MixTaxonomyMapping</class>
-
         <!-- COB (Chunk of Business) -->
-        <class>org.apache.fineract.cob.domain.LoanAccountLock</class>
         <class>org.apache.fineract.cob.domain.BatchBusinessStep</class>
 
         <!-- Template -->
@@ -327,8 +320,6 @@
         <!-- Office -->
         <class>org.apache.fineract.organisation.office.domain.OfficeTransaction</class>
 
-        <!-- Self Registration -->
-        <class>org.apache.fineract.portfolio.self.registration.domain.SelfServiceRegistration</class>
 
         <!-- Note -->
         <class>org.apache.fineract.portfolio.note.domain.Note</class>

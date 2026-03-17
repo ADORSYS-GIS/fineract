@@ -37,7 +37,6 @@ import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
-import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.apache.fineract.portfolio.loanaccount.data.OutstandingAmountsDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
@@ -106,11 +105,8 @@ public class ProgressiveLoanScheduleGenerator implements LoanScheduleGenerator {
         // generate list of proposed schedule due dates
         final List<LoanScheduleModelRepaymentPeriod> expectedRepaymentPeriods = scheduledDateGenerator.generateRepaymentPeriods(mc,
                 periodStartDate, loanApplicationTerms, holidayDetailDTO);
-        List<LoanTermVariationsData> loanTermVariations = loanApplicationTerms.getLoanTermVariations() != null
-                ? loanApplicationTerms.getLoanTermVariations().getExceptionData()
-                : null;
         final ProgressiveLoanInterestScheduleModel interestScheduleModel = emiCalculator.generatePeriodInterestScheduleModel(
-                expectedRepaymentPeriods, loanApplicationTerms.toLoanConfigurationDetails(), loanTermVariations,
+                expectedRepaymentPeriods, loanApplicationTerms.toLoanConfigurationDetails(),
                 loanApplicationTerms.getInstallmentAmountInMultiplesOf(), mc);
         final List<LoanScheduleModelPeriod> periods = new ArrayList<>(expectedRepaymentPeriods.size());
 
@@ -212,11 +208,10 @@ public class ProgressiveLoanScheduleGenerator implements LoanScheduleGenerator {
                 .interest(outstandingAmounts.getOutstandingInterest());//
 
         if (loan.isProgressiveSchedule()) {
-            final LoanRepaymentScheduleInstallment downPaymentInstallment = loan.getRepaymentScheduleInstallments(i -> i.isDownPayment())
-                    .stream().findFirst().orElse(null);
-            if (downPaymentInstallment != null) {
-                result.principal(downPaymentInstallment.getPrincipalOutstanding(loan.getCurrency())
-                        .add(outstandingAmounts.getOutstandingPrincipal()));
+            final List<LoanRepaymentScheduleInstallment> downPaymentInstallments = loan
+                    .getRepaymentScheduleInstallments(LoanRepaymentScheduleInstallment::isDownPayment).stream().toList();
+            for (final LoanRepaymentScheduleInstallment installment : downPaymentInstallments) {
+                result.plusPrincipal(installment.getPrincipalOutstanding(loan.getCurrency()));
             }
         }
         // We need to deduct any paid amount if there is no interest recalculation
@@ -247,15 +242,16 @@ public class ProgressiveLoanScheduleGenerator implements LoanScheduleGenerator {
         Loan loan = installment.getLoan();
         LoanRepaymentScheduleTransactionProcessor transactionProcessor = loanTransactionProcessingService
                 .getTransactionProcessor(loan.getTransactionProcessingStrategyCode());
-        if (!(transactionProcessor instanceof AdvancedPaymentScheduleTransactionProcessor processor)) {
+
+        if (!(transactionProcessor instanceof AdvancedPaymentScheduleTransactionProcessor)) {
             throw new IllegalStateException("Expected an AdvancedPaymentScheduleTransactionProcessor");
         }
-        if (installment.isAdditional() || installment.isDownPayment() || installment.isReAged()) {
+        if (installment.isAdditional() || installment.isDownPayment()) {
             return Money.zero(loan.getCurrency());
         }
         Optional<ProgressiveLoanInterestScheduleModel> savedModel = interestScheduleModelRepositoryWrapper.getSavedModel(loan, targetDate);
         ProgressiveLoanInterestScheduleModel model = savedModel.orElseThrow();
-        return emiCalculator.getPeriodInterestTillDate(model, installment.getFromDate(), installment.getDueDate(), targetDate, false);
+        return emiCalculator.getPeriodInterestTillDate(model, installment.getFromDate(), installment.getDueDate(), targetDate, false, true);
     }
 
     // Private, internal methods

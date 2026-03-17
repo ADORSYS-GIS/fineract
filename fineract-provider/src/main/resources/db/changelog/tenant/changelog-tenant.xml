@@ -91,7 +91,7 @@
     <include file="parts/0069_add_unique_constraint_for_reversal_external_id_of_loan_transactions.xml" relativeToChangelogFile="true"/>
     <include file="parts/0070_add_event_configuration_for_delinquency_range_change_event.xml" relativeToChangelogFile="true"/>
     <include file="parts/0071_add_external_id_support_for_loan_transaction.xml" relativeToChangelogFile="true"/>
-    <include file="parts/0072_add_result_and status_to_command_source.xml" relativeToChangelogFile="true" />
+    <include file="parts/0072_add_result_and_status_to_command_source.xml" relativeToChangelogFile="true" />
     <include file="parts/0073_add_result_status_code_to_command_source.xml" relativeToChangelogFile="true" />
     <include file="parts/0074_add_last_cob_business_date_column_to_loan.xml" relativeToChangelogFile="true"/>
     <include file="parts/0075_add_processed_commands_purge_job.xml" relativeToChangelogFile="true" />
@@ -225,4 +225,18 @@
     <include file="parts/0204_transaction_summary_with_asset_owner_and_from_asset_owner_id_for_buybacks.xml" relativeToChangelogFile="true" />
     <include file="parts/0205_add_read_familymembers_permission.xml" relativeToChangelogFile="true" />
     <include file="parts/0206_transaction_summary_with_asset_owner_classification_name_bug_fix.xml" relativeToChangelogFile="true" />
+    <include file="parts/0207_add_allow_full_term_for_tranche.xml" relativeToChangelogFile="true" />
+    <include file="parts/0208_trial_balance_summary_with_asset_owner_journal_entry_aggregation_fix.xml" relativeToChangelogFile="true" />
+    <include file="parts/0209_transaction_summary_with_asset_owner_and_from_asset_owner_id_for_asset_sales.xml" relativeToChangelogFile="true" />
+    <include file="parts/0210_add_configuration_password_reuse_check_history_count.xml" relativeToChangelogFile="true" />
+    <include file="parts/0211_trial_balance_summary_fix_external_owners_and_aggregation.xml" relativeToChangelogFile="true" />
+    <include file="parts/0212_add_force_password_reset_config.xml" relativeToChangelogFile="true" />
+    <include file="parts/0213_transaction_summary_adding_originators.xml" relativeToChangelogFile="true" />
+    <include file="parts/0214_trial_balance_summary_adding_originators.xml" relativeToChangelogFile="true" />
+    <include file="parts/0215_transaction_summary_reports_add_buydown_fee_types.xml" relativeToChangelogFile="true" />
+    <include file="parts/0216_add_unique_constraint_sms_campaign_name.xml" relativeToChangelogFile="true" />
+    <include file="parts/0217_force_withdrawal_configs.xml" relativeToChangelogFile="true" />
+    <include file="parts/0218_standardize_character_set_and_collation.xml" relativeToChangelogFile="true" />
+    <include file="parts/0219_remove_self_service_feature.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0220_add_login_retry_configuration.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

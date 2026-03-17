@@ -141,12 +141,10 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
 
             // If the Loan is not Active yet or is cancelled (rejected or withdrawn), return template data
             if (loan.isSubmittedAndPendingApproval() || loan.isApproved() || loan.isCancelled()) {
-                if (loan.getLoanProduct() != null && !loan.getLoanProduct().isAllowApprovedDisbursedAmountsOverApplied()) {
-                    return collectionData;
-                } else {
+                if (loan.getLoanProduct() == null || loan.getLoanProduct().isAllowApprovedDisbursedAmountsOverApplied()) {
                     collectionData.setAvailableDisbursementAmountWithOverApplied(calculateAvailableDisbursementAmountWithOverApplied(loan));
-                    return collectionData;
                 }
+                return collectionData;
             }
 
             final List<LoanDelinquencyAction> savedDelinquencyList = retrieveLoanDelinquencyActions(loanId);
@@ -218,7 +216,7 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
         // Calculate available amount: (approved + over applied) - expected tranches - disbursed - capitalized income
         if (loan.isMultiDisburmentLoan() && loan.getDisbursementDetails() != null) {
             final BigDecimal expectedDisbursementAmount = loan.getDisbursementDetails().stream()
-                    .filter(detail -> detail.actualDisbursementDate() == null).map(LoanDisbursementDetails::principal)
+                    .filter(detail -> detail.actualDisbursementDate() == null).map(LoanDisbursementDetails::getPrincipal)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             approvedWithOverApplied = approvedWithOverApplied.subtract(expectedDisbursementAmount);
         }
@@ -337,11 +335,9 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
                 isCurrentDateBeforeInstallmentAndLoanPeriod = DateUtils.isEqual(currentBusinessDate, installment.getDueDate())
                         && DateUtils.isBefore(currentBusinessDate, expectedMaturityDate);
             }
-            if (isCurrentDateBeforeInstallmentAndLoanPeriod) {
-                if (installment.isNotFullyPaidOff()) {
-                    nextUnpaidInstallmentDate = installment.getDueDate();
-                    break;
-                }
+            if (isCurrentDateBeforeInstallmentAndLoanPeriod && installment.isNotFullyPaidOff()) {
+                nextUnpaidInstallmentDate = installment.getDueDate();
+                break;
             }
         }
         return nextUnpaidInstallmentDate;

@@ -194,6 +194,12 @@ public class ClientHelper {
         return GSON.fromJson(response, GetClientsClientIdAccountsResponse.class);
     }
 
+    public static String getClientAccountsRaw(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
+            final long clientId) {
+        final String url = CLIENT_URL + "/" + clientId + "/accounts?" + Utils.TENANT_IDENTIFIER;
+        return Utils.performServerGet(requestSpec, responseSpec, url);
+    }
+
     // TODO: Rewrite to use fineract-client instead!
     // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
     // org.apache.fineract.client.models.PostLoansLoanIdRequest)
@@ -450,8 +456,8 @@ public class ClientHelper {
         HashMap<String, Object> map = new HashMap<>();
         map.put("officeId", officeId);
         map.put("legalFormId", legalFormId);
-        map.put("firstname", Utils.randomStringGenerator("Client_FirstName_", 5));
-        map.put("lastname", Utils.randomStringGenerator("Client_LastName_", 4));
+        map.put("firstname", Utils.randomFirstNameGenerator());
+        map.put("lastname", Utils.randomLastNameGenerator());
         if (externalId != null) {
             map.put("externalId", externalId);
         }
@@ -1209,10 +1215,9 @@ public class ClientHelper {
     }
 
     public static PostClientsRequest defaultClientCreationRequest() {
-        return new PostClientsRequest().officeId(1L).legalFormId(LEGALFORM_ID_PERSON)
-                .firstname(Utils.randomStringGenerator("Client_FirstName_", 5)).lastname(Utils.randomStringGenerator("Client_LastName_", 5))
-                .externalId(UUID.randomUUID().toString()).dateFormat(Utils.DATE_FORMAT).locale("en").active(true)
-                .activationDate(DEFAULT_DATE);
+        return new PostClientsRequest().officeId(1L).legalFormId(LEGALFORM_ID_PERSON).firstname(Utils.randomFirstNameGenerator())
+                .lastname(Utils.randomLastNameGenerator()).externalId(UUID.randomUUID().toString()).dateFormat(Utils.DATE_FORMAT)
+                .locale("en").active(true).activationDate(DEFAULT_DATE);
     }
 
     public LoanAccountLockResponseDTO retrieveLockedAccounts(int page, int limit) {

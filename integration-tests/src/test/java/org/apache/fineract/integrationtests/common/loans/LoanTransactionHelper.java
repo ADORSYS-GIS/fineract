@@ -1709,6 +1709,22 @@ public class LoanTransactionHelper {
                 excludedTransactionTypes, page, size, sort));
     }
 
+    /**
+     * Helper method to create manual interest refund transaction
+     */
+    public PostLoansLoanIdTransactionsResponse createManualInterestRefund(Long loanId, Long targetTransactionId, String transactionDate,
+            Double amount, String externalId) {
+
+        PostLoansLoanIdTransactionsTransactionIdRequest request = new PostLoansLoanIdTransactionsTransactionIdRequest()
+                .transactionAmount(amount).dateFormat("dd MMMM yyyy").locale("en");
+
+        if (externalId != null) {
+            request.externalId(externalId);
+        }
+
+        return manualInterestRefund(loanId, targetTransactionId, request);
+    }
+
     // TODO: Rewrite to use fineract-client instead!
     // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
     // org.apache.fineract.client.models.PostLoansLoanIdRequest)
@@ -2829,7 +2845,7 @@ public class LoanTransactionHelper {
         assertEquals(numItems, getLoansLoanIdResponse.getDisbursementDetails().size());
         Double amount = Double.valueOf("0.0");
         for (GetLoansLoanIdDisbursementDetails disbursementDetails : getLoansLoanIdResponse.getDisbursementDetails()) {
-            amount = amount + disbursementDetails.getPrincipal();
+            amount = amount + disbursementDetails.getPrincipal().doubleValue();
             log.info("Disbursement details with principal {} {}", disbursementDetails.getExpectedDisbursementDate(),
                     disbursementDetails.getPrincipal());
         }
