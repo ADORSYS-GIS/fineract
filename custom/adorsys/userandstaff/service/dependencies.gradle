@@ -1,5 +1,6 @@
 dependencies {
     implementation(project(':fineract-core'))
+    implementation(project(':fineract-security'))
     implementation(project(':custom:adorsys:userandstaff:data'))
     implementation('com.google.code.gson:gson')
     implementation(project(':fineract-provider'))
