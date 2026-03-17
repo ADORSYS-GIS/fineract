@@ -20,7 +20,7 @@ name: Sync Upstream Apache Fineract
 
 on:
   schedule:
-    - cron: '0 6 1 * *' # 1st of each month at 06:00 UTC
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
   workflow_dispatch: # Allow manual trigger
 
 permissions:
