@@ -113,7 +113,7 @@ public class EventCheckHelper {
 
     public void clientEventCheck(PostClientsResponse clientCreationResponse) {
         waitForTransactionCommit();
-        GetClientsClientIdResponse body = ok(() -> fineractClient.clients().retrieveOne11(clientCreationResponse.getClientId(),
+        GetClientsClientIdResponse body = ok(() -> fineractClient.clients().retrieveOneClient(clientCreationResponse.getClientId(),
                 Map.of("staffInSelectedOfficeOnly", false)));
 
         Long clientId = Long.valueOf(body.getId());
@@ -173,8 +173,8 @@ public class EventCheckHelper {
                 .extractingData(loanAccountDataV1 -> {
                     Long idActual = loanAccountDataV1.getId();
                     Long idExpected = body.getId();
-                    Integer statusIdActual = loanAccountDataV1.getStatus().getId();
-                    Integer statusIdExpected = body.getStatus().getId();
+                    Long statusIdActual = loanAccountDataV1.getStatus().getId().longValue();
+                    Long statusIdExpected = body.getStatus().getId();
                     String statusCodeActual = loanAccountDataV1.getStatus().getCode();
                     String statusCodeExpected = body.getStatus().getCode();
                     Long clientIdActual = loanAccountDataV1.getClientId();
@@ -201,6 +201,8 @@ public class EventCheckHelper {
                     BigDecimal delinquentFeeExpected = body.getDelinquent().getDelinquentFee();
                     BigDecimal delinquentPenaltyActual = loanAccountDataV1.getDelinquent().getDelinquentPenalty();
                     BigDecimal delinquentPenaltyExpected = body.getDelinquent().getDelinquentPenalty();
+                    Integer actualNoTermActual = loanAccountDataV1.getActualNoTerm();
+                    Integer actualNoTermExpected = body.getActualNoTerm();
 
                     assertThat(idActual).isEqualTo(idExpected);
                     assertThat(statusIdActual).isEqualTo(statusIdExpected);
@@ -217,6 +219,7 @@ public class EventCheckHelper {
                     assertThat(areBigDecimalValuesEqual(delinquentInterestActual, delinquentInterestExpected)).isTrue();
                     assertThat(areBigDecimalValuesEqual(delinquentFeeActual, delinquentFeeExpected)).isTrue();
                     assertThat(areBigDecimalValuesEqual(delinquentPenaltyActual, delinquentPenaltyExpected)).isTrue();
+                    assertThat(actualNoTermActual).isEqualTo(actualNoTermExpected);
 
                     return null;
                 });
@@ -576,7 +579,8 @@ public class EventCheckHelper {
 
         eventAssertion.assertEvent(LoanCreatedEvent.class, createLoanResponse.getLoanId())//
                 .extractingData(LoanAccountDataV1::getId).isEqualTo(body.getId())//
-                .extractingData(loanAccountDataV1 -> loanAccountDataV1.getStatus().getId()).isEqualTo(body.getStatus().getId())//
+                .extractingData(loanAccountDataV1 -> loanAccountDataV1.getStatus().getId().intValue())
+                .isEqualTo(body.getStatus().getId().intValue())//
                 .extractingData(LoanAccountDataV1::getClientId).isEqualTo(body.getClientId())//
                 .extractingBigDecimal(LoanAccountDataV1::getPrincipal).isEqualTo(body.getPrincipal())//
                 .extractingData(loanAccountDataV1 -> loanAccountDataV1.getSummary().getCurrency().getCode())
@@ -590,7 +594,8 @@ public class EventCheckHelper {
 
         eventAssertion.assertEvent(LoanApprovedEvent.class, loanApproveResponse.getLoanId())//
                 .extractingData(LoanAccountDataV1::getId).isEqualTo(body.getId())//
-                .extractingData(loanAccountDataV1 -> loanAccountDataV1.getStatus().getId()).isEqualTo(body.getStatus().getId())//
+                .extractingData(loanAccountDataV1 -> loanAccountDataV1.getStatus().getId().intValue())
+                .isEqualTo(body.getStatus().getId().intValue())//
                 .extractingData(loanAccountDataV1 -> loanAccountDataV1.getStatus().getCode()).isEqualTo(body.getStatus().getCode())//
                 .extractingData(LoanAccountDataV1::getClientId).isEqualTo(Long.valueOf(body.getClientId()))//
                 .extractingBigDecimal(LoanAccountDataV1::getApprovedPrincipal).isEqualTo(body.getApprovedPrincipal())//

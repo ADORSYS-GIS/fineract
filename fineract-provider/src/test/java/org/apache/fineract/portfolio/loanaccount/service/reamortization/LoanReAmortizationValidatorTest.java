@@ -42,7 +42,10 @@ import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRu
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
@@ -180,58 +183,34 @@ class LoanReAmortizationValidatorTest {
     }
 
     @Test
+    public void testValidateReAmortize_ShouldThrowException_WhenNoOverdueInstallmentsExist() {
+        // given
+        Loan loan = loan(false);
+        JsonCommand command = jsonCommand();
+        // when
+        GeneralPlatformDomainRuleException result = assertThrows(GeneralPlatformDomainRuleException.class,
+                () -> underTest.validateReAmortize(loan, command));
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getGlobalisationMessageCode()).isEqualTo("error.msg.loan.reamortize.no.overdue.amount");
+    }
+
+    @Test
     public void testValidateUndoReAmortize_ShouldThrowException_WhenLoanDoesntHaveReAmortization() {
         // given
         List<LoanTransaction> transactions = List.of(loanTransaction(LoanTransactionType.DISBURSEMENT, actualDate.minusDays(3)));
         Loan loan = loan();
         given(loan.getLoanTransactions()).willReturn(transactions);
-        JsonCommand command = jsonCommand();
         // when
         GeneralPlatformDomainRuleException result = assertThrows(GeneralPlatformDomainRuleException.class,
-                () -> underTest.validateUndoReAmortize(loan, command));
+                () -> underTest.findAndValidateReAmortizeTransactionForUndo(loan));
         // then
         assertThat(result).isNotNull();
         assertThat(result.getGlobalisationMessageCode()).isEqualTo("error.msg.loan.reamortize.reamortization.transaction.missing");
     }
 
     @Test
-    public void testValidateUndoReAmortize_ShouldThrowException_WhenLoanAlreadyHasRepaymentAfterReAmortization() {
-        // given
-        List<LoanTransaction> transactions = List.of(loanTransaction(LoanTransactionType.DISBURSEMENT, actualDate.minusDays(3)),
-                loanTransaction(LoanTransactionType.REAMORTIZE, actualDate.minusDays(2)),
-                loanTransaction(LoanTransactionType.REPAYMENT, actualDate.minusDays(1)));
-        Loan loan = loan();
-        given(loan.getLoanTransactions()).willReturn(transactions);
-        JsonCommand command = jsonCommand();
-        // when
-        GeneralPlatformDomainRuleException result = assertThrows(GeneralPlatformDomainRuleException.class,
-                () -> underTest.validateUndoReAmortize(loan, command));
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getGlobalisationMessageCode()).isEqualTo("error.msg.loan.reamortize.repayment.exists.after.reamortization");
-    }
-
-    @Test
-    public void testValidateUndoReAmortize_ShouldThrowException_WhenLoanAlreadyHasRepaymentAfterReAmortization_SameDay() {
-        // given
-        List<LoanTransaction> transactions = List.of(loanTransaction(LoanTransactionType.DISBURSEMENT, actualDate.minusDays(2)),
-                loanTransaction(LoanTransactionType.REAMORTIZE, actualDate.minusDays(1),
-                        OffsetDateTime.of(actualDate, LocalTime.of(10, 0), ZoneOffset.UTC)),
-                loanTransaction(LoanTransactionType.REPAYMENT, actualDate.minusDays(1),
-                        OffsetDateTime.of(actualDate, LocalTime.of(11, 0), ZoneOffset.UTC)));
-        Loan loan = loan();
-        given(loan.getLoanTransactions()).willReturn(transactions);
-        JsonCommand command = jsonCommand();
-        // when
-        GeneralPlatformDomainRuleException result = assertThrows(GeneralPlatformDomainRuleException.class,
-                () -> underTest.validateUndoReAmortize(loan, command));
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getGlobalisationMessageCode()).isEqualTo("error.msg.loan.reamortize.repayment.exists.after.reamortization");
-    }
-
-    @Test
-    public void testValidateUndoReAmortize_ShouldNotThrowException_WhenLoanAlreadyHasRepaymentAfterReAmortization_SameDay_RepaymentBeforeReAmortization() {
+    public void testValidateUndoReAmortize_ShouldNotThrowException() {
         // given
         List<LoanTransaction> transactions = List.of(loanTransaction(LoanTransactionType.DISBURSEMENT, actualDate.minusDays(2)),
                 loanTransaction(LoanTransactionType.REAMORTIZE, actualDate.minusDays(1),
@@ -240,9 +219,8 @@ class LoanReAmortizationValidatorTest {
                         OffsetDateTime.of(actualDate, LocalTime.of(9, 0), ZoneOffset.UTC)));
         Loan loan = loan();
         given(loan.getLoanTransactions()).willReturn(transactions);
-        JsonCommand command = jsonCommand();
         // when
-        underTest.validateUndoReAmortize(loan, command);
+        underTest.findAndValidateReAmortizeTransactionForUndo(loan);
         // then no exception thrown
     }
 
@@ -271,10 +249,15 @@ class LoanReAmortizationValidatorTest {
         given(loanTransaction.getTypeOf()).willReturn(type);
         given(loanTransaction.getTransactionDate()).willReturn(txDate);
         given(loanTransaction.getSubmittedOnDate()).willReturn(txDate);
+        given(loanTransaction.isNotReversed()).willReturn(true);
         return loanTransaction;
     }
 
     private Loan loan() {
+        return loan(true);
+    }
+
+    private Loan loan(boolean withOverdueInstallments) {
         Loan loan = mock(Loan.class);
         given(loan.getStatus()).willReturn(LoanStatus.ACTIVE);
         given(loan.getMaturityDate()).willReturn(actualDate.plusDays(30));
@@ -285,6 +268,24 @@ class LoanReAmortizationValidatorTest {
         given(loanProductRelatedDetail.getLoanScheduleType()).willReturn(LoanScheduleType.PROGRESSIVE);
         given(loan.isInterestBearing()).willReturn(false);
         given(loan.getLoanTransactions()).willReturn(List.of());
+
+        MonetaryCurrency currency = new MonetaryCurrency("USD", 2, null);
+        given(loan.getCurrency()).willReturn(currency);
+
+        Money principalOutstanding = mock(Money.class);
+        given(principalOutstanding.isGreaterThanZero()).willReturn(true);
+
+        if (withOverdueInstallments) {
+            LoanRepaymentScheduleInstallment overdueInstallment = mock(LoanRepaymentScheduleInstallment.class);
+            given(overdueInstallment.getDueDate()).willReturn(actualDate.minusDays(5));
+            given(overdueInstallment.getPrincipalOutstanding(currency)).willReturn(principalOutstanding);
+            given(loan.getRepaymentScheduleInstallments()).willReturn(List.of(overdueInstallment));
+        } else {
+            LoanRepaymentScheduleInstallment futureInstallment = mock(LoanRepaymentScheduleInstallment.class);
+            given(futureInstallment.getDueDate()).willReturn(actualDate.plusDays(10));
+            given(futureInstallment.getPrincipalOutstanding(currency)).willReturn(principalOutstanding);
+            given(loan.getRepaymentScheduleInstallments()).willReturn(List.of(futureInstallment));
+        }
         return loan;
     }
 

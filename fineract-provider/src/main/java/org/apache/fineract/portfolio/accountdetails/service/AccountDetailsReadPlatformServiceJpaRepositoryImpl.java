@@ -34,6 +34,7 @@ import org.apache.fineract.portfolio.accountdetails.data.GuarantorAccountSummary
 import org.apache.fineract.portfolio.accountdetails.data.LoanAccountSummaryData;
 import org.apache.fineract.portfolio.accountdetails.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.accountdetails.data.ShareAccountSummaryData;
+import org.apache.fineract.portfolio.accountdetails.data.WorkingCapitalLoanAccountSummaryData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.data.LoanApplicationTimelineData;
@@ -46,6 +47,7 @@ import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountApplicationTimelineData;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountStatusEnumData;
 import org.apache.fineract.portfolio.shareaccounts.service.SharesEnumerations;
+import org.apache.fineract.portfolio.workingcapitalloan.service.WorkingCapitalLoanApplicationReadPlatformService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -58,6 +60,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
     private final ClientReadPlatformService clientReadPlatformService;
     private final GroupReadPlatformService groupReadPlatformService;
     private final ColumnValidator columnValidator;
+    private final WorkingCapitalLoanApplicationReadPlatformService workingCapitalLoanApplicationReadPlatformService;
 
     @Override
     public AccountSummaryCollectionData retrieveClientAccountDetails(final Long clientId) {
@@ -75,11 +78,14 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
 
         final List<LoanAccountSummaryData> glimAccounts = retrieveLoanAccountDetails(glimLoanClause, new Object[] { clientId });
         final List<LoanAccountSummaryData> loanAccounts = retrieveLoanAccountDetails(loanwhereClause, new Object[] { clientId });
+        final List<WorkingCapitalLoanAccountSummaryData> workingCapitalLoanAccounts = workingCapitalLoanApplicationReadPlatformService
+                .retrieveLoanSummaryData(clientId);
         final List<SavingsAccountSummaryData> savingsAccounts = retrieveAccountDetails(savingswhereClause, new Object[] { clientId });
         final List<ShareAccountSummaryData> shareAccounts = retrieveShareAccountDetails(clientId);
         final List<GuarantorAccountSummaryData> guarantorloanAccounts = retrieveGuarantorLoanAccountDetails(guarantorWhereClause,
                 new Object[] { clientId });
-        return new AccountSummaryCollectionData(loanAccounts, glimAccounts, savingsAccounts, shareAccounts, guarantorloanAccounts);
+        return new AccountSummaryCollectionData(loanAccounts, glimAccounts, savingsAccounts, shareAccounts, guarantorloanAccounts,
+                workingCapitalLoanAccounts);
     }
 
     @Override
@@ -311,6 +317,8 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             accountsSummary.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, sa.status_enum as statusEnum, ");
             accountsSummary.append("sa.account_type_enum as accountType, ");
             accountsSummary.append("sa.account_balance_derived as accountBalance, ");
+            accountsSummary.append("sa.on_hold_funds_derived as onHoldFunds, ");
+            accountsSummary.append("sa.total_savings_amount_on_hold as onHoldAmount, ");
 
             accountsSummary.append("sa.submittedon_date as submittedOnDate,");
             accountsSummary.append("sbu.username as submittedByUsername,");
@@ -377,6 +385,18 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
             final String shortProductName = rs.getString("shortProductName");
             final Integer statusId = JdbcSupport.getInteger(rs, "statusEnum");
             final BigDecimal accountBalance = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "accountBalance");
+            final BigDecimal onHoldFunds = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "onHoldFunds");
+            final BigDecimal onHoldAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "onHoldAmount");
+
+            BigDecimal availableBalance = accountBalance;
+            if (availableBalance != null && onHoldFunds != null) {
+                availableBalance = availableBalance.subtract(onHoldFunds);
+            }
+
+            if (availableBalance != null && onHoldAmount != null) {
+                availableBalance = availableBalance.subtract(onHoldAmount);
+            }
+
             final SavingsAccountStatusEnumData status = SavingsEnumerations.status(statusId);
             final Integer accountType = JdbcSupport.getInteger(rs, "accountType");
             final EnumOptionData accountTypeData = AccountEnumerations.loanType(accountType);
@@ -433,7 +453,8 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                     activatedByLastname, closedOnDate, closedByUsername, closedByFirstname, closedByLastname);
 
             return new SavingsAccountSummaryData(id, accountNo, externalId, productId, productName, shortProductName, status, currency,
-                    accountBalance, accountTypeData, timeline, depositTypeData, subStatus, lastActiveTransactionDate);
+                    accountBalance, onHoldFunds, onHoldAmount, availableBalance, accountTypeData, timeline, depositTypeData, subStatus,
+                    lastActiveTransactionDate);
         }
     }
 
@@ -573,7 +594,7 @@ public class AccountDetailsReadPlatformServiceJpaRepositoryImpl implements Accou
                     approvedByFirstname, approvedByLastname, expectedDisbursementDate, actualDisbursementDate, disbursedByUsername,
                     disbursedByFirstname, disbursedByLastname, closedOnDate, closedByUsername, closedByFirstname, closedByLastname,
                     actualMaturityDate, expectedMaturityDate, writtenOffOnDate, closedByUsername, closedByFirstname, closedByLastname,
-                    chargedOffOnDate, chargedOffByUsername, chargedOffByFirstname, chargedOffByLastname);
+                    chargedOffOnDate, chargedOffByUsername, chargedOffByFirstname, chargedOffByLastname, null);
 
             return new LoanAccountSummaryData(id, accountNo, parentAccountNumber, externalId, productId, loanProductName,
                     shortLoanProductName, loanStatus, currency, loanType, loanCycle, timeline, inArrears, originalLoan, loanBalance,

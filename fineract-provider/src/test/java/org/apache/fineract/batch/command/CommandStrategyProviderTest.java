@@ -40,6 +40,7 @@ import org.apache.fineract.batch.command.internal.CreateChargeCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateClientCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateDatatableEntryCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateLoanRescheduleRequestCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateSavingsAccountChargeCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateTransactionByLoanExternalIdCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateTransactionLoanCommandStrategy;
 import org.apache.fineract.batch.command.internal.DisburseLoanCommandStrategy;
@@ -52,6 +53,8 @@ import org.apache.fineract.batch.command.internal.GetLoanByExternalIdCommandStra
 import org.apache.fineract.batch.command.internal.GetLoanByIdCommandStrategy;
 import org.apache.fineract.batch.command.internal.GetLoanTransactionByExternalIdCommandStrategy;
 import org.apache.fineract.batch.command.internal.GetLoanTransactionByIdCommandStrategy;
+import org.apache.fineract.batch.command.internal.GetReagePreviewByLoanExternalIdCommandStrategy;
+import org.apache.fineract.batch.command.internal.GetReagePreviewByLoanIdCommandStrategy;
 import org.apache.fineract.batch.command.internal.LoanStateTransistionsByExternalIdCommandStrategy;
 import org.apache.fineract.batch.command.internal.ModifyLoanApplicationCommandStrategy;
 import org.apache.fineract.batch.command.internal.UnknownCommandStrategy;
@@ -89,6 +92,8 @@ public class CommandStrategyProviderTest {
                 Arguments.of("loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1?associations=all&exclude=guarantors", HttpMethod.GET,
                         "getLoanByExternalIdCommandStrategy", mock(GetLoanByExternalIdCommandStrategy.class)),
                 Arguments.of("savingsaccounts", HttpMethod.POST, "applySavingsCommandStrategy", mock(ApplySavingsCommandStrategy.class)),
+                Arguments.of("savingsaccounts/123/charges", HttpMethod.POST, "createSavingsAccountChargeCommandStrategy",
+                        mock(CreateSavingsAccountChargeCommandStrategy.class)),
                 Arguments.of("loans/123/charges", HttpMethod.POST, "createChargeCommandStrategy", mock(CreateChargeCommandStrategy.class)),
                 Arguments.of("loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/charges", HttpMethod.POST,
                         "createChargeByLoanExternalIdCommandStrategy", mock(CreateChargeByLoanExternalIdCommandStrategy.class)),
@@ -206,7 +211,28 @@ public class CommandStrategyProviderTest {
                 Arguments.of("loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/interest-pauses", HttpMethod.POST,
                         "createLoanInterestPauseByExternalIdCommandStrategy", mock(CommandStrategy.class)),
                 Arguments.of("loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/interest-pauses/123", HttpMethod.PUT,
-                        "updateLoanInterestPauseByExternalIdCommandStrategy", mock(CommandStrategy.class)));
+                        "updateLoanInterestPauseByExternalIdCommandStrategy", mock(CommandStrategy.class)),
+                Arguments.of("loans/123/transactions/reage-preview", HttpMethod.GET, "getReagePreviewByLoanIdCommandStrategy",
+                        mock(GetReagePreviewByLoanIdCommandStrategy.class)),
+                Arguments.of("loans/123/transactions/reage-preview?frequencyNumber=1&frequencyType=MONTHS", HttpMethod.GET,
+                        "getReagePreviewByLoanIdCommandStrategy", mock(GetReagePreviewByLoanIdCommandStrategy.class)),
+                Arguments.of(
+                        "loans/123/transactions/reage-preview?frequencyType=MONTHS&locale=en_US&frequencyNumber=1&dateFormat=MM%2Fdd%2Fyyyy&startDate=02%2F05%2F2026&numberOfInstallments=6",
+                        HttpMethod.GET, "getReagePreviewByLoanIdCommandStrategy", mock(GetReagePreviewByLoanIdCommandStrategy.class)),
+                Arguments.of("loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/transactions/reage-preview", HttpMethod.GET,
+                        "getReagePreviewByLoanExternalIdCommandStrategy", mock(GetReagePreviewByLoanExternalIdCommandStrategy.class)),
+                Arguments.of(
+                        "loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/transactions/reage-preview?frequencyNumber=2&frequencyType=WEEKS",
+                        HttpMethod.GET, "getReagePreviewByLoanExternalIdCommandStrategy",
+                        mock(GetReagePreviewByLoanExternalIdCommandStrategy.class)),
+                Arguments.of(
+                        "loans/external-id/0083477d-ea2a-45a4-a244-cb79a9ecf741/transactions/reage-preview?frequencyType=MONTHS&locale=en_US&frequencyNumber=1&dateFormat=MM%2Fdd%2Fyyyy&startDate=02%2F05%2F2026&numberOfInstallments=6",
+                        HttpMethod.GET, "getReagePreviewByLoanExternalIdCommandStrategy",
+                        mock(GetReagePreviewByLoanExternalIdCommandStrategy.class)),
+                Arguments.of(
+                        "loans/external-id/8dfad438-2319-48ce-8520-10a62801e9a1/transactions/reage-preview?frequency-number=2&frequencyType=long-string",
+                        HttpMethod.GET, "getReagePreviewByLoanExternalIdCommandStrategy",
+                        mock(GetReagePreviewByLoanExternalIdCommandStrategy.class)));
     }
 
     /**

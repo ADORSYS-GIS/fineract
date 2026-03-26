@@ -104,6 +104,13 @@ public class LoanRepaymentStepDef extends AbstractStepDef {
         makeRepayment(repaymentType, transactionDate, transactionAmount, transferExternalOwnerId);
     }
 
+    @And("Customer makes {string} repayment on {string} with {double} EUR transaction amount and check previous external owner")
+    public void makeLoanRepaymentAndCheckPreviousOwner(String repaymentType, String transactionDate, double transactionAmount)
+            throws IOException {
+        String previousOwnerId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_PREVIOUS_OWNER_EXTERNAL_ID);
+        makeRepayment(repaymentType, transactionDate, transactionAmount, previousOwnerId);
+    }
+
     private void makeRepayment(String repaymentType, String transactionDate, double transactionAmount, String transferExternalOwnerId)
             throws IOException {
         eventStore.reset();
@@ -145,7 +152,7 @@ public class LoanRepaymentStepDef extends AbstractStepDef {
 
         PostUsersResponse createUserResponse = testContext().get(TestContextKey.CREATED_SIMPLE_USER_RESPONSE);
         Long createdUserId = createUserResponse.getResourceId();
-        GetUsersUserIdResponse user = ok(() -> fineractClient.users().retrieveOne31(createdUserId));
+        GetUsersUserIdResponse user = ok(() -> fineractClient.users().retrieveOneUser(createdUserId));
 
         String apiBaseUrl = apiProperties.getBaseUrl() + "/fineract-provider/api/";
         FineractFeignClient userClient = FineractFeignClient.builder().baseUrl(apiBaseUrl)
@@ -174,8 +181,9 @@ public class LoanRepaymentStepDef extends AbstractStepDef {
         String idempotencyKey = UUID.randomUUID().toString();
         testContext().set(TestContextKey.TRANSACTION_IDEMPOTENCY_KEY, idempotencyKey);
 
-        PostLoansLoanIdTransactionsResponse repaymentResponse = ok(() -> fineractClient.loanTransactions()
-                .executeLoanTransaction1(resourceExternalId, repaymentRequest, Map.<String, Object>of("command", "repayment")));
+        PostLoansLoanIdTransactionsResponse repaymentResponse = ok(
+                () -> fineractClient.loanTransactions().executeLoanTransactionByLoanExternalId(resourceExternalId, repaymentRequest,
+                        Map.<String, Object>of("command", "repayment")));
 
         testContext().set(TestContextKey.LOAN_REPAYMENT_RESPONSE, repaymentResponse);
         eventCheckHelper.loanBalanceChangedEventCheck(loanId);
@@ -200,15 +208,16 @@ public class LoanRepaymentStepDef extends AbstractStepDef {
 
         PostUsersResponse createUserResponse = testContext().get(TestContextKey.CREATED_SIMPLE_USER_RESPONSE);
         Long createdUserId = createUserResponse.getResourceId();
-        GetUsersUserIdResponse user = ok(() -> fineractClient.users().retrieveOne31(createdUserId));
+        GetUsersUserIdResponse user = ok(() -> fineractClient.users().retrieveOneUser(createdUserId));
 
         String apiBaseUrl = apiProperties.getBaseUrl() + "/fineract-provider/api/";
         FineractFeignClient userClient = FineractFeignClient.builder().baseUrl(apiBaseUrl)
                 .credentials(user.getUsername(), PWD_USER_WITH_ROLE).tenantId(apiProperties.getTenantId()).disableSslVerification(true)
                 .readTimeout((int) apiProperties.getReadTimeout(), java.util.concurrent.TimeUnit.SECONDS).build();
 
-        PostLoansLoanIdTransactionsResponse repaymentResponse = ok(() -> userClient.loanTransactions()
-                .executeLoanTransaction1(resourceExternalId, repaymentRequest, Map.<String, Object>of("command", "repayment")));
+        PostLoansLoanIdTransactionsResponse repaymentResponse = ok(
+                () -> userClient.loanTransactions().executeLoanTransactionByLoanExternalId(resourceExternalId, repaymentRequest,
+                        Map.<String, Object>of("command", "repayment")));
         testContext().set(TestContextKey.LOAN_REPAYMENT_RESPONSE, repaymentResponse);
         eventCheckHelper.loanBalanceChangedEventCheck(loanId);
     }
@@ -679,6 +688,36 @@ public class LoanRepaymentStepDef extends AbstractStepDef {
                     loanTransactionAdjustmentDataV1 -> loanTransactionAdjustmentDataV1.getNewTransactionDetail().getExternalOwnerId())
                     .isEqualTo(externalOwnerId);
         }
+    }
 
+    @Then("Customer undo {string}th transaction made on {string} results a {int} error and {string} error message")
+    public void undoTransactionResultsError(final String nthItemStr, final String transactionDate, final int errorCodeExpected,
+            final String errorMessageCode) {
+        eventStore.reset();
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        final PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        assert loanResponse != null;
+        final long loanId = loanResponse.getLoanId();
+        final List<GetLoansLoanIdTransactions> transactions = ok(
+                () -> fineractClient.loans().retrieveLoan(loanId, Map.<String, Object>of("associations", "transactions")))
+                .getTransactions();
+
+        final int nthItem = Integer.parseInt(nthItemStr) - 1;
+        assert transactions != null;
+        final GetLoansLoanIdTransactions targetTransaction = transactions.stream().filter(t -> {
+            assert t.getDate() != null;
+            return transactionDate.equals(formatter.format(t.getDate()));
+        }).toList().get(nthItem);
+
+        final PostLoansLoanIdTransactionsTransactionIdRequest transactionUndoRequest = LoanRequestFactory.defaultTransactionUndoRequest()
+                .transactionDate(transactionDate);
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.loanTransactions().adjustLoanTransaction(loanId,
+                targetTransaction.getId(), transactionUndoRequest, Map.of()));
+
+        assertThat(exception.getStatus()).as(ErrorMessageHelper.wrongErrorCode(exception.getStatus(), errorCodeExpected))
+                .isEqualTo(errorCodeExpected);
+        assertThat(exception.getDeveloperMessage())
+                .as(ErrorMessageHelper.wrongErrorMessage(exception.getDeveloperMessage(), errorMessageCode)).contains(errorMessageCode);
     }
 }

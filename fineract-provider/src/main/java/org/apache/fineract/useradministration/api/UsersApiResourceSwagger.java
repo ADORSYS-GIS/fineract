@@ -100,7 +100,6 @@ final class UsersApiResourceSwagger {
 
         public Collection<OfficeData> allowedOffices;
         public Collection<RoleData> availableRoles;
-        public Collection<RoleData> selfServiceRoles;
     }
 
     @Schema(description = "PostUsersRequest")
@@ -135,7 +134,7 @@ final class UsersApiResourceSwagger {
         @Schema(example = "true")
         public Boolean passwordNeverExpires;
         @Schema(example = "true")
-        public Boolean isSelfServiceUser;
+        public Boolean isLoginRetriesEnabled;
     }
 
     @Schema(description = "PostUsersResponse")
@@ -216,7 +215,7 @@ final class UsersApiResourceSwagger {
         @Schema(example = "true")
         public Boolean sendPasswordToEmail;
         @Schema(example = "true")
-        public Boolean isSelfServiceUser;
+        public Boolean isLoginRetriesEnabled;
     }
 
     @Schema(description = "PutUsersUserIdResponse")

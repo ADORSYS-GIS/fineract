@@ -46,6 +46,7 @@ import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyActionRep
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyTagHistory;
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyTagHistoryRepository;
 import org.apache.fineract.portfolio.delinquency.domain.LoanInstallmentDelinquencyTagRepository;
+import org.apache.fineract.portfolio.delinquency.exception.DelinquencyBucketNotFoundException;
 import org.apache.fineract.portfolio.delinquency.helper.DelinquencyEffectivePauseHelper;
 import org.apache.fineract.portfolio.delinquency.helper.InstallmentDelinquencyAggregator;
 import org.apache.fineract.portfolio.delinquency.mapper.DelinquencyBucketMapper;
@@ -106,6 +107,9 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
 
     @Override
     public DelinquencyBucketData retrieveDelinquencyBucket(Long delinquencyBucketId) {
+        if (!repositoryBucket.existsById(delinquencyBucketId)) {
+            throw DelinquencyBucketNotFoundException.notFound(delinquencyBucketId);
+        }
         final DelinquencyBucket delinquencyBucket = repositoryBucket.getReferenceById(delinquencyBucketId);
         final DelinquencyBucketData delinquencyBucketData = mapperBucket.map(delinquencyBucket);
         delinquencyBucketData.setRanges(mapperRange.map(delinquencyBucket.getRanges()));
@@ -117,10 +121,8 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
         final Loan loan = this.loanRepository.getReferenceById(loanId);
         Optional<LoanDelinquencyTagHistory> optLoanDelinquencyTag = this.repositoryLoanDelinquencyTagHistory.findByLoanAndLiftedOnDate(loan,
                 null);
-        if (optLoanDelinquencyTag.isPresent()) {
-            return mapperRange.map(optLoanDelinquencyTag.get().getDelinquencyRange());
-        }
-        return null;
+        return optLoanDelinquencyTag.map(loanDelinquencyTagHistory -> mapperRange.map(loanDelinquencyTagHistory.getDelinquencyRange()))
+                .orElse(null);
     }
 
     @Override
@@ -141,12 +143,10 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
 
             // If the Loan is not Active yet or is cancelled (rejected or withdrawn), return template data
             if (loan.isSubmittedAndPendingApproval() || loan.isApproved() || loan.isCancelled()) {
-                if (loan.getLoanProduct() != null && !loan.getLoanProduct().isAllowApprovedDisbursedAmountsOverApplied()) {
-                    return collectionData;
-                } else {
+                if (loan.getLoanProduct() == null || loan.getLoanProduct().isAllowApprovedDisbursedAmountsOverApplied()) {
                     collectionData.setAvailableDisbursementAmountWithOverApplied(calculateAvailableDisbursementAmountWithOverApplied(loan));
-                    return collectionData;
                 }
+                return collectionData;
             }
 
             final List<LoanDelinquencyAction> savedDelinquencyList = retrieveLoanDelinquencyActions(loanId);
@@ -218,7 +218,7 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
         // Calculate available amount: (approved + over applied) - expected tranches - disbursed - capitalized income
         if (loan.isMultiDisburmentLoan() && loan.getDisbursementDetails() != null) {
             final BigDecimal expectedDisbursementAmount = loan.getDisbursementDetails().stream()
-                    .filter(detail -> detail.actualDisbursementDate() == null).map(LoanDisbursementDetails::principal)
+                    .filter(detail -> detail.actualDisbursementDate() == null).map(LoanDisbursementDetails::getPrincipal)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             approvedWithOverApplied = approvedWithOverApplied.subtract(expectedDisbursementAmount);
         }
@@ -337,11 +337,9 @@ public class DelinquencyReadPlatformServiceImpl implements DelinquencyReadPlatfo
                 isCurrentDateBeforeInstallmentAndLoanPeriod = DateUtils.isEqual(currentBusinessDate, installment.getDueDate())
                         && DateUtils.isBefore(currentBusinessDate, expectedMaturityDate);
             }
-            if (isCurrentDateBeforeInstallmentAndLoanPeriod) {
-                if (installment.isNotFullyPaidOff()) {
-                    nextUnpaidInstallmentDate = installment.getDueDate();
-                    break;
-                }
+            if (isCurrentDateBeforeInstallmentAndLoanPeriod && installment.isNotFullyPaidOff()) {
+                nextUnpaidInstallmentDate = installment.getDueDate();
+                break;
             }
         }
         return nextUnpaidInstallmentDate;
