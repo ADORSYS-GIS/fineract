@@ -24,8 +24,10 @@ import static jakarta.ws.rs.HttpMethod.POST;
 import static jakarta.ws.rs.HttpMethod.PUT;
 import static org.apache.fineract.batch.command.CommandStrategyUtils.isResourceVersioned;
 
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.batch.command.internal.UnknownCommandStrategy;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,7 @@ import org.springframework.stereotype.Component;
  *
  * @see org.apache.fineract.batch.command.internal.UnknownCommandStrategy
  */
+@Slf4j
 @Component
 public class CommandStrategyProvider {
 
@@ -92,6 +95,22 @@ public class CommandStrategyProvider {
         init();
 
         this.applicationContext = applicationContext;
+    }
+
+    /**
+     * Allows custom plugins to register additional batch command strategies
+     * without modifying the core init() method.
+     */
+    @PostConstruct
+    public void registerPluginStrategies() {
+        Map<String, CommandStrategyRegistrar> registrars = applicationContext.getBeansOfType(CommandStrategyRegistrar.class);
+        if (!registrars.isEmpty()) {
+            registrars.forEach((name, registrar) -> {
+                int before = commandStrategies.size();
+                registrar.register(commandStrategies);
+                log.info("Plugin '{}' registered {} batch command strategies", name, commandStrategies.size() - before);
+            });
+        }
     }
 
     /**
