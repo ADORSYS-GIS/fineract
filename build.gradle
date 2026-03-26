@@ -167,12 +167,6 @@ subprojects { subproject ->
 }
 
 allprojects  {
-    apply plugin: 'java'
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
     group = 'org.apache.fineract'
 
     repositories {
@@ -286,10 +280,6 @@ allprojects  {
         reportDir = file("$buildDir/reports/rat")
         excludes = [
             '**/src/main/templates/**/*.mustache',
-            '**/keycloak-config/**',
-            '**/Dockerfile.keycloak-setup',
-            '**/config/docker/env/fineract-keycloak.env',
-            '**/fineract-helm-chart/**',
             '**/.dockerignore',
             '**/*.launch',
             '**/licenses/**',
@@ -497,9 +487,9 @@ configure(project.fineractJavaProjects) {
         options.deprecation = true
     }
 
-    // check {
-    //     dependsOn(rat, licenseMain, licenseTest)
-    // }
+    check {
+        dependsOn(rat, licenseMain, licenseTest)
+    }
 
     dependencies {
         spotbugsPlugins 'jp.skypencil.findbugs.slf4j:bug-pattern:1.5.0@jar'
@@ -842,7 +832,6 @@ configure(project.fineractCustomProjects) {
     }
 }
 
-/*
 configure(project.fineractPublishProjects) {
     apply plugin: 'maven-publish'
 
