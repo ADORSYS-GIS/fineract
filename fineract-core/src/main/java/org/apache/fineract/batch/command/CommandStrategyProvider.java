@@ -50,12 +50,12 @@ public class CommandStrategyProvider {
     /**
      * Regex pattern for specifying any number of query params or not specific any query param
      */
-    private static final String OPTIONAL_QUERY_PARAM_REGEX = "(\\?(\\w+(?:\\=[\\w,]+|&)+)+)?";
+    private static final String OPTIONAL_QUERY_PARAM_REGEX = "(\\?([\\w-]+=[^&]+)(?:&[\\w-]+=[^&]+)*)?";
 
     /**
      * Regex pattern for specifying query params
      */
-    private static final String MANDATORY_QUERY_PARAM_REGEX = "(\\?(\\w+(?:\\=[\\w\\-,]+|&)+)+)";
+    private static final String MANDATORY_QUERY_PARAM_REGEX = "(\\?([\\w-]+=[^&]+)(?:&[\\w-]+=[^&]+)*)";
 
     /**
      * Regex pattern for specifying any query param that has key = 'command' or not specific anything.
@@ -168,6 +168,8 @@ public class CommandStrategyProvider {
         commandStrategies.put(CommandContext
                 .resource("v1\\/savingsaccounts\\/" + NUMBER_REGEX + "\\/transactions\\/" + NUMBER_REGEX + OPTIONAL_COMMAND_PARAM_REGEX)
                 .method(POST).build(), "savingsAccountAdjustTransactionCommandStrategy");
+        commandStrategies.put(CommandContext.resource("v1\\/savingsaccounts\\/" + NUMBER_REGEX + "\\/charges").method(POST).build(),
+                "createSavingsAccountChargeCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\/charges").method(POST).build(),
                 "createChargeCommandStrategy");
         commandStrategies.put(
@@ -220,6 +222,13 @@ public class CommandStrategyProvider {
                 CommandContext.resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + "\\/transactions\\/external-id\\/"
                         + UUID_PARAM_REGEX + OPTIONAL_QUERY_PARAM_REGEX).method(GET).build(),
                 "getLoanTransactionByExternalIdCommandStrategy");
+        commandStrategies.put(
+                CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\/transactions\\/reage-preview" + OPTIONAL_QUERY_PARAM_REGEX)
+                        .method(GET).build(),
+                "getReagePreviewByLoanIdCommandStrategy");
+        commandStrategies.put(CommandContext
+                .resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + "\\/transactions\\/reage-preview" + OPTIONAL_QUERY_PARAM_REGEX)
+                .method(GET).build(), "getReagePreviewByLoanExternalIdCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/datatables\\/" + ALPHANUMBERIC_WITH_UNDERSCORE_REGEX + "\\/" + NUMBER_REGEX)
                 .method(POST).build(), "createDatatableEntryCommandStrategy");
         commandStrategies.put(CommandContext

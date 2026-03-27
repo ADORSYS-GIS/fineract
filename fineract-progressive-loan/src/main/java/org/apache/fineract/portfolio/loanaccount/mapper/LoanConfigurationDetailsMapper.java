@@ -48,7 +48,7 @@ public final class LoanConfigurationDetailsMapper {
 
         return new LoanConfigurationDetails(currencyData, loanProductRelatedDetail.getNominalInterestRatePerPeriod(),
                 loanProductRelatedDetail.getAnnualNominalInterestRate(), loanProductRelatedDetail.getGraceOnInterestCharged(),
-                loanProductRelatedDetail.getGraceOnPrincipalPayment(), loanProductRelatedDetail.getGraceOnPrincipalPayment(),
+                loanProductRelatedDetail.getGraceOnInterestPayment(), loanProductRelatedDetail.getGraceOnPrincipalPayment(),
                 loanProductRelatedDetail.getRecurringMoratoriumOnPrincipalPeriods(), loanProductRelatedDetail.getInterestMethod(),
                 loanProductRelatedDetail.getInterestCalculationPeriodMethod(),
                 DaysInYearType.fromInt(loanProductRelatedDetail.getDaysInYearType()),
@@ -56,7 +56,8 @@ public final class LoanConfigurationDetailsMapper {
                 loanProductRelatedDetail.getRepaymentPeriodFrequencyType(), loanProductRelatedDetail.getRepayEvery(),
                 loanProductRelatedDetail.getNumberOfRepayments(), loanProductRelatedDetail.isInterestRecognitionOnDisbursementDate(),
                 loanProductRelatedDetail.getDaysInYearCustomStrategy(), loanProductRelatedDetail.isAllowPartialPeriodInterestCalculation(),
-                loan.isInterestRecalculationEnabled(), getRestFrequencyType(loan), getPreCloseInterestCalculationStrategy(loan));
+                loan.isInterestRecalculationEnabled(), getRestFrequencyType(loan), getPreCloseInterestCalculationStrategy(loan),
+                loan.isAllowFullTermForTranche(), loan.getLoanProductRelatedDetail().getLoanScheduleProcessingType());
     }
 
     private static RecalculationFrequencyType getRestFrequencyType(Loan loan) {

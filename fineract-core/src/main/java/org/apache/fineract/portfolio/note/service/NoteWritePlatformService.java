@@ -18,19 +18,18 @@
  */
 package org.apache.fineract.portfolio.note.service;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.note.data.NoteCreateRequest;
+import org.apache.fineract.portfolio.note.data.NoteCreateResponse;
+import org.apache.fineract.portfolio.note.data.NoteDeleteRequest;
+import org.apache.fineract.portfolio.note.data.NoteDeleteResponse;
+import org.apache.fineract.portfolio.note.data.NoteUpdateRequest;
+import org.apache.fineract.portfolio.note.data.NoteUpdateResponse;
 
 public interface NoteWritePlatformService {
 
-    CommandProcessingResult createNote(JsonCommand command);
+    NoteCreateResponse createNote(NoteCreateRequest request);
 
-    void createLoanTransactionNote(Long loanTransactionId, String note);
+    NoteUpdateResponse updateNote(NoteUpdateRequest request);
 
-    CommandProcessingResult updateNote(JsonCommand command);
-
-    CommandProcessingResult deleteNote(JsonCommand command);
-
-    void createAndPersistClientNote(Client client, JsonCommand command);
+    NoteDeleteResponse deleteNote(NoteDeleteRequest request);
 }

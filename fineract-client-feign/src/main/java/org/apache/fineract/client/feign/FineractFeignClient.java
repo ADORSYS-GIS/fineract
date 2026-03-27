@@ -54,7 +54,6 @@ import org.apache.fineract.client.feign.services.DataTablesApi;
 import org.apache.fineract.client.feign.services.DefaultApi;
 import org.apache.fineract.client.feign.services.DelinquencyRangeAndBucketsManagementApi;
 import org.apache.fineract.client.feign.services.DepositAccountOnHoldFundTransactionsApi;
-import org.apache.fineract.client.feign.services.DeviceRegistrationApi;
 import org.apache.fineract.client.feign.services.DocumentsApi;
 import org.apache.fineract.client.feign.services.DocumentsApiFixed;
 import org.apache.fineract.client.feign.services.EntityDataTableApi;
@@ -96,6 +95,7 @@ import org.apache.fineract.client.feign.services.LoanCollateralApi;
 import org.apache.fineract.client.feign.services.LoanCollateralManagementApi;
 import org.apache.fineract.client.feign.services.LoanDisbursementDetailsApi;
 import org.apache.fineract.client.feign.services.LoanInterestPauseApi;
+import org.apache.fineract.client.feign.services.LoanOriginatorsApi;
 import org.apache.fineract.client.feign.services.LoanProductsApi;
 import org.apache.fineract.client.feign.services.LoanReschedulingApi;
 import org.apache.fineract.client.feign.services.LoanTransactionsApi;
@@ -114,7 +114,6 @@ import org.apache.fineract.client.feign.services.PasswordPreferencesApi;
 import org.apache.fineract.client.feign.services.PaymentTypeApi;
 import org.apache.fineract.client.feign.services.PeriodicAccrualAccountingApi;
 import org.apache.fineract.client.feign.services.PermissionsApi;
-import org.apache.fineract.client.feign.services.PocketApi;
 import org.apache.fineract.client.feign.services.PovertyLineApi;
 import org.apache.fineract.client.feign.services.ProductMixApi;
 import org.apache.fineract.client.feign.services.ProductsApi;
@@ -140,23 +139,6 @@ import org.apache.fineract.client.feign.services.SchedulerApi;
 import org.apache.fineract.client.feign.services.SchedulerJobApi;
 import org.apache.fineract.client.feign.services.ScoreCardApi;
 import org.apache.fineract.client.feign.services.SearchApiApi;
-import org.apache.fineract.client.feign.services.SelfAccountTransferApi;
-import org.apache.fineract.client.feign.services.SelfAuthenticationApi;
-import org.apache.fineract.client.feign.services.SelfClientApi;
-import org.apache.fineract.client.feign.services.SelfDividendApi;
-import org.apache.fineract.client.feign.services.SelfLoanProductsApi;
-import org.apache.fineract.client.feign.services.SelfLoansApi;
-import org.apache.fineract.client.feign.services.SelfRunReportApi;
-import org.apache.fineract.client.feign.services.SelfSavingsAccountApi;
-import org.apache.fineract.client.feign.services.SelfSavingsProductsApi;
-import org.apache.fineract.client.feign.services.SelfScoreCardApi;
-import org.apache.fineract.client.feign.services.SelfServiceRegistrationApi;
-import org.apache.fineract.client.feign.services.SelfShareAccountsApi;
-import org.apache.fineract.client.feign.services.SelfShareProductsApi;
-import org.apache.fineract.client.feign.services.SelfSpmApi;
-import org.apache.fineract.client.feign.services.SelfThirdPartyTransferApi;
-import org.apache.fineract.client.feign.services.SelfUserApi;
-import org.apache.fineract.client.feign.services.SelfUserDetailsApi;
 import org.apache.fineract.client.feign.services.ShareAccountApi;
 import org.apache.fineract.client.feign.services.SmsApi;
 import org.apache.fineract.client.feign.services.SpmApiLookUpTableApi;
@@ -171,6 +153,10 @@ import org.apache.fineract.client.feign.services.TellerCashManagementApi;
 import org.apache.fineract.client.feign.services.TwoFactorApi;
 import org.apache.fineract.client.feign.services.UserGeneratedDocumentsApi;
 import org.apache.fineract.client.feign.services.UsersApi;
+import org.apache.fineract.client.feign.services.WorkingCapitalLoanCobCatchUpApi;
+import org.apache.fineract.client.feign.services.WorkingCapitalLoanProductsApi;
+import org.apache.fineract.client.feign.services.WorkingCapitalLoanTransactionsApi;
+import org.apache.fineract.client.feign.services.WorkingCapitalLoansApi;
 import org.apache.fineract.client.feign.services.WorkingDaysApi;
 
 /**
@@ -364,10 +350,6 @@ public final class FineractFeignClient {
         return create(DepositAccountOnHoldFundTransactionsApi.class);
     }
 
-    public DeviceRegistrationApi deviceRegistration() {
-        return create(DeviceRegistrationApi.class);
-    }
-
     public DocumentsApi documents() {
         return create(DocumentsApi.class);
     }
@@ -532,6 +514,10 @@ public final class FineractFeignClient {
         return create(LoanInterestPauseApi.class);
     }
 
+    public LoanOriginatorsApi loanOriginators() {
+        return create(LoanOriginatorsApi.class);
+    }
+
     public LoanProductsApi loanProducts() {
         return create(LoanProductsApi.class);
     }
@@ -602,10 +588,6 @@ public final class FineractFeignClient {
 
     public PermissionsApi permissions() {
         return create(PermissionsApi.class);
-    }
-
-    public PocketApi pocket() {
-        return create(PocketApi.class);
     }
 
     public PovertyLineApi povertyLine() {
@@ -708,74 +690,6 @@ public final class FineractFeignClient {
         return create(SearchApiApi.class);
     }
 
-    public SelfAccountTransferApi selfAccountTransfer() {
-        return create(SelfAccountTransferApi.class);
-    }
-
-    public SelfAuthenticationApi selfAuthentication() {
-        return create(SelfAuthenticationApi.class);
-    }
-
-    public SelfClientApi selfClient() {
-        return create(SelfClientApi.class);
-    }
-
-    public SelfDividendApi selfDividend() {
-        return create(SelfDividendApi.class);
-    }
-
-    public SelfLoanProductsApi selfLoanProducts() {
-        return create(SelfLoanProductsApi.class);
-    }
-
-    public SelfLoansApi selfLoans() {
-        return create(SelfLoansApi.class);
-    }
-
-    public SelfRunReportApi selfRunReport() {
-        return create(SelfRunReportApi.class);
-    }
-
-    public SelfSavingsAccountApi selfSavingsAccount() {
-        return create(SelfSavingsAccountApi.class);
-    }
-
-    public SelfSavingsProductsApi selfSavingsProducts() {
-        return create(SelfSavingsProductsApi.class);
-    }
-
-    public SelfScoreCardApi selfScoreCard() {
-        return create(SelfScoreCardApi.class);
-    }
-
-    public SelfServiceRegistrationApi selfServiceRegistration() {
-        return create(SelfServiceRegistrationApi.class);
-    }
-
-    public SelfShareAccountsApi selfShareAccounts() {
-        return create(SelfShareAccountsApi.class);
-    }
-
-    public SelfShareProductsApi selfShareProducts() {
-        return create(SelfShareProductsApi.class);
-    }
-
-    public SelfSpmApi selfSpm() {
-        return create(SelfSpmApi.class);
-    }
-
-    public SelfThirdPartyTransferApi selfThirdPartyTransfer() {
-        return create(SelfThirdPartyTransferApi.class);
-    }
-
-    public SelfUserApi selfUser() {
-        return create(SelfUserApi.class);
-    }
-
-    public SelfUserDetailsApi selfUserDetails() {
-        return create(SelfUserDetailsApi.class);
-    }
-
     public ShareAccountApi shareAccount() {
         return create(ShareAccountApi.class);
     }
@@ -830,6 +744,22 @@ public final class FineractFeignClient {
 
     public UsersApi users() {
         return create(UsersApi.class);
+    }
+
+    public WorkingCapitalLoanProductsApi workingCapitalLoanProducts() {
+        return create(WorkingCapitalLoanProductsApi.class);
+    }
+
+    public WorkingCapitalLoanCobCatchUpApi workingCapitalLoanCobCatchUpApi() {
+        return create(WorkingCapitalLoanCobCatchUpApi.class);
+    }
+
+    public WorkingCapitalLoansApi workingCapitalLoans() {
+        return create(WorkingCapitalLoansApi.class);
+    }
+
+    public WorkingCapitalLoanTransactionsApi workingCapitalLoanTransactions() {
+        return create(WorkingCapitalLoanTransactionsApi.class);
     }
 
     public WorkingDaysApi workingDays() {

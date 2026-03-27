@@ -40,7 +40,7 @@ public class TaxComponentRequest implements Serializable {
     private Integer debitAccountType;
     private Long debitAccountId;
     private Integer creditAccountType;
-    private Long creditAcountId;
+    private Long creditAccountId;
     private String startDate;
     private String dateFormat;
     private String locale;
