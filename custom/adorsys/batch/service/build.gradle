@@ -1,9 +1,0 @@
-description = 'Adorsys Custom Batch API Strategies Service'
-
-group = 'com.adorsys.fineract.batch'
-
-base {
-    archivesName = 'adorsys-fineract-batch-service'
-}
-
-apply from: 'dependencies.gradle'
