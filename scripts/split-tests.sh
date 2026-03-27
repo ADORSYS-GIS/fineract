@@ -45,7 +45,7 @@ fi
 
 echo "🔍 Searching for eligible JUnit test classes..."
 
-ALL_TESTS=$(find . -type f -path "*/src/test/java/*.java" \
+ALL_TESTS=$(find . -type f -path "*/src/test/java/*.java" -not -path "*fineract-adorsys-*" \
   | while read filepath; do
       filename=$(basename "$filepath")
 
