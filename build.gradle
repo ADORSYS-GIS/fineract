@@ -252,6 +252,7 @@ allprojects  {
         header rootProject.file("$rootDir/APACHE_LICENSETEXT.md")
         excludes([
             "**/gradlew*",
+            "**/*adorsys*/**",
             "**/git.properties",
             "**/*.html",
             "**/templates/**",
