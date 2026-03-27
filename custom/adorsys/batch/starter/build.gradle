@@ -1,0 +1,9 @@
+description = 'Adorsys Custom Batch API Strategies Starter'
+
+group = 'com.adorsys.fineract.batch'
+
+base {
+    archivesName = 'adorsys-fineract-batch-starter'
+}
+
+apply from: 'dependencies.gradle'
