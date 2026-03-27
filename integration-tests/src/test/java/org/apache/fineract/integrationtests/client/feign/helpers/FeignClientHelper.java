@@ -36,15 +36,18 @@ public class FeignClientHelper {
         this.fineractClient = fineractClient;
     }
 
-    public Long createClient(String firstName, String lastName) {
+    public Long createClient() {
+        return createClient(Utils.dateFormatter.format(Utils.getLocalDateOfTenant()));
+    }
+
+    public Long createClient(String activationDate) {
         String externalId = Utils.randomStringGenerator("EXT_", 7);
-        String activationDate = Utils.dateFormatter.format(Utils.getLocalDateOfTenant());
 
         PostClientsRequest request = new PostClientsRequest()//
                 .officeId(1L)//
                 .legalFormId(1L)//
-                .firstname(firstName)//
-                .lastname(lastName)//
+                .firstname(Utils.randomFirstNameGenerator())//
+                .lastname(Utils.randomLastNameGenerator())//
                 .externalId(externalId)//
                 .active(true)//
                 .activationDate(activationDate)//
@@ -55,11 +58,11 @@ public class FeignClientHelper {
     }
 
     public Long createClient(PostClientsRequest request) {
-        PostClientsResponse response = ok(() -> fineractClient.clients().create6(request));
+        PostClientsResponse response = ok(() -> fineractClient.clients().createClient(request));
         return response.getClientId();
     }
 
     public GetClientsClientIdResponse getClient(Long clientId) {
-        return ok(() -> fineractClient.clients().retrieveOne11(clientId, Collections.emptyMap()));
+        return ok(() -> fineractClient.clients().retrieveOneClient(clientId, Collections.emptyMap()));
     }
 }

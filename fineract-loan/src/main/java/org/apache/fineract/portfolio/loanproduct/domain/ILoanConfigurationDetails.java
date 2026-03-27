@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.common.domain.DaysInYearCustomStrategyType;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleProcessingType;
 
 /**
  * Represents the bare minimum repayment details needed for activities related to generating repayment schedules.
@@ -73,4 +74,8 @@ public interface ILoanConfigurationDetails {
     RecalculationFrequencyType getRestFrequencyType();
 
     LoanPreCloseInterestCalculationStrategy getPreCloseInterestCalculationStrategy();
+
+    boolean isAllowFullTermForTranche();
+
+    LoanScheduleProcessingType getLoanScheduleProcessingType();
 }

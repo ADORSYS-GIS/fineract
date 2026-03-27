@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.infrastructure.cache.data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +30,10 @@ import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public final class CacheData {
+public final class CacheData implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
     private EnumOptionData cacheType;

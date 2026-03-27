@@ -29,6 +29,7 @@ public abstract class TestContextKey {
     public static final String LOAN_CREATE_RESPONSE = "loanCreateResponse";
     public static final String LOAN_CREATE_SECOND_LOAN_RESPONSE = "loanCreateSecondLoanResponse";
     public static final String LOAN_MODIFY_RESPONSE = "loanModifyResponse";
+    public static final String LOAN_DELETE_RESPONSE = "loanDeleteResponse";
     public static final String ADD_DUE_DATE_CHARGE_RESPONSE = "addDueDateChargeResponse";
     public static final String ADD_INSTALLMENT_FEE_CHARGE_RESPONSE = "addInstallmentFeeChargeResponse";
     public static final String ADD_PROCESSING_FEE_RESPONSE = "addProcessingFeeResponse";
@@ -52,6 +53,7 @@ public abstract class TestContextKey {
     public static final String LOAN_REAGING_UNDO_RESPONSE = "loanReAgingUndoResponse";
     public static final String LOAN_REAGING_PREVIEW_RESPONSE = "loanReAgingPreviewResponse";
     public static final String LOAN_REAMORTIZATION_RESPONSE = "loanReAmortizationResponse";
+    public static final String LOAN_REAMORTIZATION_PREVIEW_RESPONSE = "loanReAmortizationPreviewResponse";
     public static final String LOAN_REAMORTIZATION_UNDO_RESPONSE = "loanReAmortizationUndoResponse";
     public static final String BUSINESS_DATE_RESPONSE = "businessDateResponse";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP1 = "loanProductCreateResponseLP1";
@@ -87,6 +89,7 @@ public abstract class TestContextKey {
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_AUTO = "loanProductCreateResponseLP2DownPaymentAuto";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_ADVANCED_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE = "loanProductCreateResponseLP2DownPaymentProgressiveLoanSchedule";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADVANCED_CUSTOM_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE = "loanProductCreateResponseLP2ProgressiveLoanScheduleCustomPaymentAllocation";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADVANCED_PAYMENT_ALLOCATION_ACTUAL_ACTUAL_PROGRESSIVE_LOAN_SCHEDULE = "loanProductCreateResponseLP2ProgressiveLoanScheduleActualActualAdvancedPaymentAllocation";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_ADVANCED_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE_VERTICAL = "loanProductCreateResponseLP2DownPaymentProgressiveLoanScheduleVertical";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_ADVANCED_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE_INSTALLMENT_LEVEL_DELINQUENCY = "loanProductCreateResponseLP2DownPaymentProgressiveLoanScheduleInstallmentLevelDelinquency";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_ADV_PMT_ALLOC_PROG_SCHEDULE_HOR_INST_LVL_DELINQUENCY_CREDIT_ALLOCATION = "loanProductCreateResponseLP2DownPaymentProgressiveLoanScheduleHorizontalInstallmentLevelDelinquencyCreditAllocation";
@@ -114,6 +117,7 @@ public abstract class TestContextKey {
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_EMI_ACTUAL_ACTUAL_INTEREST_REFUND_FULL = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualInterestRefundFull";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_EMI_ACTUAL_ACTUAL_NO_INTEREST_RECALC_REFUND_FULL = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualNoInterestRecalcRefundFull";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualInterestRefundFullZeroInterestChargeOff";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF_ACCRUAL_ACTIVITY = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualInterestRefundFullZeroInterestChargeOffAccrualActivity";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_NO_INTEREST_RECALC_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualNoInterestRecalcInterestRefundFullZeroInterestChargeOff";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ACCELERATE_MATURITY_CHARGE_OFF = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualInterestRefundFullAccelerateMaturityChargeOff";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_NO_INTEREST_RECALC_INT_REFUND_FULL_ACC_MATUR_CHARGE_OFF = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmiActualActualNoInterestRecalcInterestRefundFullAccelerateMaturityChargeOff";
@@ -166,6 +170,7 @@ public abstract class TestContextKey {
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_PROGRESSIVE_ADV_PYMNT_BUYDOWN_FEES_NON_MERCHANT = "loanProductCreateResponseLP2ProgressiveAdvancedPaymentBuyDownFeesNonMerchant";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_PROGRESSIVE_ADV_PYMNT_BUYDOWN_FEES_NON_MERCHANT_CHARGE_OFF_REASON = "loanProductCreateResponseLP2ProgressiveAdvancedPaymentBuyDownFeesNonMerchantWithChargeOffReason";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_PROGRESSIVE_ADV_PYMNT_BUYDOWN_FEES_CLASSIFICATION_INCOME_MAP = "loanProductCreateResponseLP2ProgressiveAdvancedPaymentBuyDownFeesClassificationIncomeMap";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_PROGRESSIVE_ADV_PYMNT_BUYDOWN_FEES_FEE_INCOME = "loanProductCreateResponseLP2ProgressiveAdvancedPaymentBuyDownFeesFeeIncome";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_EMI_360_30_INTEREST_RECALC_DAILY_CAPITALIZED_INCOME_ADJ_CUSTOM_ALLOC = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyCapitalizedIncomeAdjCustomAlloc";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_PROGRESSIVE_ADV_PMNT_ALLOCATION_CAPITALIZED_INCOME_ADJ_CUSTOM_ALLOC_CLASSIFICATION_INCOME_MAP = "loanProductCreateResponseLP2AdvancedPaymentCapitalizedIncomeAdjCustomAllocClassificationIncomeMao";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_RECALC_EMI_360_30_MULTIDISB_OVER_APPLIED_PERCENTAGE_CAPITALIZED_INCOME = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisbursalApprovedOVerAppliedPercentageCapitalizedIncome";
@@ -209,6 +214,7 @@ public abstract class TestContextKey {
     public static final String CHARGE_FOR_LOAN_INSTALLMENT_FEE_FLAT_CREATE_RESPONSE = "ChargeForLoanInstallmentFeeFlatCreateResponse";
     public static final String CHARGE_FOR_CLIENT_FIXED_FEE_CREATE_RESPONSE = "ChargeForClientFixedFeeCreateResponse";
     public static final String CHARGE_FOR_LOAN_DISBURSEMENT_CHARGE_CREATE_RESPONSE = "ChargeForLoanDisbursementChargeCreateResponse";
+    public static final String CHARGE_FOR_LOAN_DISBURSEMENT_PERCENTAGE_AMOUNT_PLUS_INTEREST_CREATE_RESPONSE = "ChargeForLoanDisbursementPercentageAmountPlusInterestCreateResponse";
     public static final String LOAN_RESPONSE = "loanResponse";
     public static final String LOAN_REPAYMENT_UNDO_RESPONSE = "loanRepaymentUndoResponse";
     public static final String LOAN_CAPITALIZED_INCOME_ADJUSTMENT_UNDO_RESPONSE = "loanCapitalizedIncomeAdjustmentUndoResponse";
@@ -216,6 +222,7 @@ public abstract class TestContextKey {
     public static final String LOAN_CHARGEBACK_RESPONSE = "loanChargebackResponse";
     public static final String LOAN_CHARGE_ADJUSTMENT_RESPONSE = "loanChargeAdjustmentResponse";
     public static final String PUT_CURRENCIES_RESPONSE = "putCurrenciesResponse";
+    public static final String GET_CURRENCIES_RESPONSE = "getCurrenciesResponse";
     public static final String BATCH_API_CALL_RESPONSE = "batchApiCallResponse";
     public static final String BATCH_API_CALL_IDEMPOTENCY_KEY = "batchApiIdempotencyKey";
     public static final String BATCH_API_CALL_IDEMPOTENCY_KEY_2 = "batchApiIdempotencyKey2";
@@ -252,6 +259,8 @@ public abstract class TestContextKey {
     public static final String ASSET_EXTERNALIZATION_BUYBACK_TRANSFER_PREFIX = "assetExternalizationTransferPrefix";
     public static final String ASSET_EXTERNALIZATION_OWNER_EXTERNAL_ID = "assetExternalizationOwnerExternalId";
     public static final String ASSET_EXTERNALIZATION_PREVIOUS_OWNER_EXTERNAL_ID = "assetExternalizationPreviousOwnerExternalId";
+    public static final String EXTERNAL_ASSET_OWNER_CREATE_RESPONSE = "externalAssetOwnerCreateResponse";
+    public static final String EXTERNAL_ASSET_OWNER_EXTERNAL_ID = "externalAssetOwnerExternalId";
     public static final String TRANSACTION_EVENT = "transactionEvent";
     public static final String LOAN_WRITE_OFF_RESPONSE = "loanWriteOffResponse";
     public static final String LOAN_DELINQUENCY_ACTION_RESPONSE = "loanDelinquencyActionResponse";
@@ -290,4 +299,39 @@ public abstract class TestContextKey {
     public static final String LP1_INTEREST_FLAT_DAILY_RECALCULATION_SAR_MULTIDISB_EXPECT_TRANCHES = "loanProductCreateResponseLP1InterestFlatDailyRecalculationSameAsRepaymentMultiDisbursementExpectTranches";
     public static final String LP1_INTEREST_FLAT_DAILY_ACTUAL_ACTUAL_MULTIDISB_EXPECT_TRANCHES = "loanProductCreateResponseLP1InterestFlatDailyActualActualMultiDisbursementExpectTranches";
     public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_360_30_ZERO_INTEREST_CHARGE_OFF_ACCRUAL_ACTIVITY = "loanProductCreateResponseLP2AdvancedPaymentZeroInterestChargeOffBehaviourAccrualActivity";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADVANCED_CUSTOM_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE_PRINCIPAL_FIRST = "loanProductCreateResponseLP2AdvancedPaymentHorizontalPrincipalFirst";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DAILY_EMI_360_30_INTEREST_RECALC_DAILY_MULTIDISBURSE_FULL_TERM_TRANCHE = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTranche";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_CUSTOM_PMT_ALLOC_PROGRESSIVE_LOAN_SCHEDULE_HORIZONTAL_360_30_USD = "loanProductCreateResponseLP2AdvancedPaymentHorizontal36030Usd";
+    public static final String ORIGINATOR_CREATE_RESPONSE = "originatorCreateResponse";
+    public static final String ORIGINATOR_EXTERNAL_ID = "originatorExternalId";
+    public static final String ORIGINATOR_TYPE_NAME = "originatorTypeName";
+    public static final String ORIGINATOR_CHANNEL_TYPE_NAME = "originatorChannelTypeName";
+    public static final String ORIGINATOR_SECOND_CREATE_RESPONSE = "originatorSecondCreateResponse";
+    public static final String ORIGINATOR_SECOND_EXTERNAL_ID = "originatorSecondExternalId";
+    public static final String VERIFIED_LOAN_ACCRUALS = "VERIFIED_LOAN_ACCRUALS";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_DOWNPAYMENT = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheDownPayment";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_DOWNPAYMENT_AUTO = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheDownPaymentAuto";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_DEFERRED_INCOME = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheDeferredIncome";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_CHARGEBACK = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheChargeback";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_ZERO_CHARGE_OFF = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheZeroIntChargeOff";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_360_30_INT_RECALC_DAILY_MULTIDISB_FULL_TERM_TRANCHE_ACCELERATE_MATURITY = "loanProductCreateResponseLP2AdvancedPaymentInterestDailyEmi36030InterestRecalculationDailyMultidisburseFullTermTrancheAccelerateMaturity";
+    public static final String OFFICE_CREATE_RESPONSE = "officeCreateResponse";
+    public static final String DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_DOWNPAYMENT_ADVANCED_PAYMENT_ALLOCATION_PROGRESSIVE_LOAN_SCHEDULE_VERTICAL_INTEREST_RECALC = "loanProductCreateResponseLP2DownPaymentAdvancedPaymentAllocationProgressiveLoanScheduleVerticalInterestRecalc";
+    public static final String DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_WCLP = "workingCapitalLoanProductCreateResponseWCLP";
+    public static final String WC_LOAN_IDS = "wcLoanIds";
+    public static final String DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_REQUEST_FOR_UPDATE_WCLP = "workingCapitalLoanProductCreateRequestForUpdateWCLP";
+    public static final String DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_FOR_UPDATE_WCLP = "workingCapitalLoanProductCreateResponseForUpdateWCLP";
+    public static final String WORKING_CAPITAL_LOAN_PRODUCT_CREATE_REQUEST = "workingCapitalLoanProductCreateRequest";
+    public static final String WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE = "workingCapitalLoanProductCreateResponse";
+    public static final String WORKING_CAPITAL_LOAN_PRODUCT_UPDATE_REQUEST = "workingCapitalLoanProductUpdateRequest";
+    public static final String WORKING_CAPITAL_LOAN_PRODUCT_UPDATE_RESPONSE = "workingCapitalLoanProductUpdateResponse";
+    public static final String DELINQUENCY_BUCKET_ID = "delinquencyBucketId";
+    public static final String DELINQUENCY_BUCKET_CREATE_REQUEST = "delinquencyBucketCreateRequest";
+    public static final String DELINQUENCY_BUCKET_UPDATE_REQUEST = "delinquencyBucketUpdateRequest";
+
+    public static final String DELINQUENCY_BUCKET_ID_FOR_UPDATE = "delinquencyBucketIdForUpdate";
+    public static final String DELINQUENCY_BUCKET_CREATE_REQUEST_FOR_UPDATE = "delinquencyBucketCreateRequestForUpdate";
+    public static final String DELINQUENCY_BUCKET_CREATE_RESPONSE_FOR_UPDATE_DUPLICATE = "delinquencyBucketUpdateRequestForUpdateDuplicate";
+
+    public static final String WC_LOAN_ACTION_TEMPLATE_RESPONSE = "wcLoanActionTemplateResponse";
 }

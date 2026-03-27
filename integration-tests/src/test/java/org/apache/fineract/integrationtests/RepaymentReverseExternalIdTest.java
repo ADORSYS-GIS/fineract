@@ -152,7 +152,7 @@ public class RepaymentReverseExternalIdTest extends BaseLoanIntegrationTest {
         final Integer fundId = createFund(requestSpec, responseSpec);
         Assertions.assertNotNull(fundId);
 
-        final Integer delinquencyBucketId = DelinquencyBucketsHelper.createDelinquencyBucket(requestSpec, responseSpec);
+        final Long delinquencyBucketId = DelinquencyBucketsHelper.createDefaultBucket();
         Assertions.assertNotNull(delinquencyBucketId);
 
         return new PostLoanProductsRequest()//
@@ -251,7 +251,7 @@ public class RepaymentReverseExternalIdTest extends BaseLoanIntegrationTest {
                 .interestRecalculationCompoundingMethod(0)//
                 .recalculationRestFrequencyType(2)//
                 .recalculationRestFrequencyInterval(1)//
-                .allowPartialPeriodInterestCalcualtion(false);//
+                .allowPartialPeriodInterestCalculation(false);//
     }
 
     private Integer createLoanAccount(final Integer clientID, final Long loanProductID, final String externalId) {

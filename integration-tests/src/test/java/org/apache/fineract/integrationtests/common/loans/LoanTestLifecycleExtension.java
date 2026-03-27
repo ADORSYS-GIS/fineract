@@ -20,7 +20,6 @@ package org.apache.fineract.integrationtests.common.loans;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -56,17 +55,15 @@ public class LoanTestLifecycleExtension implements AfterEachCallback, BeforeEach
     }
 
     private void closeOpenLoans() {
-        BusinessDateHelper.runAt(DateTimeFormatter.ofPattern(DATE_FORMAT).format(Utils.getLocalDateOfTenant()), () -> {
+        LocalDate cleanupDate = determineCleanupDate();
+        BusinessDateHelper.runAt(DateTimeFormatter.ofPattern(DATE_FORMAT).format(cleanupDate), () -> {
             this.loanTransactionHelper = new LoanTransactionHelper(null, null);
 
-            // Fully repay ACTIVE loans, so it will not be picked up by any jobs
             List<Long> loanIds = LoanTransactionHelper.getLoanIdsByStatusId(300);
             loanIds.forEach(loanId -> {
                 GetLoansLoanIdResponse loanResponse = Calls
                         .ok(FineractClientHelper.getFineractClient().loans.retrieveLoan((long) loanId, null, "all", null, null));
                 if (MathUtil.isLessThan(loanResponse.getApprovedPrincipal(), loanResponse.getProposedPrincipal())) {
-                    // reset approved principal in case it's less than proposed principal so all expected disbursements
-                    // can be properly disbursed
                     PutLoansApprovedAmountRequest request = new PutLoansApprovedAmountRequest().amount(loanResponse.getProposedPrincipal())
                             .locale("en");
                     Calls.ok(FineractClientHelper.getFineractClient().loans.modifyLoanApprovedAmount(loanId, request));
@@ -76,14 +73,13 @@ public class LoanTestLifecycleExtension implements AfterEachCallback, BeforeEach
                         loanTransactionHelper.disburseLoan((long) loanId,
                                 new PostLoansLoanIdRequest()
                                         .actualDisbursementDate(dateFormatter.format(disbursementDetail.getExpectedDisbursementDate()))
-                                        .dateFormat(DATE_FORMAT).locale("en")
-                                        .transactionAmount(BigDecimal.valueOf(disbursementDetail.getPrincipal())));
+                                        .dateFormat(DATE_FORMAT).locale("en").transactionAmount(disbursementDetail.getPrincipal()));
                     }
                 });
                 loanResponse = Calls
                         .ok(FineractClientHelper.getFineractClient().loans.retrieveLoan((long) loanId, null, "all", null, null));
                 GetLoansLoanIdTransactionsTemplateResponse prepayDetail = this.loanTransactionHelper.getPrepaymentAmount(loanId,
-                        dateFormatter.format(Utils.getLocalDateOfTenant()), DATE_FORMAT);
+                        dateFormatter.format(cleanupDate), DATE_FORMAT);
                 LocalDate transactionDate = prepayDetail.getDate();
                 Double amount = prepayDetail.getAmount();
                 Double netDisbursalAmount = prepayDetail.getNetDisbursalAmount();
@@ -91,12 +87,10 @@ public class LoanTestLifecycleExtension implements AfterEachCallback, BeforeEach
                 loanTransactionHelper.makeLoanRepayment(loanId, new PostLoansLoanIdTransactionsRequest().dateFormat(DATE_FORMAT)
                         .transactionDate(dateFormatter.format(transactionDate)).locale("en").transactionAmount(repayAmount));
             });
-            // Undo APPROVED loans, so the next step can REJECT them, so it will not be picked up by any jobs
             loanIds = LoanTransactionHelper.getLoanIdsByStatusId(200);
             loanIds.forEach(loanId -> {
                 loanTransactionHelper.undoApprovalForLoan(loanId, new PostLoansLoanIdRequest());
             });
-            // Mark SUBMITTED loans, as REJECTED, so it will not be picked up by any jobs
             loanIds = LoanTransactionHelper.getLoanIdsByStatusId(100);
             loanIds.forEach(loanId -> {
                 GetLoansLoanIdResponse details = loanTransactionHelper.getLoanDetails((long) loanId);
@@ -107,5 +101,27 @@ public class LoanTestLifecycleExtension implements AfterEachCallback, BeforeEach
             loanIds = LoanTransactionHelper.getLoanIdsByStatusId(300);
             assertEquals(0, loanIds.size());
         });
+    }
+
+    private LocalDate determineCleanupDate() {
+        LocalDate tenantDate = Utils.getLocalDateOfTenant();
+        try {
+            List<Long> activeLoanIds = LoanTransactionHelper.getLoanIdsByStatusId(300);
+            LocalDate maxTxDate = tenantDate;
+            for (Long loanId : activeLoanIds) {
+                GetLoansLoanIdResponse loanResponse = Calls
+                        .ok(FineractClientHelper.getFineractClient().loans.retrieveLoan(loanId, null, "all", null, null));
+                if (loanResponse.getTransactions() != null) {
+                    for (var tx : loanResponse.getTransactions()) {
+                        if (tx.getDate() != null && tx.getDate().isAfter(maxTxDate)) {
+                            maxTxDate = tx.getDate();
+                        }
+                    }
+                }
+            }
+            return maxTxDate;
+        } catch (Exception e) {
+            return tenantDate;
+        }
     }
 }
