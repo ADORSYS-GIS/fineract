@@ -106,16 +106,6 @@ public final class UserHelper {
     // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
     // org.apache.fineract.client.models.PostLoansLoanIdRequest)
     @Deprecated(forRemoval = true)
-    public static Object createUserForSelfService(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-            int roleId, int staffId, int clientId, String attribute) {
-        return Utils.performServerPost(requestSpec, responseSpec, CREATE_USER_URL,
-                getTestCreateUserAsJSONForSelfService(roleId, staffId, clientId), attribute);
-    }
-
-    // TODO: Rewrite to use fineract-client instead!
-    // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
-    // org.apache.fineract.client.models.PostLoansLoanIdRequest)
-    @Deprecated(forRemoval = true)
     public static Integer getUserId(final RequestSpecification requestSpec, final ResponseSpecification responseSpec, String userName) {
         String json = Utils.performServerGet(requestSpec, responseSpec, CREATE_USER_URL, null);
         Assertions.assertNotNull(json);
@@ -175,17 +165,6 @@ public final class UserHelper {
     // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
     // org.apache.fineract.client.models.PostLoansLoanIdRequest)
     @Deprecated(forRemoval = true)
-    public static String getTestCreateUserAsJSONForSelfService(int roleId, int staffId, int clientId) {
-        return "{ \"username\": \"" + Utils.uniqueRandomStringGenerator("User_Name_", 3)
-                + "\", \"firstname\": \"Test\", \"lastname\": \"User\", \"email\": \"whatever@mifos.org\","
-                + " \"officeId\": \"1\", \"staffId\": " + "\"" + staffId + "\",\"roles\": [\"" + roleId
-                + "\"], \"sendPasswordToEmail\": false," + "\"isSelfServiceUser\" : true," + "\"clients\" : [\"" + clientId + "\"]}";
-    }
-
-    // TODO: Rewrite to use fineract-client instead!
-    // Example: org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper.disburseLoan(java.lang.Long,
-    // org.apache.fineract.client.models.PostLoansLoanIdRequest)
-    @Deprecated(forRemoval = true)
     public static Integer deleteUser(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final Integer userId) {
         return Utils.performServerDelete(requestSpec, responseSpec, createRoleOperationURL(userId), "resourceId");
@@ -217,12 +196,12 @@ public final class UserHelper {
             final ResponseSpecification responseSpec) {
         String password = SIMPLE_USER_PASSWORD;
         if (!SIMPLE_USER_CREATED) {
-            GetOfficesResponse headOffice = OfficeHelper.getHeadOffice(requestSpec, responseSpec);
+            GetOfficesResponse headOffice = OfficeHelper.getHeadOffice();
             String simpleRoleId = createSimpleRole(requestSpec, responseSpec);
             PostUsersRequest createUserRequest = new PostUsersRequest().username(SIMPLE_USER_NAME)
-                    .firstname(Utils.randomStringGenerator("NotificationFN", 4)).lastname(Utils.randomStringGenerator("NotificationLN", 4))
-                    .email("whatever@mifos.org").password(password).repeatPassword(password).sendPasswordToEmail(false)
-                    .roles(List.of(Long.valueOf(simpleRoleId))).officeId(headOffice.getId());
+                    .firstname(Utils.randomFirstNameGenerator()).lastname(Utils.randomLastNameGenerator()).email("whatever@mifos.org")
+                    .password(password).repeatPassword(password).sendPasswordToEmail(false).roles(List.of(Long.valueOf(simpleRoleId)))
+                    .officeId(headOffice.getId());
 
             PostUsersResponse userCreationResponse = UserHelper.createUser(requestSpec, responseSpec, createUserRequest);
             Assertions.assertNotNull(userCreationResponse.getResourceId());
@@ -241,11 +220,11 @@ public final class UserHelper {
     public static PostUsersRequest buildUserRequest(ResponseSpecification responseSpec, RequestSpecification requestSpec, String password) {
         Integer roleId = RolesHelper.createRole(requestSpec, responseSpec);
         String uniqueUsername = Utils.uniqueRandomStringGenerator("TestUser", 4);
-        GetOfficesResponse headOffice = OfficeHelper.getHeadOffice(requestSpec, responseSpec);
+        GetOfficesResponse headOffice = OfficeHelper.getHeadOffice();
 
-        return new PostUsersRequest().username(uniqueUsername).firstname("Test").lastname("User").email("testuser@example.com")
-                .password(password).repeatPassword(password).sendPasswordToEmail(false).officeId(headOffice.getId())
-                .roles(List.of(roleId.longValue()));
+        return new PostUsersRequest().username(uniqueUsername).firstname(Utils.randomFirstNameGenerator())
+                .lastname(Utils.randomLastNameGenerator()).email("testuser@example.com").password(password).repeatPassword(password)
+                .sendPasswordToEmail(false).officeId(headOffice.getId()).roles(List.of(roleId.longValue()));
     }
 
     // TODO: Rewrite to use fineract-client instead!

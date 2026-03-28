@@ -60,6 +60,11 @@ public class LoanRepaymentScheduleService {
                 isInterestRecalculationEnabled, loanScheduleType);
     }
 
+    public Integer countInstallmentsByLoanIdWhereIsAdditionalFalseAndIsDownPaymentFalse(Long loanId) {
+        return Math.toIntExact(loanRepaymentScheduleInstallmentRepository
+                .countLoanRepaymentScheduleInstallmentsByLoan_IdAndAdditionalAndIsDownPayment(loanId, false, false));
+    }
+
     public LoanScheduleData extractLoanScheduleData(final List<LoanRepaymentScheduleInstallment> installments,
             final RepaymentScheduleRelatedLoanData repaymentScheduleRelatedLoanData, Collection<DisbursementData> disbursementData,
             Collection<LoanTransactionRepaymentPeriodData> capitalizedIncomeData, boolean isInterestRecalculationEnabled,
@@ -360,7 +365,12 @@ public class LoanRepaymentScheduleService {
             if (dataItem.isDisbursement()) {
                 // Process disbursement data
                 DisbursementData data = (DisbursementData) dataItem.getData();
-                periodData = createLoanSchedulePeriodData(data, disbursementChargeAmount, waivedChargeAmount);
+                if (periods.isEmpty()) {
+                    periodData = createLoanSchedulePeriodData(data, disbursementChargeAmount, waivedChargeAmount);
+                } else {
+                    periodData = createLoanSchedulePeriodData(data, disbursementChargeAmount.subtract(data.getDisburseChargeAmount()),
+                            waivedChargeAmount);
+                }
             } else {
                 // Process capitalized income data
                 LoanTransactionRepaymentPeriodData data = (LoanTransactionRepaymentPeriodData) dataItem.getData();

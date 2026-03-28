@@ -108,7 +108,7 @@ public class ClientHelper {
     }
 
     public static PostClientsResponse createClient(final PostClientsRequest request) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clients.create6(request));
+        return Calls.ok(FineractClientHelper.getFineractClient().clients.createClient(request));
     }
 
     public PostClientsClientIdIdentifiersResponse createClientIdentifer(final Long clientId,
@@ -144,7 +144,7 @@ public class ClientHelper {
     }
 
     public PageClientSearchData searchClients(PagedRequestClientTextSearch request) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clientSearchV2.searchByText(request));
+        return Calls.ok(FineractClientHelper.getFineractClient().clientSearchV2.searchClientsByText(request));
     }
 
     // TODO: Rewrite to use fineract-client instead!
@@ -192,6 +192,12 @@ public class ClientHelper {
         final String response = Utils.performServerGet(requestSpec, responseSpec, url);
         log.info("{}", response);
         return GSON.fromJson(response, GetClientsClientIdAccountsResponse.class);
+    }
+
+    public static String getClientAccountsRaw(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
+            final long clientId) {
+        final String url = CLIENT_URL + "/" + clientId + "/accounts?" + Utils.TENANT_IDENTIFIER;
+        return Utils.performServerGet(requestSpec, responseSpec, url);
     }
 
     // TODO: Rewrite to use fineract-client instead!
@@ -450,8 +456,8 @@ public class ClientHelper {
         HashMap<String, Object> map = new HashMap<>();
         map.put("officeId", officeId);
         map.put("legalFormId", legalFormId);
-        map.put("firstname", Utils.randomStringGenerator("Client_FirstName_", 5));
-        map.put("lastname", Utils.randomStringGenerator("Client_LastName_", 4));
+        map.put("firstname", Utils.randomFirstNameGenerator());
+        map.put("lastname", Utils.randomLastNameGenerator());
         if (externalId != null) {
             map.put("externalId", externalId);
         }
@@ -1134,31 +1140,32 @@ public class ClientHelper {
     }
 
     public GetClientsClientIdTransactionsResponse getAllClientTransactionsByExternalId(final String externalId) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.retrieveAllClientTransactions1(externalId, 0, 100));
+        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions
+                .retrieveAllClientTransactionsByClientExternalId(externalId, 0, 100));
     }
 
     public GetClientsClientIdTransactionsTransactionIdResponse getClientTransactionByExternalId(final String externalId,
             final String transactionId) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.retrieveClientTransaction2(externalId,
+        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.retrieveClientTransactionByClientExternalId(externalId,
                 Long.parseLong(transactionId)));
     }
 
     public GetClientsClientIdTransactionsTransactionIdResponse getClientTransactionByTransactionExternalId(final Long clientId,
             final String transactionExternalId) {
-        return Calls.ok(
-                FineractClientHelper.getFineractClient().clientTransactions.retrieveClientTransaction1(clientId, transactionExternalId));
+        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions
+                .retrieveClientTransactionByTransactionExternalId(clientId, transactionExternalId));
     }
 
     public PostClientsClientIdTransactionsTransactionIdResponse undoClientTransactionByExternalId(final String externalId,
             final String transactionId) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.undoClientTransaction2(externalId,
+        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.undoClientTransactionByClientExternalId(externalId,
                 Long.parseLong(transactionId), "undo"));
     }
 
     public PostClientsClientIdTransactionsTransactionIdResponse undoClientTransactionByTransactionExternalId(final Long clientId,
             final String transactionExternalId) {
-        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.undoClientTransaction1(clientId, transactionExternalId,
-                "undo"));
+        return Calls.ok(FineractClientHelper.getFineractClient().clientTransactions.undoClientTransactionByTransactionExternalId(clientId,
+                transactionExternalId, "undo"));
     }
 
     // TODO: Rewrite to use fineract-client instead!
@@ -1209,10 +1216,9 @@ public class ClientHelper {
     }
 
     public static PostClientsRequest defaultClientCreationRequest() {
-        return new PostClientsRequest().officeId(1L).legalFormId(LEGALFORM_ID_PERSON)
-                .firstname(Utils.randomStringGenerator("Client_FirstName_", 5)).lastname(Utils.randomStringGenerator("Client_LastName_", 5))
-                .externalId(UUID.randomUUID().toString()).dateFormat(Utils.DATE_FORMAT).locale("en").active(true)
-                .activationDate(DEFAULT_DATE);
+        return new PostClientsRequest().officeId(1L).legalFormId(LEGALFORM_ID_PERSON).firstname(Utils.randomFirstNameGenerator())
+                .lastname(Utils.randomLastNameGenerator()).externalId(UUID.randomUUID().toString()).dateFormat(Utils.DATE_FORMAT)
+                .locale("en").active(true).activationDate(DEFAULT_DATE);
     }
 
     public LoanAccountLockResponseDTO retrieveLockedAccounts(int page, int limit) {

@@ -32,7 +32,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.client.models.AdvancedPaymentData;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
@@ -41,10 +43,10 @@ import org.apache.fineract.client.models.GetLoansLoanIdTransactionsTransactionId
 import org.apache.fineract.client.models.PaymentAllocationOrder;
 import org.apache.fineract.client.models.PostClientsResponse;
 import org.apache.fineract.client.models.PostLoanProductsResponse;
+import org.apache.fineract.client.models.PostLoansLoanIdTransactionsRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdTransactionsResponse;
 import org.apache.fineract.client.models.PostLoansLoanIdTransactionsTransactionIdRequest;
 import org.apache.fineract.client.util.CallFailedRuntimeException;
-import org.apache.fineract.integrationtests.common.BusinessStepHelper;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.loans.LoanTransactionHelper;
@@ -61,7 +63,6 @@ public class LoanInterestRefundTest extends BaseLoanIntegrationTest {
     private static RequestSpecification requestSpec;
     private static LoanTransactionHelper loanTransactionHelper;
     private static PostClientsResponse client;
-    private static BusinessStepHelper businessStepHelper;
 
     @BeforeAll
     public static void setup() {
@@ -1512,6 +1513,116 @@ public class LoanInterestRefundTest extends BaseLoanIntegrationTest {
         });
     }
 
+    // UC20: Manual interest refund on closed loan results in DatabaseException
+    @Test
+    public void verifyUC20() {
+        AtomicReference<Long> loanIdRef = new AtomicReference<>();
+        final Integer totalTransactions = 4;
+        AtomicReferenceArray<PostLoansLoanIdTransactionsResponse> merchantIssuedRefundTransactions = new AtomicReferenceArray<>(
+                totalTransactions);
+        runAt("07 March 2025", () -> {
+            PostLoanProductsResponse loanProduct = loanProductHelper
+                    .createLoanProduct(create4IProgressive().daysInMonthType(DaysInMonthType.ACTUAL) //
+                            .daysInYearType(DaysInYearType.ACTUAL) //
+                            .chargeOffBehaviour("ZERO_INTEREST")//
+                            .enableAccrualActivityPosting(true)//
+                            .allowApprovedDisbursedAmountsOverApplied(true)//
+                            .overAppliedCalculationType("flat")//
+                            .overAppliedNumber(10000)//
+                            .enableInstallmentLevelDelinquency(true)//
+                            .multiDisburseLoan(true)//
+                            .loanScheduleType("PROGRESSIVE")//
+                            .loanScheduleProcessingType("HORIZONTAL")//
+                            .interestRecognitionOnDisbursementDate(true)//
+                            .disallowExpectedDisbursements(true)//
+                            .maxTrancheCount(500)//
+                            .addSupportedInterestRefundTypesItem(SupportedInterestRefundTypesItem.MERCHANT_ISSUED_REFUND) //
+                            .addSupportedInterestRefundTypesItem(SupportedInterestRefundTypesItem.PAYOUT_REFUND) //
+                            .recalculationRestFrequencyType(RecalculationRestFrequencyType.DAILY) //
+            );
+            Long loanId = applyAndApproveProgressiveLoan(client.getClientId(), loanProduct.getResourceId(), "07 March 2025", 915.88, 24.99,
+                    24, null);
+            Assertions.assertNotNull(loanId);
+            loanIdRef.set(loanId);
+        });
+
+        runAt("11 March 2025", () -> {
+            for (int i = 0; i < totalTransactions; i++) {
+                disburseLoan(loanIdRef.get(), BigDecimal.valueOf(228.97), "11 March 2025");
+            }
+        });
+
+        runAt("04 April 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "04 April 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("02 May 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "02 May 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("30 May 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "30 May 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("27 June 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "27 June 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("08 August 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "08 August 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("05 September 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "05 September 2025", 48.91)
+                    .getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("03 October 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            Long response = loanTransactionHelper.makeLoanRepayment(loanIdRef.get(), "Repayment", "03 October 2025", 48.91).getResourceId();
+            Assertions.assertNotNull(response);
+        });
+
+        runAt("08 October 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            for (int i = 0; i < totalTransactions; i++) {
+                final String transactionExternalId = UUID.randomUUID().toString();
+                PostLoansLoanIdTransactionsResponse refundResponse = loanTransactionHelper.makeMerchantIssuedRefund(loanIdRef.get(),
+                        new PostLoansLoanIdTransactionsRequest().dateFormat(DATETIME_PATTERN).transactionDate("08 October 2025")
+                                .locale(LOCALE).transactionAmount(228.97).externalId(transactionExternalId)
+                                .interestRefundCalculation(false));
+                Assertions.assertNotNull(refundResponse.getResourceId());
+                merchantIssuedRefundTransactions.set(i, refundResponse);
+            }
+        });
+
+        runAt("09 October 2025", () -> {
+            executeInlineCOB(loanIdRef.get());
+            loanTransactionHelper.makeCreditBalanceRefund(loanIdRef.get(), new PostLoansLoanIdTransactionsRequest()
+                    .dateFormat(DATETIME_PATTERN).transactionDate("09 October 2025").locale(LOCALE).transactionAmount(225.15));
+
+            GetLoansLoanIdResponse loanDetails = loanTransactionHelper.getLoanDetails(loanIdRef.get());
+            assertTrue(loanDetails.getStatus().getClosedObligationsMet());
+
+            for (int i = 0; i < totalTransactions; i++) {
+                loanTransactionHelper.createManualInterestRefund(loanIdRef.get(), merchantIssuedRefundTransactions.get(i).getResourceId(),
+                        null, 0.01, null);
+            }
+        });
+    }
+
     AdvancedPaymentData createPaymentAllocationInterestPrincipalPenaltyFee(String transactionType, String futureInstallmentAllocationRule) {
         AdvancedPaymentData advancedPaymentData = new AdvancedPaymentData();
         advancedPaymentData.setTransactionType(transactionType);
@@ -1633,4 +1744,63 @@ public class LoanInterestRefundTest extends BaseLoanIntegrationTest {
             Assertions.assertEquals(0.36, Utils.getDoubleValue(loanDetails.getTotalOverpaid()));
         });
     }
+
+    @Test
+    public void allowToReprocessInterestRefundEvenIfNoTransactionWasChanged() {
+        runAt("1 February 2025", () -> {
+            Long loanProductId = getOrCreateLoanProduct();
+            Long loanId = applyAndApproveProgressiveLoan(client.getClientId(), loanProductId, "1 January 2025", 100.0, 26.0, 6, null);
+            Assertions.assertNotNull(loanId);
+            disburseLoan(loanId, BigDecimal.valueOf(100.0), "1 January 2025");
+
+            final String transactionExternalId = UUID.randomUUID().toString();
+            final PostLoansLoanIdTransactionsResponse refundResponse = loanTransactionHelper.makeMerchantIssuedRefund(loanId,
+                    new PostLoansLoanIdTransactionsRequest().dateFormat(DATETIME_PATTERN).transactionDate("1 February 2025").locale("en")
+                            .transactionAmount(66.41).externalId(transactionExternalId).interestRefundCalculation(false));
+            Assertions.assertNotNull(refundResponse.getResourceId());
+
+            verifyTransactions(loanId, //
+                    transaction(100.0, "Disbursement", "01 January 2025"), //
+                    transaction(66.41, "Merchant Issued Refund", "01 February 2025") //
+            );
+
+            // Create manual interest refund via API
+            loanTransactionHelper.createManualInterestRefund(loanId, refundResponse.getResourceId(), "1 February 2025", 0.47, null);
+
+            verifyTransactions(loanId, //
+                    transaction(100.0, "Disbursement", "01 January 2025"), //
+                    transaction(66.41, "Merchant Issued Refund", "01 February 2025"), //
+                    transaction(0.47, "Interest Refund", "01 February 2025") //
+            );
+
+            PostLoansLoanIdTransactionsResponse repaymentResponse = loanTransactionHelper.makeLoanRepayment(loanId, "Repayment",
+                    "20 January 2025", 17.94);
+            loanTransactionHelper.makeLoanRepayment(loanId, "Repayment", "25 January 2025", 10.94);
+
+            verifyTransactions(loanId, //
+                    transaction(100.0, "Disbursement", "01 January 2025"), //
+                    transaction(17.94, "Repayment", "20 January 2025"), //
+                    transaction(10.94, "Repayment", "25 January 2025"), //
+                    transaction(66.41, "Merchant Issued Refund", "01 February 2025"), //
+                    transaction(1.47, "Interest Refund", "01 February 2025") //
+            );
+
+            loanTransactionHelper.reverseLoanTransaction(loanId, repaymentResponse.getResourceId(),
+                    new PostLoansLoanIdTransactionsTransactionIdRequest().dateFormat(DATETIME_PATTERN).transactionDate("25 January 2025")
+                            .transactionAmount(0.0).locale("en"));
+
+            verifyTransactions(loanId, //
+                    transaction(100.0, "Disbursement", "01 January 2025"), //
+                    reversedTransaction(17.94, "Repayment", "20 January 2025"), //
+                    transaction(10.94, "Repayment", "25 January 2025"), //
+                    transaction(66.41, "Merchant Issued Refund", "01 February 2025"), //
+                    transaction(1.47, "Interest Refund", "01 February 2025") //
+            );
+
+            GetLoansLoanIdResponse loanDetails = loanTransactionHelper.getLoanDetails(loanId);
+            verifyLoanStatus(loanDetails, LoanStatus.ACTIVE);
+            Assertions.assertEquals(23.97, Utils.getDoubleValue(loanDetails.getSummary().getTotalOutstanding()));
+        });
+    }
+
 }

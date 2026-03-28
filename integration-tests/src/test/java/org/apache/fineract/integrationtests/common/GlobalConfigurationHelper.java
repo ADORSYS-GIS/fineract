@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.client.models.GetGlobalConfigurationsResponse;
@@ -54,19 +55,32 @@ public class GlobalConfigurationHelper {
 
     public GlobalConfigurationPropertyData getGlobalConfigurationById(final Long configId) {
         log.info("------------------------ RETRIEVING GLOBAL CONFIGURATION BY ID -------------------------");
-        return Calls.ok(FineractClientHelper.getFineractClient().globalConfigurations.retrieveOne3(configId));
+        return Calls.ok(FineractClientHelper.getFineractClient().globalConfigurations.retrieveOneGlobalConfiguration(configId));
     }
 
-    // TODO: This is quite a bad pattern and adds a lot of time to individual test executions
+    // TODO: This is quite a bad pattern and adds a lot of time to individual test
+    // executions
     public void resetAllDefaultGlobalConfigurations() {
 
         GetGlobalConfigurationsResponse actualGlobalConfigurations = getAllGlobalConfigurations();
         final ArrayList<HashMap> defaults = getAllDefaultGlobalConfigurations();
-        int changedNo = 0;
-        for (int i = 0; i < actualGlobalConfigurations.getGlobalConfiguration().size(); i++) {
 
-            HashMap defaultGlobalConfiguration = defaults.get(i);
-            GlobalConfigurationPropertyData actualGlobalConfiguration = actualGlobalConfigurations.getGlobalConfiguration().get(i);
+        Map<String, HashMap> defaultMap = new HashMap<>();
+        for (HashMap config : defaults) {
+            defaultMap.put((String) config.get("name"), config);
+        }
+
+        int changedNo = 0;
+        for (GlobalConfigurationPropertyData actualGlobalConfiguration : actualGlobalConfigurations.getGlobalConfiguration()) {
+
+            HashMap defaultGlobalConfiguration = defaultMap.get(actualGlobalConfiguration.getName());
+            if (defaultGlobalConfiguration == null) {
+                String message = "Global configuration '" + actualGlobalConfiguration.getName()
+                        + "' found in database but not in integration test defaults. "
+                        + "You must add it to GlobalConfigurationHelper.getAllDefaultGlobalConfigurations() to ensure test isolation.";
+                log.error(message);
+                throw new RuntimeException(message);
+            }
 
             if (!isMatching(defaultGlobalConfiguration, actualGlobalConfiguration)) {
 
@@ -101,19 +115,23 @@ public class GlobalConfigurationHelper {
     }
 
     public void verifyAllDefaultGlobalConfigurations() {
-
         ArrayList<HashMap> expectedGlobalConfigurations = getAllDefaultGlobalConfigurations();
         GetGlobalConfigurationsResponse actualGlobalConfigurations = getAllGlobalConfigurations();
 
-        Assertions.assertEquals(59, expectedGlobalConfigurations.size());
-        Assertions.assertEquals(59, actualGlobalConfigurations.getGlobalConfiguration().size());
+        Assertions.assertEquals(expectedGlobalConfigurations.size(), actualGlobalConfigurations.getGlobalConfiguration().size());
 
-        for (int i = 0; i < expectedGlobalConfigurations.size(); i++) {
+        Map<String, HashMap> expectedConfigMap = new HashMap<>();
+        for (HashMap config : expectedGlobalConfigurations) {
+            expectedConfigMap.put((String) config.get("name"), config);
+        }
 
-            HashMap expectedGlobalConfiguration = expectedGlobalConfigurations.get(i);
-            GlobalConfigurationPropertyData actualGlobalConfiguration = actualGlobalConfigurations.getGlobalConfiguration().get(i);
+        for (GlobalConfigurationPropertyData actualGlobalConfiguration : actualGlobalConfigurations.getGlobalConfiguration()) {
+            String configName = actualGlobalConfiguration.getName();
+            HashMap expectedGlobalConfiguration = expectedConfigMap.get(configName);
 
-            final String assertionFailedMessage = "Assertion failed for configName:<" + expectedGlobalConfiguration.get("name") + ">";
+            assertNotNull(expectedGlobalConfiguration, "Configuration found in API but not in expected defaults: " + configName);
+
+            final String assertionFailedMessage = "Assertion failed for configName:<" + configName + ">";
             Assertions.assertEquals(expectedGlobalConfiguration.get("name"), actualGlobalConfiguration.getName(), assertionFailedMessage);
             Assertions.assertEquals(expectedGlobalConfiguration.get("value"), actualGlobalConfiguration.getValue(), assertionFailedMessage);
             Assertions.assertEquals(expectedGlobalConfiguration.get("enabled"), actualGlobalConfiguration.getEnabled(),
@@ -200,12 +218,26 @@ public class GlobalConfigurationHelper {
         forcePasswordResetDaysDefault.put("trapDoor", false);
         defaults.add(forcePasswordResetDaysDefault);
 
+        HashMap<String, Object> passwordReuseCheckHistoryCountDefault = new HashMap<>();
+        passwordReuseCheckHistoryCountDefault.put("name", GlobalConfigurationConstants.PASSWORD_REUSE_CHECK_HISTORY_COUNT);
+        passwordReuseCheckHistoryCountDefault.put("value", 3L);
+        passwordReuseCheckHistoryCountDefault.put("enabled", false);
+        passwordReuseCheckHistoryCountDefault.put("trapDoor", false);
+        defaults.add(passwordReuseCheckHistoryCountDefault);
+
         HashMap<String, Object> graceOnPenaltyPostingDefault = new HashMap<>();
         graceOnPenaltyPostingDefault.put("name", GlobalConfigurationConstants.GRACE_ON_PENALTY_POSTING);
         graceOnPenaltyPostingDefault.put("value", 0L);
         graceOnPenaltyPostingDefault.put("enabled", true);
         graceOnPenaltyPostingDefault.put("trapDoor", false);
         defaults.add(graceOnPenaltyPostingDefault);
+
+        HashMap<String, Object> forcePasswordResetOnFirstLoginDefault = new HashMap<>();
+        forcePasswordResetOnFirstLoginDefault.put("name", GlobalConfigurationConstants.FORCE_PASSWORD_RESET_ON_FIRST_LOGIN);
+        forcePasswordResetOnFirstLoginDefault.put("value", 0L);
+        forcePasswordResetOnFirstLoginDefault.put("enabled", false);
+        forcePasswordResetOnFirstLoginDefault.put("trapDoor", false);
+        defaults.add(forcePasswordResetOnFirstLoginDefault);
 
         HashMap<String, Object> savingsInterestPostingCurrentPeriodEndDefault = new HashMap<>();
         savingsInterestPostingCurrentPeriodEndDefault.put("name", GlobalConfigurationConstants.SAVINGS_INTEREST_POSTING_CURRENT_PERIOD_END);
@@ -568,6 +600,34 @@ public class GlobalConfigurationHelper {
                 "ACTIVE,TRANSFER_IN_PROGRESS,TRANSFER_ON_HOLD,OVERPAID,CLOSED_OBLIGATIONS_MET");
         defaults.add(allowedLoanStatusesForDelayedSettlementExternalAssetTransfer);
 
+        HashMap<String, Object> maxLoginRetryAttempts = new HashMap<>();
+        maxLoginRetryAttempts.put("name", GlobalConfigurationConstants.MAX_LOGIN_RETRY_ATTEMPTS);
+        maxLoginRetryAttempts.put("value", 5L);
+        maxLoginRetryAttempts.put("enabled", false);
+        maxLoginRetryAttempts.put("trapDoor", false);
+        defaults.add(maxLoginRetryAttempts);
+        HashMap<String, Object> enableOriginatorCreationDuringLoanApplication = new HashMap<>();
+        enableOriginatorCreationDuringLoanApplication.put("name",
+                GlobalConfigurationConstants.ENABLE_ORIGINATOR_CREATION_DURING_LOAN_APPLICATION);
+        enableOriginatorCreationDuringLoanApplication.put("value", 0L);
+        enableOriginatorCreationDuringLoanApplication.put("enabled", false);
+        enableOriginatorCreationDuringLoanApplication.put("trapDoor", false);
+        defaults.add(enableOriginatorCreationDuringLoanApplication);
+
+        HashMap<String, Object> forceWithdrawalOnSavingsAccount = new HashMap<>();
+        forceWithdrawalOnSavingsAccount.put("name", GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT);
+        forceWithdrawalOnSavingsAccount.put("value", 0L);
+        forceWithdrawalOnSavingsAccount.put("enabled", false);
+        forceWithdrawalOnSavingsAccount.put("trapDoor", false);
+        defaults.add(forceWithdrawalOnSavingsAccount);
+
+        HashMap<String, Object> forceWithdrawalOnSavingsAccountLimit = new HashMap<>();
+        forceWithdrawalOnSavingsAccountLimit.put("name", GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT_LIMIT);
+        forceWithdrawalOnSavingsAccountLimit.put("value", 0L);
+        forceWithdrawalOnSavingsAccountLimit.put("enabled", false);
+        forceWithdrawalOnSavingsAccountLimit.put("trapDoor", false);
+        defaults.add(forceWithdrawalOnSavingsAccountLimit);
+
         return defaults;
     }
 
@@ -578,7 +638,7 @@ public class GlobalConfigurationHelper {
 
     public void updateGlobalConfigurationInternal(final String configName, final Long value) {
         log.info("---------------------------UPDATE VALUE FOR GLOBAL CONFIG (internal) ---------------------------------------");
-        Calls.ok(FineractClientHelper.getFineractClient().legacy.updateGlobalConfiguration(configName, value));
+        Calls.ok(FineractClientHelper.getFineractClient().legacy.updateInternalGlobalConfiguration(configName, value));
     }
 
     public void manageConfigurations(final String configurationName, final boolean enabled) {

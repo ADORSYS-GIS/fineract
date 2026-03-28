@@ -22,6 +22,7 @@ import jakarta.annotation.PostConstruct;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -61,27 +62,23 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
 
     private static final class SmsMapper implements RowMapper<SmsData> {
 
-        final String schema;
+        private static final String SMS_SCHEMA = """
+                 smo.id as id,
+                smo.group_id as groupId,
+                smo.client_id as clientId,
+                smo.staff_id as staffId,
+                smo.status_enum as statusId,
+                smo.mobile_no as mobileNo,
+                smo.message as message,
+                smc.provider_id as providerId,
+                smc.campaign_name as campaignName
+                from sms_messages_outbound smo
+                join sms_campaign smc on smc.id = smo.campaign_id\s""";
 
-        SmsMapper() {
-            final StringBuilder sql = new StringBuilder(300);
-            sql.append("smo.id as id, ");
-            sql.append("smo.group_id as groupId, ");
-            sql.append("smo.client_id as clientId, ");
-            sql.append("smo.staff_id as staffId, ");
-            sql.append("smo.status_enum as statusId, ");
-            sql.append("smo.mobile_no as mobileNo, ");
-            sql.append("smo.message as message, ");
-            sql.append("smc.provider_id as providerId, ");
-            sql.append("smc.campaign_name as campaignName ");
-            sql.append("from sms_messages_outbound smo ");
-            sql.append("join sms_campaign smc on smc.id = smo.campaign_id ");
-
-            this.schema = sql.toString();
-        }
+        SmsMapper() {}
 
         public String schema() {
-            return this.schema;
+            return SMS_SCHEMA;
         }
 
         public String tableName() {
@@ -131,14 +128,18 @@ public class SmsReadPlatformServiceImpl implements SmsReadPlatformService {
     @Override
     public List<SmsData> retrieveAllPending(final Long campaignId, final Integer limit) {
         final String sqlPlusLimit = limit > 0 ? " " + sqlGenerator.limit(limit) : "";
-        String sql = "select " + this.smsRowMapper.schema() + " where smo.status_enum = " + SmsMessageStatusType.PENDING.getValue();
+        String sql = "select " + this.smsRowMapper.schema() + " where smo.status_enum = ?";
+        List<Object> params = new ArrayList<>();
+        params.add(SmsMessageStatusType.PENDING.getValue());
+
         if (campaignId != null) {
-            sql += " and smo.campaign_id = " + campaignId;
+            sql += " and smo.campaign_id = ?";
+            params.add(campaignId);
         }
 
         sql += sqlPlusLimit;
 
-        return this.jdbcTemplate.query(sql, this.smsRowMapper); // NOSONAR
+        return this.jdbcTemplate.query(sql, this.smsRowMapper, params.toArray()); // NOSONAR
     }
 
     @Override

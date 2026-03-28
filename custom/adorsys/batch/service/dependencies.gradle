@@ -1,0 +1,11 @@
+dependencies {
+    implementation(project(':fineract-core'))
+    implementation(project(':fineract-provider'))
+    implementation(project(':fineract-savings'))
+    implementation(project(':fineract-accounting'))
+    implementation('org.apache.httpcomponents:httpcore')
+    implementation('com.google.guava:guava')
+    implementation('com.google.code.gson:gson')
+    compileOnly('org.springframework.boot:spring-boot-autoconfigure')
+    compileOnly('jakarta.ws.rs:jakarta.ws.rs-api')
+}
