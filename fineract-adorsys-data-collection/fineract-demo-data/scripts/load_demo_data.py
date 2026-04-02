@@ -55,6 +55,24 @@ class FineractDemoDataLoader:
         self.roles_permissions_loader = RolesPermissionsLoader(self.client, excel_file, self.config)
         self.reports_loader = ReportsLoader(self.client, excel_file, self.config)
 
+    def set_initial_business_date(self):
+        """Set the initial business date to the current date."""
+        logger.info("Setting initial business date...")
+        try:
+            today = datetime.now()
+            date_str = today.strftime('%d %B %Y')
+            payload = {
+                "type": "BUSINESS_DATE",
+                "date": date_str,
+                "dateFormat": "dd MMMM yyyy",
+                "locale": "en"
+            }
+            self.client.post('/businessdate', payload)
+            logger.info(f"✓ Initial business date set to: {date_str}")
+        except Exception as e:
+            logger.error(f"✗ Failed to set initial business date: {str(e)}")
+
+
     def _load_config(self):
         """Load configuration from JSON file"""
         with open(self.config_file, 'r') as f:
@@ -123,6 +141,8 @@ class FineractDemoDataLoader:
             self.account_loader.load_savings_withdrawals()
             self.account_loader.load_loan_repayments()
             self.account_loader.load_inter_branch_transfers()
+
+            self.set_initial_business_date()
 
             # Note: Reports are skipped - they are just views of existing data
             # Users can generate reports on-demand from Fineract UI: Reports → Run Reports

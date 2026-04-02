@@ -1,0 +1,12 @@
+dependencies {
+    implementation(project(':fineract-core'))
+    implementation(project(':fineract-provider'))
+    implementation(project(':fineract-loan'))
+    implementation(project(':fineract-savings'))
+    implementation(project(':fineract-charge'))
+    compileOnly('org.springframework.boot:spring-boot-autoconfigure')
+    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa')
+    compileOnly('org.eclipse.persistence:eclipselink:4.0.6')
+    compileOnly('jakarta.ws.rs:jakarta.ws.rs-api')
+    compileOnly('io.swagger.core.v3:swagger-annotations-jakarta')
+}

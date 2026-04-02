@@ -134,12 +134,17 @@ public class ClientLoader {
       Map<String, Object> response = apiClient.post("/api/v1/clients", request, Map.class);
       clientId = ((Number) response.get("clientId")).longValue();
 
-      log.info(
-          "Client created: {} {} {} (ID: {})",
-          client.getFirstName(),
-          client.getMiddleName() != null ? client.getMiddleName() + " " : "",
-          client.getLastName(),
-          clientId);
+      boolean isEntityClient = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+      if (isEntityClient && client.getFullname() != null) {
+        log.info("Client created: {} (ID: {})", client.getFullname(), clientId);
+      } else {
+        log.info(
+            "Client created: {} {} {} (ID: {})",
+            client.getFirstName(),
+            client.getMiddleName() != null ? client.getMiddleName() + " " : "",
+            client.getLastName(),
+            clientId);
+      }
       result.recordEntity("client", ImportResult.EntityAction.CREATED);
 
       // Activate client if requested
@@ -164,10 +169,15 @@ public class ClientLoader {
   private Map<String, Object> buildRequest(Client client, ImportContext context) {
     RequestBuilder builder = RequestBuilder.create().withLocaleDateFormat();
 
-    // Basic information
-    builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+    // Name fields depend on legal form: entity clients use fullname, persons use firstname/lastname
+    boolean isEntity = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+    if (isEntity && client.getFullname() != null) {
+      builder.put("fullname", client.getFullname());
+    } else {
+      builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+      builder.putIfNotNull("middlename", client.getMiddleName());
+    }
 
-    builder.putIfNotNull("middlename", client.getMiddleName());
     builder.putIfNotNull("externalId", client.getExternalId());
 
     // Resolve office
@@ -196,14 +206,13 @@ public class ClientLoader {
 
     // Resolve gender from code values (Gender code)
     if (client.getGender() != null) {
-      // Try to resolve from cached code values first (e.g., "Gender:Male" or "Gender:Female")
-      Long genderId = context.resolveEntityId("codeValue", "Gender:" + client.getGender());
+      Long genderId = resolveGenderId(client.getGender());
       if (genderId != null) {
         builder.put("genderId", genderId);
       } else {
-        // Fall back to enum mapper if not found in cache
+        // Fall back to enum mapper if retrieval fails
         log.warn(
-            "Gender code value '{}' not found in cache, falling back to hardcoded mapping",
+            "Gender code value '{}' not found via API, falling back to hardcoded mapping",
             client.getGender());
         builder.put("genderId", FineractEnumMapper.mapGender(client.getGender()));
       }
@@ -272,7 +281,8 @@ public class ClientLoader {
 
     if (isActive) {
       // Client is active - only update allowed fields
-      // According to ChangeDetectionService: staffId, savingsProductId, genderId, clientTypeId
+      // According to ChangeDetectionService: staffId, savingsProductId, genderId,
+      // clientTypeId
       log.debug("Client is active - limiting updateable fields");
 
       if (client.getStaffName() != null) {
@@ -292,13 +302,18 @@ public class ClientLoader {
         }
       }
 
-      // Note: savingsProductId and clientTypeId would go here if supported in Client model
+      // Note: savingsProductId and clientTypeId would go here if supported in Client
+      // model
     } else {
       // Client not active - can update most fields (excluding immutables)
       // Immutable: id, externalId, accountNo, activationDate
-      builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
-
-      builder.putIfNotNull("middlename", client.getMiddleName());
+      boolean isEntity = client.getLegalFormId() != null && client.getLegalFormId() == 2;
+      if (isEntity && client.getFullname() != null) {
+        builder.put("fullname", client.getFullname());
+      } else {
+        builder.put("firstname", client.getFirstName()).put("lastname", client.getLastName());
+        builder.putIfNotNull("middlename", client.getMiddleName());
+      }
 
       // Resolve office
       if (client.getOfficeName() != null) {
@@ -364,5 +379,49 @@ public class ClientLoader {
     } catch (Exception ex) {
       log.warn("Failed to activate client {}: {}", clientId, ex.getMessage());
     }
+  }
+
+  private final java.util.Map<String, Long> genderCache = new java.util.HashMap<>();
+
+  private Long resolveGenderId(String genderName) {
+    if (genderName == null) {
+      return null;
+    }
+
+    if (genderCache.isEmpty()) {
+      try {
+        // 1. Find Gender Code ID
+        Long genderCodeId = 4L; // Default for system defined Gender
+        try {
+          List<?> codes = apiClient.get("/api/v1/codes", List.class);
+          if (codes != null) {
+            for (Object obj : codes) {
+              Map<String, Object> code = (Map<String, Object>) obj;
+              if ("Gender".equalsIgnoreCase((String) code.get("name"))) {
+                genderCodeId = ((Number) code.get("id")).longValue();
+                break;
+              }
+            }
+          }
+        } catch (Exception e) {
+          log.warn("Failed to lookup Gender code ID, using default 4: {}", e.getMessage());
+        }
+
+        // 2. Fetch Code Values
+        List<?> values = apiClient.get("/api/v1/codes/" + genderCodeId + "/codevalues", List.class);
+        if (values != null) {
+          for (Object obj : values) {
+            Map<String, Object> val = (Map<String, Object>) obj;
+            String name = (String) val.get("name");
+            Long id = ((Number) val.get("id")).longValue();
+            genderCache.put(name.toUpperCase(), id);
+          }
+        }
+      } catch (Exception e) {
+        log.warn("Failed to populate gender cache: {}", e.getMessage());
+      }
+    }
+
+    return genderCache.get(genderName.toUpperCase());
   }
 }

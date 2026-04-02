@@ -1,7 +1,10 @@
 package org.apache.fineract.config.provider;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
+import org.apache.fineract.config.domain.BusinessDate;
 import org.apache.fineract.config.exception.FineractApiException;
 import org.apache.fineract.config.properties.FineractProperties;
 import org.apache.fineract.config.provider.auth.AuthProvider;
@@ -189,6 +192,18 @@ public class FineractApiClient {
     } catch (Exception ex) {
       log.error("Connection test failed: {}", ex.getMessage());
       return false;
+    }
+  }
+
+  public void createBusinessDate(BusinessDate businessDate) {
+    // Check if a business date is already configured
+    List<Map<String, Object>> existingBusinessDates = get("/api/v1/businessdate", List.class);
+    if (existingBusinessDates != null && !existingBusinessDates.isEmpty()) {
+      // Update existing business date
+      put("/api/v1/businessdate", businessDate, Object.class);
+    } else {
+      // Create new business date
+      post("/api/v1/businessdate", businessDate, Object.class);
     }
   }
 

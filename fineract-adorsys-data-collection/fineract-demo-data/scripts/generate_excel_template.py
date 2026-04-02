@@ -81,9 +81,13 @@ class FineractDemoDataGenerator:
             {'firstname': 'Christine', 'lastname': 'Biaka', 'office': 'Head Office', 'role': 'Accountant',
              'username': 'accountant', 'email': 'c.biaka@mfi.cm', 'mobile': '+237 677 22 22 22',
              'joining_date': '2024-01-02', 'external_id': 'STF-102'},
-
-            # Yaounde Branch Staff
-            {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
+ 
+            {'firstname': 'Supervisor', 'lastname': 'Accountant', 'office': 'Head Office', 'role': 'Supervisor Accountant',
+             'username': 'supervisor', 'email': 's.accountant@mfi.cm', 'mobile': '+237 677 33 33 33',
+             'joining_date': '2024-01-02', 'external_id': 'STF-103'},
+ 
+             # Yaounde Branch Staff
+             {'firstname': 'Jean', 'lastname': 'Mbarga', 'office': 'Yaounde Branch', 'role': 'Branch Manager',
              'username': 'manager.yaounde', 'email': 'j.mbarga@mfi.cm', 'mobile': '+237 677 12 34 56',
              'joining_date': '2024-01-15', 'external_id': 'STF-001'},
 
@@ -159,9 +163,14 @@ class FineractDemoDataGenerator:
              'email': 'c.biaka@mfi.cm', 'office_name': 'Head Office',
              'roles': 'Accountant', 'staff_name': 'Christine Biaka',
              'password': 'Ac0untant@2024!', 'password_never_expires': False},
-
-            # Yaounde Branch Users
-            {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
+ 
+            {'username': 'supervisor', 'first_name': 'Supervisor', 'last_name': 'Accountant',
+             'email': 's.accountant@mfi.cm', 'office_name': 'Head Office',
+             'roles': 'Supervisor Accountant', 'staff_name': 'Supervisor Accountant',
+             'password': 'sUp3rV1sor@2024!', 'password_never_expires': False},
+ 
+             # Yaounde Branch Users
+             {'username': 'manager.yaounde', 'first_name': 'Jean', 'last_name': 'Mbarga',
              'email': 'j.mbarga@mfi.cm', 'office_name': 'Yaounde Branch',
              'roles': 'Branch Manager', 'staff_name': 'Jean Mbarga',
              'password': 'Man4ger@Yde2024', 'password_never_expires': False},
@@ -1328,99 +1337,29 @@ class FineractDemoDataGenerator:
     def create_roles_permissions_sheet(self):
         """Create roles with permissions assignments"""
         data = [
-            # Branch Manager Role - Full branch operations access
-            {'role_name': 'Branch Manager', 'permission_group': 'Client', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Full client management'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Loan', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Full loan management'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Savings', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Full savings management'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Transaction', 'permission': 'ALL_FUNCTIONS',
-             'description': 'All transaction operations'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Report', 'permission': 'READ',
-             'description': 'View all reports'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Office', 'permission': 'READ',
-             'description': 'View office information'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Staff', 'permission': 'READ',
-             'description': 'View staff information'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Accounting', 'permission': 'CREATE_READ',
-             'description': 'Record shortage/overage journal entries and view accounting'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Teller', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Manage teller cash allocation and settlement'},
-            {'role_name': 'Branch Manager', 'permission_group': 'Checker', 'permission': 'CHECKER_SUPER_USER',
-             'description': 'Can approve/reject pending maker-checker tasks'},
+            # System Administrator
+            {'role_name': 'System Administrator', 'permission_group': 'Role', 'permission': 'SUPER_USER',
+             'description': 'Super user with full system access'},
 
-            # Loan Officer Role - Loan and client operations
-            {'role_name': 'Loan Officer', 'permission_group': 'Client', 'permission': 'CREATE_UPDATE_READ',
-             'description': 'Create and update clients'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'CREATE_UPDATE_READ',
-             'description': 'Create and manage loans (approval requires manager)'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'DELETE_FUNCTIONS',
-             'description': 'Delete loan accounts (if unapproved or rejected)'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Loan', 'permission': 'DISBURSE_REPAYMENT',
-             'description': 'Disburse approved loans and process repayments'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Savings', 'permission': 'CREATE_UPDATE_READ',
-             'description': 'Create and manage savings accounts'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Transaction', 'permission': 'CREATE_READ',
-             'description': 'Process and view transactions'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Report', 'permission': 'READ',
-             'description': 'View operational reports'},
-            {'role_name': 'Loan Officer', 'permission_group': 'Office', 'permission': 'READ',
-             'description': 'View office information'},
+            # Branch Manager
+            {'role_name': 'Branch Manager', 'permission_group': 'Role', 'permission': 'BRANCH_MANAGER',
+             'description': 'Branch manager with approval authority'},
 
-            # Cashier Role - Transaction processing only
-            {'role_name': 'Cashier', 'permission_group': 'Client', 'permission': 'READ',
-             'description': 'View client information only'},
-            {'role_name': 'Cashier', 'permission_group': 'Loan', 'permission': 'READ',
-             'description': 'View loan information only'},
-            {'role_name': 'Cashier', 'permission_group': 'Savings', 'permission': 'TRANSACTION',
-             'description': 'Process deposits and withdrawals on savings accounts'},
-            {'role_name': 'Cashier', 'permission_group': 'Transaction', 'permission': 'CREATE_READ',
-             'description': 'Process transactions and repayments'},
-            {'role_name': 'Cashier', 'permission_group': 'Report', 'permission': 'READ',
-             'description': 'View transaction reports'},
-            {'role_name': 'Cashier', 'permission_group': 'PaymentType', 'permission': 'READ',
-             'description': 'Read payment types'},
+            # Loan Officer
+            {'role_name': 'Loan Officer', 'permission_group': 'Role', 'permission': 'LOAN_OFFICER',
+             'description': 'Loan officer for client and loan management'},
 
-            # System Administrator Role - System configuration and setup
-            {'role_name': 'System Administrator', 'permission_group': 'Office', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage offices/branches'},
-            {'role_name': 'System Administrator', 'permission_group': 'Staff', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage staff members'},
-            {'role_name': 'System Administrator', 'permission_group': 'Loan Product', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage loan products'},
-            {'role_name': 'System Administrator', 'permission_group': 'Savings Product', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage savings products'},
-            {'role_name': 'System Administrator', 'permission_group': 'Charge', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage charges/fees'},
-            {'role_name': 'System Administrator', 'permission_group': 'Client', 'permission': 'CREATE_UPDATE_READ',
-             'description': 'Create and update clients (not delete)'},
-            {'role_name': 'System Administrator', 'permission_group': 'Loan', 'permission': 'READ',
-             'description': 'View loan accounts'},
-            {'role_name': 'System Administrator', 'permission_group': 'Savings', 'permission': 'READ',
-             'description': 'View savings accounts'},
-            {'role_name': 'System Administrator', 'permission_group': 'Report', 'permission': 'READ',
-             'description': 'View all reports'},
-            {'role_name': 'System Administrator', 'permission_group': 'MakerChecker', 'permission': 'ENABLE_MAKERCHECKER',
-             'description': 'Can enable/disable maker-checker for specific operations'},
+            # Cashier
+            {'role_name': 'Cashier', 'permission_group': 'Role', 'permission': 'CASHIER',
+             'description': 'Cashier for handling cash transactions'},
 
-            # Accountant Role - Accounting and financial management
-            {'role_name': 'Accountant', 'permission_group': 'Accounting', 'permission': 'ALL_FUNCTIONS',
-             'description': 'Create and manage GL accounts and journal entries'},
-            {'role_name': 'Accountant', 'permission_group': 'Client', 'permission': 'READ',
-             'description': 'View client information'},
-            {'role_name': 'Accountant', 'permission_group': 'Loan', 'permission': 'READ',
-             'description': 'View loan accounts and transactions'},
-            {'role_name': 'Accountant', 'permission_group': 'Savings', 'permission': 'READ',
-             'description': 'View savings accounts and transactions'},
-            {'role_name': 'Accountant', 'permission_group': 'Transaction', 'permission': 'READ',
-             'description': 'View all transactions'},
-            {'role_name': 'Accountant', 'permission_group': 'Report', 'permission': 'READ',
-             'description': 'View financial reports'},
-            {'role_name': 'Accountant', 'permission_group': 'Office', 'permission': 'READ',
-             'description': 'View office information'},
-            {'role_name': 'Accountant', 'permission_group': 'Checker', 'permission': 'CHECKER_SUPER_USER',
-             'description': 'Can approve/reject pending accounting tasks'},
+            # Accountant
+            {'role_name': 'Accountant', 'permission_group': 'Role', 'permission': 'ACCOUNTANT',
+             'description': 'Accountant for financial management (Maker)'},
+
+            # Supervisor Accountant
+            {'role_name': 'Supervisor Accountant', 'permission_group': 'Role', 'permission': 'SUPERVISOR_ACCOUNTANT',
+             'description': 'Senior accountant for audit and approval (Checker)'},
         ]
         return pd.DataFrame(data)
 
@@ -1457,7 +1396,7 @@ class FineractDemoDataGenerator:
 
             # Savings operations
             {'task_name': 'Close Savings Account', 'entity': 'SAVINGSACCOUNT', 'action': 'CLOSE',
-             'enabled': False,
+             'enabled': True,
              'maker_role': 'Cashier', 'checker_role': 'Branch Manager',
              'description': 'Savings account closures require manager approval (disabled by default)'},
 
@@ -1468,15 +1407,26 @@ class FineractDemoDataGenerator:
              'description': 'New client activation requires manager approval (disabled by default)'},
 
             {'task_name': 'Propose Client Transfer', 'entity': 'Client', 'action': 'PROPOSETRANSFER',
-             'enabled': False,
+             'enabled': True,
              'maker_role': 'Loan Officer', 'checker_role': 'Branch Manager',
              'description': 'Client office transfer requires manager approval (disabled by default)'},
 
             # Accounting operations
             {'task_name': 'Create Manual Journal Entry', 'entity': 'JOURNALENTRY', 'action': 'CREATE',
-             'enabled': False,
-             'maker_role': 'Accountant', 'checker_role': 'Branch Manager',
-             'description': 'Manual journal entries require manager approval (disabled by default)'},
+             'enabled': True,
+             'maker_role': 'Accountant', 'checker_role': 'Supervisor Accountant',
+             'description': 'Manual journal entries require supervisor approval (disabled by default)'},
+
+            # Teller/Cashier operations
+            {'task_name': 'Allocate Cash to Cashier', 'entity': 'TELLER', 'action': 'ALLOCATECASHTOCASHIER',
+             'enabled': True,
+             'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
+             'description': 'Cash allocation to cashier requires cashier confirmation'},
+
+            {'task_name': 'Settle Cash from Cashier', 'entity': 'TELLER', 'action': 'SETTLECASHFROMCASHIER',
+             'enabled': True,
+             'maker_role': 'Branch Manager', 'checker_role': 'Cashier',
+             'description': 'Cash settlement from cashier requires cashier confirmation'},
 
             # User/System operations
             {'task_name': 'Create User', 'entity': 'User', 'action': 'CREATE',
@@ -1704,6 +1654,10 @@ class FineractDemoDataGenerator:
             {'job_name': 'Add Periodic Accrual Transactions', 'display_name': 'Add Periodic Accrual Transactions',
              'cron_expression': '0 0 0 1 * ? *', 'active': 'Yes',
              'description': 'Add monthly accrual entries on the 1st of each month'},
+
+            {'job_name': 'Update Business Date', 'display_name': 'Update Business Date',
+             'cron_expression': '0 0 1 * * ?', 'active': 'Yes',
+             'description': 'Daily job to update the business date at 1 AM'},
 
             # NOTE: "Update Loan Paid In Advance" job does not exist in Fineract source code
             # This functionality may have been removed or renamed in newer versions
@@ -2835,6 +2789,19 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
         ]
         return pd.DataFrame(data)
 
+    def create_business_date_sheet(self):
+        """Create a sheet with the current date for business date initialization."""
+        today = datetime.now()
+        data = [
+            {
+                'type': 'BUSINESS_DATE',
+                'date': today.strftime('%Y-%m-%d'),
+                'dateFormat': 'yyyy-MM-dd',
+                'locale': 'en'
+            }
+        ]
+        return pd.DataFrame(data)
+
     def create_cobac_report_config_sheet(self):
         """Create COBAC reporting configuration"""
         data = [
@@ -3052,6 +3019,10 @@ ORDER BY days_overdue DESC, outstanding_principal DESC
             # COBAC Reporting
             print("  Creating COBAC Report Configuration sheet...")
             self.create_cobac_report_config_sheet().to_excel(writer, sheet_name='COBAC Reports', index=False)
+
+            print("  Creating Business Date sheet...")
+            self.create_business_date_sheet().to_excel(writer, sheet_name='Business Date', index=False)
+
 
         # Apply formatting
         print("  Applying formatting...")
