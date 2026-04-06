@@ -1057,6 +1057,10 @@ public final class ErrorMessageHelper {
         return String.format("Delinquency bucket with id `%d` does not exist.", id);
     }
 
+    public static String workingCapitalBreachNotFoundFailure(final Long id) {
+        return String.format("Working Capital Breach with id %d was not found.", id);
+    }
+
     public static String disburseNotApprovedFailure(String status) {
         return String.format("Disbursement is not allowed from current status %s", status);
     }
@@ -1067,5 +1071,21 @@ public final class ErrorMessageHelper {
 
     public static String undoDisbursalDisallowedFailure(String status) {
         return String.format("Transition LOAN_DISBURSAL_UNDO is not allowed from status %s", status);
+    }
+
+    public static String discountAmountExceedFailure() {
+        return "Failed data validation due to: amount.cannot.exceed.created.discount.";
+    }
+
+    public static String discountAlreadySetBeforeDisburseFailure() {
+        return "Discount was already set before disbursement and cannot be added again";
+    }
+
+    public static String discountDiffDateFromDisburseFailure() {
+        return "Failed data validation due to: transaction.date.must.be.equal.disbursement.date.";
+    }
+
+    public static String discountOverrideDisallowedByProductFailure() {
+        return "Failed data validation due to: override.not.allowed.by.product.";
     }
 }

@@ -41,9 +41,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.client.feign.FineractFeignClient;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.CommandProcessingResult;
 import org.apache.fineract.client.models.DeleteWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.GetDisbursementDetail;
 import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.PostAllowAttributeOverrides;
 import org.apache.fineract.client.models.PostClientsResponse;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsResponse;
@@ -51,6 +53,7 @@ import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansResponse;
+import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdDiscountRequest;
 import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.test.data.LoanStatus;
@@ -66,7 +69,7 @@ import org.apache.fineract.test.support.TestContextKey;
 
 @Slf4j
 @RequiredArgsConstructor
-public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
+public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     private static final String DATE_FORMAT = "dd MMMM yyyy";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT);
@@ -435,6 +438,7 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
                 .defaultWorkingCapitalLoanApproveRequest().approvedOnDate(approveDate).approvedLoanAmount(new BigDecimal(approvedAmount))
                 .expectedDisbursementDate(expectedDisbursementDate);
+        testContext().set(TestContextKey.LOAN_APPROVAL_REQUEST, approveRequest);
 
         executeStateTransition("approve", approveRequest, TestContextKey.LOAN_APPROVAL_RESPONSE, false);
     }
@@ -445,8 +449,23 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
                 .defaultWorkingCapitalLoanApproveRequest().approvedOnDate(approveDate).approvedLoanAmount(new BigDecimal(approvedAmount))
                 .expectedDisbursementDate(expectedDisbursementDate);
+        testContext().set(TestContextKey.LOAN_APPROVAL_REQUEST, approveRequest);
 
         executeStateTransition("approve", approveRequest, TestContextKey.LOAN_APPROVAL_RESPONSE, true);
+    }
+
+    @When("Admin successfully approves the working capital loan on {string} with {string} amount and {string} discount amount and expected disbursement date on {string}")
+    public void approveWorkingCapitalLoanWithDiscount(final String approveDate, final String approvedAmount, final String discountAmount,
+            final String expectedDisbursementDate) {
+        final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanApproveRequest()//
+                .approvedOnDate(approveDate)//
+                .approvedLoanAmount(new BigDecimal(approvedAmount))//
+                .discountAmount(new BigDecimal(discountAmount))//
+                .expectedDisbursementDate(expectedDisbursementDate);
+        testContext().set(TestContextKey.LOAN_APPROVAL_REQUEST, approveRequest);
+
+        executeStateTransition("approve", approveRequest, TestContextKey.LOAN_APPROVAL_RESPONSE, false);
     }
 
     @Then("Working capital loan approval was successful")
@@ -458,14 +477,33 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
     public void approvalOfWorkingCapitalLoanResultsAnError(final String approveDate, final String approvedAmount,
             final String expectedDisbursementDate, final DataTable table) {
         final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
-                .defaultWorkingCapitalLoanApproveRequest().approvedOnDate(approveDate).approvedLoanAmount(new BigDecimal(approvedAmount))
-                .expectedDisbursementDate(expectedDisbursementDate);
+                .defaultWorkingCapitalLoanApproveRequest()//
+                .approvedOnDate(approveDate)//
+                .approvedLoanAmount(new BigDecimal(approvedAmount))//
+                .expectedDisbursementDate(expectedDisbursementDate);//
 
         final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoans()
                 .stateTransitionWorkingCapitalLoanById(getCreatedLoanId(), "approve", approveRequest));
 
         verifyErrorResponse(exception, table);
         log.info("Verified working capital loan approval failed with expected error");
+    }
+
+    @When("Admin failed to approve the working capital loan on {string} with {string} amount and expected disbursement date on {string} with {string} exceeded discount amount")
+    public void approveWorkingCapitalLoanWithExceededDiscountFailure(final String approveDate, final String approvedAmount,
+            final String expectedDisbursementDate, final String discountAmount) {
+        final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanApproveRequest()//
+                .approvedOnDate(approveDate)//
+                .approvedLoanAmount(new BigDecimal(approvedAmount))//
+                .discountAmount(new BigDecimal(discountAmount))//
+                .expectedDisbursementDate(expectedDisbursementDate);//
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoans()
+                .stateTransitionWorkingCapitalLoanById(getCreatedLoanId(), "approve", approveRequest));
+
+        assertThat(exception.getStatus()).as(ErrorMessageHelper.discountAmountExceedFailure()).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(ErrorMessageHelper.discountAmountExceedFailure());
     }
 
     @When("Admin rejects the working capital loan on {string}")
@@ -531,6 +569,7 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         PostWorkingCapitalLoansLoanIdRequest disburseRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate)//
                 .transactionAmount(new BigDecimal(transactionAmount));
+        testContext().set(TestContextKey.LOAN_DISBURSE_REQUEST, disburseRequest);
 
         executeStateTransition("disburse", disburseRequest, TestContextKey.LOAN_DISBURSE_RESPONSE, false);
         verifyStateTransitionSuccess(TestContextKey.LOAN_DISBURSE_RESPONSE, "disbursement");
@@ -542,6 +581,7 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         PostWorkingCapitalLoansLoanIdRequest disburseRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate)//
                 .transactionAmount(new BigDecimal(transactionAmount));
+        testContext().set(TestContextKey.LOAN_DISBURSE_REQUEST, disburseRequest);
 
         executeStateTransition("disburse", disburseRequest, TestContextKey.LOAN_DISBURSE_RESPONSE, true);
         verifyStateTransitionSuccess(TestContextKey.LOAN_DISBURSE_RESPONSE, "disbursement");
@@ -563,6 +603,51 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         String formattedDate = disbursementDetails.getActualDisbursementDate().format(FORMATTER);
         assertThat(formattedDate).isEqualTo(actualDisbursementDate);
         assertThat(disbursementDetails.getActualAmount().compareTo(new BigDecimal(transactionAmount))).isEqualTo(0);
+    }
+
+    @And("Admin successfully disburse the Working Capital loan on {string} with {string} EUR transaction amount and {string} discount amount")
+    public void disburseWCLoanWithDiscount(String actualDisbursementDate, String transactionAmount, String discountAmount) {
+        PostWorkingCapitalLoansLoanIdRequest disburseRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDisburseRequest()
+                .actualDisbursementDate(actualDisbursementDate)//
+                .discountAmount(new BigDecimal(discountAmount)).transactionAmount(new BigDecimal(transactionAmount));
+        testContext().set(TestContextKey.LOAN_DISBURSE_REQUEST, disburseRequest);
+
+        executeStateTransition("disburse", disburseRequest, TestContextKey.LOAN_DISBURSE_RESPONSE, false);
+        verifyStateTransitionSuccess(TestContextKey.LOAN_DISBURSE_RESPONSE, "disbursement");
+        checkChangesExpectedStatus(TestContextKey.LOAN_DISBURSE_RESPONSE, ACTIVE);
+    }
+
+    @When("Admin failed to disburse the working capital loan on {string} with {string} amount with {string} exceeded discount amount")
+    public void disburseWorkingCapitalLoanWithExceededDiscountFailure(String actualDisbursementDate, String transactionAmount,
+            String discountAmount) {
+        PostWorkingCapitalLoansLoanIdRequest disburseRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDisburseRequest()
+                .actualDisbursementDate(actualDisbursementDate)//
+                .discountAmount(new BigDecimal(discountAmount)).transactionAmount(new BigDecimal(transactionAmount));
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoans()
+                .stateTransitionWorkingCapitalLoanById(getCreatedLoanId(), "disburse", disburseRequest));
+
+        assertThat(exception.getStatus()).as(ErrorMessageHelper.discountAmountExceedFailure()).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(ErrorMessageHelper.discountAmountExceedFailure());
+    }
+
+    @Then("Verify Working Capital loan disbursement was successful")
+    public void checkDisbursementData() {
+        final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        long loanId = loanResponse.getLoanId();
+
+        GetWorkingCapitalLoansLoanIdResponse loanDetailsResponse = ok(
+                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
+        String getLoanStatus = loanDetailsResponse.getStatus().getValue();
+        assertThat(getLoanStatus.toUpperCase()).isEqualTo(ACTIVE.name());
+
+        PostWorkingCapitalLoansLoanIdRequest disburseLoanRequest = testContext().get(TestContextKey.LOAN_DISBURSE_REQUEST);
+
+        GetDisbursementDetail disbursementDetails = loanDetailsResponse.getDisbursementDetails().stream().findFirst()
+                .orElseThrow(() -> new RuntimeException(""));
+        String formattedDate = disbursementDetails.getActualDisbursementDate().format(FORMATTER);
+        assertThat(formattedDate).isEqualTo(disburseLoanRequest.getActualDisbursementDate());
+        assertThat(disbursementDetails.getActualAmount().compareTo(disburseLoanRequest.getTransactionAmount())).isEqualTo(0);
     }
 
     @Then("Admin successfully undo Working Capital disbursal")
@@ -625,6 +710,38 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         assertThat(exception.getDeveloperMessage()).contains(ErrorMessageHelper.undoDisbursalDisallowedFailure(actualLoanStatus));
     }
 
+    @And("Admin successfully update discount with {string} amount on Working Capital loan account")
+    public void updateDiscountWCLoan(String discountAmount) {
+        final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        long loanId = loanResponse.getLoanId();
+
+        PutWorkingCapitalLoansLoanIdDiscountRequest updateDiscountRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanUpdateDiscountRequest().discountAmount(new BigDecimal(discountAmount));
+
+        PutWorkingCapitalLoansLoanIdResponse updateDiscountResponse = ok(
+                () -> fineractClient.workingCapitalLoans().updateWorkingCapitalLoanDiscountById(loanId, updateDiscountRequest));
+
+        log.info("Working Capital Loan discount updated with ID: {}", updateDiscountResponse.getResourceId());
+    }
+
+    @And("Update discount with {string} amount on Working Capital loan account failed due to already added discount before disbursement")
+    public void updateDiscountWCLoanAlreadyAddedFailure(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountAlreadySetBeforeDisburseFailure();
+        updateDiscountFailedCheck(discountAmount, errorMessage);
+    }
+
+    @And("Update discount with {string} amount on Working Capital loan account failed due to date diff from disbursement date")
+    public void updateDiscountWCLoanDiffFromDisburseDateFailure(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountDiffDateFromDisburseFailure();
+        updateDiscountFailedCheck(discountAmount, errorMessage);
+    }
+
+    @And("Update discount with {string} amount on Working Capital loan account failed due to override disallowed by product")
+    public void updateDiscountWCLoanOverrideDisallowedByProductFailure(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountOverrideDisallowedByProductFailure();
+        updateDiscountFailedCheck(discountAmount, errorMessage);
+    }
+
     // ====================================
     // Private Helper Methods
     // ====================================
@@ -635,6 +752,7 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         final Long clientId = extractClientId();
         final Long loanProductId = resolveLoanProductId(loanProduct);
         final PostWorkingCapitalLoansRequest loansRequest = buildCreateLoanRequest(clientId, loanProductId, loanData);
+        testContext().set(TestContextKey.LOAN_CREATE_REQUEST, loansRequest);
 
         final PostWorkingCapitalLoansResponse response = ok(
                 () -> fineractClient.workingCapitalLoans().submitWorkingCapitalLoanApplication(loansRequest));
@@ -696,6 +814,19 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         testContext().set(responseKey, response);
     }
 
+    public void updateDiscountFailedCheck(String discountAmount, String errorMessage) {
+        final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        long loanId = loanResponse.getLoanId();
+
+        PutWorkingCapitalLoansLoanIdDiscountRequest updateDiscountRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanUpdateDiscountRequest().discountAmount(new BigDecimal(discountAmount));
+
+        CallFailedRuntimeException exception = fail(
+                () -> fineractClient.workingCapitalLoans().updateWorkingCapitalLoanDiscountById(loanId, updateDiscountRequest));
+        assertThat(exception.getStatus()).as(errorMessage).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(errorMessage);
+    }
+
     // Data Extraction Helpers
     private Long getCreatedLoanId() {
         final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
@@ -755,11 +886,14 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         final String periodPaymentRate = loanData.get(5);
         final String discount = loanData.get(6);
 
-        return workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId).productId(productId)
-                .submittedOnDate(submittedOnDate).expectedDisbursementDate(expectedDisbursementDate)
-                .principalAmount(new BigDecimal(principal)).totalPayment(new BigDecimal(totalPayment))
-                .periodPaymentRate(new BigDecimal(periodPaymentRate))
-                .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);
+        return workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId)//
+                .productId(productId)//
+                .submittedOnDate(submittedOnDate)//
+                .expectedDisbursementDate(expectedDisbursementDate)//
+                .principalAmount(new BigDecimal(principal))//
+                .totalPayment(new BigDecimal(totalPayment))//
+                .periodPaymentRate(new BigDecimal(periodPaymentRate))//
+                .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);//
     }
 
     private PutWorkingCapitalLoansLoanIdRequest buildModifyLoanRequest(final List<String> loanData) {
@@ -971,5 +1105,79 @@ public class WorkingCapitalProductLoanAccountStepDef extends AbstractStepDef {
         final CallFailedRuntimeException exception = fail(
                 () -> fineractClient.workingCapitalLoans().submitWorkingCapitalLoanApplication(request));
         assertThat(exception.getStatus()).as("HTTP status").isEqualTo(expectedStatus);
+    }
+
+    @Then("Creating a working capital loan with breachId {long} on {string} will result with status code {int}")
+    public void createLoanWithInvalidBreachId(final long breachId, final String submittedOnDate, final int expectedStatus) {
+        final Long clientId = extractClientId();
+        final Long loanProductId = resolveLoanProductId(DefaultWorkingCapitalLoanProduct.WCLP.name());
+
+        final PostWorkingCapitalLoansRequest request = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId)
+                .productId(loanProductId) //
+                .submittedOnDate(submittedOnDate) //
+                .expectedDisbursementDate(submittedOnDate) //
+                .principalAmount(new BigDecimal("100")) //
+                .totalPayment(new BigDecimal("100")) //
+                .periodPaymentRate(new BigDecimal("1")) //
+                .discount(BigDecimal.ZERO) //
+                .breachId(breachId);
+
+        final CallFailedRuntimeException exception = fail(
+                () -> fineractClient.workingCapitalLoans().submitWorkingCapitalLoanApplication(request));
+        assertThat(exception.getStatus()).as("HTTP status").isEqualTo(expectedStatus);
+    }
+
+    @Then("Creating a working capital loan with breach override allowed {string} on {string} will result with status code {int}")
+    public void createLoanWithBreachOverrideAllowed(final String breachOverrideAllowed, final String submittedOnDate,
+            final int expectedStatus) {
+        final Long clientId = extractClientId();
+        final boolean overrideAllowed = Boolean.parseBoolean(breachOverrideAllowed);
+
+        final Long productBreachId = createBreachAndGetId();
+        final Long overrideBreachId = createBreachAndGetId();
+        final Long productId = createWorkingCapitalProductForBreachOverride(overrideAllowed, productBreachId);
+
+        final PostWorkingCapitalLoansRequest request = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId)
+                .productId(productId) //
+                .submittedOnDate(submittedOnDate) //
+                .expectedDisbursementDate(submittedOnDate) //
+                .principalAmount(new BigDecimal("100")) //
+                .totalPayment(new BigDecimal("100")) //
+                .periodPaymentRate(new BigDecimal("1")) //
+                .discount(null) //
+                .breachId(overrideBreachId);
+
+        if (expectedStatus == 200) {
+            final PostWorkingCapitalLoansResponse response = ok(
+                    () -> fineractClient.workingCapitalLoans().submitWorkingCapitalLoanApplication(request));
+            assertThat(response).isNotNull();
+            assertThat(response.getLoanId()).isNotNull();
+            return;
+        }
+
+        final CallFailedRuntimeException exception = fail(
+                () -> fineractClient.workingCapitalLoans().submitWorkingCapitalLoanApplication(request));
+        assertThat(exception.getStatus()).as("HTTP status").isEqualTo(expectedStatus);
+    }
+
+    private Long createBreachAndGetId() {
+        final CommandProcessingResult breachResponse = ok(() -> fineractClient.workingCapitalBreaches()
+                .createWorkingCapitalBreach(workingCapitalProductRequestFactory.defaultWorkingCapitalBreachRequest()));
+        return breachResponse.getResourceId();
+    }
+
+    private Long createWorkingCapitalProductForBreachOverride(final boolean breachOverrideAllowed, final Long breachId) {
+        final String name = DefaultWorkingCapitalLoanProduct.WCLP.getName() + Utils.randomStringGenerator("_", 10);
+        final PostAllowAttributeOverrides allowOverrides = new PostAllowAttributeOverrides().breach(breachOverrideAllowed);
+
+        final PostWorkingCapitalLoanProductsRequest productRequest = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanProductAllowAttributesOverrideRequest() //
+                .name(name) //
+                .breachId(breachId) //
+                .allowAttributeOverrides(allowOverrides);
+
+        final PostWorkingCapitalLoanProductsResponse productResponse = ok(
+                () -> fineractClient.workingCapitalLoanProducts().createWorkingCapitalLoanProduct(productRequest, Map.of()));
+        return productResponse.getResourceId();
     }
 }

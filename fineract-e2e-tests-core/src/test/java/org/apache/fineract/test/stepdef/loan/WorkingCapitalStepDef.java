@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.client.feign.FineractFeignClient;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoanProductsApi;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.CommandProcessingResult;
 import org.apache.fineract.client.models.DeleteWorkingCapitalLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.GetConfigurableAttributes;
 import org.apache.fineract.client.models.GetPaymentAllocation;
@@ -75,6 +76,7 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
     public static final String PRINCIPAL_FIELD_NAME = "principal";
     public static final String MIN_PRINCIPAL_FIELD_NAME = "minPrincipal";
     public static final String MAX_PRINCIPAL_FIELD_NAME = "maxPrincipal";
+    public static final String DISCOUNT_FIELD_NAME = "discount";
     public static final String PERIOD_PAYMENT_RATE_FIELD_NAME = "periodPaymentRate";
     public static final String MIN_PERIOD_PAYMENT_RATE_FIELD_NAME = "minPeriodPaymentRate";
     public static final String MAX_PERIOD_PAYMENT_RATE_FIELD_NAME = "maxPeriodPaymentRate";
@@ -84,6 +86,7 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
     public static final String DELINQUENCY_BUCKET_ID_FIELD_NAME = "delinquencyBucketId";
     public static final String DELINQUENCY_GRACE_DAYS_FIELD_NAME = "delinquencyGraceDays";
     public static final String DELINQUENCY_START_TYPE_FIELD_NAME = "delinquencyStartType";
+    public static final String BREACH_ID_FIELD_NAME = "breachId";
     public static final String LOCALE_FIELD_NAME = "locale";
 
     private WorkingCapitalLoanProductsApi workingCapitalApi() {
@@ -101,6 +104,24 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
                 defaultWorkingCapitalLoanProductCreateRequest);
         testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE, responseDefaultWorkingCapitalLoanProductCreate);
         testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_PRODUCT_CREATE_REQUEST, defaultWorkingCapitalLoanProductCreateRequest);
+        checkWorkingCapitalLoanProductCreate();
+    }
+
+    @When("Admin creates a new Working Capital Loan Product with breachId")
+    public void createWorkingCapitalLoanProductWithBreachId() {
+        final CommandProcessingResult breachCreateResponse = ok(() -> fineractFeignClient.workingCapitalBreaches()
+                .createWorkingCapitalBreach(workingCapitalRequestFactory.defaultWorkingCapitalBreachRequest()));
+        final Long breachId = breachCreateResponse.getResourceId();
+        testContext().set(TestContextKey.WORKING_CAPITAL_BREACH_ID, breachId);
+
+        final String name = DefaultWorkingCapitalLoanProduct.WCLP.getName() + Utils.randomStringGenerator("_", 10);
+        final PostWorkingCapitalLoanProductsRequest request = workingCapitalRequestFactory.defaultWorkingCapitalLoanProductRequest() //
+                .name(name) //
+                .breachId(breachId);
+
+        final PostWorkingCapitalLoanProductsResponse response = createWorkingCapitalLoanProduct(request);
+        testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE, response);
+        testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_PRODUCT_CREATE_REQUEST, request);
         checkWorkingCapitalLoanProductCreate();
     }
 
@@ -433,6 +454,12 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
                 .isEqualTo(getWorkingCapitalProductResponse.getMinPeriodPaymentRate());
         assertions.assertThat(workingCapitalLoanProductCreateRequest.getMaxPeriodPaymentRate())
                 .isEqualTo(getWorkingCapitalProductResponse.getMaxPeriodPaymentRate());
+        if (workingCapitalLoanProductCreateRequest.getDiscount() != null) {
+            assertions
+                    .assertThat(
+                            workingCapitalLoanProductCreateRequest.getDiscount().compareTo(getWorkingCapitalProductResponse.getDiscount()))
+                    .isEqualTo(0);
+        }
 
         // check payment allocation rules
         assert workingCapitalLoanProductCreateRequest.getPaymentAllocation() != null;
@@ -544,6 +571,12 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
                 .isEqualTo(getWorkingCapitalProductResponse.getMinPeriodPaymentRate());
         assertions.assertThat(workingCapitalLoanProductsUpdateRequest.getMaxPeriodPaymentRate())
                 .isEqualTo(getWorkingCapitalProductResponse.getMaxPeriodPaymentRate());
+        if (workingCapitalLoanProductsUpdateRequest.getDiscount() != null) {
+            assertions
+                    .assertThat(
+                            workingCapitalLoanProductsUpdateRequest.getDiscount().compareTo(getWorkingCapitalProductResponse.getDiscount()))
+                    .isEqualTo(0);
+        }
 
         // check payment allocation rules
         assert workingCapitalLoanProductsUpdateRequest.getPaymentAllocation() != null;
@@ -621,7 +654,7 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
         if (fieldName.equalsIgnoreCase(PRINCIPAL_FIELD_NAME) || fieldName.equalsIgnoreCase(MIN_PRINCIPAL_FIELD_NAME)
                 || fieldName.equalsIgnoreCase(MAX_PRINCIPAL_FIELD_NAME) || fieldName.equalsIgnoreCase(PERIOD_PAYMENT_RATE_FIELD_NAME)
                 || fieldName.equalsIgnoreCase(MIN_PERIOD_PAYMENT_RATE_FIELD_NAME)
-                || fieldName.equalsIgnoreCase(MAX_PERIOD_PAYMENT_RATE_FIELD_NAME)) {
+                || fieldName.equalsIgnoreCase(MAX_PERIOD_PAYMENT_RATE_FIELD_NAME) || fieldName.equalsIgnoreCase(DISCOUNT_FIELD_NAME)) {
             valueBigDecimal = fieldValue != null ? new BigDecimal(fieldValue) : null;
         }
 
@@ -660,6 +693,9 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
             case MAX_PRINCIPAL_FIELD_NAME:
                 defaultWorkingCapitalLoanProductCreateRequest.setMaxPrincipal(valueBigDecimal);
             break;
+            case DISCOUNT_FIELD_NAME:
+                defaultWorkingCapitalLoanProductCreateRequest.setDiscount(valueBigDecimal);
+            break;
             case PERIOD_PAYMENT_RATE_FIELD_NAME:
                 defaultWorkingCapitalLoanProductCreateRequest.setPeriodPaymentRate(valueBigDecimal);
             break;
@@ -688,6 +724,9 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
             break;
             case DELINQUENCY_START_TYPE_FIELD_NAME:
                 defaultWorkingCapitalLoanProductCreateRequest.setDelinquencyStartType(fieldValue);
+            break;
+            case BREACH_ID_FIELD_NAME:
+                defaultWorkingCapitalLoanProductCreateRequest.setBreachId(fieldValue != null ? Long.valueOf(fieldValue) : null);
             break;
             case LOCALE_FIELD_NAME:
                 defaultWorkingCapitalLoanProductCreateRequest.setLocale(fieldValue);
@@ -737,7 +776,7 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
         if (fieldName.equalsIgnoreCase(PRINCIPAL_FIELD_NAME) || fieldName.equalsIgnoreCase(MIN_PRINCIPAL_FIELD_NAME)
                 || fieldName.equalsIgnoreCase(MAX_PRINCIPAL_FIELD_NAME) || fieldName.equalsIgnoreCase(PERIOD_PAYMENT_RATE_FIELD_NAME)
                 || fieldName.equalsIgnoreCase(MIN_PERIOD_PAYMENT_RATE_FIELD_NAME)
-                || fieldName.equalsIgnoreCase(MAX_PERIOD_PAYMENT_RATE_FIELD_NAME)) {
+                || fieldName.equalsIgnoreCase(MAX_PERIOD_PAYMENT_RATE_FIELD_NAME) || fieldName.equalsIgnoreCase(DISCOUNT_FIELD_NAME)) {
             valueBigDecimal = fieldValue != null ? new BigDecimal(fieldValue) : null;
         }
 
@@ -773,6 +812,9 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
             case MIN_PRINCIPAL_FIELD_NAME:
                 defaultWorkingCapitalLoanProductUpdateRequest.setMinPrincipal(valueBigDecimal);
             break;
+            case DISCOUNT_FIELD_NAME:
+                defaultWorkingCapitalLoanProductUpdateRequest.setDiscount(valueBigDecimal);
+            break;
             case MAX_PRINCIPAL_FIELD_NAME:
                 defaultWorkingCapitalLoanProductUpdateRequest.setMaxPrincipal(valueBigDecimal);
             break;
@@ -804,6 +846,9 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
             break;
             case DELINQUENCY_START_TYPE_FIELD_NAME:
                 defaultWorkingCapitalLoanProductUpdateRequest.setDelinquencyStartType(fieldValue);
+            break;
+            case BREACH_ID_FIELD_NAME:
+                defaultWorkingCapitalLoanProductUpdateRequest.setBreachId(fieldValue != null ? Long.valueOf(fieldValue) : null);
             break;
             case LOCALE_FIELD_NAME:
                 defaultWorkingCapitalLoanProductUpdateRequest.setLocale(fieldValue);

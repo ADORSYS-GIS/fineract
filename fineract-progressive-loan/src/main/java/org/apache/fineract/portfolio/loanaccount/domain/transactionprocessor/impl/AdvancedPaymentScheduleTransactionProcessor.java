@@ -67,6 +67,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
@@ -142,11 +143,13 @@ public class AdvancedPaymentScheduleTransactionProcessor extends AbstractLoanRep
     private final LoanChargeService loanChargeService;
     private final SingleLoanChargeRepaymentScheduleProcessingWrapper loanChargeRepaymentScheduleProcessing;
     private final ScheduledDateGenerator scheduledDateGenerator;
+    private final ConfigurationDomainService configurationDomainService;
 
     public AdvancedPaymentScheduleTransactionProcessor(final EMICalculator emiCalculator, final InterestRefundService interestRefundService,
             final ExternalIdFactory externalIdFactory, final LoanScheduleComponent loanSchedule,
             final LoanChargeValidator loanChargeValidator, final LoanBalanceService loanBalanceService,
-            final LoanChargeService loanChargeService, ScheduledDateGenerator scheduledDateGenerator) {
+            final LoanChargeService loanChargeService, ScheduledDateGenerator scheduledDateGenerator,
+            ConfigurationDomainService configurationDomainService) {
         super(externalIdFactory, loanChargeValidator, loanBalanceService);
         this.emiCalculator = emiCalculator;
         this.interestRefundService = interestRefundService;
@@ -154,6 +157,7 @@ public class AdvancedPaymentScheduleTransactionProcessor extends AbstractLoanRep
         this.loanChargeService = loanChargeService;
         this.loanChargeRepaymentScheduleProcessing = new SingleLoanChargeRepaymentScheduleProcessingWrapper();
         this.scheduledDateGenerator = scheduledDateGenerator;
+        this.configurationDomainService = configurationDomainService;
     }
 
     @Override
@@ -3585,6 +3589,13 @@ public class AdvancedPaymentScheduleTransactionProcessor extends AbstractLoanRep
     private void createMissingAccrualTransactionDuringChargeOffIfNeeded(final BigDecimal newInterest,
             final LoanTransaction chargeOffTransaction, final LocalDate chargeOffDate, final TransactionCtx ctx) {
         final Loan loan = chargeOffTransaction.getLoan();
+        final boolean accrualAllowed = configurationDomainService.isAllowCashAndNonCashAccrual()
+                ? loan.isNoneOrCashOrUpfrontAccrualAccountingEnabledOnLoanProduct()
+                        || loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()
+                : loan.isUpfrontAccrualAccountingEnabledOnLoanProduct() || loan.isPeriodicAccrualAccountingEnabledOnLoanProduct();
+        if (!accrualAllowed) {
+            return;
+        }
         final List<LoanRepaymentScheduleInstallment> relevantInstallments = loan.getRepaymentScheduleInstallments().stream()
                 .filter(i -> !i.getFromDate().isAfter(chargeOffDate)).toList();
 
