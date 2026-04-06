@@ -47,6 +47,7 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Collection<WorkingCapitalLoanProductApiResourceSwagger.GetWorkingCapitalLoanProductsResponse.GetDelinquencyBucket> delinquencyBucketOptions;
         public List<StringEnumOptionData> periodFrequencyTypeOptions;
         public List<StringEnumOptionData> delinquencyStartTypeOptions;
+        public List<WorkingCapitalLoanProductApiResourceSwagger.GetWorkingCapitalLoanProductsResponse.GetWorkingCapitalLoanBreach> breachOptions;
     }
 
     @Schema(description = "GetWorkingCapitalLoansClient")
@@ -190,6 +191,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public StringEnumOptionData repaymentFrequencyType;
         @Schema(example = "0.0")
         public BigDecimal discount;
+        @Schema(description = "Working capital breach)")
+        public WorkingCapitalLoanProductApiResourceSwagger.GetWorkingCapitalLoanProductsResponse.GetWorkingCapitalLoanBreach breach;
         public WorkingCapitalLoanProductApiResourceSwagger.GetWorkingCapitalLoanProductsResponse.GetDelinquencyBucket delinquencyBucket;
         @Schema(example = "3", description = "Number of grace days before delinquency tracking starts")
         public Integer delinquencyGraceDays;
@@ -310,6 +313,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "0.0")
         public BigDecimal discount;
         @Schema(example = "1")
+        public Long breachId;
+        @Schema(example = "1")
         public Long delinquencyBucketId;
         @Schema(example = "3")
         public Integer delinquencyGraceDays;
@@ -413,6 +418,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "0.0")
         public BigDecimal discount;
         @Schema(example = "1")
+        public Long breachId;
+        @Schema(example = "1")
         public Long delinquencyBucketId;
         @Schema(example = "3")
         public Integer delinquencyGraceDays;
@@ -492,5 +499,23 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public String externalId;
         @Schema(description = "Payment details (Account No, Cheque No, Routing Code, Receipt No, Bank code)")
         public PostWorkingCapitalLoansLoanIdDisbursementPaymentDetails paymentDetails;
+    }
+
+    @Schema(description = "Request for updating discount on a disbursed Working Capital Loan")
+    public static final class PutWorkingCapitalLoansLoanIdDiscountRequest {
+
+        private PutWorkingCapitalLoansLoanIdDiscountRequest() {}
+
+        @Schema(example = "0.0", description = "Discount amount")
+        public BigDecimal discountAmount;
+
+        @Schema(example = "Discount update Note")
+        public String note;
+
+        @Schema(example = "en_GB")
+        public String locale;
+
+        @Schema(example = "dd MMMM yyyy")
+        public String dateFormat;
     }
 }
