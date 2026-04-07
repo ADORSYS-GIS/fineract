@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  * Registers batch command strategies for operations not supported by upstream Apache Fineract:
  * <ul>
  *   <li>POST /journalentries — GL journal entry creation</li>
- *   <li>POST /accounttransfers — savings-to-savings transfers</li>
+ *   <li>POST /accounttransfers — savings-to-savings transfers (delegates to upstream createAccountTransferCommandStrategy)</li>
  *   <li>PUT /savingsaccounts/{id}?command=approve — savings account approval</li>
  *   <li>PUT /savingsaccounts/{id}?command=activate — savings account activation</li>
  * </ul>
