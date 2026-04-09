@@ -1,10 +1,6 @@
 name: Fineract Publish to DockerHub
 on:
-  push:
-    branches:
-      - develop
-    tags:
-      - 1.*
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
