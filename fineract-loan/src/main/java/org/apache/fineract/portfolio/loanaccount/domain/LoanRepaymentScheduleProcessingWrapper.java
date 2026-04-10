@@ -108,7 +108,7 @@ public class LoanRepaymentScheduleProcessingWrapper {
                                 && loanCharge.getLoan().isMultiDisburmentLoan()) {
                             for (final LoanDisbursementDetails loanDisbursementDetails : loanCharge.getLoan().getDisbursementDetails()) {
                                 if (!DateUtils.isAfter(loanDisbursementDetails.expectedDisbursementDate(), loanCharge.getDueDate())) {
-                                    amount = amount.add(loanDisbursementDetails.principal());
+                                    amount = amount.add(loanDisbursementDetails.getPrincipal());
                                 }
                             }
                         } else {
@@ -251,6 +251,10 @@ public class LoanRepaymentScheduleProcessingWrapper {
     public static boolean isInPeriod(LocalDate targetDate, LocalDate fromDate, LocalDate toDate, boolean isFirstPeriod) {
         return isFirstPeriod ? DateUtils.isDateInRangeInclusive(targetDate, fromDate, toDate)
                 : DateUtils.isDateInRangeFromExclusiveToInclusive(targetDate, fromDate, toDate);
+    }
+
+    public static boolean isInPeriodFromInclusiveToExclusive(final LocalDate targetDate, final LocalDate fromDate, final LocalDate toDate) {
+        return DateUtils.isDateInRangeFromInclusiveToExclusive(fromDate, toDate, targetDate);
     }
 
     public static boolean isBeforePeriod(LocalDate targetDate, LoanRepaymentScheduleInstallment installment, boolean isFirstPeriod) {

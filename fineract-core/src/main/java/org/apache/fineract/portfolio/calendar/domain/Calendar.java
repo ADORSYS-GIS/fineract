@@ -518,7 +518,7 @@ public class Calendar extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         final StringBuilder recurrenceBuilder = new StringBuilder(200);
 
         recurrenceBuilder.append("FREQ=");
-        recurrenceBuilder.append(frequencyType.toString().toUpperCase());
+        recurrenceBuilder.append(frequencyType.toString().toUpperCase(java.util.Locale.ROOT));
         if (interval > 1) {
             recurrenceBuilder.append(";INTERVAL=");
             recurrenceBuilder.append(interval);
@@ -528,7 +528,7 @@ public class Calendar extends AbstractAuditableWithUTCDateTimeCustom<Long> {
                 final CalendarWeekDaysType weekDays = CalendarWeekDaysType.fromInt(repeatsOnDay);
                 if (!weekDays.isInvalid()) {
                     recurrenceBuilder.append(";BYDAY=");
-                    recurrenceBuilder.append(weekDays.toString().toUpperCase());
+                    recurrenceBuilder.append(weekDays.toString().toUpperCase(java.util.Locale.ROOT));
                 }
             }
         }
@@ -548,7 +548,7 @@ public class Calendar extends AbstractAuditableWithUTCDateTimeCustom<Long> {
                 final CalendarWeekDaysType weekday = CalendarWeekDaysType.fromInt(repeatsOnDay);
                 if (!weekday.isInvalid()) {
                     recurrenceBuilder.append(";BYDAY=");
-                    recurrenceBuilder.append(weekday.toString().toUpperCase());
+                    recurrenceBuilder.append(weekday.toString().toUpperCase(java.util.Locale.ROOT));
                 }
             }
         }

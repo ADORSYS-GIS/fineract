@@ -40,8 +40,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import org.apache.fineract.client.models.PaymentTypeRequest;
-import org.apache.fineract.client.models.PostPaymentTypesResponse;
+import org.apache.fineract.client.models.PaymentTypeCreateRequest;
 import org.apache.fineract.client.models.PutGlobalConfigurationsRequest;
 import org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType;
 import org.apache.fineract.infrastructure.configuration.api.GlobalConfigurationConstants;
@@ -2664,10 +2663,10 @@ public class ClientSavingsIntegrationTest {
         String name = PaymentTypeHelper.randomNameGenerator("P_T", 5);
         String description = PaymentTypeHelper.randomNameGenerator("PT_Desc", 15);
         Boolean isCashPayment = false;
-        Integer position = 1;
+        Long position = 1L;
 
-        PostPaymentTypesResponse paymentTypesResponse = paymentTypeHelper.createPaymentType(
-                new PaymentTypeRequest().name(name).description(description).isCashPayment(isCashPayment).position(position));
+        var paymentTypesResponse = paymentTypeHelper.createPaymentType(
+                new PaymentTypeCreateRequest().name(name).description(description).isCashPayment(isCashPayment).position(position));
         Long paymentTypeIdOne = paymentTypesResponse.getResourceId();
         Assertions.assertNotNull(paymentTypeIdOne);
 
@@ -2688,8 +2687,8 @@ public class ClientSavingsIntegrationTest {
 
         String paymentTypeNameTwo = PaymentTypeHelper.randomNameGenerator("P_T", 5);
 
-        PostPaymentTypesResponse paymentTypesResponseTwo = paymentTypeHelper.createPaymentType(
-                new PaymentTypeRequest().name(paymentTypeNameTwo).description(description).isCashPayment(isCashPayment).position(position));
+        var paymentTypesResponseTwo = paymentTypeHelper.createPaymentType(new PaymentTypeCreateRequest().name(paymentTypeNameTwo)
+                .description(description).isCashPayment(isCashPayment).position(position));
         Long paymentTypeIdTwo = paymentTypesResponseTwo.getResourceId();
         Assertions.assertNotNull(paymentTypeIdTwo);
 
@@ -2952,6 +2951,80 @@ public class ClientSavingsIntegrationTest {
         final Integer payChargeId = this.savingsAccountHelper.payCharge(savingsChargeId, savingsId, "200", "07 March 2013");
 
         Assertions.assertNotNull(payChargeId);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testAnnualChargePaymentAfterDueDate() {
+        Integer savingsId = null;
+        try {
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
+                    new PutGlobalConfigurationsRequest().enabled(true));
+
+            LocalDate submittedDate = LocalDate.of(2023, 1, 1);
+            String submittedDateString = "01 January 2023";
+            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, submittedDate);
+
+            this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+
+            final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+            ClientHelper.verifyClientCreatedOnServer(this.requestSpec, this.responseSpec, clientID);
+
+            final String minBalanceForInterestCalculation = null;
+            final String minRequiredBalance = null;
+            final String enforceMinRequiredBalance = "false";
+            final boolean allowOverdraft = false;
+            final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, "1000",
+                    minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
+            Assertions.assertNotNull(savingsProductID);
+
+            savingsId = this.savingsAccountHelper.applyForSavingsApplicationOnDate(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL,
+                    submittedDateString);
+            Assertions.assertNotNull(savingsId);
+
+            HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
+            SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
+
+            savingsStatusHashMap = this.savingsAccountHelper.approveSavingsOnDate(savingsId, submittedDateString);
+            SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
+
+            savingsStatusHashMap = this.savingsAccountHelper.activateSavings(savingsId, submittedDateString);
+            SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
+
+            final Integer chargeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                    ChargesHelper.getSavingsAnnualFeeJSON());
+            Assertions.assertNotNull(chargeId);
+
+            this.savingsAccountHelper.addChargesForSavingsWithDueDateAndFeeOnMonthDay(savingsId, chargeId, "15 February 2023", 100,
+                    "15 February");
+
+            ArrayList<HashMap> charges = this.savingsAccountHelper.getSavingsCharges(savingsId);
+            Assertions.assertEquals(1, charges.size());
+
+            HashMap savingsChargeForPay = charges.get(0);
+            Integer annualSavingsChargeId = (Integer) savingsChargeForPay.get("id");
+            float chargeAmount = (Float) savingsChargeForPay.get("amount");
+
+            LocalDate paymentDate = LocalDate.of(2023, 3, 1);
+            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, paymentDate);
+
+            Integer payChargeTransactionId = this.savingsAccountHelper.payCharge(annualSavingsChargeId, savingsId,
+                    String.valueOf(chargeAmount), paymentDate);
+            Assertions.assertNotNull(payChargeTransactionId);
+
+            HashMap paidCharge = this.savingsAccountHelper.getSavingsCharge(savingsId, annualSavingsChargeId);
+            Float amountPaid = (Float) paidCharge.get("amountPaid");
+            assertTrue(Math.abs(chargeAmount - amountPaid) < 0.01);
+
+        } finally {
+            if (savingsId != null) {
+                BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE,
+                        LocalDate.of(2024, 11, 11));
+                savingsAccountHelper.closeSavingsAccountOnDate(savingsId, "true", "11 November 2024");
+            }
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
+                    new PutGlobalConfigurationsRequest().enabled(false));
+        }
     }
 
     @Test

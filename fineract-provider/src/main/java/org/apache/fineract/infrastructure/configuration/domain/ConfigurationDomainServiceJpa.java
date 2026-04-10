@@ -548,4 +548,47 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         return getGlobalConfigurationPropertyData(
                 GlobalConfigurationConstants.ASSET_OWNER_TRANSFER_OUTSTANDING_INTEREST_CALCULATION_STRATEGY).getStringValue();
     }
+
+    @Override
+    public boolean isForceWithdrawalOnSavingsAccountEnabled() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT).isEnabled();
+    }
+
+    @Override
+    public Long retrieveForceWithdrawalOnSavingsAccountLimit() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT_LIMIT).getValue();
+    }
+
+    @Override
+    public Integer getPasswordReuseRestrictionCount() {
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.PASSWORD_REUSE_CHECK_HISTORY_COUNT);
+        if (!property.isEnabled()) {
+            return null;
+        }
+        Long value = property.getValue();
+        return value != null && value > 0 ? value.intValue() : 0;
+    }
+
+    @Override
+    public boolean isForcePasswordResetOnFirstLoginEnabled() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.FORCE_PASSWORD_RESET_ON_FIRST_LOGIN).isEnabled();
+    }
+
+    @Override
+    public boolean isMaxLoginRetriesEnabled() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.MAX_LOGIN_RETRY_ATTEMPTS).isEnabled();
+    }
+
+    @Override
+    public Integer retrieveMaxLoginRetries() {
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.MAX_LOGIN_RETRY_ATTEMPTS);
+        return property.getValue() == null ? null : property.getValue().intValue();
+    }
+
+    @Override
+    public boolean isAllowCashAndNonCashAccrual() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL).isEnabled();
+    }
 }

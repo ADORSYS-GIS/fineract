@@ -364,6 +364,7 @@ public class FineractProperties {
         private List<String> regexWhitelist;
         private boolean mimeWhitelistEnabled;
         private List<String> mimeWhitelist;
+        private Integer defaultBufferSize;
         private FineractContentFilesystemProperties filesystem;
         private FineractContentS3Properties s3;
     }
@@ -519,6 +520,7 @@ public class FineractProperties {
         private FineractSecurityTwoFactorAuth twoFactor;
         private FineractSecurityHsts hsts;
         private FineractSecurityOAuth2Properties oauth2;
+        private CorsProperties cors;
 
         public void set2fa(FineractSecurityTwoFactorAuth twoFactor) {
             this.twoFactor = twoFactor;
@@ -598,7 +600,7 @@ public class FineractProperties {
     public static class FineractModulesProperties {
 
         private FineractInvestorModuleProperties investor;
-        private FineractSelfServiceModuleProperties selfService;
+        private FineractLoanOriginationModuleProperties loanOrigination;
     }
 
     @Getter
@@ -609,7 +611,7 @@ public class FineractProperties {
 
     @Getter
     @Setter
-    public static class FineractSelfServiceModuleProperties extends AbstractFineractModuleProperties {
+    public static class FineractLoanOriginationModuleProperties extends AbstractFineractModuleProperties {
 
     }
 
@@ -687,5 +689,17 @@ public class FineractProperties {
 
             }
         }
+    }
+
+    @Getter
+    @Setter
+    public static class CorsProperties {
+
+        private boolean enabled;
+        private List<String> allowedOriginPatterns;
+        private List<String> allowedMethods;
+        private List<String> allowedHeaders;
+        private List<String> exposedHeaders;
+        private boolean allowCredentials;
     }
 }

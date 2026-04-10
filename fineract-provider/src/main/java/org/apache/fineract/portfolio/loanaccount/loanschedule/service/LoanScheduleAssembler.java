@@ -243,10 +243,10 @@ public class LoanScheduleAssembler {
         final InterestCalculationPeriodMethod interestCalculationPeriodMethod = allowOverridingInterestCalcPeriod
                 ? InterestCalculationPeriodMethod.fromInt(interestCalculationPeriodType)
                 : loanProduct.getLoanProductRelatedDetail().getInterestCalculationPeriodMethod();
-        Boolean allowPartialPeriodInterestCalcualtion = this.fromApiJsonHelper
+        Boolean allowPartialPeriodInterestCalculation = this.fromApiJsonHelper
                 .extractBooleanNamed(LoanProductConstants.ALLOW_PARTIAL_PERIOD_INTEREST_CALCUALTION_PARAM_NAME, element);
-        if (allowPartialPeriodInterestCalcualtion == null) {
-            allowPartialPeriodInterestCalcualtion = loanProduct.getLoanProductRelatedDetail().isAllowPartialPeriodInterestCalculation();
+        if (allowPartialPeriodInterestCalculation == null) {
+            allowPartialPeriodInterestCalculation = loanProduct.getLoanProductRelatedDetail().isAllowPartialPeriodInterestCalculation();
         }
 
         final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element);
@@ -314,8 +314,6 @@ public class LoanScheduleAssembler {
             calculatedRepaymentsStartingFromDate = deriveFirstRepaymentDate(loanType, repaymentEvery, expectedDisbursementDate,
                     repaymentPeriodFrequencyType, loanProduct.getMinimumDaysBetweenDisbursalAndFirstRepayment(), calendar, submittedOnDate,
                     repaymentStartDateType);
-            // If calculated repayment start date does not match due to minimum days between disbursal and first
-            // repayment rule, we set repaymentsStartingFromDate (which will be used as seed date later)
             if (!tmpCalculatedRepaymentsStartingFromDate.equals(calculatedRepaymentsStartingFromDate)) {
                 repaymentsStartingFromDate = calculatedRepaymentsStartingFromDate;
             }
@@ -533,10 +531,15 @@ public class LoanScheduleAssembler {
                     .extractBooleanNamed(LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, element);
         }
 
+        boolean allowFullTermForTranche = loanProduct.isAllowFullTermForTranche();
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element)) {
+            allowFullTermForTranche = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element);
+        }
+
         return LoanApplicationTerms.assembleFrom(applicationCurrency.toData(), loanTermFrequency, loanTermPeriodFrequencyType,
                 numberOfRepayments, repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
                 interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
-                allowPartialPeriodInterestCalcualtion, principalMoney, expectedDisbursementDate, repaymentsStartingFromDate,
+                allowPartialPeriodInterestCalculation, principalMoney, expectedDisbursementDate, repaymentsStartingFromDate,
                 calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods,
                 graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,
                 loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, graceOnArrearsAgeing,
@@ -561,7 +564,7 @@ public class LoanScheduleAssembler {
                 loanProduct.getLoanProductRelatedDetail().getBuyDownFeeCalculationType(),
                 loanProduct.getLoanProductRelatedDetail().getBuyDownFeeStrategy(),
                 loanProduct.getLoanProductRelatedDetail().getBuyDownFeeIncomeType(),
-                loanProduct.getLoanProductRelatedDetail().isMerchantBuyDownFee());
+                loanProduct.getLoanProductRelatedDetail().isMerchantBuyDownFee(), allowFullTermForTranche);
     }
 
     private CalendarInstance createCalendarForSameAsRepayment(final Integer repaymentEvery,
@@ -743,18 +746,9 @@ public class LoanScheduleAssembler {
         final MathContext mc = MoneyHelper.getMathContext();
         HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
 
-        LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getLoanScheduleType(),
-                loanApplicationTerms.getInterestMethod());
+        LoanScheduleGenerator loanScheduleGenerator;
         if (loanApplicationTerms.isEqualAmortization()) {
-            if (loanApplicationTerms.getInterestMethod().isDecliningBalance()) {
-                final LoanScheduleGenerator decliningLoanScheduleGenerator = this.loanScheduleFactory
-                        .create(loanApplicationTerms.getLoanScheduleType(), InterestMethod.DECLINING_BALANCE);
-                LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
-
-                loanApplicationTerms
-                        .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
-
-            }
+            updateInterestForEqualAmortization(mc, loanApplicationTerms, loanCharges, detailDTO);
             loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getLoanScheduleType(), InterestMethod.FLAT);
         } else {
             loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getLoanScheduleType(),
@@ -1594,6 +1588,18 @@ public class LoanScheduleAssembler {
                     loanScheduleModelPeriod.addLoanCharges(loanCharge.getAmountOutstanding(), BigDecimal.ZERO);
                 }
             }
+        }
+    }
+
+    private void updateInterestForEqualAmortization(final MathContext mc, final LoanApplicationTerms loanApplicationTerms,
+            final Set<LoanCharge> loanCharges, final HolidayDetailDTO detailDTO) {
+        if (loanApplicationTerms.getInterestMethod().isDecliningBalance()) {
+            final LoanScheduleGenerator decliningLoanScheduleGenerator = this.loanScheduleFactory
+                    .create(loanApplicationTerms.getLoanScheduleType(), InterestMethod.DECLINING_BALANCE);
+            LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+
+            loanApplicationTerms
+                    .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
         }
     }
 

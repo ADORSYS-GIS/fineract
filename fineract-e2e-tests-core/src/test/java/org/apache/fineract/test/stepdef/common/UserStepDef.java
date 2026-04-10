@@ -47,7 +47,7 @@ public class UserStepDef extends AbstractStepDef {
     @When("Admin creates new user with {string} username, {string} role name and given permissions:")
     public void createUserWithUsernameAndRoles(String username, String roleName, List<String> permissions) {
         ok(() -> fineractClient.roles().retrieveAllRoles());
-        PostRolesRequest newRoleRequest = new PostRolesRequest().name(Utils.randomNameGenerator(roleName, 8)).description(roleName);
+        PostRolesRequest newRoleRequest = new PostRolesRequest().name(Utils.randomStringGenerator(roleName, 8)).description(roleName);
         PostRolesResponse createNewRole = ok(() -> fineractClient.roles().createRole(newRoleRequest));
         Long roleId = createNewRole.getResourceId();
         Map<String, Boolean> permissionMap = new HashMap<>();
@@ -56,19 +56,19 @@ public class UserStepDef extends AbstractStepDef {
                 .permissions(permissionMap);
         ok(() -> fineractClient.roles().updateRolePermissions(roleId, putRolesRoleIdPermissionsRequest));
 
-        String generatedUsername = Utils.randomNameGenerator(username, 8);
+        String generatedUsername = Utils.randomStringGenerator(username, 8);
         PostUsersRequest postUsersRequest = new PostUsersRequest() //
                 .username(generatedUsername) //
                 .email(EMAIL) //
-                .firstname(username) //
-                .lastname(username) //
+                .firstname(Utils.randomFirstNameGenerator()) //
+                .lastname(Utils.randomLastNameGenerator()) //
                 .sendPasswordToEmail(Boolean.FALSE) //
                 .officeId(1L) //
                 .password(PWD_USER_WITH_ROLE) //
                 .repeatPassword(PWD_USER_WITH_ROLE) //
                 .roles(List.of(roleId));
 
-        PostUsersResponse createUserResponse = ok(() -> fineractClient.users().create15(postUsersRequest));
+        PostUsersResponse createUserResponse = ok(() -> fineractClient.users().createUser(postUsersRequest));
         testContext().set(TestContextKey.CREATED_SIMPLE_USER_RESPONSE, createUserResponse);
         testContext().set(TestContextKey.CREATED_SIMPLE_USER_USERNAME, generatedUsername);
         testContext().set(TestContextKey.CREATED_SIMPLE_USER_PASSWORD, PWD_USER_WITH_ROLE);

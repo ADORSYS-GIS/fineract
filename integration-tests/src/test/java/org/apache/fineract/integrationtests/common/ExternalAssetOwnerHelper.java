@@ -49,12 +49,14 @@ public class ExternalAssetOwnerHelper {
     }
 
     public void cancelTransferByTransferExternalId(String transferExternalId) {
-        Calls.ok(FineractClientHelper.getFineractClient().externalAssetOwners.transferRequestWithId1(transferExternalId, "cancel"));
+        Calls.ok(FineractClientHelper.getFineractClient().externalAssetOwners.transferRequestWithIdByExternalId(transferExternalId,
+                "cancel"));
     }
 
     public void cancelTransferByTransferExternalIdError(String transferExternalId) {
-        CallFailedRuntimeException exception = assertThrows(CallFailedRuntimeException.class, () -> Calls
-                .okR(FineractClientHelper.getFineractClient().externalAssetOwners.transferRequestWithId1(transferExternalId, "cancel")));
+        CallFailedRuntimeException exception = assertThrows(CallFailedRuntimeException.class,
+                () -> Calls.okR(FineractClientHelper.getFineractClient().externalAssetOwners
+                        .transferRequestWithIdByExternalId(transferExternalId, "cancel")));
         assertEquals(403, exception.getResponse().code());
     }
 
@@ -100,8 +102,8 @@ public class ExternalAssetOwnerHelper {
 
     public PagedRequestExternalAssetOwnerSearchRequest buildExternalAssetOwnerSearchRequest(String text, String attribute,
             LocalDate fromDate, LocalDate toDate, Integer page, Integer size) {
-        // increase it if tests create more than 100 items
-        final Integer DEFAULT_PAGE_SIZE = 100;
+        // increase it if tests create more than 200 items
+        final Integer DEFAULT_PAGE_SIZE = 200;
         PagedRequestExternalAssetOwnerSearchRequest pagedRequest = new PagedRequestExternalAssetOwnerSearchRequest();
         ExternalAssetOwnerSearchRequest searchRequest = new ExternalAssetOwnerSearchRequest();
         searchRequest.text(text);

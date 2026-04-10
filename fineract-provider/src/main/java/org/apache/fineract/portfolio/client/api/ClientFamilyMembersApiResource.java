@@ -19,6 +19,7 @@
 
 package org.apache.fineract.portfolio.client.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
@@ -57,8 +58,8 @@ public class ClientFamilyMembersApiResource {
 
     @GET
     @Path("/{familyMemberId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Retrieve a client family member", operationId = "retrieveOneClientFamilyMember")
     public ClientFamilyMembersData getFamilyMember(@PathParam("familyMemberId") final Long familyMemberId,
             @PathParam("clientId") @Parameter(description = "clientId") final Long clientId) {
 
@@ -68,8 +69,8 @@ public class ClientFamilyMembersApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "List all client family members", operationId = "retrieveAllClientFamilyMembers")
     public List<ClientFamilyMembersData> getFamilyMembers(@PathParam("clientId") final long clientId) {
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
         return this.readPlatformService.getClientFamilyMembers(clientId);
@@ -77,8 +78,8 @@ public class ClientFamilyMembersApiResource {
 
     @GET
     @Path("/template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Retrieve client family member template", operationId = "retrieveTemplateClientFamilyMember")
     public ClientFamilyMembersData getTemplate(@PathParam("clientId") final long clientId) {
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
         return this.readPlatformService.retrieveTemplate();
@@ -88,6 +89,7 @@ public class ClientFamilyMembersApiResource {
     @Path("/{familyMemberId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Update a client family member", operationId = "updateClientFamilyMember")
     public CommandProcessingResult updateClientFamilyMembers(@PathParam("familyMemberId") final long familyMemberId,
             ClientFamilyMemberRequest clientFamilyMemberRequest,
             @PathParam("clientId") @Parameter(description = "clientId") final Long clientId) {
@@ -100,6 +102,7 @@ public class ClientFamilyMembersApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Add a client family member", operationId = "createClientFamilyMember")
     public CommandProcessingResult addClientFamilyMembers(@PathParam("clientId") final long clientid,
             ClientFamilyMemberRequest clientFamilyMemberRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().addFamilyMembers(clientid)
@@ -110,8 +113,8 @@ public class ClientFamilyMembersApiResource {
 
     @DELETE
     @Path("/{familyMemberId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Delete a client family member", operationId = "deleteClientFamilyMember")
     public CommandProcessingResult deleteClientFamilyMembers(@PathParam("familyMemberId") final long familyMemberId,
             @PathParam("clientId") @Parameter(description = "clientId") final Long clientId) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().deleteFamilyMembers(familyMemberId).build();

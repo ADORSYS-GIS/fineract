@@ -53,7 +53,7 @@ import org.apache.fineract.infrastructure.security.utils.SQLBuilder;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
 import org.apache.fineract.organisation.staff.data.StaffData;
-import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
+import org.apache.fineract.organisation.staff.service.StaffReadService;
 import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
@@ -86,7 +86,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
     private final OfficeReadPlatformService officeReadPlatformService;
     private final ClientReadPlatformService clientReadPlatformService;
     private final LoanProductReadPlatformService loanProductReadPlatformService;
-    private final StaffReadPlatformService staffReadPlatformService;
+    private final StaffReadService staffReadPlatformService;
     private final PaginationHelper paginationHelper;
     private final DatabaseSpecificSQLGenerator sqlGenerator;
     private final PaginationParametersDataValidator paginationParametersDataValidator;
@@ -393,7 +393,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
                     commandAsJsonMap.remove(typeName);
 
                     final Integer enumTypeId = auditObject.get(typeName).getAsInt();
-                    final String code = SavingsEnumerations.savingEnumueration(typeName, enumTypeId).getValue();
+                    final String code = SavingsEnumerations.savingEnumeration(typeName, enumTypeId).getValue();
                     if (code != null) {
                         commandAsJsonMap.put(typeName, code);
                     }

@@ -25,7 +25,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -64,7 +63,7 @@ import org.springframework.stereotype.Component;
         closingDate
         The date for which the accounting closure is defined
         officeId
-        The identifer of the branch for which accounting has been closed
+        The identifier of the branch for which accounting has been closed
         comments
         Description associated with an Accounting closure
         """)
@@ -81,7 +80,6 @@ public class GLClosuresApiResource {
     private final OfficeReadPlatformService officeReadPlatformService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Accounting closures", description = """
             Example Requests:
@@ -96,7 +94,6 @@ public class GLClosuresApiResource {
 
     @GET
     @Path("{glClosureId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve an Accounting Closure", description = """
             Example Requests:
@@ -125,8 +122,7 @@ public class GLClosuresApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Create an Accounting Closure", description = "Mandatory Fields\n" + "officeId,closingDate")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = GLClosuresApiResourceSwagger.PostGlClosuresRequest.class, description = "Request Body")))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLClosuresApiResourceSwagger.PostGlClosuresResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLClosuresApiResourceSwagger.PostGlClosuresResponse.class)))
     public CommandProcessingResult createGLClosure(@Parameter(hidden = true) GLClosureRequest glClosureRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createGLClosure()
                 .withJson(apiJsonSerializerService.serialize(glClosureRequest)).build();
@@ -150,7 +146,6 @@ public class GLClosuresApiResource {
 
     @DELETE
     @Path("{glClosureId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Delete an accounting closure", description = "Note: Only the latest accounting closure associated with a branch may be deleted.")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLClosuresApiResourceSwagger.DeleteGlClosuresResponse.class)))

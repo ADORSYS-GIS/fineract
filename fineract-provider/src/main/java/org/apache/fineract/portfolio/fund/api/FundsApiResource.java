@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -70,7 +69,6 @@ public class FundsApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Funds", description = "Returns the list of funds.\n" + "\n" + "Example Requests:\n" + "\n" + "funds")
     public List<FundData> retrieveFunds() {
@@ -83,8 +81,7 @@ public class FundsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Create a Fund", description = "Creates a Fund")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = FundRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FundsApiResourceSwagger.PostFundsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FundsApiResourceSwagger.PostFundsResponse.class)))
     public CommandProcessingResult createFund(@Parameter(hidden = true) final FundRequest fundRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createFund().withJson(toApiJsonSerializer.serialize(fundRequest))
                 .build();
@@ -93,7 +90,6 @@ public class FundsApiResource {
 
     @GET
     @Path("{fundId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve a Fund", description = "Returns the details of a Fund.\n" + "\n" + "Example Requests:\n" + "\n"
             + "funds/1")
@@ -108,8 +104,7 @@ public class FundsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Update a Fund", description = "Updates the details of a fund.")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = FundRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FundsApiResourceSwagger.PutFundsFundIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FundsApiResourceSwagger.PutFundsFundIdResponse.class)))
     public String updateFund(@PathParam("fundId") @Parameter(description = "fundId") final Long fundId,
             @Parameter(hidden = true) final FundRequest fundRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().updateFund(fundId)

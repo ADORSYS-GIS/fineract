@@ -33,7 +33,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.infrastructure.security.service.SqlValidator;
 import org.apache.fineract.organisation.monetary.service.CurrencyReadPlatformService;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
-import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
+import org.apache.fineract.organisation.staff.service.StaffReadService;
 import org.apache.fineract.organisation.teller.data.CashierData;
 import org.apache.fineract.organisation.teller.service.TellerManagementReadPlatformServiceImpl;
 import org.springframework.context.annotation.Primary;
@@ -49,7 +49,7 @@ public class CustomTellerManagementReadPlatformServiceImpl extends TellerManagem
     private final JdbcTemplate jdbcTemplate;
 
     public CustomTellerManagementReadPlatformServiceImpl(final JdbcTemplate jdbcTemplate, final PlatformSecurityContext context,
-            final OfficeReadPlatformService officeReadPlatformService, final StaffReadPlatformService staffReadPlatformService,
+            final OfficeReadPlatformService officeReadPlatformService, final StaffReadService staffReadPlatformService,
             final CurrencyReadPlatformService currencyReadPlatformService, final DatabaseSpecificSQLGenerator sqlGenerator,
             final PaginationHelper paginationHelper, final SqlValidator sqlValidator) {
         super(jdbcTemplate, context, officeReadPlatformService, staffReadPlatformService, currencyReadPlatformService, sqlGenerator,

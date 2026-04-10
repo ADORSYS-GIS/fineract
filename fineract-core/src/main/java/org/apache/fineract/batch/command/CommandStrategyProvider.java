@@ -24,8 +24,10 @@ import static jakarta.ws.rs.HttpMethod.POST;
 import static jakarta.ws.rs.HttpMethod.PUT;
 import static org.apache.fineract.batch.command.CommandStrategyUtils.isResourceVersioned;
 
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.batch.command.internal.UnknownCommandStrategy;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,7 @@ import org.springframework.stereotype.Component;
  *
  * @see org.apache.fineract.batch.command.internal.UnknownCommandStrategy
  */
+@Slf4j
 @Component
 public class CommandStrategyProvider {
 
@@ -47,12 +50,12 @@ public class CommandStrategyProvider {
     /**
      * Regex pattern for specifying any number of query params or not specific any query param
      */
-    private static final String OPTIONAL_QUERY_PARAM_REGEX = "(\\?(\\w+(?:\\=[\\w,]+|&)+)+)?";
+    private static final String OPTIONAL_QUERY_PARAM_REGEX = "(\\?([\\w-]+=[^&]+)(?:&[\\w-]+=[^&]+)*)?";
 
     /**
      * Regex pattern for specifying query params
      */
-    private static final String MANDATORY_QUERY_PARAM_REGEX = "(\\?(\\w+(?:\\=[\\w\\-,]+|&)+)+)";
+    private static final String MANDATORY_QUERY_PARAM_REGEX = "(\\?([\\w-]+=[^&]+)(?:&[\\w-]+=[^&]+)*)";
 
     /**
      * Regex pattern for specifying any query param that has key = 'command' or not specific anything.
@@ -92,6 +95,22 @@ public class CommandStrategyProvider {
         init();
 
         this.applicationContext = applicationContext;
+    }
+
+    /**
+     * Allows custom plugins to register additional batch command strategies
+     * without modifying the core init() method.
+     */
+    @PostConstruct
+    public void registerPluginStrategies() {
+        Map<String, CommandStrategyRegistrar> registrars = applicationContext.getBeansOfType(CommandStrategyRegistrar.class);
+        if (!registrars.isEmpty()) {
+            registrars.forEach((name, registrar) -> {
+                int before = commandStrategies.size();
+                registrar.register(commandStrategies);
+                log.info("Plugin '{}' registered {} batch command strategies", name, commandStrategies.size() - before);
+            });
+        }
     }
 
     /**
@@ -149,6 +168,11 @@ public class CommandStrategyProvider {
         commandStrategies.put(CommandContext
                 .resource("v1\\/savingsaccounts\\/" + NUMBER_REGEX + "\\/transactions\\/" + NUMBER_REGEX + OPTIONAL_COMMAND_PARAM_REGEX)
                 .method(POST).build(), "savingsAccountAdjustTransactionCommandStrategy");
+        commandStrategies.put(CommandContext.resource("v1\\/savingsaccounts\\/" + NUMBER_REGEX + "\\/charges").method(POST).build(),
+                "createSavingsAccountChargeCommandStrategy");
+        commandStrategies.put(CommandContext
+                .resource("v1\\/savingsaccounts\\/" + NUMBER_REGEX + "\\/charges\\/" + NUMBER_REGEX + MANDATORY_COMMAND_PARAM_REGEX)
+                .method(POST).build(), "paySavingsAccountChargeCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\/charges").method(POST).build(),
                 "createChargeCommandStrategy");
         commandStrategies.put(
@@ -188,6 +212,8 @@ public class CommandStrategyProvider {
                 "approveLoanCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\?command=disburse").method(POST).build(),
                 "disburseLoanCommandStrategy");
+        commandStrategies.put(CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\?command=disburseToSavings").method(POST).build(),
+                "disburseToSavingsCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + MANDATORY_COMMAND_PARAM_REGEX)
                 .method(POST).build(), "loanStateTransistionsByExternalIdCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/rescheduleloans").method(POST).build(),
@@ -201,6 +227,13 @@ public class CommandStrategyProvider {
                 CommandContext.resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + "\\/transactions\\/external-id\\/"
                         + UUID_PARAM_REGEX + OPTIONAL_QUERY_PARAM_REGEX).method(GET).build(),
                 "getLoanTransactionByExternalIdCommandStrategy");
+        commandStrategies.put(
+                CommandContext.resource("v1\\/loans\\/" + NUMBER_REGEX + "\\/transactions\\/reage-preview" + OPTIONAL_QUERY_PARAM_REGEX)
+                        .method(GET).build(),
+                "getReagePreviewByLoanIdCommandStrategy");
+        commandStrategies.put(CommandContext
+                .resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + "\\/transactions\\/reage-preview" + OPTIONAL_QUERY_PARAM_REGEX)
+                .method(GET).build(), "getReagePreviewByLoanExternalIdCommandStrategy");
         commandStrategies.put(CommandContext.resource("v1\\/datatables\\/" + ALPHANUMBERIC_WITH_UNDERSCORE_REGEX + "\\/" + NUMBER_REGEX)
                 .method(POST).build(), "createDatatableEntryCommandStrategy");
         commandStrategies.put(CommandContext
@@ -243,6 +276,8 @@ public class CommandStrategyProvider {
         commandStrategies.put(CommandContext
                 .resource("v1\\/loans\\/external-id\\/" + UUID_PARAM_REGEX + "\\/interest-pauses\\/" + NUMBER_REGEX).method(PUT).build(),
                 "updateLoanInterestPauseByExternalIdCommandStrategy");
+        commandStrategies.put(CommandContext.resource("v1\\/accounttransfers").method(POST).build(),
+                "createAccountTransferCommandStrategy");
     }
 
 }

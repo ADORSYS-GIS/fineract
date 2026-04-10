@@ -77,6 +77,19 @@ public final class ErrorMessageHelper {
         return "The parameter 'currencies' is mandatory.";
     }
 
+    public static String currencyNotFound(String currencyCode) {
+        return String.format("Currency with code '%s' not found in currency options", currencyCode);
+    }
+
+    public static String wrongCurrencyField(String currencyCode, String fieldName, Object actual, Object expected) {
+        return String.format("Wrong %s for currency '%s'. Actual value is: %s - But expected value is: %s", fieldName, currencyCode, actual,
+                expected);
+    }
+
+    public static String wrongSelectedCurrencies(List<String> actual, List<String> expected) {
+        return String.format("Wrong selected currencies. Actual value is: %s - But expected value is: %s", actual, expected);
+    }
+
     public static String disburseDateFailure(Integer loanId) {
         String loanIdStr = parseLoanIdToString(loanId);
         return String.format("The date on which a loan with identifier : %s is disbursed cannot be in the future.", loanIdStr);
@@ -113,6 +126,10 @@ public final class ErrorMessageHelper {
 
     public static String disburseIsNotAllowedFailure() {
         return "Loan Disbursal is not allowed. Loan Account is not in approved and not disbursed state.";
+    }
+
+    public static String disburseIsNotAllowedExceedApprovedAmountFailure() {
+        return "Loan can't be disbursed, disburse amount is exceeding approved principal.";
     }
 
     public static String loanSubmitDateInFutureFailureMsg() {
@@ -468,6 +485,18 @@ public final class ErrorMessageHelper {
     public static String nrOfLinesWrongInTransactionsTab(String resourceId, int actual, int expected) {
         return String.format("%nNumber of lines does not match in Transactions tab and expected datatable of resource %s." //
                 + "%nNumber of transaction tab lines: %s %nNumber of expected datatable lines: %s%n", resourceId, actual, expected);
+    }
+
+    public static String wrongValueInLineInRescheduleTab(String resourceId, int line, List<List<String>> actualList,
+            List<String> expected) {
+        String actual = actualList.stream().map(Object::toString).collect(Collectors.joining(System.lineSeparator()));
+        return String.format("%nWrong value in Reschedule tab of resource %s line %s." //
+                + "%nActual values in line are: %n%s %nExpected values in line: %n%s", resourceId, line, actual, expected);
+    }
+
+    public static String nrOfLinesWrongInRescheduleTab(String resourceId, int actual, int expected) {
+        return String.format("%nNumber of lines does not match in Reschedule tab and expected datatable of resource %s." //
+                + "%nNumber of reschedule tab lines: %s %nNumber of expected datatable lines: %s%n", resourceId, actual, expected);
     }
 
     public static String wrongValueInLineInChargesTab(String resourceId, int line, List<List<String>> actualList, List<String> expected) {
@@ -965,5 +994,98 @@ public final class ErrorMessageHelper {
 
     public static String reAgeContractTerminatedLoanFailure() {
         return "Loan re-aging is not allowed on contract terminated loan.";
+    }
+
+    public static String reAgeClosedLoanFailure() {
+        return "Loan reaging can only be done on active loans";
+    }
+
+    public static String reAmortizeChargedOffLoanFailure() {
+        return "Loan re-amortization is not allowed on charged-off loan.";
+    }
+
+    public static String reAmortizeContractTerminatedLoanFailure() {
+        return "Loan re-amortization is not allowed on contract terminated loan.";
+    }
+
+    public static String reAmortizeClosedLoanFailure() {
+        return "Loan re-amortization can only be done on active loans";
+    }
+
+    public static String reAmortizeSameDateFailure() {
+        return "Validation errors: [id] Loan reamortization can only be done once a day. There has already been a reamortization done for today";
+    }
+
+    public static String incorrectExpectedValueInResponse() {
+        return "The parameter is not matching to expected.";
+    }
+
+    public static String fieldValueNullOrEmptyMandatoryFailure(String fieldName) {
+        return String.format("The parameter `%s` is mandatory.", fieldName);
+    }
+
+    public static String fieldValueMoreMaxLengthAllowedFailure(String fieldName, int maxAllowedLength) {
+        return String.format("The parameter `%s` exceeds max length of %d.", fieldName, maxAllowedLength);
+    }
+
+    public static String fieldValueZeroValueFailure(String fieldName) {
+        return String.format("The parameter `%s` must be greater than 0.", fieldName);
+    }
+
+    public static String paymentAllocationRulesInvalidNumberFailure(int actualNumberOfPaymentAllocationRules) {
+        return String.format("Each provided payment allocation must contain exactly 3 allocation rules, but %d were provided",
+                actualNumberOfPaymentAllocationRules);
+    }
+
+    public static String paymentAllocationRulesInvalidValueFailure() {
+        return "One or more payment allocation types are invalid or not recognized";
+    }
+
+    public static String workingCapitalLoanProductIdentifiedDoesNotExistFailure(String identifierId) {
+        return String.format("Working Capital Loan Product with identifier %s does not exist", identifierId);
+    }
+
+    public static String workingCapitalDelinquencyBucketCreateDuplicateNameFailure(Long identifierId) {
+        return String.format("Data integrity issue with resource: %d", identifierId);
+    }
+
+    public static String workingCapitalDelinquencyBucketNotFoundFailure(Long id) {
+        return String.format("Delinquency bucket with id `%d` is not found.", id);
+    }
+
+    public static String workingCapitalDelinquencyBucketDoesntExistFailure(Long id) {
+        return String.format("Delinquency bucket with id `%d` does not exist.", id);
+    }
+
+    public static String workingCapitalBreachNotFoundFailure(final Long id) {
+        return String.format("Working Capital Breach with id %d was not found.", id);
+    }
+
+    public static String disburseNotApprovedFailure(String status) {
+        return String.format("Disbursement is not allowed from current status %s", status);
+    }
+
+    public static String disburseDateFailure(String errorMessageDescription) {
+        return String.format("Failed data validation due to: %s", errorMessageDescription);
+    }
+
+    public static String undoDisbursalDisallowedFailure(String status) {
+        return String.format("Transition LOAN_DISBURSAL_UNDO is not allowed from status %s", status);
+    }
+
+    public static String discountAmountExceedFailure() {
+        return "Failed data validation due to: amount.cannot.exceed.created.discount.";
+    }
+
+    public static String discountAlreadySetBeforeDisburseFailure() {
+        return "Discount was already set before disbursement and cannot be added again";
+    }
+
+    public static String discountDiffDateFromDisburseFailure() {
+        return "Failed data validation due to: transaction.date.must.be.equal.disbursement.date.";
+    }
+
+    public static String discountOverrideDisallowedByProductFailure() {
+        return "Failed data validation due to: override.not.allowed.by.product.";
     }
 }

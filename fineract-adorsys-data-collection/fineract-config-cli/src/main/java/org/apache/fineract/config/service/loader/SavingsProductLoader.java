@@ -186,6 +186,7 @@ public class SavingsProductLoader {
 
     if (!"NONE".equals(savingsProduct.getAccountingRule())) {
       addAccountingMappings(builder, savingsProduct, context);
+      addPaymentChannelToFundSourceMappings(builder, savingsProduct, context);
     }
 
     return builder.build();
@@ -268,5 +269,57 @@ public class SavingsProductLoader {
     // if (savingsProduct.getEscheatLiabilityAccountId() != null) {
     //   builder.put("escheatLiabilityAccountId", savingsProduct.getEscheatLiabilityAccountId());
     // }
+  }
+
+  /**
+   * Adds payment channel to fund source mappings to the request.
+   *
+   * <p>These per-product mappings tell Fineract which GL fund source account to debit/credit when a
+   * deposit or withdrawal uses a specific payment type (e.g., MTN MoMo → GL 5001).
+   *
+   * @param builder request builder
+   * @param savingsProduct savings product
+   * @param context import context
+   */
+  private void addPaymentChannelToFundSourceMappings(
+      RequestBuilder builder, SavingsProduct savingsProduct, ImportContext context) {
+
+    if (savingsProduct.getPaymentChannelToFundSourceMappings() == null
+        || savingsProduct.getPaymentChannelToFundSourceMappings().isEmpty()) {
+      return;
+    }
+
+    List<Map<String, Object>> mappings = new ArrayList<>();
+
+    for (SavingsProduct.PaymentChannelMapping mapping :
+        savingsProduct.getPaymentChannelToFundSourceMappings()) {
+      Long paymentTypeId = context.resolveEntityId("paymentType", mapping.getPaymentTypeName());
+      Long fundSourceId = context.resolveEntityId("glAccount", mapping.getFundSourceGlCode());
+
+      if (paymentTypeId == null) {
+        log.warn(
+            "Payment type '{}' not found for savings product '{}' — skipping mapping",
+            mapping.getPaymentTypeName(),
+            savingsProduct.getName());
+        continue;
+      }
+      if (fundSourceId == null) {
+        log.warn(
+            "GL account '{}' not found for savings product '{}' — skipping mapping",
+            mapping.getFundSourceGlCode(),
+            savingsProduct.getName());
+        continue;
+      }
+
+      mappings.add(Map.of("paymentTypeId", paymentTypeId, "fundSourceAccountId", fundSourceId));
+    }
+
+    if (!mappings.isEmpty()) {
+      builder.put("paymentChannelToFundSourceMappings", mappings);
+      log.debug(
+          "Added {} payment channel mappings to savings product '{}'",
+          mappings.size(),
+          savingsProduct.getName());
+    }
   }
 }

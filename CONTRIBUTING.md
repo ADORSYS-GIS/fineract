@@ -26,6 +26,48 @@ Here's how to run the set of relatively fast and independent Fineract tests:
 This runs nearly 1,000 tests and completes in a few minutes on decent hardware.
 They shouldn't need any special servers/services running.
 
+#### Cucumber E2E tests
+
+The Cucumber E2E tests run against a live Fineract instance instead of starting one for you.
+Before running them locally, create the required databases and start Fineract:
+
+```bash
+# Create required databases
+./gradlew createPGDB -PdbName=fineract_tenants
+./gradlew createPGDB -PdbName=fineract_default
+
+# Start Fineract in another terminal
+./gradlew bootRun -Dspring.profiles.active=test
+```
+
+The default E2E test connection settings live in `fineract-e2e-tests-core/src/test/resources/fineract-test-application.properties`.
+By default, the test suite connects to `https://localhost:8443`.
+
+Many E2E tests require seeded test data.
+That setup is controlled by the `INITIALIZATION_ENABLED` environment variable, which maps to `fineract-test.initialization.enabled`.
+For a fresh database, run the suite from `fineract-e2e-tests-runner` with initialization enabled first:
+
+```bash
+cd fineract-e2e-tests-runner
+INITIALIZATION_ENABLED=true ../gradlew cucumber
+```
+
+After the initialization data already exists, you can run all E2E tests without it:
+
+```bash
+cd fineract-e2e-tests-runner
+../gradlew cucumber
+```
+
+To run a single feature file:
+
+```bash
+cd fineract-e2e-tests-runner
+../gradlew cucumber -Pcucumber.features="src/test/resources/features/Loan.feature"
+```
+
+See [Cucumber E2E Tests](https://fineract.apache.org/docs/current/#testing-cucumber) for more details and additional options.
+
 #### Integration tests
 
 Running tests with external dependencies is a multi-step process with many moving parts.
@@ -95,6 +137,15 @@ This is useful for repeated test runs (say, for timing) when gradle would otherw
 
 See the next section for testing in Eclipse and [here](https://fineract-academy.com) for testing in IntelliJ.
 
+## Recommended IDEs
+
+Apache Fineract can be developed using multiple IDEs. The most commonly used and supported IDEs are:
+
+- **Eclipse IDE** – Fully supported and commonly used within the community.
+- **IntelliJ IDEA (Community or Ultimate)** – Recommended for most developers due to excellent Gradle support and debugging experience.
+
+The sections below provide setup guidance for each IDE.
+
 ### How to run and debug in Eclipse IDE
 
 It is possible to run Fineract in Eclipse IDE and also to debug Fineract using Eclipse's debugging facilities.
@@ -110,6 +161,29 @@ If you change the project settings (dependencies etc) in Gradle, you should redo
 You can also use Eclipse JUnit support to run tests in Eclipse (Run As->JUnit Test)
 
 Finally, modifying source code in Eclipse automatically triggers hot code replace to a running instance, allowing you to immediately test your changes
+
+## How to run and debug in IntelliJ IDEA
+
+IntelliJ IDEA provides strong Gradle integration and is recommended for most new contributors.
+
+### Prerequisites
+- IntelliJ IDEA (Community Edition is sufficient)
+- Java 21 (as required by Fineract)
+- Gradle (wrapper included in the repository)
+
+### Steps
+
+1. Open IntelliJ IDEA and select **Open**
+2. Choose the root `fineract` directory
+3. When prompted, import the project as a **Gradle project**
+4. Use the Gradle wrapper (`gradlew`) when asked
+5. Ensure the correct JDK is selected (**Java 21**)
+6. After import completes, run:
+   - `org.apache.fineract.ServerApplication` as a **Java Application**
+
+### Notes
+- IntelliJ may take several minutes to index the project on first open
+- If you encounter build issues, try running `./gradlew clean build` from the terminal
 
 How to download Gradle wrapper
 ---
@@ -178,6 +252,18 @@ The project uses Jacoco to measure unit tests code coverage. To generate a repor
 Generated reports can be found in the build/code-coverage directory.
 
 
+### Lombok
+
+The project uses [Lombok](https://projectlombok.org/) to reduce boilerplate code. Configuration is in [lombok.config](lombok.config).
+
+* Use `@Getter` / `@Setter` / `@NoArgsConstructor` on JPA entities. Never use `@Data` on entities (causes JPA lazy loading issues).
+* Use `@RequiredArgsConstructor` on service classes for constructor-based dependency injection.
+* Use `@Slf4j` for logging instead of manually declaring loggers.
+* Use `@Data` for simple DTOs (includes getters, setters, toString, equals, hashCode).
+* Use `@Builder` with `@Builder.Default` for configuration classes and complex object construction.
+* Never use `@SneakyThrows` - handle exceptions explicitly.
+
+
 ### Error Handling
 
 * When catching exceptions, either rethrow them, or log them.  Either way, include the root cause by using `catch (SomeException e)` and then either `throw AnotherException("..details..", e)` or `LOG.error("...context...", e)`.
@@ -224,6 +310,17 @@ If your PR is failing to pass our CI build due to a test failure, then:
 [Pull Request Size Limit](https://cwiki.apache.org/confluence/display/FINERACT/Pull+Request+Size+Limit)
 documents that we cannot accept huge "code dump" Pull Requests, with some related suggestions.
 
+In your PR branch, include as few or as many commits as you feel will be helpful to most clearly communicate your intent, progress, and lessons learned.
+Each commit should be reviewable and logically coherent.
+Add detail and context as necessary in commit log messages to communicate not only *what* you changed, but *why*, including summaries of discussions leading to the changes, ideas/plans for future changes, etc.
+Keep the *what* simple: Use the summary (first line) and let the diff otherwise speak for itself.
+
+Contributors: squash, rebase, and force-push your PR branches as you see fit.
+You might, for example, rebase on top of `develop`.
+You might also squash several commits with code formatting / whitespace fixes, but keep separate commits for code changes affecting functionality.
+Besides simple clean-ups, PR branch commits should be left as-is/un-squashed.
+Follow this same rule when adding new commits to in-progress PR branches; it's helpful for posterity / intent forensics to see progress along the way, changes reversed, etc.
+
 Guideline for new Feature commits involving Refactoring: If you are submitting a PR for a new feature,
 and it involves refactoring, try to differentiate "new feature code" from "refactored" by placing
 them in different commits. This helps to review your code faster.
@@ -233,8 +330,31 @@ We have an automated bot which marks pull requests as "stale" after a while, and
 
 ### Merge Strategy
 
-This project's committers typically prefer to bring your pull requests in through _Rebase and Merge_ instead of _Create a Merge Commit_. (If you are unfamiliar with GitHub's UI regarding this, note the somewhat hidden little triangle drop-down at the bottom of the PR, visible only to committers, not contributors.)  This avoids the "merge commits" which we consider to be somewhat "polluting" the project's commit log history view.  We understand this doesn't give an easy automatic reference to the original PR (which GitHub automatically adds to the merge commit message it generates), but we consider this an only very minor inconvenience; it's typically relatively easy to find the original PR even just from the commit message, and JIRA.
+After PR review and passing CI build, a committer will merge your PR branch into our primary integration branch, `develop`, either locally or on GitHub using "Merge pull request - Create a merge commit" (not "Squash and merge" and not "Rebase and merge").
 
-We expect most proposed PRs to typically consist of a single commit. Committers may use _Squash and merge_ to combine your commits at merge time, and if they do so, will rewrite your commit message as they see fit.
 
-Neither of these two are hard absolute rules, but mere conventions. Multiple commits in single PRs make sense in certain cases (e.g. branch backports).
+### Signing Your Commits
+
+All commits must be signed with GPG keys.
+
+For GPG setup instructions, see the [Fineract GPG Guide](https://fineract.apache.org/docs/current/#_gpg_2).
+
+Commit signatures may be checked locally with `git log --show-signature`, and a "Verified" badge should appear on GitHub for [every commit](https://github.com/apache/fineract/commits/).
+
+To verify your commits locally before pushing:
+
+```bash
+./scripts/verify-signed-commits.sh
+```
+
+
+### Examining history
+
+Hints for simplifying commit history with git:
+
+```bash
+git switch develop
+git log --first-parent develop
+git log --no-merges
+git log --max-parents=1
+```

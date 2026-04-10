@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -63,8 +62,8 @@ public class ClientAddressApiResource {
 
     @GET
     @Path("addresses/template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Retrieve client address template", operationId = "retrieveTemplateClientAddress")
     public AddressData getAddressesTemplate() {
         context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
         return readPlatformService.retrieveTemplate();
@@ -75,10 +74,10 @@ public class ClientAddressApiResource {
     @Path("/{clientid}/addresses")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Create an address for a Client", description = "Mandatory Fields : \n" + "type and clientId")
+    @Operation(summary = "Create an address for a Client", operationId = "createClientAddress", description = "Mandatory Fields : \n"
+            + "type and clientId")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = ClientAddressRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ClientAddressApiResourcesSwagger.PostClientClientIdAddressesResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ClientAddressApiResourcesSwagger.PostClientClientIdAddressesResponse.class)))
     public CommandProcessingResult addClientAddress(@QueryParam("type") @Parameter(description = "type") final long addressTypeId,
             @PathParam("clientid") @Parameter(description = "clientId") final long clientid,
             @Parameter(hidden = true) ClientAddressRequest clientAddressRequest) {
@@ -90,10 +89,14 @@ public class ClientAddressApiResource {
 
     @GET
     @Path("/{clientid}/addresses")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "List all addresses for a Client", description = "Example Requests:\n" + "\n" + "client/1/addresses\n" + "\n"
-            + "\n" + "clients/1/addresses?status=false,true&&type=1,2,3")
+    @Operation(summary = "List all addresses for a Client", operationId = "retrieveAllClientAddresses", description = """
+            Example Requests:
+
+            client/1/addresses
+
+
+            clients/1/addresses?status=false,true&&type=1,2,3""")
     public List<AddressData> getAddresses(@QueryParam("status") @Parameter(description = "status") final String status,
             @QueryParam("type") @Parameter(description = "type") final long addressTypeId,
             @PathParam("clientid") @Parameter(description = "clientId") final long clientid) {
@@ -105,11 +108,14 @@ public class ClientAddressApiResource {
     @Path("/{clientid}/addresses")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Update an address for a Client", description = "All the address fields can be updated by using update client address API\n"
-            + "\n" + "Mandatory Fields\n" + "type and addressId")
+    @Operation(summary = "Update an address for a Client", operationId = "updateClientAddress", description = """
+            All the address fields can be updated by using update client address API
+
+            Mandatory Fields
+            type and addressId""")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = ClientAddressRequest.class)))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ClientAddressApiResourcesSwagger.PutClientClientIdAddressesResponse.class))) })
+
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ClientAddressApiResourcesSwagger.PutClientClientIdAddressesResponse.class)))
     public CommandProcessingResult updateClientAddress(@PathParam("clientid") @Parameter(description = "clientId") final long clientid,
             @Parameter(hidden = true) ClientAddressRequest clientAddressRequest) {
 

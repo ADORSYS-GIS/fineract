@@ -16,27 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
 package org.apache.fineract.test.stepdef.assetexternalization;
 
 import static org.apache.fineract.client.feign.util.FeignCalls.fail;
+import static org.apache.fineract.client.feign.util.FeignCalls.ok;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.cucumber.datatable.DataTable;
@@ -60,11 +43,14 @@ import org.apache.fineract.client.models.ExternalOwnerJournalEntryData;
 import org.apache.fineract.client.models.ExternalOwnerTransferJournalEntryData;
 import org.apache.fineract.client.models.ExternalTransferData;
 import org.apache.fineract.client.models.ExternalTransferLoanProductAttributesData;
+import org.apache.fineract.client.models.ExternalTransferOwnerData;
 import org.apache.fineract.client.models.GetLoanProductsResponse;
 import org.apache.fineract.client.models.JournalEntryData;
 import org.apache.fineract.client.models.PageExternalTransferData;
 import org.apache.fineract.client.models.PageExternalTransferLoanProductAttributesData;
 import org.apache.fineract.client.models.PostExternalAssetOwnerLoanProductAttributeRequest;
+import org.apache.fineract.client.models.PostExternalAssetOwnerRequest;
+import org.apache.fineract.client.models.PostExternalAssetOwnerResponse;
 import org.apache.fineract.client.models.PostInitiateTransferResponse;
 import org.apache.fineract.client.models.PostLoansResponse;
 import org.apache.fineract.client.models.PutExternalAssetOwnerLoanProductAttributeRequest;
@@ -87,6 +73,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
     public static final String TRANSACTION_TYPE_SALE = "sale";
     public static final String TRANSACTION_TYPE_BUYBACK = "buyback";
     public static final String TRANSACTION_TYPE_INTERMEDIARY_SALE = "intermediarySale";
+    public static final String COMMAND = "command";
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT_ASSET_EXT);
 
     @Autowired
@@ -115,7 +102,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         // if user created transferExternalId previously, it will use that, otherwise create a new one
         String transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED);
         if (transferExternalId == null) {
-            transferExternalId = Utils.randomNameGenerator("TestTransferExtId_", 3);
+            transferExternalId = Utils.randomStringGenerator("TestTransferExtId_", 10);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED, transferExternalId);
         }
 
@@ -147,7 +134,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .locale(DEFAULT_LOCALE);//
 
             PostInitiateTransferResponse response = externalAssetOwnersApi().transferRequestWithLoanId(loanId, request,
-                    Map.of("command", transferData.get(0)));
+                    Map.of(COMMAND, transferData.get(0)));
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_RESPONSE, response);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_BUYBACK_TRANSFER_EXTERNAL_ID_FROM_RESPONSE,
                     response.getResourceExternalId());
@@ -155,7 +142,12 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         } else if ((transferData.get(0).equals(TRANSACTION_TYPE_SALE) || transferData.get(0).equals(TRANSACTION_TYPE_INTERMEDIARY_SALE))) {
             String ownerExternalId;
             if (regenerateOwner) {
-                ownerExternalId = Utils.randomNameGenerator(OWNER_EXTERNAL_ID_PREFIX, 3);
+                // For owner-to-owner transfers: preserve the current owner as previous owner
+                String currentOwner = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_OWNER_EXTERNAL_ID);
+                if (currentOwner != null && !transferData.get(0).equals(TRANSACTION_TYPE_INTERMEDIARY_SALE)) {
+                    testContext().set(TestContextKey.ASSET_EXTERNALIZATION_PREVIOUS_OWNER_EXTERNAL_ID, currentOwner);
+                }
+                ownerExternalId = Utils.randomStringGenerator(OWNER_EXTERNAL_ID_PREFIX, 10);
             } else {
                 ownerExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_OWNER_EXTERNAL_ID);
             }
@@ -168,7 +160,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .locale(DEFAULT_LOCALE);//
 
             PostInitiateTransferResponse response = externalAssetOwnersApi().transferRequestWithLoanId(loanId, request,
-                    Map.of("command", transferData.get(0)));
+                    Map.of(COMMAND, transferData.get(0)));
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_RESPONSE, response);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE,
                     response.getResourceExternalId());
@@ -197,7 +189,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                 .locale(DEFAULT_LOCALE);//
 
         PostInitiateTransferResponse response = externalAssetOwnersApi().transferRequestWithLoanId(loanId, request,
-                Map.of("command", TRANSACTION_TYPE_BUYBACK));
+                Map.of(COMMAND, TRANSACTION_TYPE_BUYBACK));
         testContext().set(TestContextKey.ASSET_EXTERNALIZATION_RESPONSE, response);
         testContext().set(TestContextKey.ASSET_EXTERNALIZATION_BUYBACK_TRANSFER_EXTERNAL_ID_FROM_RESPONSE,
                 response.getResourceExternalId());
@@ -208,7 +200,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         // if user created transferExternalId previously, it will use that, otherwise create a new one
         String transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED);
         if (transferExternalId == null) {
-            transferExternalId = Utils.randomNameGenerator("TestTransferExtId_", 3);
+            transferExternalId = Utils.randomStringGenerator("TestTransferExtId_", 10);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED, transferExternalId);
         }
 
@@ -235,12 +227,12 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .locale(DEFAULT_LOCALE);//
 
             PostInitiateTransferResponse response = externalAssetOwnersApi().transferRequestWithLoanExternalId(loanExternalId, request,
-                    Map.of("command", transferData.get(0)));
+                    Map.of(COMMAND, transferData.get(0)));
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_RESPONSE, response);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_BUYBACK_TRANSFER_EXTERNAL_ID_FROM_RESPONSE,
                     response.getResourceExternalId());
         } else if (transferData.get(0).equals(TRANSACTION_TYPE_SALE)) {
-            String ownerExternalId = Utils.randomNameGenerator(OWNER_EXTERNAL_ID_PREFIX, 3);
+            String ownerExternalId = Utils.randomStringGenerator(OWNER_EXTERNAL_ID_PREFIX, 10);
 
             request.settlementDate(transferData.get(1))//
                     .ownerExternalId(ownerExternalId)//
@@ -250,7 +242,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .locale(DEFAULT_LOCALE);//
 
             PostInitiateTransferResponse response = externalAssetOwnersApi().transferRequestWithLoanExternalId(loanExternalId, request,
-                    Map.of("command", transferData.get(0)));
+                    Map.of(COMMAND, transferData.get(0)));
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_RESPONSE, response);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE,
                     response.getResourceExternalId());
@@ -263,7 +255,6 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
     @Then("Asset externalization response has the correct Loan ID, transferExternalId")
     public void checkAssetExternalizationResponse() {
         String ownerExternalIdStored = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_OWNER_EXTERNAL_ID);
-
         String transferExternalIdExpected = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED);
 
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
@@ -273,10 +264,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         Long loanIdActual = response.getSubResourceId();
         String transferExternalIdActual = response.getResourceExternalId();
 
-        log.debug("loanId: {}", loanId);
-        log.debug("ownerExternalIdStored: {}", ownerExternalIdStored);
-        log.debug("transferExternalId generated by user: {}", transferExternalIdExpected);
-        log.debug("transferExternalIdActual: {}", transferExternalIdActual);
+        logAssetExternalizationResponseDetails(loanId, ownerExternalIdStored, transferExternalIdExpected, transferExternalIdActual);
 
         assertThat(loanIdActual).as(ErrorMessageHelper.wrongDataInAssetExternalizationResponse(loanIdActual, loanId)).isEqualTo(loanId);
         assertThat(response.getResourceId()).isNotNull();
@@ -287,6 +275,14 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         } else {
             assertThat(transferExternalIdActual).isNotEmpty();
         }
+    }
+
+    private void logAssetExternalizationResponseDetails(long loanId, String ownerExternalIdStored, String transferExternalIdExpected,
+            String transferExternalIdActual) {
+        log.debug("loanId: {}", loanId);
+        log.debug("ownerExternalIdStored: {}", ownerExternalIdStored);
+        log.debug("transferExternalId generated by user: {}", transferExternalIdExpected);
+        log.debug("transferExternalIdActual: {}", transferExternalIdActual);
     }
 
     @Then("Fetching Asset externalization details by loan id gives numberOfElements: {int} with correct ownerExternalId and the following data:")
@@ -365,12 +361,19 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     previousAssetOwner = null;
                     transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE);
                 }
-            } else { // in case transfer has previous intermediarySale transfer
+            } else { // in case transfer has previous intermediarySale or owner-to-owner transfer
                 if (transactionType.equalsIgnoreCase(TRANSACTION_TYPE_SALE)
                         && (status.equals(ExternalTransferData.StatusEnum.ACTIVE.getValue())
                                 || status.equals(ExternalTransferData.StatusEnum.PENDING.getValue()))) {
                     ownerExternalId = ownerExternalIdStored;
                     previousAssetOwner = intermediarySaleAssetOwner;
+                    transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE);
+                } else if (transactionType.equalsIgnoreCase(TRANSACTION_TYPE_SALE)
+                        && (status.equals(ExternalTransferData.StatusEnum.DECLINED.getValue())
+                                || status.equals(ExternalTransferData.StatusEnum.CANCELLED.getValue()))) {
+                    // DECLINED and CANCELLED records have previousOwner = null in the API response
+                    ownerExternalId = ownerExternalIdStored;
+                    previousAssetOwner = null;
                     transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE);
                 } else if (transactionType.equalsIgnoreCase(TRANSACTION_TYPE_BUYBACK)
                         && (status.equals(ExternalTransferData.StatusEnum.BUYBACK.getValue())
@@ -443,6 +446,11 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         }
     }
 
+    private void logErrorDetails(int errorCodeActual, String errorMessageActual) {
+        log.debug("ERROR CODE: {}", errorCodeActual);
+        log.debug("ERROR MESSAGE: {}", errorMessageActual);
+    }
+
     @Then("BUYBACK transaction results a {int} error and proper error message when its settlementDate is earlier than the original settlementDate")
     public void buybackDateError(int errorCodeExpected, DataTable table) throws IOException {
         List<List<String>> data = table.asLists();
@@ -466,7 +474,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                 .locale(DEFAULT_LOCALE);//
 
         CallFailedRuntimeException exception = fail(
-                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of("command", transferData.get(0))));
+                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of(COMMAND, transferData.get(0))));
 
         int errorCodeActual = exception.getStatus();
         String errorMessageActual = exception.getDeveloperMessage();
@@ -475,8 +483,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         assertThat(errorMessageActual).as(ErrorMessageHelper.wrongErrorMessage(errorMessageActual, errorMessageExpected))
                 .contains(errorMessageExpected);
 
-        log.debug("ERROR CODE: {}", errorCodeActual);
-        log.debug("ERROR MESSAGE: {}", errorMessageActual);
+        logErrorDetails(errorCodeActual, errorMessageActual);
     }
 
     @Then("Asset externalization transaction with the following data results a {int} error and {string} error message")
@@ -494,7 +501,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .dateFormat(DATE_FORMAT_ASSET_EXT)//
                     .locale(DEFAULT_LOCALE);//
         } else if (transferData.get(0).equals(TRANSACTION_TYPE_SALE)) {
-            String ownerExternalId = Utils.randomNameGenerator(OWNER_EXTERNAL_ID_PREFIX, 3);
+            String ownerExternalId = Utils.randomStringGenerator(OWNER_EXTERNAL_ID_PREFIX, 10);
 
             request.settlementDate(transferData.get(1))//
                     .ownerExternalId(ownerExternalId)//
@@ -512,7 +519,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         String errorMessageExpected = errorMsgType.getValue();
 
         CallFailedRuntimeException exception = fail(
-                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of("command", transferData.get(0))));
+                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of(COMMAND, transferData.get(0))));
 
         int errorCodeActual = exception.getStatus();
         String errorMessageActual = exception.getDeveloperMessage();
@@ -526,8 +533,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .contains(errorMessageExpected);
         }
 
-        log.debug("ERROR CODE: {}", errorCodeActual);
-        log.debug("ERROR MESSAGE: {}", errorMessageActual);
+        logErrorDetails(errorCodeActual, errorMessageActual);
     }
 
     @Then("Asset externalization SALES transaction with ownerExternalId = null and the following data results a {int} error and {string} error message")
@@ -550,7 +556,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         String errorMessageExpected = errorMsgType.getValue();
 
         CallFailedRuntimeException exception = fail(
-                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of("command", TRANSACTION_TYPE_SALE)));
+                () -> externalAssetOwnersApi().transferRequestWithLoanId(loanId, request, Map.of(COMMAND, TRANSACTION_TYPE_SALE)));
 
         int errorCodeActual = exception.getStatus();
         String errorMessageActual = exception.getDeveloperMessage();
@@ -564,8 +570,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                     .contains(errorMessageExpected);
         }
 
-        log.debug("ERROR CODE: {}", errorCodeActual);
-        log.debug("ERROR MESSAGE: {}", errorMessageActual);
+        logErrorDetails(errorCodeActual, errorMessageActual);
     }
 
     @Then("The latest asset externalization transaction with {string} status has the following TRANSFER Journal entries:")
@@ -645,11 +650,8 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
 
         PageExternalTransferData transfersResponse = externalAssetOwnersApi().getTransfers(Map.of("loanId", loanId));
         List<ExternalTransferData> content = transfersResponse.getContent();
-        ExternalTransferData result = content.stream().filter(bizEvent -> bizEvent.getTransferExternalId().equals(transferExternalId))
-                .toList().stream().reduce((first, second) -> second)
-                .orElseThrow(() -> new IllegalStateException("transfersResponse.getContent() is empty"));
-
-        return result;
+        return content.stream().filter(bizEvent -> bizEvent.getTransferExternalId().equals(transferExternalId)).toList().stream()
+                .reduce((first, second) -> second).orElseThrow(() -> new IllegalStateException("transfersResponse.getContent() is empty"));
     }
 
     @Then("The asset external owner has the following OWNER Journal entries:")
@@ -769,10 +771,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         Long loanIdActual = response.getSubResourceId();
         String transferExternalIdActual = response.getResourceExternalId();
 
-        log.debug("loanId: {}", loanId);
-        log.debug("ownerExternalIdStored: {}", ownerExternalIdStored);
-        log.debug("transferExternalId generated by user: {}", transferExternalIdExpected);
-        log.debug("transferExternalIdActual: {}", transferExternalIdActual);
+        logAssetExternalizationResponseDetails(loanId, ownerExternalIdStored, transferExternalIdExpected, transferExternalIdActual);
 
         assertThat(loanIdActual).as(ErrorMessageHelper.wrongDataInAssetExternalizationResponse(loanIdActual, loanId)).isEqualTo(loanId);
         assertThat(response.getResourceId()).isNotNull();
@@ -791,7 +790,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         String transferExternalId = testContext()
                 .get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED + "_" + type);
         if (transferExternalId == null) {
-            transferExternalId = Utils.randomNameGenerator("TestTransferExtId_", 3);
+            transferExternalId = Utils.randomStringGenerator("TestTransferExtId_", 10);
             testContext().set(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED + "_" + type, transferExternalId);
         }
 
@@ -803,7 +802,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         String transferExternalId = testContext()
                 .get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED + "_" + type);
 
-        externalAssetOwnersApi().transferRequestWithId1(transferExternalId, Map.of("command", command));
+        externalAssetOwnersApi().transferRequestWithIdByExternalId(transferExternalId, Map.of(COMMAND, command));
     }
 
     @When("Admin send {string} command to the transaction type {string} will throw error")
@@ -812,7 +811,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
                 .get(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED + "_" + type);
 
         CallFailedRuntimeException exception = fail(
-                () -> externalAssetOwnersApi().transferRequestWithId1(transferExternalId, Map.of("command", command)));
+                () -> externalAssetOwnersApi().transferRequestWithIdByExternalId(transferExternalId, Map.of(COMMAND, command)));
 
         assertThat(exception.getStatus()).as("Expected status code: 403").isEqualTo(403);
     }
@@ -874,7 +873,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
         }
 
         CallFailedRuntimeException exception = fail(
-                () -> externalAssetOwnersApi().transferRequestWithId1(transferExternalId, Map.of("command", command)));
+                () -> externalAssetOwnersApi().transferRequestWithIdByExternalId(transferExternalId, Map.of(COMMAND, command)));
 
         assertThat(exception.getStatus()).as("Expected status code: 403").isEqualTo(403);
     }
@@ -888,7 +887,7 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
             transferExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_SALES_TRANSFER_EXTERNAL_ID_FROM_RESPONSE);
         }
 
-        externalAssetOwnersApi().transferRequestWithId1(transferExternalId, Map.of("command", command));
+        externalAssetOwnersApi().transferRequestWithIdByExternalId(transferExternalId, Map.of(COMMAND, command));
     }
 
     @When("Admin set external asset owner loan product attribute {string} value {string} for loan product {string}")
@@ -926,10 +925,84 @@ public class AssetExternalizationStepDef extends AbstractStepDef {
     public void createAssetExternalizationRequestByLoanIdUserGeneratedExtIdForceTransferIdNoTestOwner(String type, DataTable table)
             throws IOException {
         // if user created transferExternalId previously, it will use that, otherwise create a new one
-        String transferExternalId = Utils.randomNameGenerator("TestTransferExtId_", 3);
+        String transferExternalId = Utils.randomStringGenerator("TestTransferExtId_", 10);
         testContext().set(TestContextKey.ASSET_EXTERNALIZATION_TRANSFER_EXTERNAL_ID_USER_GENERATED + "_" + type, transferExternalId);
 
         createAssetExternalizationRequestByLoanId(table, transferExternalId, false);
+    }
+
+    @When("Admin creates a new external asset owner with a unique ownerExternalId")
+    public void createExternalAssetOwnerWithUniqueId() {
+        String ownerExternalId = Utils.randomStringGenerator(OWNER_EXTERNAL_ID_PREFIX, 20);
+        testContext().set(TestContextKey.EXTERNAL_ASSET_OWNER_EXTERNAL_ID, ownerExternalId);
+
+        PostExternalAssetOwnerRequest request = new PostExternalAssetOwnerRequest().ownerExternalId(ownerExternalId);
+        PostExternalAssetOwnerResponse response = ok(() -> externalAssetOwnersApi().createExternalAssetOwner(request));
+        testContext().set(TestContextKey.EXTERNAL_ASSET_OWNER_CREATE_RESPONSE, response);
+
+        log.debug("Created external asset owner with externalId: {}, resourceId: {}", ownerExternalId, response.getResourceId());
+    }
+
+    @Then("External asset owner creation response has a non-null resourceId")
+    public void verifyCreateResponseHasResourceId() {
+        PostExternalAssetOwnerResponse response = testContext().get(TestContextKey.EXTERNAL_ASSET_OWNER_CREATE_RESPONSE);
+        assertThat(response).as("External asset owner create response should not be null").isNotNull();
+        assertThat(response.getResourceId()).as("resourceId should not be null").isNotNull();
+    }
+
+    @Then("External asset owner list contains the created owner")
+    public void verifyOwnerExistsInList() {
+        String ownerExternalId = testContext().get(TestContextKey.EXTERNAL_ASSET_OWNER_EXTERNAL_ID);
+        PostExternalAssetOwnerResponse createResponse = testContext().get(TestContextKey.EXTERNAL_ASSET_OWNER_CREATE_RESPONSE);
+
+        List<ExternalTransferOwnerData> owners = ok(() -> externalAssetOwnersApi().retrieveExternalAssetOwners());
+        assertThat(owners).as("Owners list should not be empty").isNotEmpty();
+
+        ExternalTransferOwnerData found = owners.stream().filter(o -> ownerExternalId.equals(o.getExternalId())).findFirst().orElse(null);
+
+        assertThat(found).as("Owner with externalId '%s' should exist in the list", ownerExternalId).isNotNull();
+        assertThat(found.getId()).as("Owner id from GET should match resourceId from create").isEqualTo(createResponse.getResourceId());
+    }
+
+    @When("Admin tries to create an external asset owner with null ownerExternalId then it should fail with {int} status code")
+    public void createExternalAssetOwnerWithNullIdFails(int expectedStatusCode) {
+        PostExternalAssetOwnerRequest request = new PostExternalAssetOwnerRequest().ownerExternalId(null);
+
+        CallFailedRuntimeException exception = fail(() -> externalAssetOwnersApi().createExternalAssetOwner(request));
+
+        assertThat(exception.getStatus()).as("Expected HTTP %d for null ownerExternalId", expectedStatusCode).isEqualTo(expectedStatusCode);
+        assertThat(exception.getDeveloperMessage()).as("Error message should indicate ownerExternalId cannot be blank")
+                .containsAnyOf("validation.msg.externalAssetOwner.ownerExternalId.cannot.be.blank", "ownerExternalId");
+    }
+
+    @When("Admin tries to create an external asset owner with a duplicate ownerExternalId then it should fail with {int} status code")
+    public void createExternalAssetOwnerWithDuplicateIdFails(int expectedStatusCode) {
+        String ownerExternalId = testContext().get(TestContextKey.EXTERNAL_ASSET_OWNER_EXTERNAL_ID);
+
+        PostExternalAssetOwnerRequest request = new PostExternalAssetOwnerRequest().ownerExternalId(ownerExternalId);
+
+        CallFailedRuntimeException exception = fail(() -> externalAssetOwnersApi().createExternalAssetOwner(request));
+
+        assertThat(exception.getStatus()).as("Expected HTTP %d for duplicate ownerExternalId", expectedStatusCode)
+                .isEqualTo(expectedStatusCode);
+        assertThat(exception.getDeveloperMessage()).as("Error message should indicate duplicate external id")
+                .contains("Provided external id already exists");
+    }
+
+    @When("Admin tries to create an external asset owner with empty JSON body then it should fail with {int} status code")
+    public void createExternalAssetOwnerWithEmptyBodyFails(int expectedStatusCode) {
+        PostExternalAssetOwnerRequest request = new PostExternalAssetOwnerRequest();
+
+        CallFailedRuntimeException exception = fail(() -> externalAssetOwnersApi().createExternalAssetOwner(request));
+
+        assertThat(exception.getStatus()).as("Expected HTTP %d for missing ownerExternalId", expectedStatusCode)
+                .isEqualTo(expectedStatusCode);
+    }
+
+    @Then("Admin retrieves all external asset owners successfully")
+    public void retrieveAllExternalAssetOwners() {
+        List<ExternalTransferOwnerData> owners = ok(() -> externalAssetOwnersApi().retrieveExternalAssetOwners());
+        assertThat(owners).as("Owners list should not be null").isNotNull();
     }
 
 }

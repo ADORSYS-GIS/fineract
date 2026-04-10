@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -74,8 +73,10 @@ import org.springframework.stereotype.Component;
 
 @Path("/v1/journalentries")
 @Component
-@Tag(name = "Journal Entries", description = "A journal entry refers to the logging of transactions against general ledger accounts. A journal entry may consist of several line items, each of which is either a \"debit\" or a \"credit\". The total amount of the debits must equal the total amount of the credits or the journal entry is said to be \"unbalanced\" \n"
-        + "\n" + "A journal entry directly changes the account balances on the general ledger")
+@Tag(name = "Journal Entries", description = """
+        A journal entry refers to the logging of transactions against general ledger accounts. A journal entry may consist of several line items, each of which is either a "debit" or a "credit". The total amount of the debits must equal the total amount of the credits or the journal entry is said to be "unbalanced"\s
+
+        A journal entry directly changes the account balances on the general ledger""")
 @RequiredArgsConstructor
 public class JournalEntriesApiResource {
 
@@ -96,16 +97,14 @@ public class JournalEntriesApiResource {
     private final SqlValidator sqlValidator;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "List Journal Entries", description = "The list capability of journal entries can support pagination and sorting.\n\n"
+    @Operation(summary = "List Journal Entries", operationId = "retrieveAllJournalEntries", description = "The list capability of journal entries can support pagination and sorting.\n\n"
             + "Example Requests:\n" + "\n" + "journalentries\n" + "\n" + "journalentries?transactionId=PB37X8Y21EQUY4S\n" + "\n"
             + "journalentries?officeId=1&manualEntriesOnly=true&fromDate=1 July 2013&toDate=15 July 2013&dateFormat=dd MMMM yyyy&locale=en\n"
             + "\n" + "journalentries?fields=officeName,glAccountName,transactionDate\n" + "\n" + "journalentries?offset=10&limit=50\n"
             + "\n" + "journalentries?orderBy=transactionId&sortOrder=DESC\n" + "\n" + "journalentries?runningBalance=true\n" + "\n"
             + "journalentries?transactionDetails=true\n" + "\n" + "journalentries?loanId=12\n" + "\n" + "journalentries?savingsId=24")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.GetJournalEntriesTransactionIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.GetJournalEntriesTransactionIdResponse.class)))
     public String retrieveAll(@Context final UriInfo uriInfo,
             @QueryParam("officeId") @Parameter(description = "officeId") final Long officeId,
             @QueryParam("glAccountId") @Parameter(description = "glAccountId") final Long glAccountId,
@@ -165,13 +164,11 @@ public class JournalEntriesApiResource {
 
     @GET
     @Path("{journalEntryId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve a single Entry", description = "Example Requests:\n" + "\n" + "journalentries/1\n" + "\n" + "\n" + "\n"
             + "journalentries/1?fields=officeName,glAccountId,entryType,amount\n" + "\n" + "journalentries/1?runningBalance=true\n" + "\n"
             + "journalentries/1?transactionDetails=true")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.JournalEntryTransactionItem.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.JournalEntryTransactionItem.class)))
     public String retrieveJournalEntryById(
             @PathParam("journalEntryId") @Parameter(description = "journalEntryId") final Long journalEntryId,
             @Context final UriInfo uriInfo,
@@ -197,8 +194,7 @@ public class JournalEntriesApiResource {
             + "\ndebits-  glAccountId, amount, comments\n\n " + "\n" + "Optional Fields\n"
             + "paymentTypeId, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber")
     @RequestBody(content = @Content(schema = @Schema(implementation = JournalEntryCommand.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesResponse.class)))
     public String createGLJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
             @QueryParam("command") @Parameter(description = "command") final String commandParam) {
 
@@ -225,8 +221,7 @@ public class JournalEntriesApiResource {
     @Operation(summary = "Update Running balances for Journal Entries", description = "This API calculates the running balances for office. If office ID not provided this API calculates running balances for all offices. \n"
             + "Mandatory Fields\n" + "officeId")
     @RequestBody(content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesTransactionIdRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesTransactionIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesTransactionIdResponse.class)))
     public String createReversalJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
             @PathParam("transactionId") @Parameter(description = "transactionId") final String transactionId,
             @QueryParam("command") @Parameter(description = "command") final String commandParam) {
@@ -244,7 +239,6 @@ public class JournalEntriesApiResource {
 
     @GET
     @Path("provisioning")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveJournalEntries(@QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
             @QueryParam("entryId") final Long entryId, @Context final UriInfo uriInfo) {
@@ -259,7 +253,6 @@ public class JournalEntriesApiResource {
 
     @GET
     @Path("openingbalance")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveOpeningBalance(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
             @QueryParam("currencyCode") final String currencyCode) {

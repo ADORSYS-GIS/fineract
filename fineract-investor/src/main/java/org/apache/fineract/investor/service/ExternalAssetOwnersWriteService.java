@@ -31,4 +31,5 @@ public interface ExternalAssetOwnersWriteService {
 
     CommandProcessingResult cancelTransactionById(JsonCommand command);
 
+    CommandProcessingResult createExternalAssetOwner(JsonCommand command);
 }

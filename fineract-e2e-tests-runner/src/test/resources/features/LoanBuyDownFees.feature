@@ -3232,7 +3232,7 @@ Feature:Feature: Buy Down Fees
     And Admin successfully approves the loan on "01 January 2024" with "100" amount and expected disbursement date on "01 January 2024"
     And Admin successfully disburse the loan on "01 January 2024" with "100" EUR transaction amount
     Then Loan status will be "ACTIVE"
-    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and "buydown_fee_transaction_classification" classification
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and "buydown_fee_transaction_classification_value" classification
     Then Loan Repayment schedule has 3 periods, with the following data for periods:
       | Nr | Days | Date             | Paid date | Balance of loan | Principal due | Interest | Fees | Penalties | Due   | Paid | In advance | Late | Outstanding |
       |    |      | 01 January 2024  |           | 100.0           |               |          | 0.0  |           | 0.0   | 0.0  |            |      |             |
@@ -3841,7 +3841,7 @@ Feature:Feature: Buy Down Fees
       | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_CLASSIFICATION_INCOME_MAP | 01 January 2024   | 350            | 7                      | DECLINING_BALANCE | DAILY                       | EQUAL_INSTALLMENTS | 3                 | MONTHS                | 1              | MONTHS                 | 3                  | 0                       | 0                      | 0                    | ADVANCED_PAYMENT_ALLOCATION |
     And Admin successfully approves the loan on "01 January 2024" with "350" amount and expected disbursement date on "01 January 2024"
     And Admin successfully disburse the loan on "01 January 2024" with "100" EUR transaction amount
-    And Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and classification: pending_bankruptcy
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and "buydown_fee_transaction_classification_value" classification
     And Admin sets the business date to "02 January 2024"
     And Admin runs inline COB job for Loan
     Then Loan Transactions tab has a "BUY_DOWN_FEE" transaction with date "01 January 2024" which has the following Journal entries:
@@ -3868,7 +3868,7 @@ Feature:Feature: Buy Down Fees
     And Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount
     And Admin sets the business date to "02 January 2024"
     And Admin runs inline COB job for Loan
-    And Admin adds buy down fee with "AUTOPAY" payment type to the loan on "02 January 2024" with "20" EUR transaction amount and classification: pending_bankruptcy
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "02 January 2024" with "20" EUR transaction amount and "buydown_fee_transaction_classification_value" classification
     And Admin sets the business date to "03 January 2024"
     And Admin runs inline COB job for Loan
     Then Loan Transactions tab has a "BUY_DOWN_FEE" transaction with date "01 January 2024" which has the following Journal entries:
@@ -3902,7 +3902,7 @@ Feature:Feature: Buy Down Fees
     And Admin successfully approves the loan on "01 January 2024" with "100" amount and expected disbursement date on "01 January 2024"
     And Admin successfully disburse the loan on "01 January 2024" with "100" EUR transaction amount
     Then Loan status will be "ACTIVE"
-    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and classification: pending_bankruptcy
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "01 January 2024" with "50" EUR transaction amount and "buydown_fee_transaction_classification_value" classification
     Then Loan Repayment schedule has 3 periods, with the following data for periods:
       | Nr | Days | Date             | Paid date | Balance of loan | Principal due | Interest | Fees | Penalties | Due   | Paid | In advance | Late | Outstanding |
       |    |      | 01 January 2024  |           | 100.0           |               |          | 0.0  |           | 0.0   | 0.0  |            |      |             |
@@ -3920,7 +3920,7 @@ Feature:Feature: Buy Down Fees
       | Type      | Account code | Account name                | Debit | Credit |
       | EXPENSE   | 450280       | Buy Down Expense            | 50.0  |        |
       | LIABILITY | 145024       | Deferred Capitalized Income |       | 50.0   |
-    And Loan Transactions tab has a "Buy Down Fee" transaction with date "01 January 2024" which has classification code value "pending_bankruptcy"
+    And Loan Transactions tab has a "Buy Down Fee" transaction with date "01 January 2024" which has classification code value "buydown_fee_transaction_classification_value"
     And Buy down fee contains the following data:
       | Date            | Fee Amount | Amortized Amount | Not Yet Amortized Amount | Adjusted Amount | Charged Off Amount |
       | 01 January 2024 | 50.0       | 0.0              | 50.0                     | 0.0             | 0.0                |
@@ -4078,3 +4078,182 @@ Feature:Feature: Buy Down Fees
 
     When Loan Pay-off is made on "16 April 2024"
     Then Loan is closed with zero outstanding balance and it's all installments have obligations met
+
+
+
+    ##
+  ## ISSUE:   Buydown amortizes slower after waiver-reversal
+  @TestRailId:CXXXX
+  Scenario Outline: Verify Buy Down Fee Amortization Works correctly after Buy Down Fee Adjustment Reversal
+    ##Create and disburse a loan for 3-month period with buydown fees enabled (2026/03/11).
+    When Admin sets the business date to "11 March 2026"
+    And Admin creates a client with random data
+    And Admin creates a fully customized loan with the following data:
+      | LoanProduct                                              | submitted on date | with Principal | ANNUAL interest rate % | interest type     | interest calculation period | amortization type  | loanTermFrequency | loanTermFrequencyType | repaymentEvery | repaymentFrequencyType | numberOfRepayments | graceOnPrincipalPayment | graceOnInterestPayment | interest free period | Payment strategy            |
+      | <loanProduct> | 11 March 2026     | 1500           | 9.99                   | DECLINING_BALANCE | DAILY                       | EQUAL_INSTALLMENTS | 3                 | MONTHS                | 1              | MONTHS                 | 3                  | 0                       | 0                      | 0                    | ADVANCED_PAYMENT_ALLOCATION |
+    And Admin successfully approves the loan on "11 March 2026" with "1500" amount and expected disbursement date on "11 March 2026"
+    And Admin successfully disburse the loan on "11 March 2026" with "1500" EUR transaction amount
+    Then Loan status will be "ACTIVE"
+
+    ##Add 2 buydown fees transactions with the same amount (300 each).
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "11 March 2026" with "300" EUR transaction amount
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "11 March 2026" with "300" EUR transaction amount
+
+    ##Run COB until 2026/04/11.
+    When Admin sets the business date to "12 March 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Interest | Fees | Penalties | Loan Balance | Reverted | Replayed |
+      | 11 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    When Admin sets the business date to "12 April 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Interest | Fees | Penalties | Loan Balance | Reverted | Replayed |
+      | 12 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 13 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 14 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 15 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 16 March 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 17 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 18 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 19 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 20 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 21 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 22 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 23 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 24 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 25 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 26 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 27 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 28 March 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 29 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 30 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 31 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 01 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 02 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 03 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 04 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 05 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 06 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 07 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 08 April 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 09 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 10 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 11 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##Waive the first buydown fees (2026/04/12). ( Buydown Fee Adjustment )
+    Then Admin adds buy down fee adjustment with "AUTOPAY" payment type to the loan on "12 April 2026" with "300" EUR transaction amount
+    When Admin sets the business date to "13 April 2026"
+
+    ##Run COB - This creates a buydown amortization adjustment (127.55)
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type                     | Amount | Principal | Interest | Fees | Penalties | Loan Balance | Reverted | Replayed |
+      | 12 April 2026    | Buy Down Fee Amortization Adjustment | 101.09 | 0.0       | 101.09   | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##Reverse the waiver from Step 4 (2026/04/13)
+    When Customer undo "1"th "Buy Down Fee Adjustment" transaction made on "12 April 2026"
+
+    ##ISSUE: Run COB - This creates a buydown amortization much lower than adjustment amount in step 5 (86.07)
+    When Admin sets the business date to "14 April 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Interest | Fees | Penalties | Loan Balance | Reverted | Replayed |
+      | 13 April 2026    | Buy Down Fee Amortization | 114.13 | 0.0       | 114.13   | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##ISSUE: Run COB for following day as well - This creates amortization of 4.92, which is lower than the previous amount of 6.52 before waiver.
+    When Admin sets the business date to "12 June 2026"
+    Then Admin runs inline COB job for Loan
+
+    Examples:
+      | loanProduct |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_CHARGE_OFF_REASON |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_NON_MERCHANT_CHARGE_OFF_REASON |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_NON_MERCHANT |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_CLASSIFICATION_INCOME_MAP |
+
+
+  Scenario: Verify Buy Down Fee Amortization Works correctly after Buy Down Fee Adjustment Reversal buydown fee as fee
+    ##Create and disburse a loan for 3-month period with buydown fees enabled (2026/03/11).
+    When Admin sets the business date to "11 March 2026"
+    And Admin creates a client with random data
+    And Admin creates a fully customized loan with the following data:
+      | LoanProduct                                              | submitted on date | with Principal | ANNUAL interest rate % | interest type     | interest calculation period | amortization type  | loanTermFrequency | loanTermFrequencyType | repaymentEvery | repaymentFrequencyType | numberOfRepayments | graceOnPrincipalPayment | graceOnInterestPayment | interest free period | Payment strategy            |
+      | LP2_PROGRESSIVE_ADVANCED_PAYMENT_ALLOCATION_BUYDOWN_FEES_FEE_INCOME | 11 March 2026     | 1500           | 9.99                   | DECLINING_BALANCE | DAILY                       | EQUAL_INSTALLMENTS | 3                 | MONTHS                | 1              | MONTHS                 | 3                  | 0                       | 0                      | 0                    | ADVANCED_PAYMENT_ALLOCATION |
+    And Admin successfully approves the loan on "11 March 2026" with "1500" amount and expected disbursement date on "11 March 2026"
+    And Admin successfully disburse the loan on "11 March 2026" with "1500" EUR transaction amount
+    Then Loan status will be "ACTIVE"
+
+    ##Add 2 buydown fees transactions with the same amount (300 each).
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "11 March 2026" with "300" EUR transaction amount
+    When Admin adds buy down fee with "AUTOPAY" payment type to the loan on "11 March 2026" with "300" EUR transaction amount
+
+    ##Run COB until 2026/04/11.
+    When Admin sets the business date to "12 March 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Fees | Interest | Penalties | Loan Balance | Reverted | Replayed |
+      | 11 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    When Admin sets the business date to "12 April 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Fees | Interest | Penalties | Loan Balance | Reverted | Replayed |
+      | 12 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 13 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 14 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 15 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 16 March 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 17 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 18 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 19 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 20 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 21 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 22 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 23 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 24 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 25 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 26 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 27 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 28 March 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 29 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 30 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 31 March 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 01 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 02 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 03 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 04 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 05 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 06 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 07 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 08 April 2026    | Buy Down Fee Amortization | 6.54   | 0.0       | 6.54     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 09 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 10 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+      | 11 April 2026    | Buy Down Fee Amortization | 6.52   | 0.0       | 6.52     | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##Waive the first buydown fees (2026/04/12). ( Buydown Fee Adjustment )
+    Then Admin adds buy down fee adjustment with "AUTOPAY" payment type to the loan on "12 April 2026" with "300" EUR transaction amount
+    When Admin sets the business date to "13 April 2026"
+
+    ##Run COB - This creates a buydown amortization adjustment (127.55)
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type                     | Amount | Principal | Fees | Interest | Penalties | Loan Balance | Reverted | Replayed |
+      | 12 April 2026    | Buy Down Fee Amortization Adjustment | 101.09 | 0.0       | 101.09   | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##Reverse the waiver from Step 4 (2026/04/13)
+    When Customer undo "1"th "Buy Down Fee Adjustment" transaction made on "12 April 2026"
+
+    ##ISSUE: Run COB - This creates a buydown amortization much lower than adjustment amount in step 5 (86.07)
+    When Admin sets the business date to "14 April 2026"
+    Then Admin runs inline COB job for Loan
+    Then Loan Transactions tab has the following new buy down fee amortization data:
+      | Transaction date | Transaction Type          | Amount | Principal | Fees | Interest | Penalties | Loan Balance | Reverted | Replayed |
+      | 13 April 2026    | Buy Down Fee Amortization | 114.13 | 0.0       | 114.13   | 0.0  | 0.0       | 0.0          | false    | false    |
+
+    ##ISSUE: Run COB for following day as well - This creates amortization of 4.92, which is lower than the previous amount of 6.52 before waiver.
+    When Admin sets the business date to "12 June 2026"
+    Then Admin runs inline COB job for Loan

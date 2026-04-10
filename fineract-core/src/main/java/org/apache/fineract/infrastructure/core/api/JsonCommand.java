@@ -178,7 +178,7 @@ public final class JsonCommand {
         this.parsedCommand = parsedCommand;
         this.resourceId = resourceId;
         this.commandId = null;
-        this.jsonCommand = null;
+        this.jsonCommand = parsedCommand.toString();
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.entityName = null;
         this.subresourceId = null;
@@ -540,7 +540,7 @@ public final class JsonCommand {
      */
     public boolean booleanPrimitiveValueOfParameterNamed(final String parameterName) {
         final Boolean value = this.fromApiJsonHelper.extractBooleanNamed(parameterName, this.parsedCommand);
-        return ObjectUtils.defaultIfNull(value, Boolean.FALSE);
+        return ObjectUtils.getIfNull(value, Boolean.FALSE);
     }
 
     public boolean isChangeInArrayParameterNamed(final String parameterName, final String[] existingValue) {

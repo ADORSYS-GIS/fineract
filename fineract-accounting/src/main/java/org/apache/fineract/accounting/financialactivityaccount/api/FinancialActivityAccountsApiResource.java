@@ -76,7 +76,6 @@ public class FinancialActivityAccountsApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public FinancialActivityAccountData retrieveTemplate() {
         context.authenticatedUser().validateHasReadPermission(FinancialActivityAccountsConstants.RESOURCE_NAME_FOR_PERMISSION);
@@ -84,7 +83,6 @@ public class FinancialActivityAccountsApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Financial Activities to Accounts Mappings", description = """
             Example Requests:
@@ -97,7 +95,6 @@ public class FinancialActivityAccountsApiResource {
 
     @GET
     @Path("{mappingId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve a Financial Activity to Account Mapping\n", description = """
             Example Requests:
@@ -119,7 +116,7 @@ public class FinancialActivityAccountsApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Create a new Financial Activity to Accounts Mapping", description = """
+    @Operation(summary = "Create a new Financial Activity to Accounts Mapping", operationId = "createGLAccountMappingFinancialActivityAccount", description = """
             Mandatory Fields
             financialActivityId, glAccountId""")
     @RequestBody(content = @Content(schema = @Schema(implementation = FinancialActivityAccountsApiResourceSwagger.PostFinancialActivityAccountsRequest.class)))
@@ -135,7 +132,7 @@ public class FinancialActivityAccountsApiResource {
     @Path("{mappingId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Update a Financial Activity to Account Mapping", description = "the API updates the Ledger account linked to a Financial Activity")
+    @Operation(summary = "Update a Financial Activity to Account Mapping", operationId = "updateGLAccountMappingFinancialActivityAccount", description = "the API updates the Ledger account linked to a Financial Activity")
     @RequestBody(content = @Content(schema = @Schema(implementation = FinancialActivityAccountsApiResourceSwagger.PostFinancialActivityAccountsRequest.class)))
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FinancialActivityAccountsApiResourceSwagger.PutFinancialActivityAccountsResponse.class)))
     public CommandProcessingResult updateGLAccount(@PathParam("mappingId") @Parameter(description = "mappingId") final Long mappingId,
@@ -148,9 +145,8 @@ public class FinancialActivityAccountsApiResource {
 
     @DELETE
     @Path("{mappingId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Delete a Financial Activity to Account Mapping")
+    @Operation(summary = "Delete a Financial Activity to Account Mapping", operationId = "deleteGLAccountMappingFinancialActivityAccount")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = FinancialActivityAccountsApiResourceSwagger.DeleteFinancialActivityAccountsResponse.class)))
     public CommandProcessingResult deleteGLAccount(@PathParam("mappingId") @Parameter(description = "mappingId") final Long mappingId) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().deleteOfficeToGLAccountMapping(mappingId).build();

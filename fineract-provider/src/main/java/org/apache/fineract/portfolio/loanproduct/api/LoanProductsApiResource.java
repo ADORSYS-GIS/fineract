@@ -109,7 +109,7 @@ import org.apache.fineract.portfolio.loanproduct.productmix.service.ProductMixRe
 import org.apache.fineract.portfolio.loanproduct.service.LoanDropdownReadPlatformService;
 import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
-import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
+import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadService;
 import org.apache.fineract.portfolio.rate.data.RateData;
 import org.apache.fineract.portfolio.rate.service.RateReadService;
 import org.springframework.stereotype.Component;
@@ -165,7 +165,7 @@ public class LoanProductsApiResource {
     private final DefaultToApiJsonSerializer<ProductMixData> productMixDataApiJsonSerializer;
     private final ProductMixReadPlatformService productMixReadPlatformService;
     private final DropdownReadPlatformService commonDropdownReadPlatformService;
-    private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final PaymentTypeReadService paymentTypeReadPlatformService;
     private final FloatingRatesReadPlatformService floatingRateReadPlatformService;
     private final RateReadService rateReadService;
     private final ConfigurationDomainService configurationDomainService;
@@ -178,7 +178,7 @@ public class LoanProductsApiResource {
     @Operation(summary = "Create a Loan Product", description = "Depending of the Accounting Rule (accountingRule) selected, additional fields with details of the appropriate Ledger Account identifiers would need to be passed in.\n"
             + "\n" + "Refer MifosX Accounting Specs Draft for more details regarding the significance of the selected accounting rule\n\n"
             + "Mandatory Fields: name, shortName, currencyCode, digitsAfterDecimal, inMultiplesOf, principal, numberOfRepayments, repaymentEvery, repaymentFrequencyType, interestRatePerPeriod, interestRateFrequencyType, amortizationType, interestType, interestCalculationPeriodType, transactionProcessingStrategyCode, accountingRule, isInterestRecalculationEnabled, daysInYearType, daysInMonthType\n\n"
-            + "Optional Fields: inArrearsTolerance, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, graceOnArrearsAgeing, charges, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, chargeOffReasonToExpenseAccountMappings, includeInBorrowerCycle, useBorrowerCycle,principalVariationsForBorrowerCycle, numberOfRepaymentVariationsForBorrowerCycle, interestRateVariationsForBorrowerCycle, multiDisburseLoan,maxTrancheCount, outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf, allowAttributeOverrides, allowPartialPeriodInterestCalcualtion,dueDaysForRepaymentEvent,overDueDaysForRepaymentEvent,enableDownPayment,disbursedAmountPercentageDownPayment,enableAutoRepaymentForDownPayment,repaymentStartDateType,enableBuyDownFee\n\n"
+            + "Optional Fields: inArrearsTolerance, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, graceOnArrearsAgeing, charges, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, chargeOffReasonToExpenseAccountMappings, includeInBorrowerCycle, useBorrowerCycle,principalVariationsForBorrowerCycle, numberOfRepaymentVariationsForBorrowerCycle, interestRateVariationsForBorrowerCycle, multiDisburseLoan,maxTrancheCount, outstandingLoanBalance,overdueDaysForNPA,holdGuaranteeFunds, principalThresholdForLastInstalment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf, allowAttributeOverrides, allowPartialPeriodInterestCalculation,dueDaysForRepaymentEvent,overDueDaysForRepaymentEvent,enableDownPayment,disbursedAmountPercentageDownPayment,enableAutoRepaymentForDownPayment,repaymentStartDateType,enableBuyDownFee\n\n"
             + "Additional Mandatory Fields for Cash(2) based accounting: fundSourceAccountId, loanPortfolioAccountId, interestOnLoanAccountId, incomeFromFeeAccountId, incomeFromPenaltyAccountId, writeOffAccountId, transfersInSuspenseAccountId, overpaymentLiabilityAccountId\n\n"
             + "Additional Mandatory Fields for periodic (3) and upfront (4)accrual accounting: fundSourceAccountId, loanPortfolioAccountId, interestOnLoanAccountId, incomeFromFeeAccountId, incomeFromPenaltyAccountId, writeOffAccountId, receivableInterestAccountId, receivableFeeAccountId, receivablePenaltyAccountId, transfersInSuspenseAccountId, overpaymentLiabilityAccountId\n\n"
             + "Additional Mandatory Fields if interest recalculation is enabled(true): interestRecalculationCompoundingMethod, rescheduleStrategyMethod, recalculationRestFrequencyType\n\n"
@@ -201,7 +201,6 @@ public class LoanProductsApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Loan Products", description = "Lists Loan Products\n\n" + "Example Requests:\n" + "\n" + "loanproducts\n"
             + "\n" + "\n" + "loanproducts?fields=name,description,interestRateFrequencyType,amortizationType")
@@ -226,9 +225,8 @@ public class LoanProductsApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve Loan Product Details Template", description = "This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:\n"
+    @Operation(operationId = "retrieveTemplateLoanProduct", summary = "Retrieve Loan Product Details Template", description = "This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:\n"
             + "\n" + "Field Defaults\n" + "Allowed description Lists\n" + "Example Request:\n" + "\n" + "loanproducts/template")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanProductsApiResourceSwagger.GetLoanProductsTemplateResponse.class))) })
@@ -254,7 +252,6 @@ public class LoanProductsApiResource {
 
     @GET
     @Path("{productId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve a Loan Product", description = "Retrieves a Loan Product\n\n" + "Example Requests:\n" + "\n"
             + "loanproducts/1\n" + "\n" + "\n" + "loanproducts/1?template=true\n" + "\n" + "\n"
@@ -285,10 +282,9 @@ public class LoanProductsApiResource {
 
     @GET
     @Path("external-id/{externalProductId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve a Loan Product", description = "Retrieves a Loan Product\n\n" + "Example Requests:\n" + "\n"
-            + "loanproducts/external-id/2075e308-d4a8-44d9-8203-f5a947b8c2f4\n" + "\n" + "\n"
+    @Operation(operationId = "retrieveLoanProductDetailsByExternalId", summary = "Retrieve a Loan Product", description = "Retrieves a Loan Product\n\n"
+            + "Example Requests:\n" + "\n" + "loanproducts/external-id/2075e308-d4a8-44d9-8203-f5a947b8c2f4\n" + "\n" + "\n"
             + "loanproducts/external-id/2075e308-d4a8-44d9-8203-f5a947b8c2f4?template=true\n" + "\n" + "\n"
             + "loanproducts/external-id/2075e308-d4a8-44d9-8203-f5a947b8c2f4?fields=name,description,numberOfRepayments")
     @ApiResponses({
@@ -313,7 +309,7 @@ public class LoanProductsApiResource {
     @Path("external-id/{externalProductId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Update a Loan Product", description = "Updates a Loan Product")
+    @Operation(operationId = "updateLoanProductByExternalId", summary = "Update a Loan Product", description = "Updates a Loan Product")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoanProductsApiResourceSwagger.PutLoanProductsProductIdRequest.class)))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanProductsApiResourceSwagger.PutLoanProductsProductIdResponse.class))) })

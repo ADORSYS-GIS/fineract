@@ -24,7 +24,7 @@ import static org.apache.fineract.infrastructure.core.domain.AuditableFieldsCons
 import static org.apache.fineract.infrastructure.core.domain.AuditableFieldsConstants.LAST_MODIFIED_DATE;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import jakarta.ws.rs.Consumes;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -72,8 +72,8 @@ public class InternalClientInformationApiResource implements InitializingBean {
 
     @GET
     @Path("{clientId}/audit")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Get internal client audit fields", operationId = "getInternalClientAuditFields")
     @SuppressFBWarnings("SLF4J_SIGN_ONLY_FORMAT")
     public String getClientAuditFields(@Context final UriInfo uriInfo, @PathParam("clientId") Long clientId) {
         log.warn("------------------------------------------------------------");

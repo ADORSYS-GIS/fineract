@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -68,7 +67,6 @@ public class ConfigureBusinessStepApiResource {
 
     @GET
     @Path("{jobName}/steps")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Business Step Configurations for a Job", description = "Returns the configured Business Steps for a job")
     public JobBusinessStepConfigData retrieveAllConfiguredBusinessStep(
@@ -82,7 +80,7 @@ public class ConfigureBusinessStepApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Business Step Configurations for a Job", description = "Updates the Business steps execution order for a job")
     @RequestBody(content = @Content(schema = @Schema(implementation = BusinessStepRequest.class)))
-    @ApiResponses({ @ApiResponse(responseCode = "204", description = "NO_CONTENT") })
+    @ApiResponse(responseCode = "204", description = "NO_CONTENT")
     public Response updateJobBusinessStepConfig(@PathParam("jobName") @Parameter(description = "jobName") final String jobName,
             @Parameter(hidden = true) BusinessStepRequest businessStepRequest) {
 
@@ -95,7 +93,6 @@ public class ConfigureBusinessStepApiResource {
 
     @GET
     @Path("{jobName}/available-steps")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Business Step Configurations for a Job", description = "Returns the available Business Steps for a job")
     public JobBusinessStepDetail retrieveAllAvailableBusinessStep(
