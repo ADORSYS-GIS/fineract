@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.fineract.client.models.GetFixedDepositAccountsAccountIdTransactionsResponse;
+import org.apache.fineract.client.models.PostFixedDepositAccountsFixedDepositAccountIdTransactionsRequest;
 import org.apache.fineract.client.util.Calls;
 import org.apache.fineract.integrationtests.common.CommonConstants;
 import org.apache.fineract.integrationtests.common.FineractClientHelper;
@@ -648,10 +649,19 @@ public class FixedDepositAccountHelper {
 
     public Long undoFixedDepositTransaction(final Integer fixedDepositAccountId, final Integer transactionId) {
         LOG.info("--------------------------------- UNDO FIXED DEPOSIT TRANSACTION --------------------------------");
+        return Calls.ok(FineractClientHelper.getFineractClient().fixedDepositAccountTransactions.adjustTransaction(
+                fixedDepositAccountId.longValue(), transactionId.longValue(),
+                new PostFixedDepositAccountsFixedDepositAccountIdTransactionsRequest(), "undo")).getResourceId();
+    }
+
+    public Long adjustFixedDepositTransaction(final Integer fixedDepositAccountId, final Integer transactionId,
+            final String transactionDate, final Double transactionAmount) {
+        LOG.info("--------------------------------- ADJUST FIXED DEPOSIT TRANSACTION --------------------------------");
+        final PostFixedDepositAccountsFixedDepositAccountIdTransactionsRequest request = new PostFixedDepositAccountsFixedDepositAccountIdTransactionsRequest()
+                .dateFormat("dd MMMM yyyy").locale("en").transactionDate(transactionDate).transactionAmount(transactionAmount);
         return Calls
-                .ok(FineractClientHelper.getFineractClient().fixedDepositAccountTransactions.adjustTransaction(
-                        fixedDepositAccountId.longValue(), transactionId.longValue(),
-                        new org.apache.fineract.client.models.PostFixedDepositAccountsFixedDepositAccountIdTransactionsRequest(), "undo"))
+                .ok(FineractClientHelper.getFineractClient().fixedDepositAccountTransactions
+                        .adjustTransaction(fixedDepositAccountId.longValue(), transactionId.longValue(), request, "modify"))
                 .getResourceId();
     }
 

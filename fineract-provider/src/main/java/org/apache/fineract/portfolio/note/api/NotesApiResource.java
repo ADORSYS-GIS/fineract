@@ -49,7 +49,7 @@ import org.apache.fineract.portfolio.note.exception.NoteResourceNotSupportedExce
 import org.apache.fineract.portfolio.note.service.NoteReadPlatformService;
 import org.springframework.stereotype.Component;
 
-@Path("/v1/{resourceType}/{resourceId}/notes")
+@Path("/v1/{resourceType:.+}/{resourceId}/notes")
 @Produces({ MediaType.APPLICATION_JSON })
 @Component
 @Tag(name = "Notes", description = """

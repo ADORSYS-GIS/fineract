@@ -531,7 +531,7 @@ public class SmsCampaign extends AbstractPersistableCustom<Long> {
         if (frequencyType.isWeekly()) {
             if (repeatsOnDay != null) {
                 final CalendarWeekDaysType weekDays = CalendarWeekDaysType.fromInt(repeatsOnDay);
-                if (!weekDays.isInvalid()) {
+                if (weekDays != CalendarWeekDaysType.INVALID) {
                     recurrenceBuilder.append(";BYDAY=");
                     recurrenceBuilder.append(weekDays.toString().toUpperCase(java.util.Locale.ROOT));
                 }

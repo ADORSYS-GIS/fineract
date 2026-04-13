@@ -54,16 +54,6 @@ public class WorkingCapitalInitializerStep implements FineractGlobalInitializerS
         final PostWorkingCapitalLoanProductsResponse responseDefaultWCPL = createWorkingCapitalLoanProductIdempotent(defaultWCPLRequest);
         TestContext.INSTANCE.set(TestContextKey.DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_WCLP, responseDefaultWCPL);
 
-        final String workingCapitalProductDisallowOverridesDefaultName = DefaultWorkingCapitalLoanProduct.WCLP_DISALLOW_ATTRIBUTES_OVERRIDE
-                .getName();
-        final PostWorkingCapitalLoanProductsRequest defaultWCPLDisallowOverridesRequest = workingCapitalRequestFactory
-                .defaultWorkingCapitalLoanProductRequest() //
-                .name(workingCapitalProductDisallowOverridesDefaultName); //
-        final PostWorkingCapitalLoanProductsResponse responseDefaultWCPLDisallowOverrides = createWorkingCapitalLoanProductIdempotent(
-                defaultWCPLDisallowOverridesRequest);
-        TestContext.INSTANCE.set(TestContextKey.DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_WCLP_DISALLOW_OVERRIDES,
-                responseDefaultWCPLDisallowOverrides);
-
         final String workingCapitalProductDiscountDefaultName = DefaultWorkingCapitalLoanProduct.WCLP_DISCOUNT.getName();
         final PostWorkingCapitalLoanProductsRequest defaultWCPLPDiscountRequest = workingCapitalRequestFactory
                 .defaultWorkingCapitalLoanProductAllowAttributesOverrideRequest() //
@@ -73,6 +63,16 @@ public class WorkingCapitalInitializerStep implements FineractGlobalInitializerS
                 defaultWCPLPDiscountRequest);
         TestContext.INSTANCE.set(TestContextKey.DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_WCLP_DISCOUNT,
                 responseDefaultWCPLDiscount);
+
+        final String workingCapitalProductDisallowOverridesDefaultName = DefaultWorkingCapitalLoanProduct.WCLP_DISALLOW_ATTRIBUTES_OVERRIDE
+                .getName();
+        final PostWorkingCapitalLoanProductsRequest defaultWCPLDisallowOverridesRequest = workingCapitalRequestFactory
+                .defaultWorkingCapitalLoanProductRequest() //
+                .name(workingCapitalProductDisallowOverridesDefaultName); //
+        final PostWorkingCapitalLoanProductsResponse responseDefaultWCPLDisallowOverrides = createWorkingCapitalLoanProductIdempotent(
+                defaultWCPLDisallowOverridesRequest);
+        TestContext.INSTANCE.set(TestContextKey.DEFAULT_WORKING_CAPITAL_LOAN_PRODUCT_CREATE_RESPONSE_WCLP_DISALLOW_OVERRIDES,
+                responseDefaultWCPLDisallowOverrides);
 
         final String workingCapitalProductDiscountDisallowOverridesDefaultName = DefaultWorkingCapitalLoanProduct.WCLP_DISCOUNT_DISALLOW_ATTRIBUTES_OVERRIDE
                 .getName();
