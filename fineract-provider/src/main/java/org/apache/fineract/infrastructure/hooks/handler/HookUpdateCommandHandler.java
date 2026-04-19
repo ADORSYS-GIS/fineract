@@ -18,26 +18,33 @@
  */
 package org.apache.fineract.infrastructure.hooks.handler;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.commands.annotation.CommandType;
-import org.apache.fineract.commands.handler.NewCommandSourceHandler;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.command.core.Command;
+import org.apache.fineract.command.core.CommandHandler;
+import org.apache.fineract.infrastructure.hooks.data.HookUpdateRequest;
+import org.apache.fineract.infrastructure.hooks.data.HookUpdateResponse;
 import org.apache.fineract.infrastructure.hooks.service.HookWritePlatformService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@CommandType(entity = "HOOK", action = "CREATE")
+@Slf4j
+@Component
 @RequiredArgsConstructor
-public class CreateHookCommandHandler implements NewCommandSourceHandler {
+public class HookUpdateCommandHandler implements CommandHandler<HookUpdateRequest, HookUpdateResponse> {
 
     private final HookWritePlatformService writePlatformService;
 
-    @Transactional
+    @Retry(name = "commandHookUpdate", fallbackMethod = "fallback")
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
-        return this.writePlatformService.createHook(command);
+    @Transactional
+    public HookUpdateResponse handle(Command<HookUpdateRequest> command) {
+        return writePlatformService.updateHook(command.getPayload());
     }
 
+    @Override
+    public HookUpdateResponse fallback(Command<HookUpdateRequest> command, Throwable t) {
+        return CommandHandler.super.fallback(command, t);
+    }
 }

@@ -18,20 +18,34 @@
  */
 package org.apache.fineract.infrastructure.hooks.data;
 
+import jakarta.validation.constraints.Size;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
+import lombok.experimental.FieldNameConstants;
 
-@SuppressWarnings("unused")
+@Builder
 @Data
 @NoArgsConstructor
-@Accessors(chain = true)
-public class Grouping implements Serializable {
+@AllArgsConstructor
+@FieldNameConstants
+public class HookUpdateRequest implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    // @NotNull(message = "{org.apache.fineract.infrastructure.hooks.id.not-null}")
+    private Long id;
+    @Size(max = 100, message = "{org.apache.fineract.infrastructure.hooks.name.size}")
     private String name;
-    private List<Entity> entities;
+    private Boolean isActive;
+    private String displayName;
+    private Long templateId;
+    private List<HookEventData> events;
+    private Map<String, String> config;
 }

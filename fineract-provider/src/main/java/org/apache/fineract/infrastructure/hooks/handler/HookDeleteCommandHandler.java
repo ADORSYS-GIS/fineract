@@ -18,25 +18,33 @@
  */
 package org.apache.fineract.infrastructure.hooks.handler;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.commands.annotation.CommandType;
-import org.apache.fineract.commands.handler.NewCommandSourceHandler;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.command.core.Command;
+import org.apache.fineract.command.core.CommandHandler;
+import org.apache.fineract.infrastructure.hooks.data.HookDeleteRequest;
+import org.apache.fineract.infrastructure.hooks.data.HookDeleteResponse;
 import org.apache.fineract.infrastructure.hooks.service.HookWritePlatformService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@CommandType(entity = "HOOK", action = "UPDATE")
+@Slf4j
+@Component
 @RequiredArgsConstructor
-public class UpdateHookCommandHandler implements NewCommandSourceHandler {
+public class HookDeleteCommandHandler implements CommandHandler<HookDeleteRequest, HookDeleteResponse> {
 
     private final HookWritePlatformService writePlatformService;
 
-    @Transactional
+    @Retry(name = "commandHookDelete", fallbackMethod = "fallback")
     @Override
-    public CommandProcessingResult processCommand(final JsonCommand command) {
-        return this.writePlatformService.updateHook(command.entityId(), command);
+    @Transactional
+    public HookDeleteResponse handle(Command<HookDeleteRequest> command) {
+        return writePlatformService.deleteHook(command.getPayload());
+    }
+
+    @Override
+    public HookDeleteResponse fallback(Command<HookDeleteRequest> command, Throwable t) {
+        return CommandHandler.super.fallback(command, t);
     }
 }
