@@ -16,34 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanproduct.productmix.handler;
+package org.apache.fineract.portfolio.workingcapitalloan.handler;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.fineract.commands.annotation.CommandType;
 import org.apache.fineract.commands.handler.NewCommandSourceHandler;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.portfolio.loanproduct.productmix.service.ProductMixWritePlatformService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.fineract.portfolio.workingcapitalloan.service.WorkingCapitalLoanWritePlatformService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@CommandType(entity = "PRODUCTMIX", action = "CREATE")
-public class CreateProductMixCommandHandler implements NewCommandSourceHandler {
+@RequiredArgsConstructor
+@CommandType(entity = "WORKINGCAPITALLOAN", action = "REPAYMENT")
+public class RepaymentWorkingCapitalLoanCommandHandler implements NewCommandSourceHandler {
 
-    private final ProductMixWritePlatformService productMixWritePlatformService;
-
-    @Autowired
-    public CreateProductMixCommandHandler(final ProductMixWritePlatformService productMixWritePlatformService) {
-
-        this.productMixWritePlatformService = productMixWritePlatformService;
-    }
+    private final WorkingCapitalLoanWritePlatformService writePlatformService;
 
     @Transactional
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-
-        return this.productMixWritePlatformService.createProductMix(command.getProductId(), command);
+        return this.writePlatformService.makeRepayment(command.entityId(), command);
     }
-
 }
