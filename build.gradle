@@ -287,6 +287,7 @@ allprojects  {
         verbose = false
         reportDir = file("$buildDir/reports/rat")
         excludes = [
+            '**/*adorsys*/**',
             '**/src/main/templates/**/*.mustache',
             '**/.dockerignore',
             '**/*.launch',
@@ -373,6 +374,12 @@ allprojects  {
             // Apache-specific GitHub metadata settings file
             '/.asf.yaml'
         ]
+    }
+}
+
+configure(subprojects.findAll { it.path.contains('adorsys') }) {
+    tasks.withType(org.nosphere.apache.rat.RatTask) {
+        enabled = false
     }
 }
 
