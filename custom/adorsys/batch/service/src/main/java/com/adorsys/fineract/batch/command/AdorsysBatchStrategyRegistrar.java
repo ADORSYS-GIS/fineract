@@ -19,7 +19,6 @@
 package com.adorsys.fineract.batch.command;
 
 import static jakarta.ws.rs.HttpMethod.POST;
-import static jakarta.ws.rs.HttpMethod.PUT;
 
 import java.util.Map;
 import org.apache.fineract.batch.command.CommandContext;
