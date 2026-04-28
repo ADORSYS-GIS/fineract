@@ -96,7 +96,7 @@ CustomLog /proc/self/fd/1 common
     OIDCProviderMetadataURL http://172.17.0.1:9000/realms/fineract/.well-known/openid-configuration
     OIDCClientID web-client
     OIDCClientSecret **********
-    
+
     # OIDC Session Management: Uses a server-side shared memory cache.
     # This is crucial to prevent the "too many redirects" error.
     OIDCSessionType server-cache

@@ -25,5 +25,4 @@ import org.springframework.context.annotation.ComponentScan;
 @AutoConfiguration
 @ComponentScan("com.adorsys.fineract.batch")
 @ConditionalOnProperty(name = "adorsys.batch.enabled", havingValue = "true", matchIfMissing = true)
-public class AdorsysBatchAutoConfiguration {
-}
+public class AdorsysBatchAutoConfiguration {}

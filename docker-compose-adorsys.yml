@@ -90,7 +90,7 @@ services:
       - fineract-network
     restart: "no"
 
-    
+
   keycloak-config-cli:
     image: adorsys/keycloak-config-cli:latest
     depends_on:
@@ -198,5 +198,3 @@ networks:
   fineract-network:
     driver: bridge
     name: fineract-dev-network
-
-
