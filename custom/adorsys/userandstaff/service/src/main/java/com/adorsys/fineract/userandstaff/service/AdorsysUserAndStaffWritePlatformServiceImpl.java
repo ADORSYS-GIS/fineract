@@ -109,12 +109,24 @@ public class AdorsysUserAndStaffWritePlatformServiceImpl implements AdorsysUserA
     private CommandProcessingResult updateUser(Long userId, JsonCommand command) {
         final JsonObject jsonObject = command.parsedJson().getAsJsonObject();
         final JsonObject userObject = new JsonObject();
-        if (jsonObject.has(USERNAME)) userObject.add(USERNAME, jsonObject.get(USERNAME));
-        if (jsonObject.has(FIRSTNAME)) userObject.add(FIRSTNAME, jsonObject.get(FIRSTNAME));
-        if (jsonObject.has(LASTNAME)) userObject.add(LASTNAME, jsonObject.get(LASTNAME));
-        if (jsonObject.has(EMAIL)) userObject.add(EMAIL, jsonObject.get(EMAIL));
-        if (jsonObject.has(ROLES)) userObject.add(ROLES, jsonObject.get(ROLES));
-        if (jsonObject.has(OFFICE_ID)) userObject.add(OFFICE_ID, jsonObject.get(OFFICE_ID));
+        if (jsonObject.has(USERNAME)) {
+            userObject.add(USERNAME, jsonObject.get(USERNAME));
+        }
+        if (jsonObject.has(FIRSTNAME)) {
+            userObject.add(FIRSTNAME, jsonObject.get(FIRSTNAME));
+        }
+        if (jsonObject.has(LASTNAME)) {
+            userObject.add(LASTNAME, jsonObject.get(LASTNAME));
+        }
+        if (jsonObject.has(EMAIL)) {
+            userObject.add(EMAIL, jsonObject.get(EMAIL));
+        }
+        if (jsonObject.has(ROLES)) {
+            userObject.add(ROLES, jsonObject.get(ROLES));
+        }
+        if (jsonObject.has(OFFICE_ID)) {
+            userObject.add(OFFICE_ID, jsonObject.get(OFFICE_ID));
+        }
 
         if (userObject.size() == 0) {
             return CommandProcessingResult.empty();
