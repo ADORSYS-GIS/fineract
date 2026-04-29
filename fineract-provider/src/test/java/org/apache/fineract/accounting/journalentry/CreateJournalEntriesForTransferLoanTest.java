@@ -46,7 +46,8 @@ class CreateJournalEntriesForTransferLoanTest {
 
     private static final Long LOAN_ID = 1L;
     private static final Long LOAN_PRODUCT_ID = 1L;
-    private static final Long OFFICE_ID = 1L;
+    private static final Long LOAN_OFFICE_ID = 1L;
+    private static final Long TRANSACTION_OFFICE_ID = 2L;
     private static final String CURRENCY_CODE = "USD";
     private static final String TRANSACTION_ID = "txn-transfer";
     private static final LocalDate TRANSACTION_DATE = LocalDate.of(2021, 2, 11);
@@ -61,11 +62,11 @@ class CreateJournalEntriesForTransferLoanTest {
 
     @BeforeEach
     void setUp() {
-        office = Office.headOffice("Main Office", TRANSACTION_DATE, null);
-        when(helper.getOfficeById(OFFICE_ID)).thenReturn(office);
+        office = Office.headOffice("Transaction Office", TRANSACTION_DATE, null);
+        when(helper.getOfficeById(TRANSACTION_OFFICE_ID)).thenReturn(office);
 
         GLClosure mockClosure = mock(GLClosure.class);
-        when(helper.getLatestClosureByBranch(OFFICE_ID)).thenReturn(mockClosure);
+        when(helper.getLatestClosureByBranch(TRANSACTION_OFFICE_ID)).thenReturn(mockClosure);
     }
 
     @Test
@@ -105,11 +106,11 @@ class CreateJournalEntriesForTransferLoanTest {
     }
 
     private LoanDTO createLoanDTO(final LoanTransactionEnumData transactionType) {
-        LoanTransactionDTO loanTransactionDTO = new LoanTransactionDTO(OFFICE_ID, null, TRANSACTION_ID, TRANSACTION_DATE, transactionType,
-                TRANSACTION_AMOUNT, PRINCIPAL_AMOUNT, null, null, null, null, false, Collections.emptyList(), Collections.emptyList(),
-                false, "", null, null, null, null);
+        LoanTransactionDTO loanTransactionDTO = new LoanTransactionDTO(TRANSACTION_OFFICE_ID, null, TRANSACTION_ID, TRANSACTION_DATE,
+                transactionType, TRANSACTION_AMOUNT, PRINCIPAL_AMOUNT, null, null, null, null, false, Collections.emptyList(),
+                Collections.emptyList(), false, "", null, null, null, null);
 
-        return new LoanDTO(LOAN_ID, LOAN_PRODUCT_ID, OFFICE_ID, CURRENCY_CODE, false, true, true, List.of(loanTransactionDTO), false, false,
-                null, false, false, null, null, null);
+        return new LoanDTO(LOAN_ID, LOAN_PRODUCT_ID, LOAN_OFFICE_ID, CURRENCY_CODE, false, true, true, List.of(loanTransactionDTO), false,
+                false, null, false, false, null, null, null);
     }
 }

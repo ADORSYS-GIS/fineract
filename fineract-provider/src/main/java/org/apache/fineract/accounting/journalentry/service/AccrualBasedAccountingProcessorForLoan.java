@@ -52,10 +52,10 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
 
     @Override
     public void createJournalEntriesForLoan(final LoanDTO loanDTO) {
-        final Long officeId = loanDTO.getOfficeId();
-        final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(officeId);
-        final Office office = this.helper.getOfficeById(officeId);
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
+            final Long officeId = loanTransactionDTO.getOfficeId() == null ? loanDTO.getOfficeId() : loanTransactionDTO.getOfficeId();
+            final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(officeId);
+            final Office office = this.helper.getOfficeById(officeId);
             final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
             this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
             final LoanTransactionEnumData transactionType = loanTransactionDTO.getTransactionType();
