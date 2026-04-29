@@ -11,7 +11,7 @@ This means that all configuration changes should be made in the Excel file first
 ```mermaid
 graph TD
     A[generate_excel_template.py] --> B(fineract_demo_data.xlsx);
-    
+
     subgraph "Excel-Based Workflow"
         B --> C[Python Loaders];
         C --> D{Fineract API};
