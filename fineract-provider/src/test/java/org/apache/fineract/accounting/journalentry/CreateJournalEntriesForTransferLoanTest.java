@@ -18,7 +18,11 @@
  */
 package org.apache.fineract.accounting.journalentry;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -105,9 +109,24 @@ class CreateJournalEntriesForTransferLoanTest {
                 PRINCIPAL_AMOUNT);
     }
 
+    @Test
+    void shouldNotCreateJournalEntriesForTransferWithoutPrincipalAmount() {
+        LoanTransactionEnumData transactionType = mock(LoanTransactionEnumData.class);
+        when(transactionType.isInitiateTransfer()).thenReturn(true);
+
+        processor.createJournalEntriesForLoan(createLoanDTO(transactionType, null));
+
+        verify(helper, never()).createJournalEntriesForLoan(any(Office.class), anyString(), any(Integer.class), any(Integer.class),
+                any(Long.class), isNull(), any(Long.class), anyString(), any(LocalDate.class), any(BigDecimal.class));
+    }
+
     private LoanDTO createLoanDTO(final LoanTransactionEnumData transactionType) {
+        return createLoanDTO(transactionType, PRINCIPAL_AMOUNT);
+    }
+
+    private LoanDTO createLoanDTO(final LoanTransactionEnumData transactionType, final BigDecimal principalAmount) {
         LoanTransactionDTO loanTransactionDTO = new LoanTransactionDTO(TRANSACTION_OFFICE_ID, null, TRANSACTION_ID, TRANSACTION_DATE,
-                transactionType, TRANSACTION_AMOUNT, PRINCIPAL_AMOUNT, null, null, null, null, false, Collections.emptyList(),
+                transactionType, TRANSACTION_AMOUNT, principalAmount, null, null, null, null, false, Collections.emptyList(),
                 Collections.emptyList(), false, "", null, null, null, null);
 
         return new LoanDTO(LOAN_ID, LOAN_PRODUCT_ID, LOAN_OFFICE_ID, CURRENCY_CODE, false, true, true, List.of(loanTransactionDTO), false,

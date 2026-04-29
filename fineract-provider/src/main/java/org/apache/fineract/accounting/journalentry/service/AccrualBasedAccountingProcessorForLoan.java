@@ -21,6 +21,7 @@ package org.apache.fineract.accounting.journalentry.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +53,12 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
 
     @Override
     public void createJournalEntriesForLoan(final LoanDTO loanDTO) {
+        final Map<Long, GLClosure> latestGLClosureByOfficeId = new HashMap<>();
+        final Map<Long, Office> officeById = new HashMap<>();
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
             final Long officeId = loanTransactionDTO.getOfficeId() == null ? loanDTO.getOfficeId() : loanTransactionDTO.getOfficeId();
-            final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(officeId);
-            final Office office = this.helper.getOfficeById(officeId);
+            final GLClosure latestGLClosure = latestGLClosureByOfficeId.computeIfAbsent(officeId, this.helper::getLatestClosureByBranch);
+            final Office office = officeById.computeIfAbsent(officeId, this.helper::getOfficeById);
             final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
             this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
             final LoanTransactionEnumData transactionType = loanTransactionDTO.getTransactionType();
@@ -173,16 +176,18 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
         final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
         final BigDecimal principalAmount = loanTransactionDTO.getPrincipal();
 
-        if (loanTransactionDTO.getTransactionType().isInitiateTransfer()) {
-            this.helper.createJournalEntriesForLoan(office, currencyCode, AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue(),
-                    AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue(), loanProductId, null, loanId, transactionId, transactionDate,
-                    principalAmount);
-        } else if (loanTransactionDTO.getTransactionType().isApproveTransfer()
-                || loanTransactionDTO.getTransactionType().isWithdrawTransfer()) {
-            this.helper.createJournalEntriesForLoan(office, currencyCode, AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue(),
-                    AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue(), loanProductId, null, loanId, transactionId, transactionDate,
-                    principalAmount);
+        if (!MathUtil.isGreaterThanZero(principalAmount)) {
+            return;
         }
+
+        final boolean isInitiateTransfer = loanTransactionDTO.getTransactionType().isInitiateTransfer();
+        final Integer debitAccount = isInitiateTransfer ? AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue()
+                : AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue();
+        final Integer creditAccount = isInitiateTransfer ? AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue()
+                : AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue();
+
+        this.helper.createJournalEntriesForLoan(office, currencyCode, debitAccount, creditAccount, loanProductId, null, loanId,
+                transactionId, transactionDate, principalAmount);
     }
 
     private void createJournalEntriesForCapitalizedIncome(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO,
