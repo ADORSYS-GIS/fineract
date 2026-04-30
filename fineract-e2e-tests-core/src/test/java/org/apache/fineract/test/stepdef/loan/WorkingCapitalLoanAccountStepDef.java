@@ -2095,9 +2095,15 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     @Then("Customer makes repayment on {string} with {double} transaction amount on Working Capital loan")
     public void makeWorkingCapitalLoanRepayment(final String transactionDate, final double transactionAmount) {
+        makeWorkingCapitalLoanRepaymentLike("repayment", transactionDate, transactionAmount);
+    }
+
+    @Then("Customer makes {string} on {string} with {double} transaction amount on Working Capital loan")
+    public void makeWorkingCapitalLoanRepaymentLike(final String transactionType, final String transactionDate,
+            final double transactionAmount) {
         final Long loanId = getCreatedLoanId();
         final PostWorkingCapitalLoanTransactionsRequest repaymentRequest = buildRepaymentRequest(transactionDate, transactionAmount, null);
-        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentById(loanId, repaymentRequest);
+        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentLikeById(loanId, transactionType, repaymentRequest);
         validateRepaymentResponse(response, transactionAmount, transactionDate, loanId);
     }
 
@@ -2117,7 +2123,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final PostWorkingCapitalLoanTransactionsPaymentDetailRequest paymentDetails = buildPaymentDetailsFromTable(table);
         final PostWorkingCapitalLoanTransactionsRequest repaymentRequest = buildRepaymentRequest(transactionDate, transactionAmount,
                 paymentDetails);
-        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentById(loanId, repaymentRequest);
+        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentLikeById(loanId, "repayment", repaymentRequest);
         validateRepaymentResponse(response, transactionAmount, transactionDate, loanId);
     }
 
@@ -2179,12 +2185,12 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         return request;
     }
 
-    private PostWorkingCapitalLoanTransactionsResponse executeRepaymentById(final Long loanId,
+    private PostWorkingCapitalLoanTransactionsResponse executeRepaymentLikeById(final Long loanId, final String transactionType,
             final PostWorkingCapitalLoanTransactionsRequest repaymentRequest) {
-        log.debug("Making repayment for loan ID: {}, transactionDate: {}, transactionAmount: {}", loanId,
+        log.debug("Making {} for loan ID: {}, transactionDate: {}, transactionAmount: {}", transactionType, loanId,
                 repaymentRequest.getTransactionDate(), repaymentRequest.getTransactionAmount());
 
-        return ok(() -> fineractClient.workingCapitalLoanTransactions().executeWorkingCapitalLoanTransactionById(loanId, "repayment",
+        return ok(() -> fineractClient.workingCapitalLoanTransactions().executeWorkingCapitalLoanTransactionById(loanId, transactionType,
                 repaymentRequest));
     }
 
