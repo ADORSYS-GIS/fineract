@@ -53,6 +53,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.workingcapitalloan.WorkingCapitalLoanConstants;
+import org.apache.fineract.portfolio.workingcapitalloan.accounting.WorkingCapitalLoanAccountingProcessor;
 import org.apache.fineract.portfolio.workingcapitalloan.data.RepaymentAmortizationData;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBalance;
@@ -97,6 +98,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
     private final InternalWorkingCapitalLoanPaymentService internalWorkingCapitalLoanPaymentService;
     private final CodeValueRepository codeValueRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final WorkingCapitalLoanAccountingProcessor accountingProcessor;
     private final WorkingCapitalLoanTransactionRelationRepository relationRepository;
 
     @Override
@@ -544,16 +546,17 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                 paymentDetail, transactionDate, classification, txnExternalId);
         this.transactionRepository.saveAndFlush(repaymentTransaction);
 
-        final WorkingCapitalLoanTransactionAllocation allocation = WorkingCapitalLoanTransactionAllocation
-                .forPrincipalAllocation(repaymentTransaction, transactionAmount);
-        this.allocationRepository.saveAndFlush(allocation);
-
         final WorkingCapitalLoanBalance currentBalance = this.balanceRepository.findByWcLoan_Id(loan.getId())
                 .orElseGet(() -> WorkingCapitalLoanBalance.createFor(loan));
         final BigDecimal outstandingBeforeRepayment = currentBalance.getPrincipalOutstanding() != null
                 ? currentBalance.getPrincipalOutstanding()
                 : BigDecimal.ZERO;
         final BigDecimal amountAppliedToOutstanding = transactionAmount.min(outstandingBeforeRepayment);
+
+        final WorkingCapitalLoanTransactionAllocation allocation = WorkingCapitalLoanTransactionAllocation
+                .forPrincipalAllocation(repaymentTransaction, amountAppliedToOutstanding);
+        this.allocationRepository.saveAndFlush(allocation);
+
         final RepaymentAmortizationData amortizationData = amortizationScheduleWriteService.applyRepayment(loan, transactionDate,
                 amountAppliedToOutstanding);
         updateBalanceOnRepayment(loan, transactionAmount, amortizationData);
@@ -582,6 +585,11 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         createNote(noteText, loan);
 
         this.loanRepository.saveAndFlush(loan);
+
+        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+            accountingProcessor.postJournalEntriesForRepayment(loan, repaymentTransaction, allocation, false);
+        }
+
         businessEventNotifierService
                 .notifyPostBusinessEvent(new WorkingCapitalLoanRepaymentTransactionBusinessEvent(repaymentTransaction, loan.getId()));
 

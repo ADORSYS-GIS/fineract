@@ -74,6 +74,7 @@ import org.apache.fineract.portfolio.loanaccount.data.AccountingBridgeLoanTransa
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargeData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargePaidByDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.springframework.dao.DataAccessException;
@@ -86,6 +87,7 @@ public class AccountingProcessorHelper {
     public static final String CLIENT_TRANSACTION_IDENTIFIER = "C";
     public static final String PROVISIONING_TRANSACTION_IDENTIFIER = "P";
     public static final String SHARE_TRANSACTION_IDENTIFIER = "SH";
+    public static final String WORKING_CAPITAL_LOAN_TRANSACTION_IDENTIFIER = "WC";
 
     private final JournalEntryRepository glJournalEntryRepository;
     private final ProductToGLAccountMappingRepository accountMappingRepository;
@@ -955,6 +957,47 @@ public class AccountingProcessorHelper {
                 transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.LOAN.getValue(), loanId, null,
                 loanTransactionId, null, null, null);
         persistJournalEntry(journalEntry);
+    }
+
+    public void createCreditJournalEntryForWorkingCapitalLoan(final Office office, final String currencyCode, final GLAccount account,
+            final Long workingCapitalLoanId, final Long workingCapitalLoanTransactionId, final LocalDate transactionDate,
+            final BigDecimal amount, final PaymentDetail paymentDetail) {
+        final String modifiedTransactionId = WORKING_CAPITAL_LOAN_TRANSACTION_IDENTIFIER + workingCapitalLoanTransactionId;
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId, false,
+                transactionDate, JournalEntryType.CREDIT, amount, null, PortfolioProductType.WORKING_CAPITAL_LOAN.getValue(),
+                workingCapitalLoanId, null, null, null, null, null);
+        persistJournalEntry(journalEntry);
+    }
+
+    public void createDebitJournalEntryForWorkingCapitalLoan(final Office office, final String currencyCode, final GLAccount account,
+            final Long workingCapitalLoanId, final Long workingCapitalLoanTransactionId, final LocalDate transactionDate,
+            final BigDecimal amount, final PaymentDetail paymentDetail) {
+        final String modifiedTransactionId = WORKING_CAPITAL_LOAN_TRANSACTION_IDENTIFIER + workingCapitalLoanTransactionId;
+        final JournalEntry journalEntry = JournalEntry.createNew(office, paymentDetail, account, currencyCode, modifiedTransactionId, false,
+                transactionDate, JournalEntryType.DEBIT, amount, null, PortfolioProductType.WORKING_CAPITAL_LOAN.getValue(),
+                workingCapitalLoanId, null, null, null, null, null);
+        persistJournalEntry(journalEntry);
+    }
+
+    public GLAccount getLinkedGLAccountForWorkingCapitalLoanProduct(final Long workingCapitalLoanProductId, final int accountMappingTypeId,
+            final Long paymentTypeId) {
+        ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(
+                workingCapitalLoanProductId, PortfolioProductType.WORKING_CAPITAL_LOAN.getValue(), accountMappingTypeId);
+
+        if (accountMappingTypeId == CashAccountsForLoan.FUND_SOURCE.getValue() && paymentTypeId != null) {
+            final ProductToGLAccountMapping paymentChannelSpecificAccountMapping = this.accountMappingRepository
+                    .findByProductIdAndProductTypeAndFinancialAccountTypeAndPaymentTypeId(workingCapitalLoanProductId,
+                            PortfolioProductType.WORKING_CAPITAL_LOAN.getValue(), accountMappingTypeId, paymentTypeId);
+            if (paymentChannelSpecificAccountMapping != null) {
+                accountMapping = paymentChannelSpecificAccountMapping;
+            }
+        }
+
+        if (accountMapping == null) {
+            throw new ProductToGLAccountMappingNotFoundException(PortfolioProductType.WORKING_CAPITAL_LOAN, workingCapitalLoanProductId,
+                    CashAccountsForLoan.fromInt(accountMappingTypeId).toString());
+        }
+        return accountMapping.getGlAccount();
     }
 
     private void createDebitJournalEntryForSavings(final Office office, final String currencyCode, final GLAccount account,
