@@ -21,7 +21,6 @@ package com.adorsys.fineract.userandstaff.api;
 import com.adorsys.fineract.userandstaff.data.EmployeeData;
 import com.adorsys.fineract.userandstaff.service.AdorsysUserAndStaffReadPlatformService;
 import com.adorsys.fineract.userandstaff.service.AdorsysUserAndStaffWritePlatformService;
-import com.google.gson.JsonElement;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +29,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import com.google.gson.JsonElement;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -38,6 +39,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -66,7 +68,8 @@ public class AdorsysUserAndStaffApiResource {
     @Operation(summary = "Create an employee", description = "Creates an employee.\n\nMandatory Fields:\nofficeId, firstname, lastname, username, roles\n\nOptional Fields:\nisLoanOfficer, mobileNo, externalId, joiningDate")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.CreateEmployeeRequest.class)))
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.CreateEmployeeResponse.class))) })
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.CreateEmployeeResponse.class)))
+    })
     public CommandProcessingResult createEmployee(
             @Parameter(hidden = true) final AdorsysUserAndStaffApiResourceSwagger.CreateEmployeeRequest request) {
         this.context.authenticatedUser().validateHasCreatePermission(RESOURCE_NAME_FOR_PERMISSIONS);
@@ -93,9 +96,10 @@ public class AdorsysUserAndStaffApiResource {
     @Operation(summary = "Update an Employee", description = "Updates the details of an employee.")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.PutEmployeeRequest.class)))
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.PutEmployeeResponse.class))) })
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AdorsysUserAndStaffApiResourceSwagger.PutEmployeeResponse.class)))
+    })
     public CommandProcessingResult updateEmployee(@PathParam("userId") @Parameter(description = "userId") final Long userId,
-            @Parameter(hidden = true) final AdorsysUserAndStaffApiResourceSwagger.PutEmployeeRequest request) {
+                                                  @Parameter(hidden = true) final AdorsysUserAndStaffApiResourceSwagger.PutEmployeeRequest request) {
         this.context.authenticatedUser().validateHasUpdatePermission(RESOURCE_NAME_FOR_PERMISSIONS);
         final String json = this.toApiJsonSerializer.serialize(request);
         final JsonElement jsonElement = this.fromJsonHelper.parse(json);

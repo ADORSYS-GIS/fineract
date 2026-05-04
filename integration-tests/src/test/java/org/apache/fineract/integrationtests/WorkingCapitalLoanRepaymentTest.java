@@ -119,8 +119,7 @@ public class WorkingCapitalLoanRepaymentTest {
 
         final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
         assertStatus(loanData, "loanStatusType.overpaid");
-        assertEqualBigDecimal(BigDecimal.ZERO, loanData.getAsJsonObject("balance").get("principalOutstanding"));
-        assertEqualBigDecimal(BigDecimal.valueOf(100), loanData.getAsJsonObject("balance").get("overpaymentAmount"));
+        assertEqualBigDecimal(BigDecimal.valueOf(-100), loanData.getAsJsonObject("balance").get("principalOutstanding"));
         final JsonArray content = JsonParser.parseString(loanHelper.retrieveTransactionsByLoanIdRaw(loanId)).getAsJsonObject()
                 .getAsJsonArray("content");
         assertEquals(2, content.size());
@@ -267,11 +266,11 @@ public class WorkingCapitalLoanRepaymentTest {
         final LocalDate repaymentDate = approvedOnDate.plusDays(1);
 
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId1, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildTransactionJson(repaymentDate, BigDecimal.valueOf(100), null, null, null, null, sharedExternalId)));
+                () -> loanHelper.makeRepaymentByLoanId(loanId1, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
+                        BigDecimal.valueOf(100), null, null, null, null, sharedExternalId)));
         final CallFailedRuntimeException ex = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId2,
-                WorkingCapitalLoanDisbursementTestBuilder.buildTransactionJson(repaymentDate, BigDecimal.valueOf(100), null, null, null,
-                        null, sharedExternalId));
+                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate, BigDecimal.valueOf(100), null, null, null, null,
+                        sharedExternalId));
         assertEquals(400, ex.getStatus());
     }
 

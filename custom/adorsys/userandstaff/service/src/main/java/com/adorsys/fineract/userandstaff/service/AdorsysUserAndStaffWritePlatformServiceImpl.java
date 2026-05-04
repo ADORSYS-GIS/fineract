@@ -71,9 +71,17 @@ public class AdorsysUserAndStaffWritePlatformServiceImpl implements AdorsysUserA
         final boolean isLoanOfficer = jsonObject.has(IS_LOAN_OFFICER) && jsonObject.get(IS_LOAN_OFFICER).getAsBoolean();
         final String externalId = jsonObject.has(EXTERNAL_ID) ? jsonObject.get(EXTERNAL_ID).getAsString() : null;
 
-        StaffCreateRequest request = StaffCreateRequest.builder().officeId(officeId).firstname(firstname).lastname(lastname)
-                .joiningDate(joiningDate).mobileNo(mobileNo).isLoanOfficer(isLoanOfficer).externalId(externalId).dateFormat("dd MMMM yyyy")
-                .locale("en").build();
+        StaffCreateRequest request = StaffCreateRequest.builder()
+                .officeId(officeId)
+                .firstname(firstname)
+                .lastname(lastname)
+                .joiningDate(joiningDate)
+                .mobileNo(mobileNo)
+                .isLoanOfficer(isLoanOfficer)
+                .externalId(externalId)
+                .dateFormat("dd MMMM yyyy")
+                .locale("en")
+                .build();
 
         final StaffCreateResponse staffResult = this.staffWriteService.createStaff(request);
 
@@ -88,8 +96,8 @@ public class AdorsysUserAndStaffWritePlatformServiceImpl implements AdorsysUserA
         userObject.addProperty("sendPasswordToEmail", false);
         final String userJson = this.fromJsonHelper.toJson(userObject);
         final JsonElement userJsonElement = this.fromJsonHelper.parse(userJson);
-        final JsonCommand userCommand = JsonCommand.from(userJson, userJsonElement, fromJsonHelper, "USER", null, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+        final JsonCommand userCommand = JsonCommand.from(userJson, userJsonElement, fromJsonHelper, "USER", null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         return this.appUserWritePlatformService.createUser(userCommand);
     }
 
@@ -109,36 +117,24 @@ public class AdorsysUserAndStaffWritePlatformServiceImpl implements AdorsysUserA
     private CommandProcessingResult updateUser(Long userId, JsonCommand command) {
         final JsonObject jsonObject = command.parsedJson().getAsJsonObject();
         final JsonObject userObject = new JsonObject();
-        if (jsonObject.has(USERNAME)) {
-            userObject.add(USERNAME, jsonObject.get(USERNAME));
-        }
-        if (jsonObject.has(FIRSTNAME)) {
-            userObject.add(FIRSTNAME, jsonObject.get(FIRSTNAME));
-        }
-        if (jsonObject.has(LASTNAME)) {
-            userObject.add(LASTNAME, jsonObject.get(LASTNAME));
-        }
-        if (jsonObject.has(EMAIL)) {
-            userObject.add(EMAIL, jsonObject.get(EMAIL));
-        }
-        if (jsonObject.has(ROLES)) {
-            userObject.add(ROLES, jsonObject.get(ROLES));
-        }
-        if (jsonObject.has(OFFICE_ID)) {
-            userObject.add(OFFICE_ID, jsonObject.get(OFFICE_ID));
-        }
-
+        if (jsonObject.has(USERNAME)) userObject.add(USERNAME, jsonObject.get(USERNAME));
+        if (jsonObject.has(FIRSTNAME)) userObject.add(FIRSTNAME, jsonObject.get(FIRSTNAME));
+        if (jsonObject.has(LASTNAME)) userObject.add(LASTNAME, jsonObject.get(LASTNAME));
+        if (jsonObject.has(EMAIL)) userObject.add(EMAIL, jsonObject.get(EMAIL));
+        if (jsonObject.has(ROLES)) userObject.add(ROLES, jsonObject.get(ROLES));
+        if (jsonObject.has(OFFICE_ID)) userObject.add(OFFICE_ID, jsonObject.get(OFFICE_ID));
+        
         if (userObject.size() == 0) {
             return CommandProcessingResult.empty();
         }
 
         final String userJson = this.fromJsonHelper.toJson(userObject);
         final JsonElement userJsonElement = this.fromJsonHelper.parse(userJson);
-        final JsonCommand userCommand = JsonCommand.from(userJson, userJsonElement, fromJsonHelper, "USER", userId, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+        final JsonCommand userCommand = JsonCommand.from(userJson, userJsonElement, fromJsonHelper, "USER", userId, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         return this.appUserWritePlatformService.updateUser(userId, userCommand);
     }
-
+    
     private CommandProcessingResult updateStaff(Long userId, JsonCommand command) {
         final JsonObject jsonObject = command.parsedJson().getAsJsonObject();
         final StaffUpdateRequest request = new StaffUpdateRequest();

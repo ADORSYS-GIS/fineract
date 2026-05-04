@@ -22,7 +22,6 @@ import static org.apache.fineract.commands.domain.CommandProcessingResultType.UN
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.util.Locale;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.batch.exception.ErrorInfo;
@@ -83,7 +82,7 @@ public class CommandSourceService {
             return commandSourceRepository.saveAndFlush(initialCommandSource);
         } catch (JpaSystemException jse) {
             final String message = (jse.getRootCause() != null) ? jse.getRootCause().getMessage() : null;
-            if (message != null && message.toUpperCase(Locale.ROOT).contains("UNIQUE_PORTFOLIO_COMMAND_SOURCE")) {
+            if (message != null && message.toUpperCase().contains("UNIQUE_PORTFOLIO_COMMAND_SOURCE")) {
                 throw new IdempotentCommandProcessUnderProcessingException(wrapper, idempotencyKey, jse);
             }
             throw jse;

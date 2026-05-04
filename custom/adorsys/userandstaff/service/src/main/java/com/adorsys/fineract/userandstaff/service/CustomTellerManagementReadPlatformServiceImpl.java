@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.security.service.SqlValidator;
@@ -34,8 +36,6 @@ import org.apache.fineract.organisation.office.service.OfficeReadPlatformService
 import org.apache.fineract.organisation.staff.service.StaffReadService;
 import org.apache.fineract.organisation.teller.data.CashierData;
 import org.apache.fineract.organisation.teller.service.TellerManagementReadPlatformServiceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -115,8 +115,8 @@ public class CustomTellerManagementReadPlatformServiceImpl extends TellerManagem
             final Boolean fullDay = rs.getBoolean("full_day");
             final String startTime = rs.getString("start_time");
             final String endTime = rs.getString("end_time");
-            return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description, startDate, endDate, fullDay,
-                    startTime, endTime);
+            return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description, startDate, endDate,
+                    fullDay, startTime, endTime);
         }
     }
 }

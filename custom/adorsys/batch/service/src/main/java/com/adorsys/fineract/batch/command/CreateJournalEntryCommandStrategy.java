@@ -32,8 +32,8 @@ import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
- * Batch command strategy for creating GL journal entries. Delegates to
- * {@link JournalEntriesApiResource#createGLJournalEntry(String, String)}.
+ * Batch command strategy for creating GL journal entries.
+ * Delegates to {@link JournalEntriesApiResource#createGLJournalEntry(String, String)}.
  */
 @Component
 @RequiredArgsConstructor

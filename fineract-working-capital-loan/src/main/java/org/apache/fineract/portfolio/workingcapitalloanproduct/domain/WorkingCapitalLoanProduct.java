@@ -44,7 +44,6 @@ import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucket;
 import org.apache.fineract.portfolio.fund.domain.Fund;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.domain.WorkingCapitalBreach;
-import org.apache.fineract.portfolio.workingcapitalloannearbreach.domain.WorkingCapitalNearBreach;
 
 /**
  * Working Capital Loan Product entity. This is a separate entity from the standard LoanProduct to provide flexibility
@@ -80,10 +79,6 @@ public class WorkingCapitalLoanProduct extends AbstractPersistableCustom<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "breach_id")
     private WorkingCapitalBreach breach;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "near_breach_id")
-    private WorkingCapitalNearBreach nearBreach;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -124,15 +119,13 @@ public class WorkingCapitalLoanProduct extends AbstractPersistableCustom<Long> {
             final WorkingCapitalAccountingRuleType accountingRule, final MonetaryCurrency currency,
             final WorkingCapitalLoanProductRelatedDetail relatedDetail, final WorkingCapitalLoanProductMinMaxConstraints minMaxConstraints,
             final List<WorkingCapitalLoanProductPaymentAllocationRule> paymentAllocationRules,
-            final WorkingCapitalLoanProductConfigurableAttributes configurableAttributes, final WorkingCapitalBreach breach,
-            final WorkingCapitalNearBreach nearBreach) {
+            final WorkingCapitalLoanProductConfigurableAttributes configurableAttributes, final WorkingCapitalBreach breach) {
         this.name = name;
         this.shortName = shortName;
         this.externalId = externalId;
         this.fund = fund;
         this.delinquencyBucket = delinquencyBucket;
         this.breach = breach;
-        this.nearBreach = nearBreach;
         this.startDate = startDate;
         this.closeDate = closeDate;
         this.description = description;

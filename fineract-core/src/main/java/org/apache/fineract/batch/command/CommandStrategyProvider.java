@@ -98,7 +98,8 @@ public class CommandStrategyProvider {
     }
 
     /**
-     * Allows custom plugins to register additional batch command strategies without modifying the core init() method.
+     * Allows custom plugins to register additional batch command strategies
+     * without modifying the core init() method.
      */
     @PostConstruct
     public void registerPluginStrategies() {

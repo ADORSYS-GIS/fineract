@@ -7,13 +7,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    commit-message:
-      # Prefix all commit messages with "FINERACT-2421: "
-      prefix: "FINERACT-2421: "
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
-    commit-message:
-      # Prefix all commit messages with "FINERACT-2421: "
-      prefix: "FINERACT-2421: "

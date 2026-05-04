@@ -77,7 +77,6 @@ public class WorkingCapitalLoanProductTestBuilder {
     private Integer delinquencyGraceDays;
     private String delinquencyStartType;
     private AccountingRuleEnum accountingRule = DEFAULT_ACCOUNTING_RULE;
-    private Long nearBreachId;
 
     public WorkingCapitalLoanProductTestBuilder withName(final String name) {
         this.name = name;
@@ -189,11 +188,6 @@ public class WorkingCapitalLoanProductTestBuilder {
         return this;
     }
 
-    public WorkingCapitalLoanProductTestBuilder withNearBreachId(final Long nearBreachId) {
-        this.nearBreachId = nearBreachId;
-        return this;
-    }
-
     public WorkingCapitalLoanProductTestBuilder withAllowAttributeOverrides(final Map<String, Boolean> allowAttributeOverrides) {
         this.allowAttributeOverrides = allowAttributeOverrides;
         return this;
@@ -260,7 +254,6 @@ public class WorkingCapitalLoanProductTestBuilder {
         request.setDelinquencyStartType(this.delinquencyStartType);
         request.setBreachId(this.breachId);
         request.setAccountingRule(this.accountingRule);
-        request.setNearBreachId(this.nearBreachId);
         request.setLocale("en_US");
         request.setDateFormat("yyyy-MM-dd");
     }
@@ -296,7 +289,6 @@ public class WorkingCapitalLoanProductTestBuilder {
         if (this.accountingRule != null) {
             request.setAccountingRule(PutWorkingCapitalLoanProductsProductIdRequest.AccountingRuleEnum.valueOf(this.accountingRule.name()));
         }
-        request.setNearBreachId(this.nearBreachId);
         request.setLocale("en_US");
         request.setDateFormat("yyyy-MM-dd");
     }

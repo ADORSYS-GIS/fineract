@@ -71,7 +71,6 @@ import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.delinquency.data.DelinquencyRangeData;
 import org.apache.fineract.portfolio.delinquency.data.LoanInstallmentDelinquencyTagData;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucketRepository;
-import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentPeriodAndRuleRepository;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyRangeRepository;
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyActionRepository;
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyTagHistoryRepository;
@@ -352,8 +351,6 @@ public class LoanAccountDelinquencyRangeEventSerializerTest {
         // given
         DelinquencyRangeRepository repositoryRange = Mockito.mock(DelinquencyRangeRepository.class);
         DelinquencyBucketRepository repositoryBucket = Mockito.mock(DelinquencyBucketRepository.class);
-        DelinquencyMinimumPaymentPeriodAndRuleRepository minimumPaymentPeriodAndRuleRepository = Mockito
-                .mock(DelinquencyMinimumPaymentPeriodAndRuleRepository.class);
         LoanDelinquencyTagHistoryRepository repositoryLoanDelinquencyTagHistory = Mockito.mock(LoanDelinquencyTagHistoryRepository.class);
         DelinquencyRangeMapper mapperRange = Mockito.mock(DelinquencyRangeMapper.class);
         DelinquencyBucketMapper mapperBucket = Mockito.mock(DelinquencyBucketMapper.class);
@@ -367,10 +364,10 @@ public class LoanAccountDelinquencyRangeEventSerializerTest {
         ConfigurationDomainService configurationDomainService = Mockito.mock(ConfigurationDomainService.class);
 
         DelinquencyReadPlatformService delinquencyReadPlatformService = new DelinquencyReadPlatformServiceImpl(repositoryRange,
-                repositoryBucket, minimumPaymentPeriodAndRuleRepository, repositoryLoanDelinquencyTagHistory, mapperRange, mapperBucket,
-                mapperLoanDelinquencyTagHistory, loanRepository, loanDelinquencyDomainService, repositoryLoanInstallmentDelinquencyTag,
-                loanDelinquencyActionRepository, delinquencyEffectivePauseHelper, configurationDomainService,
-                Mockito.mock(LoanTransactionRepository.class), Mockito.mock(PossibleNextRepaymentCalculationServiceDiscovery.class));
+                repositoryBucket, repositoryLoanDelinquencyTagHistory, mapperRange, mapperBucket, mapperLoanDelinquencyTagHistory,
+                loanRepository, loanDelinquencyDomainService, repositoryLoanInstallmentDelinquencyTag, loanDelinquencyActionRepository,
+                delinquencyEffectivePauseHelper, configurationDomainService, Mockito.mock(LoanTransactionRepository.class),
+                Mockito.mock(PossibleNextRepaymentCalculationServiceDiscovery.class));
 
         LoanProduct loanProduct = Mockito.mock(LoanProduct.class);
         when(loanProduct.isMultiDisburseLoan()).thenReturn(false);

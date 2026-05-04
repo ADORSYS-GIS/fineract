@@ -22,6 +22,7 @@ import java.util.Collection;
 import lombok.Data;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.staff.data.StaffData;
+import org.apache.fineract.useradministration.data.AppUserData;
 import org.apache.fineract.useradministration.data.RoleData;
 
 @Data
@@ -44,9 +45,10 @@ public class EmployeeData {
     private final String externalId;
 
     // The constructor is now public and will be called by the EmployeeDataMapper.
-    public EmployeeData(Long id, String username, Long officeId, String officeName, String firstname, String lastname, String email,
-            Boolean passwordNeverExpires, Collection<OfficeData> allowedOffices, Collection<RoleData> availableRoles,
-            Collection<RoleData> selectedRoles, StaffData staff, String mobileNo, boolean isLoanOfficer, String externalId) {
+    public EmployeeData(Long id, String username, Long officeId, String officeName, String firstname, String lastname,
+            String email, Boolean passwordNeverExpires, Collection<OfficeData> allowedOffices,
+            Collection<RoleData> availableRoles, Collection<RoleData> selectedRoles, StaffData staff, String mobileNo,
+            boolean isLoanOfficer, String externalId) {
         this.id = id;
         this.username = username;
         this.officeId = officeId;

@@ -44,7 +44,6 @@ import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
 import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPeriodFrequencyType;
-import org.apache.fineract.portfolio.workingcapitalloannearbreach.validator.WorkingCapitalNearBreachParseAndValidator;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.WorkingCapitalLoanProductConstants;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalAccountingRuleType;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalAdvancedPaymentAllocationsJsonParser;
@@ -67,7 +66,6 @@ public class WorkingCapitalLoanProductDataValidator {
     private final WorkingCapitalLoanProductRepository repository;
     private final WorkingCapitalAdvancedPaymentAllocationsJsonParser advancedPaymentAllocationsJsonParser;
     private final WorkingCapitalPaymentAllocationDataValidator paymentAllocationDataValidator;
-    private final WorkingCapitalNearBreachParseAndValidator workingCapitalNearBreachValidator;
 
     /**
      * The parameters supported for this command.
@@ -119,8 +117,7 @@ public class WorkingCapitalLoanProductDataValidator {
                     WorkingCapitalLoanProductConstants.goodwillCreditAccountIdParamName, //
                     WorkingCapitalLoanProductConstants.chargeOffExpenseAccountIdParamName, //
                     WorkingCapitalLoanProductConstants.chargeOffFraudExpenseAccountIdParamName, //
-                    WorkingCapitalLoanProductConstants.breachIdParamName, //
-                    WorkingCapitalLoanProductConstants.nearBreachIdParamName //
+                    WorkingCapitalLoanProductConstants.breachIdParamName //
             ));
 
     public void validateForCreate(final String json) {
@@ -367,8 +364,7 @@ public class WorkingCapitalLoanProductDataValidator {
                     .value(delinquencyBucketClassificationId).ignoreIfNull().integerGreaterThanZero();
         }
 
-        final Long breachId = validateBreachField(element, baseDataValidator);
-        validateNearBreachField(breachId, element, baseDataValidator);
+        validateBreachField(element, baseDataValidator);
 
         final Locale locale = fromApiJsonHelper.extractLocaleParameter(element.getAsJsonObject());
         if (this.fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.delinquencyGraceDaysParamName, element)) {
@@ -446,28 +442,11 @@ public class WorkingCapitalLoanProductDataValidator {
         return principal;
     }
 
-    private Long validateBreachField(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
-        Long breachId = null;
+    private void validateBreachField(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
         if (this.fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.breachIdParamName, element)) {
-            breachId = this.fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.breachIdParamName, element);
+            final Long breachId = this.fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.breachIdParamName, element);
             baseDataValidator.reset().parameter(WorkingCapitalLoanProductConstants.breachIdParamName).value(breachId).ignoreIfNull()
                     .longGreaterThanZero();
-        }
-        return breachId;
-    }
-
-    private void validateNearBreachField(final Long breachId, final JsonElement element, final DataValidatorBuilder baseDataValidator) {
-        if (this.fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.nearBreachIdParamName, element)) {
-            final Long nearBreachId = this.fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.nearBreachIdParamName,
-                    element);
-
-            if (breachId == null && nearBreachId != null) {
-                baseDataValidator.reset().parameter(WorkingCapitalLoanProductConstants.nearBreachIdParamName)
-                        .failWithCode("cannot.enable.near.breach.without.breach");
-                return;
-            }
-
-            workingCapitalNearBreachValidator.validateNearBreachAgainstBreach(baseDataValidator, breachId, nearBreachId);
         }
     }
 

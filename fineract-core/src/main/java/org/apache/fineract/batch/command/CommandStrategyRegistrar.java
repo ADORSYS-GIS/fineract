@@ -21,8 +21,8 @@ package org.apache.fineract.batch.command;
 import java.util.Map;
 
 /**
- * Extension point for custom plugins to register additional batch command strategies without modifying the core
- * {@link CommandStrategyProvider}.
+ * Extension point for custom plugins to register additional batch command strategies
+ * without modifying the core {@link CommandStrategyProvider}.
  *
  * Implementations are auto-discovered by Spring and invoked during application startup.
  */
@@ -31,8 +31,7 @@ public interface CommandStrategyRegistrar {
     /**
      * Register additional command strategies into the batch API routing table.
      *
-     * @param strategies
-     *            the mutable map of command contexts to strategy bean names
+     * @param strategies the mutable map of command contexts to strategy bean names
      */
     void register(Map<CommandContext, String> strategies);
 }
