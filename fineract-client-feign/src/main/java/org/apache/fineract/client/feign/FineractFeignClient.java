@@ -162,7 +162,6 @@ import org.apache.fineract.client.feign.services.WorkingCapitalLoanDelinquencyRa
 import org.apache.fineract.client.feign.services.WorkingCapitalLoanProductsApi;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoanTransactionsApi;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoansApi;
-import org.apache.fineract.client.feign.services.WorkingCapitalNearBreachApi;
 import org.apache.fineract.client.feign.services.WorkingDaysApi;
 
 /**
@@ -786,10 +785,6 @@ public final class FineractFeignClient {
 
     public WorkingCapitalBreachApi workingCapitalBreaches() {
         return create(WorkingCapitalBreachApi.class);
-    }
-
-    public WorkingCapitalNearBreachApi workingCapitalNearBreaches() {
-        return create(WorkingCapitalNearBreachApi.class);
     }
 
     public WorkingDaysApi workingDays() {

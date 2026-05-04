@@ -75,8 +75,8 @@ To run Fineract and the Frontends in OAuth mode (using Keycloak):
 
 3.  **Access Applications:**
     In OAuth mode, you must access applications through the **Apache Proxy** (port 80) to handle authentication.
-
+    
     -   **Cashier App:** http://localhost/cashier
     -   **Account Manager:** http://localhost/account
-
+    
     You will be redirected to Keycloak to login (default: `mifos` / `password`).

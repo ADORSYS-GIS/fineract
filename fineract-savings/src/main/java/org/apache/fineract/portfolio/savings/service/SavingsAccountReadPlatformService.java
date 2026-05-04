@@ -70,8 +70,6 @@ public interface SavingsAccountReadPlatformService {
 
     List<SavingsAccountTransactionData> retrieveAllTransactionData(List<String> refNo);
 
-    Long retrieveSavingsTransactionIdByExternalId(ExternalId externalId);
-
     Long retrieveAccountIdByExternalId(ExternalId externalId);
 
     List<SavingsAccrualData> retrievePeriodicAccrualData(LocalDate tillDate, SavingsAccount savings);

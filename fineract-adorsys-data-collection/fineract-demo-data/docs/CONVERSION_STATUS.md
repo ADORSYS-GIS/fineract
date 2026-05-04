@@ -365,7 +365,7 @@ clients:
 
 **Status**: Intentionally deferred - transactions loaded after account creation
 
-**Rationale**:
+**Rationale**: 
 - Loan accounts, savings accounts must exist first
 - Transaction import requires account IDs
 - Typically done as separate bulk import after Phase 5
@@ -508,7 +508,7 @@ java -jar target/fineract-config-cli.jar import --file config/demo.yml
 1. **Groups & Centers** (Phase 5): Sheets not present in test Excel
 2. **Transactions** (Phase 6): Intentionally deferred
 3. **Users** (Phase 2): Sheet name varies by Excel version
-4. **Advanced Product Features**:
+4. **Advanced Product Features**: 
    - Interest rate configurations
    - Repayment schedules
    - Accounting mappings (product → GL accounts)
@@ -551,11 +551,11 @@ java -jar target/fineract-config-cli.jar import --file config/demo.yml
 
 ### Test Coverage
 
-✅ **Phase 1**: All 7 entity types tested
-✅ **Phase 2**: 3/4 entity types tested (Users sheet missing)
-✅ **Phase 3**: All 4 entity types tested
-✅ **Phase 4**: All 3 entity types tested
-✅ **Phase 5**: 1/3 entity types tested (Groups/Centers missing)
+✅ **Phase 1**: All 7 entity types tested  
+✅ **Phase 2**: 3/4 entity types tested (Users sheet missing)  
+✅ **Phase 3**: All 4 entity types tested  
+✅ **Phase 4**: All 3 entity types tested  
+✅ **Phase 5**: 1/3 entity types tested (Groups/Centers missing)  
 
 ### Test Data Quality
 
@@ -597,7 +597,7 @@ java -jar target/fineract-config-cli.jar import --file config/demo.yml
 
 **Status**: ✅ **Production Ready for Phases 1-5**
 
-The Excel to YAML converter successfully transforms comprehensive Fineract demo data from Excel format into YAML configuration files compatible with fineract-config-cli.
+The Excel to YAML converter successfully transforms comprehensive Fineract demo data from Excel format into YAML configuration files compatible with fineract-config-cli. 
 
 With **18 out of 21+ entity types** implemented and tested (~85% coverage), the converter handles the critical system configuration, security, accounting foundation, financial products, and client data needed to bootstrap a Fineract instance.
 

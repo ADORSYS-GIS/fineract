@@ -58,19 +58,18 @@ public class DelinquencyConfiguration {
     @ConditionalOnMissingBean(DelinquencyReadPlatformService.class)
     public DelinquencyReadPlatformService delinquencyReadPlatformService(DelinquencyRangeRepository repositoryRange,
             DelinquencyBucketRepository repositoryBucket, LoanDelinquencyTagHistoryRepository repositoryLoanDelinquencyTagHistory,
-            DelinquencyMinimumPaymentPeriodAndRuleRepository minimumPaymentPeriodAndRuleRepository, DelinquencyRangeMapper mapperRange,
-            DelinquencyBucketMapper mapperBucket, LoanDelinquencyTagMapper mapperLoanDelinquencyTagHistory, LoanRepository loanRepository,
+            DelinquencyRangeMapper mapperRange, DelinquencyBucketMapper mapperBucket,
+            LoanDelinquencyTagMapper mapperLoanDelinquencyTagHistory, LoanRepository loanRepository,
             LoanDelinquencyDomainService loanDelinquencyDomainService,
             LoanInstallmentDelinquencyTagRepository repositoryLoanInstallmentDelinquencyTag,
             LoanDelinquencyActionRepository loanDelinquencyActionRepository,
             DelinquencyEffectivePauseHelper delinquencyEffectivePauseHelper, ConfigurationDomainService configurationDomainService,
             LoanTransactionRepository loanTransactionRepository,
             PossibleNextRepaymentCalculationServiceDiscovery possibleNextRepaymentCalculationService) {
-        return new DelinquencyReadPlatformServiceImpl(repositoryRange, repositoryBucket, minimumPaymentPeriodAndRuleRepository,
-                repositoryLoanDelinquencyTagHistory, mapperRange, mapperBucket, mapperLoanDelinquencyTagHistory, loanRepository,
-                loanDelinquencyDomainService, repositoryLoanInstallmentDelinquencyTag, loanDelinquencyActionRepository,
-                delinquencyEffectivePauseHelper, configurationDomainService, loanTransactionRepository,
-                possibleNextRepaymentCalculationService);
+        return new DelinquencyReadPlatformServiceImpl(repositoryRange, repositoryBucket, repositoryLoanDelinquencyTagHistory, mapperRange,
+                mapperBucket, mapperLoanDelinquencyTagHistory, loanRepository, loanDelinquencyDomainService,
+                repositoryLoanInstallmentDelinquencyTag, loanDelinquencyActionRepository, delinquencyEffectivePauseHelper,
+                configurationDomainService, loanTransactionRepository, possibleNextRepaymentCalculationService);
     }
 
     @Bean

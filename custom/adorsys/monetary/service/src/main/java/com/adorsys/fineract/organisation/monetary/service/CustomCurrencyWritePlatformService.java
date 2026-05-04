@@ -23,9 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Custom CurrencyWritePlatformService that auto-creates unknown currencies in the m_currency reference table when they
- * are submitted via PUT /currencies. This enables tokenized asset platforms to register custom currency codes (e.g.
- * DTT, YMT) without needing direct database access.
+ * Custom CurrencyWritePlatformService that auto-creates unknown currencies
+ * in the m_currency reference table when they are submitted via PUT /currencies.
+ * This enables tokenized asset platforms to register custom currency codes
+ * (e.g. DTT, YMT) without needing direct database access.
  */
 @Slf4j
 @Service
@@ -57,7 +58,8 @@ public class CustomCurrencyWritePlatformService implements CurrencyWritePlatform
 
             if (currency == null) {
                 // Auto-create the currency in the reference table
-                currency = new ApplicationCurrency(currencyCode, currencyCode, 0, 1, "currency." + currencyCode, currencyCode);
+                currency = new ApplicationCurrency(currencyCode, currencyCode, 0, 1,
+                        "currency." + currencyCode, currencyCode);
                 currency = currencyRepository.save(currency);
                 log.info("Auto-created custom currency in m_currency: {}", currencyCode);
             }

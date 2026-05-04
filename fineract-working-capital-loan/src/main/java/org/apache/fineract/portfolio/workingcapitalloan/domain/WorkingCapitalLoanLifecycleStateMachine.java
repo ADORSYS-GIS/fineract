@@ -53,7 +53,6 @@ public class WorkingCapitalLoanLifecycleStateMachine {
             case LOAN_DISBURSAL_UNDO -> from.isActive() ? LoanStatus.APPROVED : null;
             case LOAN_REPAID_IN_FULL -> from.isActive() ? LoanStatus.CLOSED_OBLIGATIONS_MET : null;
             case LOAN_OVERPAID -> (from.isActive() || from.isOverpaid()) ? LoanStatus.OVERPAID : null;
-            case LOAN_CREDIT_BALANCE_REFUND_IN_FULL -> from.isOverpaid() ? LoanStatus.CLOSED_OBLIGATIONS_MET : null;
         };
     }
 }

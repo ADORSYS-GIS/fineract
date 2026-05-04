@@ -18,15 +18,17 @@
  */
 package com.adorsys.fineract.userandstaff.api;
 
+
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 final class AdorsysUserAndStaffApiResourceSwagger {
 
-    private AdorsysUserAndStaffApiResourceSwagger() {}
+    private AdorsysUserAndStaffApiResourceSwagger() {
+    }
 
     @Schema(description = "CreateEmployeeRequest")
     public static final class CreateEmployeeRequest {
-
         private CreateEmployeeRequest() {}
 
         @Schema(example = "1")
@@ -53,7 +55,6 @@ final class AdorsysUserAndStaffApiResourceSwagger {
 
     @Schema(description = "CreateEmployeeResponse")
     public static final class CreateEmployeeResponse {
-
         private CreateEmployeeResponse() {}
 
         @Schema(example = "1")
@@ -64,7 +65,6 @@ final class AdorsysUserAndStaffApiResourceSwagger {
 
     @Schema(description = "PutEmployeeRequest")
     public static final class PutEmployeeRequest {
-
         private PutEmployeeRequest() {}
 
         @Schema(example = "1")
@@ -85,7 +85,6 @@ final class AdorsysUserAndStaffApiResourceSwagger {
 
     @Schema(description = "PutEmployeeResponse")
     public static final class PutEmployeeResponse {
-
         private PutEmployeeResponse() {}
 
         @Schema(example = "1")
@@ -95,9 +94,7 @@ final class AdorsysUserAndStaffApiResourceSwagger {
         public PutEmployeeResponseChanges changes;
 
         public static final class PutEmployeeResponseChanges {
-
             private PutEmployeeResponseChanges() {}
-
             @Schema(example = "1")
             public Long officeId;
             @Schema(example = "John")

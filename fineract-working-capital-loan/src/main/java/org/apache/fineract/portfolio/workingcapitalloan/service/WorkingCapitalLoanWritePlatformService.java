@@ -36,6 +36,4 @@ public interface WorkingCapitalLoanWritePlatformService {
     CommandProcessingResult updateDiscount(Long loanId, JsonCommand command);
 
     CommandProcessingResult makeRepayment(Long loanId, JsonCommand command);
-
-    CommandProcessingResult creditBalanceRefund(Long loanId, JsonCommand command);
 }

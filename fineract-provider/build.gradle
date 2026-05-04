@@ -88,9 +88,8 @@ resolve {
     buildClasspath = classpath
     outputDir = file("${buildDir}/resources/main/static")
     openApiFile = file("${buildDir}/tmp/swagger/fineract-input.yaml")
-    readerClass = 'org.apache.fineract.infrastructure.openapi.FineractOperationIdReader'
     sortOutput = true
-    dependsOn(prepareInputYaml, classes)
+    dependsOn(prepareInputYaml)
 }
 
 configurations {
@@ -340,19 +339,20 @@ cucumber {
     ]
 }
 
-tasks.jib.dependsOn(bootJar, resolve, generateGitProperties)
-tasks.jibDockerBuild.dependsOn(bootJar, resolve, generateGitProperties)
+tasks.jib.dependsOn(bootJar, resolve)
+tasks.jibDockerBuild.dependsOn(bootJar, resolve)
 
 // Configuration for git properties gradle plugin
 // https://github.com/n0mer/gradle-git-properties
 gitProperties {
-    gitPropertiesResourceDir = file("$buildDir/resources/main")
+    gitPropertiesResourceDir = file("$buildDir/classes/java/main")
     dateFormat = "yyyy-MM-dd'T'HH:mmZ"
     dateFormatTimeZone = "GMT"
     failOnNoGitDirectory = false
 }
 
-processResources.dependsOn generateGitProperties
+// make sure the generateGitProperties task always executes (even when git.properties is not changed)
+generateGitProperties.outputs.upToDateWhen { false }
 
 // NOTE: Gradle suggested these dependencies
 jar.dependsOn resolve

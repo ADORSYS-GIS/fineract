@@ -57,8 +57,6 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoa
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanRepository;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.domain.WorkingCapitalBreach;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.repository.WorkingCapitalBreachRepository;
-import org.apache.fineract.portfolio.workingcapitalloannearbreach.domain.WorkingCapitalNearBreach;
-import org.apache.fineract.portfolio.workingcapitalloannearbreach.repository.WorkingCapitalNearBreachRepository;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.WorkingCapitalLoanProductConstants;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalAdvancedPaymentAllocationsJsonParser;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanDelinquencyStartType;
@@ -85,7 +83,6 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
     private final AccountNumberGeneratorService accountNumberGeneratorService;
     private final WorkingCapitalLoanRepository workingCapitalLoanRepository;
     private final WorkingCapitalBreachRepository breachRepository;
-    private final WorkingCapitalNearBreachRepository nearBreachRepository;
 
     @Override
     public WorkingCapitalLoan assembleFrom(final JsonCommand command) {
@@ -143,7 +140,6 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
         final WorkingCapitalLoanBalance balance = WorkingCapitalLoanBalance.createFor(loan);
         balance.setPrincipalOutstanding(principal != null ? principal : BigDecimal.ZERO);
         balance.setTotalPayment(totalPayment != null ? totalPayment : BigDecimal.ZERO);
-        balance.setOverpaymentAmount(BigDecimal.ZERO);
         loan.setBalance(balance);
         loan.setLoanProductRelatedDetails(loanProductRelatedDetails);
 
@@ -188,28 +184,17 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
         } else {
             detail.setBreach(product.getBreach());
         }
-        final Long nearBreachId = fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.nearBreachIdParamName, element)
-                ? fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.nearBreachIdParamName, element)
-                : null;
-        if (nearBreachId != null) {
-            detail.setNearBreach(findNearBreachById(nearBreachId));
-        } else {
-            detail.setNearBreach(product.getNearBreach());
-        }
+
         detail.setDelinquencyGraceDays(
                 fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.delinquencyGraceDaysParamName, element)
                         ? fromApiJsonHelper.extractIntegerNamed(WorkingCapitalLoanProductConstants.delinquencyGraceDaysParamName, element,
                                 new HashSet<>())
                         : productDetail.getDelinquencyGraceDays());
-        final String delinquencyStartTypeValue = fromApiJsonHelper
-                .parameterExists(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element)
-                        ? fromApiJsonHelper.extractStringNamed(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element)
-                        : null;
-        if (delinquencyStartTypeValue != null) {
-            detail.setDelinquencyStartType(WorkingCapitalLoanDelinquencyStartType.valueOf(delinquencyStartTypeValue));
-        } else {
-            detail.setDelinquencyStartType(productDetail.getDelinquencyStartType());
-        }
+        detail.setDelinquencyStartType(
+                fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element)
+                        ? WorkingCapitalLoanDelinquencyStartType.valueOf(fromApiJsonHelper
+                                .extractStringNamed(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element))
+                        : productDetail.getDelinquencyStartType());
 
         if (fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.delinquencyBucketIdParamName, element)) {
             final Long bucketId = fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.delinquencyBucketIdParamName,
@@ -366,14 +351,6 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
                 detail.setBreach(breachId != null ? findBreachById(breachId) : null);
                 changes.put(WorkingCapitalLoanProductConstants.breachIdParamName, breachId);
             }
-            final Long existingNearBreachId = detail.getNearBreach() != null ? detail.getNearBreach().getId() : null;
-            if (fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.nearBreachIdParamName, element) && command
-                    .isChangeInLongParameterNamed(WorkingCapitalLoanProductConstants.nearBreachIdParamName, existingNearBreachId)) {
-                final Long nearBreachId = fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.nearBreachIdParamName,
-                        element);
-                detail.setNearBreach(nearBreachId != null ? findNearBreachById(nearBreachId) : null);
-                changes.put(WorkingCapitalLoanProductConstants.nearBreachIdParamName, nearBreachId);
-            }
             if (fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.delinquencyBucketIdParamName, element)) {
                 final Long bucketId = fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.delinquencyBucketIdParamName,
                         element);
@@ -397,17 +374,10 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
                 final String existingValue = detail.getDelinquencyStartType() != null ? detail.getDelinquencyStartType().name() : null;
                 if (command.isChangeInStringParameterNamed(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName,
                         existingValue)) {
-                    final String delinquencyStartTypeValue = fromApiJsonHelper
-                            .extractStringNamed(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element);
-                    if (delinquencyStartTypeValue != null) {
-                        final WorkingCapitalLoanDelinquencyStartType type = WorkingCapitalLoanDelinquencyStartType
-                                .valueOf(delinquencyStartTypeValue);
-                        detail.setDelinquencyStartType(type);
-                        changes.put(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, type.getCode());
-                    } else {
-                        detail.setDelinquencyStartType(null);
-                        changes.put(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, null);
-                    }
+                    final WorkingCapitalLoanDelinquencyStartType type = WorkingCapitalLoanDelinquencyStartType.valueOf(fromApiJsonHelper
+                            .extractStringNamed(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, element));
+                    detail.setDelinquencyStartType(type);
+                    changes.put(WorkingCapitalLoanProductConstants.delinquencyStartTypeParamName, type.name());
                 }
             }
         }
@@ -442,7 +412,6 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
             final WorkingCapitalLoanBalance balance = WorkingCapitalLoanBalance.createFor(loan);
             balance.setPrincipalOutstanding(BigDecimal.ZERO);
             balance.setTotalPayment(BigDecimal.ZERO);
-            balance.setOverpaymentAmount(BigDecimal.ZERO);
             loan.setBalance(balance);
         }
         return loan.getBalance();
@@ -452,11 +421,5 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
         return breachRepository.findById(breachId)
                 .orElseThrow(() -> new GeneralPlatformDomainRuleException("error.msg.wclp.breach.not.found",
                         "Working Capital Breach with id " + breachId + " was not found.", breachId));
-    }
-
-    private WorkingCapitalNearBreach findNearBreachById(final Long nearBreachId) {
-        return nearBreachRepository.findById(nearBreachId)
-                .orElseThrow(() -> new GeneralPlatformDomainRuleException("error.msg.wclp.nearbreach.not.found",
-                        "Working Capital Near Breach with id " + nearBreachId + " was not found.", nearBreachId));
     }
 }
