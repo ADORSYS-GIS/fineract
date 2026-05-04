@@ -37,7 +37,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          cd sms-gateway
+          cd fineract-adorsys-sms-gateway
           mvn clean package -DskipTests
 
       - name: Set up QEMU (for cross‑architecture emulation)
@@ -83,7 +83,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: sms-gateway
-          file: sms-gateway/Dockerfile
+          file: fineract-adorsys-sms-gateway/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: "true"
           tags: ${{ steps.meta.outputs.tags }}
