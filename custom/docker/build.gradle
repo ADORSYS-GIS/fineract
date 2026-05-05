@@ -62,11 +62,11 @@ jib {
     extraDirectories {
         paths {
             path {
-                from = file("${rootDir}/pentaho-dist/plugins")
+                from = file("${rootDir}/fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1")
                 into = '/app/plugins'
             }
             path {
-                from = file("${rootDir}/pentaho-dist/reports")
+                from = file("${rootDir}/fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1")
                 into = '/pentahoReports'
             }
         }
