@@ -37,10 +37,10 @@ jobs:
           echo "Preparing Pentaho Plugin..."
           mkdir -p pentaho-dist/plugins
           mkdir -p pentaho-dist/reports
-          
+
           # Unzip the plugin
           unzip -o fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1.zip -d pentaho-temp
-          
+
           # Copy JARs (Handling potential internal folder structure)
           if [ -d "pentaho-temp/MifosSecurityPlugin-1.12.1/lib" ]; then
             echo "Found lib directory, copying JARs..."
@@ -49,11 +49,11 @@ jobs:
             echo "Copying JARs from root..."
             cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"
           fi
-          
+
           # Copy Reports (From the repo folder using Postgresql)
           echo "Copying Reports..."
           cp -r fineract-adorsys-pentaho/MifosSecurityPlugin-1.12.1/Postgresql pentaho-dist/reports/
-          
+
           echo "Pentaho preparation complete."
           ls -R pentaho-dist
 

@@ -32,8 +32,8 @@ import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
- * Batch command strategy for approving savings accounts.
- * Delegates to {@link SavingsAccountsApiResource#update(Long, String, String)} with command=approve.
+ * Batch command strategy for approving savings accounts. Delegates to
+ * {@link SavingsAccountsApiResource#update(Long, String, String)} with command=approve.
  */
 @Component
 @RequiredArgsConstructor

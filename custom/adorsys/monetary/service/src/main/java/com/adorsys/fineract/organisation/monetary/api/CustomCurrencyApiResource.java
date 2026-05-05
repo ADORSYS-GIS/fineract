@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * REST endpoint for managing custom (non-ISO) currencies.
- * Provides DELETE for cleanup during asset provisioning rollback.
+ * REST endpoint for managing custom (non-ISO) currencies. Provides DELETE for cleanup during asset provisioning
+ * rollback.
  */
 @Slf4j
 @Path("/v1/currencies/custom")
@@ -33,11 +33,10 @@ public class CustomCurrencyApiResource {
 
     @DELETE
     @Path("/{currencyCode}")
-    @Consumes({MediaType.APPLICATION_JSON})
-    @Produces({MediaType.APPLICATION_JSON})
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
     @Transactional
-    @Operation(summary = "Delete Custom Currency",
-            description = "Removes a custom currency from the reference table. Used during asset rollback.")
+    @Operation(summary = "Delete Custom Currency", description = "Removes a custom currency from the reference table. Used during asset rollback.")
     public void deleteCustomCurrency(@PathParam("currencyCode") final String currencyCode) {
         final ApplicationCurrency currency = currencyRepository.findOneByCode(currencyCode);
         if (currency == null) {
