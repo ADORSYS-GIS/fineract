@@ -35,6 +35,7 @@ import org.apache.fineract.portfolio.delinquency.domain.DelinquencyAction;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucket;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyFrequencyType;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentPeriodAndRule;
+import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentPeriodAndRuleRepository;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentType;
 import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanDelinquencyRangeScheduleData;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
@@ -55,6 +56,7 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
     private final WorkingCapitalLoanDelinquencyRangeScheduleRepository loanDelinquencyRangeScheduleRepository;
     private final WorkingCapitalLoanDelinquencyActionRepository loanDelinquencyActionRepository;
     private final WorkingCapitalLoanDelinquencyRangeScheduleMapper capitalLoanDelinquencyRangeScheduleMapper;
+    private final DelinquencyMinimumPaymentPeriodAndRuleRepository minimumPaymentPeriodAndRuleRepository;
 
     @Override
     public void generateInitialPeriod(WorkingCapitalLoan loan) {
@@ -110,6 +112,8 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
         final DelinquencyFrequencyType effectiveFreqType = latestReschedule.map(WorkingCapitalLoanDelinquencyAction::getFrequencyType)
                 .orElse(rule.getFrequencyType());
 
+        final List<WorkingCapitalLoanDelinquencyAction> recordedPauses = findAllPauseActions(loan.getId());
+
         WorkingCapitalLoanDelinquencyRangeSchedule latestPeriod = latestPeriodOpt.get();
         while (!latestPeriod.getToDate().isAfter(businessDate)) {
             final LocalDate newFromDate = latestPeriod.getToDate().plusDays(1);
@@ -125,6 +129,8 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
             nextPeriod.setPaidAmount(BigDecimal.ZERO);
             nextPeriod.setOutstandingAmount(expectedAmount);
             nextPeriod.setMinPaymentCriteriaMet(null);
+
+            applyRecordedPauses(nextPeriod, recordedPauses);
 
             latestPeriod = loanDelinquencyRangeScheduleRepository.saveAndFlush(nextPeriod);
             log.debug("Generated next delinquency range schedule period {} for WC loan {}", nextPeriod.getPeriodNumber(), loan.getId());
@@ -200,7 +206,7 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
         if (bucket == null) {
             return null;
         }
-        return bucket.getMinimumPaymentPeriodAndRule();
+        return minimumPaymentPeriodAndRuleRepository.findByBucketId(bucket.getId()).orElse(null);
     }
 
     private LocalDate calculateToDate(LocalDate fromDate, Integer frequency, DelinquencyFrequencyType frequencyType) {
@@ -256,6 +262,27 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
 
     private Optional<WorkingCapitalLoanDelinquencyAction> findLatestRescheduleAction(final Long loanId) {
         return loanDelinquencyActionRepository.findTopByWorkingCapitalLoanIdAndActionOrderByIdDesc(loanId, DelinquencyAction.RESCHEDULE);
+    }
+
+    private List<WorkingCapitalLoanDelinquencyAction> findAllPauseActions(final Long loanId) {
+        return loanDelinquencyActionRepository.findByWorkingCapitalLoanIdOrderById(loanId).stream()
+                .filter(a -> DelinquencyAction.PAUSE.equals(a.getAction())).toList();
+    }
+
+    private void applyRecordedPauses(final WorkingCapitalLoanDelinquencyRangeSchedule period,
+            final List<WorkingCapitalLoanDelinquencyAction> pauseActions) {
+        for (final WorkingCapitalLoanDelinquencyAction pause : pauseActions) {
+            final LocalDate pauseStart = pause.getStartDate();
+            final LocalDate pauseEnd = pause.getEndDate();
+            // Apply only if the pause overlaps this period's date range
+            if (pauseEnd.isAfter(period.getFromDate()) && !pauseStart.isAfter(period.getToDate())) {
+                final long pauseDays = ChronoUnit.DAYS.between(pauseStart, pauseEnd);
+                period.setToDate(period.getToDate().plusDays(pauseDays));
+                if (period.getFromDate().isAfter(pauseStart)) {
+                    period.setFromDate(period.getFromDate().plusDays(pauseDays));
+                }
+            }
+        }
     }
 
     @Override
