@@ -21,6 +21,7 @@ package org.apache.fineract.accounting.journalentry.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,12 +48,14 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
 
     @Override
     public void createJournalEntriesForLoan(final LoanDTO loanDTO) {
-        final Long officeId = loanDTO.getOfficeId();
-        final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(officeId);
         final Long loanProductId = loanDTO.getLoanProductId();
         final String currencyCode = loanDTO.getCurrencyCode();
-        final Office office = this.helper.getOfficeById(officeId);
+        final Map<Long, GLClosure> latestGLClosureByOfficeId = new HashMap<>();
+        final Map<Long, Office> officeById = new HashMap<>();
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
+            final Long officeId = loanTransactionDTO.getOfficeId() == null ? loanDTO.getOfficeId() : loanTransactionDTO.getOfficeId();
+            final GLClosure latestGLClosure = latestGLClosureByOfficeId.computeIfAbsent(officeId, this.helper::getLatestClosureByBranch);
+            final Office office = officeById.computeIfAbsent(officeId, this.helper::getOfficeById);
             final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
             final String transactionId = loanTransactionDTO.getTransactionId();
             final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
