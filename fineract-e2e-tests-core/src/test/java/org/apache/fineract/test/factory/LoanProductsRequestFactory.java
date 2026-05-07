@@ -1053,7 +1053,7 @@ public class LoanProductsRequestFactory {
                 .maxPrincipal(10000.0)//
                 .minNumberOfRepayments(1)//
                 .numberOfRepayments(4)//
-                .maxNumberOfRepayments(30)//
+                .maxNumberOfRepayments(100)//
                 .isLinkedToFloatingInterestRates(false)//
                 .minInterestRatePerPeriod((double) 0)//
                 .interestRatePerPeriod((double) 12)//
