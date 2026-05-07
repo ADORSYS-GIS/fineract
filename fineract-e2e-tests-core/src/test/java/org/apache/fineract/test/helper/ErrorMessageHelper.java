@@ -1110,6 +1110,10 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: amount.cannot.exceed.created.discount.";
     }
 
+    public static String discountExceedProductDiscountFailure() {
+        return "Failed data validation due to: amount.cannot.exceed.product.discount.";
+    }
+
     public static String nearBreachCannotEnableWithoutBreachFailure() {
         return "Failed data validation due to: cannot.enable.near.breach.without.breach.";
     }

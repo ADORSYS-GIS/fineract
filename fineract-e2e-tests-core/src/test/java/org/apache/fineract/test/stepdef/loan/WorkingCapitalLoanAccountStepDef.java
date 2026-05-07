@@ -651,6 +651,23 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         log.info("Verified working capital loan approval failed with expected error");
     }
 
+    @When("Admin failed to approve the working capital loan on {string} with {string} amount and expected disbursement date on {string} with {string} exceeded product discount amount")
+    public void approveWorkingCapitalLoanWithExceededProductDiscountFailure(final String approveDate, final String approvedAmount,
+            final String expectedDisbursementDate, final String discountAmount) {
+        final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanApproveRequest()//
+                .approvedOnDate(approveDate)//
+                .approvedLoanAmount(new BigDecimal(approvedAmount))//
+                .discountAmount(new BigDecimal(discountAmount))//
+                .expectedDisbursementDate(expectedDisbursementDate);//
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoans()
+                .stateTransitionWorkingCapitalLoanById(getCreatedLoanId(), "approve", approveRequest));
+
+        assertThat(exception.getStatus()).as(ErrorMessageHelper.discountExceedProductDiscountFailure()).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(ErrorMessageHelper.discountExceedProductDiscountFailure());
+    }
+
     @When("Admin failed to approve the working capital loan on {string} with {string} amount and expected disbursement date on {string} with {string} exceeded discount amount")
     public void approveWorkingCapitalLoanWithExceededDiscountFailure(final String approveDate, final String approvedAmount,
             final String expectedDisbursementDate, final String discountAmount) {
@@ -819,6 +836,13 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     public void disburseWorkingCapitalLoanWithExceededDiscountFailure(String actualDisbursementDate, String transactionAmount,
             String discountAmount) {
         String errorMessage = ErrorMessageHelper.discountAmountExceedApprovedFailure();
+        disburseWorkingCapitalLoanFailure(actualDisbursementDate, transactionAmount, discountAmount, errorMessage);
+    }
+
+    @When("Admin failed to disburse the working capital loan on {string} with {string} amount with {string} exceeded product discount amount")
+    public void disburseWorkingCapitalLoanWithExceededProductDiscountFailure(String actualDisbursementDate, String transactionAmount,
+            String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountExceedProductDiscountFailure();
         disburseWorkingCapitalLoanFailure(actualDisbursementDate, transactionAmount, discountAmount, errorMessage);
     }
 
@@ -1024,8 +1048,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     }
 
     @Then("Update discount with {string} amount on Working Capital loan account failed due to exceed discount amount")
-    public void update_discount_with_amount_on_working_capital_loan_account_failed_due_to_exceed_discount_amount(String discountAmount) {
-        String errorMessage = ErrorMessageHelper.discountExceedCreatedDiscountFailure();
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToExceedDiscountAmount(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountExceedProductDiscountFailure();
         addDiscountFeeFailedCheck(discountAmount, errorMessage);
     }
 

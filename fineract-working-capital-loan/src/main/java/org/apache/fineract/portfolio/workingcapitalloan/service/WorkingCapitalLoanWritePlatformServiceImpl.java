@@ -133,12 +133,11 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         }
 
         // Discount amount (optional, can only be reduced per requirement)
-        BigDecimal discount = loan.getLoanProductRelatedDetails().getDiscountProposed();
         if (command.parameterExists(WorkingCapitalLoanConstants.discountAmountParamName)) {
-            discount = this.fromApiJsonHelper.extractBigDecimalNamed(WorkingCapitalLoanConstants.discountAmountParamName,
+            final BigDecimal discount = this.fromApiJsonHelper.extractBigDecimalNamed(WorkingCapitalLoanConstants.discountAmountParamName,
                     command.parsedJson(), new HashSet<>());
+            loan.getLoanProductRelatedDetails().setDiscountApproved(discount);
         }
-        loan.getLoanProductRelatedDetails().setDiscountApproved(discount);
 
         // Keep first tranche expected amount aligned with approved principal (submit stores proposed principal only).
         if (!loan.getDisbursementDetails().isEmpty()) {
@@ -283,7 +282,8 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
             loan.getDisbursementDetails().getFirst().setDisbursedBy(currentUser);
         }
 
-        BigDecimal discount = loan.getLoanProductRelatedDetails().getDiscountApproved();
+        // Discount amount (optional, can only be reduced per requirement)
+        BigDecimal discount = null;
         if (command.parameterExists(WorkingCapitalLoanConstants.discountAmountParamName)) {
             discount = this.fromApiJsonHelper.extractBigDecimalNamed(WorkingCapitalLoanConstants.discountAmountParamName,
                     command.parsedJson(), new HashSet<>());
@@ -291,8 +291,6 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                 loan.getLoanProductRelatedDetails().setDiscount(discount);
                 changes.put(WorkingCapitalLoanConstants.discountAmountParamName, discount);
             }
-        } else {
-            loan.getLoanProductRelatedDetails().setDiscount(discount);
         }
 
         final ExternalId txnExternalId = this.externalIdFactory.createFromCommand(command,

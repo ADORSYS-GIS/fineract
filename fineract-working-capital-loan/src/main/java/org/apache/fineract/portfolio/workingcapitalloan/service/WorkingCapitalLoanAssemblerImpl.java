@@ -179,7 +179,7 @@ public class WorkingCapitalLoanAssemblerImpl implements WorkingCapitalLoanAssemb
         detail.setNpvDayCount(productDetail.getNpvDayCount());
         detail.setDiscountProposed(fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.discountParamName, element)
                 ? fromApiJsonHelper.extractBigDecimalNamed(WorkingCapitalLoanProductConstants.discountParamName, element, new HashSet<>())
-                : productDetail.getDiscount());
+                : null);
         final Long breachId = fromApiJsonHelper.parameterExists(WorkingCapitalLoanProductConstants.breachIdParamName, element)
                 ? fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanProductConstants.breachIdParamName, element)
                 : null;
