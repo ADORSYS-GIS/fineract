@@ -1507,7 +1507,7 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
   #    --- second interest rate change ---
     When Admin creates and approves Loan reschedule with the following data:
       | rescheduleFromDate | submittedOnDate  | adjustedDueDate | graceOnPrincipal | graceOnInterest | extraTerms | newInterestRate |
@@ -1529,8 +1529,8 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
+      | 01 February 2025 | Test   | Approved |
 
   @TestRailId:C4575
   Scenario: Verify multiple interest rate changes on same day, UC2: on due date after repayment
@@ -1581,7 +1581,7 @@ Feature: LoanReschedule
       | 01 February 2025 | Repayment        | 17.16  | 16.34     | 0.82     | 0.0  | 0.0       | 83.66        | false    | true     |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
   #    --- second interest rate change ---
     When Admin creates and approves Loan reschedule with the following data:
       | rescheduleFromDate | submittedOnDate  | adjustedDueDate | graceOnPrincipal | graceOnInterest | extraTerms | newInterestRate |
@@ -1604,8 +1604,8 @@ Feature: LoanReschedule
       | 01 February 2025 | Repayment        | 17.16  | 16.35     | 0.81     | 0.0  | 0.0       | 83.65        | false    | true    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
+      | 01 February 2025 | Test   | Approved |
 
   @TestRailId:C4576
   Scenario: Verify multiple interest rate changes on same day, UC3: on midterm date
@@ -1653,7 +1653,7 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date       | Reason | Status   |
-      | 15 January 2025 | None   | Approved |
+      | 15 January 2025 | Test   | Approved |
   #    --- second interest rate change ---
     When Admin creates and approves Loan reschedule with the following data:
       | rescheduleFromDate | submittedOnDate  | adjustedDueDate | graceOnPrincipal | graceOnInterest | extraTerms | newInterestRate |
@@ -1675,8 +1675,8 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date       | Reason | Status   |
-      | 15 January 2025 | None   | Approved |
-      | 15 January 2025 | None   | Approved |
+      | 15 January 2025 | Test   | Approved |
+      | 15 January 2025 | Test   | Approved |
 
   @TestRailId:C4577
   Scenario: Verify multiple interest rate changes on same day, UC4: on due date with third change
@@ -1724,7 +1724,7 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
 #    --- second interest rate change ---
     When Admin creates and approves Loan reschedule with the following data:
       | rescheduleFromDate | submittedOnDate  | adjustedDueDate | graceOnPrincipal | graceOnInterest | extraTerms | newInterestRate |
@@ -1746,8 +1746,8 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
+      | 01 February 2025 | Test   | Approved |
 #    --- third interest rate change ---
     When Admin creates and approves Loan reschedule with the following data:
       | rescheduleFromDate | submittedOnDate  | adjustedDueDate | graceOnPrincipal | graceOnInterest | extraTerms | newInterestRate |
@@ -1769,9 +1769,9 @@ Feature: LoanReschedule
       | 01 January 2025  | Disbursement     | 100.0  | 0.0       | 0.0      | 0.0  | 0.0       | 100.0        | false    | false    |
     And Loan Reschedule tab has the following data:
       | From Date        | Reason | Status   |
-      | 01 February 2025 | None   | Approved |
-      | 01 February 2025 | None   | Approved |
-      | 01 February 2025 | None   | Approved |
+      | 01 February 2025 | Test   | Approved |
+      | 01 February 2025 | Test   | Approved |
+      | 01 February 2025 | Test   | Approved |
 
   @TestRailId:C78849
   Scenario: Verify that reschedule after ReAge produces correct schedule and balance for downpayment product
