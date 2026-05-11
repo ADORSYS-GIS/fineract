@@ -26,9 +26,15 @@ buildscript {
         fineractJavaProjects = subprojects.findAll{
             [
                 'fineract-core',
+                'fineract-security',
                 'fineract-cob',
                 'fineract-validation',
                 'fineract-command',
+                'fineract-command-test',
+                'fineract-command-jdbc',
+                'fineract-command-audit',
+                'fineract-command-async',
+                'fineract-command-disruptor',
                 'fineract-accounting',
                 'fineract-provider',
                 'fineract-branch',
@@ -37,9 +43,11 @@ buildscript {
                 'fineract-charge',
                 'fineract-rates',
                 'fineract-tax',
+                'fineract-loan-origination',
                 'fineract-loan',
                 'fineract-savings',
                 'fineract-report',
+                'fineract-mix',
                 'integration-tests',
                 'twofactor-tests',
                 'oauth2-tests',
@@ -50,7 +58,7 @@ buildscript {
                 'fineract-e2e-tests-runner',
                 'fineract-progressive-loan',
                 'fineract-progressive-loan-embeddable-schedule-generator',
-                'fineract-war'
+                'fineract-working-capital-loan'
             ].contains(it.name)
         }
         fineractPublishProjects = subprojects.findAll{
@@ -59,22 +67,28 @@ buildscript {
                 'fineract-client',
                 'fineract-client-feign',
                 'fineract-core',
+                'fineract-security',
                 'fineract-cob',
                 'fineract-validation',
                 'fineract-command',
+                'fineract-command-jdbc',
+                'fineract-command-audit',
                 'fineract-accounting',
                 'fineract-provider',
                 'fineract-investor',
                 'fineract-charge',
                 'fineract-rates',
                 'fineract-tax',
+                'fineract-loan-origination',
                 'fineract-loan',
                 'fineract-savings',
                 'fineract-report',
+                'fineract-mix',
                 'fineract-branch',
                 'fineract-document',
                 'fineract-progressive-loan',
-                'fineract-progressive-loan-embeddable-schedule-generator'
+                'fineract-progressive-loan-embeddable-schedule-generator',
+                'fineract-working-capital-loan'
             ].contains(it.name)
         }
         npmRepository = 'https://npm.pkg.github.com'
@@ -103,7 +117,7 @@ plugins {
     id 'com.github.hierynomus.license' version '0.16.1' apply false
     id 'com.github.jk1.dependency-license-report' version '2.9' apply false
     id 'org.zeroturnaround.gradle.jrebel' version '1.2.0' apply false
-    id 'org.springframework.boot' version '3.5.5' apply false
+    id 'org.springframework.boot' version '3.5.13' apply false
     id 'net.ltgt.errorprone' version '4.1.0' apply false
     id 'io.swagger.core.v3.swagger-gradle-plugin' version '2.2.23' apply false
     id 'com.gorylenko.gradle-git-properties' version '2.4.2' apply false
@@ -116,8 +130,10 @@ plugins {
     id 'se.thinkcode.cucumber-runner' version '0.0.11' apply false
     id "com.github.davidmc24.gradle.plugin.avro-base" version "1.9.1" apply false
     id 'org.openapi.generator' version '7.8.0' apply false
-    id 'com.gradleup.shadow' version '8.3.5' apply false
+    id 'com.gradleup.shadow' version '9.3.2' apply false
     id 'me.champeau.jmh' version '0.7.1' apply false
+    id 'org.cyclonedx.bom' version '3.1.0' apply false
+    id 'com.docktape.swagger-brake' version '2.7.0' apply false
 }
 
 apply from: "${rootDir}/buildSrc/src/main/groovy/org.apache.fineract.release.gradle"
@@ -158,16 +174,19 @@ subprojects { subproject ->
 }
 
 allprojects  {
-    apply plugin: 'java'
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
     group = 'org.apache.fineract'
 
     repositories {
         mavenCentral()
+    }
+
+    configurations.configureEach {
+        resolutionStrategy {
+            dependencySubstitution {
+                // Substitution is to resolve CVE-2025-12183
+                substitute module('org.lz4:lz4-java') using module('at.yawk.lz4:lz4-java:1.10.1')
+            }
+        }
     }
 
     configurations {
@@ -240,6 +259,7 @@ allprojects  {
         header rootProject.file("$rootDir/APACHE_LICENSETEXT.md")
         excludes([
             "**/gradlew*",
+            "**/*adorsys*/**",
             "**/git.properties",
             "**/*.html",
             "**/templates/**",
@@ -267,11 +287,8 @@ allprojects  {
         verbose = false
         reportDir = file("$buildDir/reports/rat")
         excludes = [
+             '**/*adorsys*/**',
             '**/src/main/templates/**/*.mustache',
-            '**/keycloak-config/**',
-            '**/Dockerfile.keycloak-setup',
-            '**/config/docker/env/fineract-keycloak.env',
-            '**/fineract-helm-chart/**',
             '**/.dockerignore',
             '**/*.launch',
             '**/licenses/**',
@@ -355,9 +372,14 @@ allprojects  {
             "**/generated/**/*MapperImpl.java",
             '**/META-INF/fineract-test.config',
             // Apache-specific GitHub metadata settings file
-            '/.asf.yaml',
-            '**/*.sh'
+            '/.asf.yaml'
         ]
+    }
+}
+
+configure(subprojects.findAll { it.path.contains('adorsys') }) {
+    tasks.withType(org.nosphere.apache.rat.RatTask) {
+        enabled = false
     }
 }
 
@@ -392,7 +414,7 @@ configure(project.fineractJavaProjects) {
     }
 
     // Add performance optimizations
-    configurations.all {
+    configurations.configureEach {
         resolutionStrategy {
             cacheChangingModulesFor 0, 'seconds'
             cacheDynamicVersionsFor 0, 'seconds'
@@ -440,49 +462,49 @@ configure(project.fineractJavaProjects) {
     configurations {
         api.setCanBeResolved(true)
     }
-    tasks.withType(Copy) {
+    tasks.withType(Copy).configureEach {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach {
         options.compilerArgs += [
-            "-Xlint:cast",
-            "-Xlint:auxiliaryclass",
-            "-Xlint:dep-ann",
-            "-Xlint:divzero",
-            "-Xlint:empty",
-            "-Xlint:exports",
-            "-Xlint:fallthrough",
-            "-Xlint:finally",
-            "-Xlint:module",
-            "-Xlint:opens",
-            "-Xlint:options",
-            "-Xlint:overloads",
-            "-Xlint:overrides",
-            "-Xlint:path",
-            "-Xlint:processing",
-            "-Xlint:removal",
-            "-Xlint:requires-automatic",
-            "-Xlint:requires-transitive-automatic",
-            "-Xlint:try",
-            "-Xlint:varargs",
-            "-Xlint:preview",
-            "-Xlint:static",
-            // -Werror needs to be disabled because EclipseLink's static weaving doesn't generate warning-free code
-            // and during an IntelliJ recompilation, it fails
-            //"-Werror",
-            "-Xmaxwarns",
-            "1500",
-            "-Xmaxerrs",
-            "1500"
+                "-Xlint:cast",
+                "-Xlint:auxiliaryclass",
+                "-Xlint:dep-ann",
+                "-Xlint:divzero",
+                "-Xlint:empty",
+                "-Xlint:exports",
+                "-Xlint:fallthrough",
+                "-Xlint:finally",
+                "-Xlint:module",
+                "-Xlint:opens",
+                "-Xlint:options",
+                "-Xlint:overloads",
+                "-Xlint:overrides",
+                "-Xlint:path",
+                "-Xlint:processing",
+                "-Xlint:removal",
+                "-Xlint:requires-automatic",
+                "-Xlint:requires-transitive-automatic",
+                "-Xlint:try",
+                "-Xlint:varargs",
+                "-Xlint:preview",
+                "-Xlint:static",
+                // -Werror needs to be disabled because EclipseLink's static weaving doesn't generate warning-free code
+                // and during an IntelliJ recompilation, it fails
+                //"-Werror",
+                "-Xmaxwarns",
+                "1500",
+                "-Xmaxerrs",
+                "1500"
         ]
         // TODO FINERACT-959 (gradually) enable -Xlint:all (see "javac -help -X")
 
         options.deprecation = true
     }
 
-    // check {
-    //     dependsOn(rat, licenseMain, licenseTest)
-    // }
+    check {
+        dependsOn(rat, licenseMain, licenseTest)
+    }
 
     dependencies {
         spotbugsPlugins 'jp.skypencil.findbugs.slf4j:bug-pattern:1.5.0@jar'
@@ -542,6 +564,14 @@ configure(project.fineractJavaProjects) {
     dependencies {
         checkstyle 'com.puppycrawl.tools:checkstyle:11.0.0'
         checkstyle 'com.github.sevntu-checkstyle:sevntu-checks:1.44.1'
+    }
+
+    tasks.withType(org.gradle.api.plugins.quality.Checkstyle).configureEach {
+        exclude("**/*.avsc")
+
+        if (project.path.startsWith(':custom:acme:')) {
+            enabled = false
+        }
     }
 
     // Configuration for JaCoCo code coverage task
@@ -745,6 +775,11 @@ configure(project.fineractJavaProjects) {
             }
         }
     }
+    tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+        if (project.path.startsWith(':custom:acme:')) {
+            enabled = false
+        }
+    }
 
     // Configuration for https://github.com/andygoossens/gradle-modernizer-plugin
     modernizer {
@@ -759,11 +794,13 @@ configure(project.fineractJavaProjects) {
         ]
     }
 
-    tasks.withType(Javadoc) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-        options.encoding = 'UTF-8'
-        // Ignore any errors during javadoc generation
-        failOnError = false
+    tasks.withType(Javadoc).tap {
+        configureEach {
+            options.addStringOption('Xdoclint:none', '-quiet')
+            options.encoding = 'UTF-8'
+            // Ignore any errors during javadoc generation
+            failOnError = false
+        }
     }
 }
 
@@ -823,7 +860,6 @@ configure(project.fineractCustomProjects) {
     }
 }
 
-/*
 configure(project.fineractPublishProjects) {
     apply plugin: 'maven-publish'
 
@@ -889,17 +925,31 @@ configure(project.fineractPublishProjects) {
         }
     }
 }
-*/
 
-task printSourceSetInformation() {
-    doLast{
+// Configuration for CycloneDX SBOM generator
+// https://github.com/CycloneDX/cyclonedx-gradle-plugin
+apply plugin: 'org.cyclonedx.bom'
+
+cyclonedxBom {
+    projectType = "application"
+    includeBomSerialNumber = true
+    includeLicenseText = true
+}
+
+tasks.withType(org.cyclonedx.gradle.CyclonedxDirectTask).configureEach {
+    includeMetadataResolution.set(false)
+    skipConfigs.set(['.*eclipse.*', '.*swt.*'])
+}
+
+tasks.register('printSourceSetInformation') {
+    doLast {
         sourceSets.each { srcSet ->
-            println "["+srcSet.name+"]"
-            print "-->Source directories: "+srcSet.allJava.srcDirs+"\n"
-            print "-->Output directories: "+srcSet.output.classesDirs.files+"\n"
+            println "[" + srcSet.name + "]"
+            print "-->Source directories: " + srcSet.allJava.srcDirs + "\n"
+            print "-->Output directories: " + srcSet.output.classesDirs.files + "\n"
             print "-->Compile classpath:\n"
             srcSet.compileClasspath.files.each {
-                print "  "+it.path+"\n"
+                print "  " + it.path + "\n"
             }
             println ""
         }

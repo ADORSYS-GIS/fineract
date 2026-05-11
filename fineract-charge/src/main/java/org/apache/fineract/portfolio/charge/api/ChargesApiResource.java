@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -54,9 +53,12 @@ import org.springframework.stereotype.Component;
 
 @Path("/v1/charges")
 @Component
-@Tag(name = "Charges", description = "Its typical for MFIs to add extra costs for their financial products. These are typically Fees or Penalties.\n"
-        + "\n" + "A Charge on fineract platform is what we use to model both Fees and Penalties.\n" + "\n"
-        + "At present we support defining charges for use with Client accounts and both loan and saving products.")
+@Tag(name = "Charges", description = """
+        Its typical for MFIs to add extra costs for their financial products. These are typically Fees or Penalties.
+
+        A Charge on fineract platform is what we use to model both Fees and Penalties.
+
+        At present we support defining charges for use with Client accounts and both loan and saving products.""")
 @RequiredArgsConstructor
 public class ChargesApiResource {
 
@@ -69,10 +71,13 @@ public class ChargesApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve Charges", description = "Returns the list of defined charges.\n" + "\n" + "Example Requests:\n" + "\n"
-            + "charges")
+    @Operation(summary = "Retrieve Charges", operationId = "retrieveAllCharges", description = """
+            Returns the list of defined charges.
+
+            Example Requests:
+
+            charges""")
     public List<ChargeData> retrieveAllCharges() {
         context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
         return readPlatformService.retrieveAllCharges();
@@ -80,12 +85,14 @@ public class ChargesApiResource {
 
     @GET
     @Path("{chargeId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve a Charge", description = "Returns the details of a defined Charge.\n" + "\n" + "Example Requests:\n"
-            + "\n" + "charges/1")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.GetChargesResponse.class))) })
+    @Operation(summary = "Retrieve a Charge", operationId = "retrieveOneCharge", description = """
+            Returns the details of a defined Charge.
+
+            Example Requests:
+
+            charges/1""")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.GetChargesResponse.class)))
     public ChargeData retrieveCharge(@PathParam("chargeId") @Parameter(description = "chargeId") final Long chargeId,
             @Context final UriInfo uriInfo) {
         context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
@@ -102,10 +109,16 @@ public class ChargesApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve Charge Template", description = "This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:\n"
-            + "\n" + "Field Defaults\n" + "Allowed description Lists\n" + "Example Request:\n" + "\n" + "charges/template\n")
+    @Operation(summary = "Retrieve Charge Template", operationId = "retrieveTemplateCharge", description = """
+            This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:
+
+            Field Defaults
+            Allowed description Lists
+            Example Request:
+
+            charges/template
+            """)
     public ChargeData retrieveNewChargeDetails() {
         context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
         return readPlatformService.retrieveNewChargeDetails();
@@ -114,10 +127,9 @@ public class ChargesApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Create/Define a Charge", description = "Define a new charge that can later be associated with loans and savings through their respective product definitions or directly on each account instance.")
+    @Operation(summary = "Create/Define a Charge", operationId = "createCharge", description = "Define a new charge that can later be associated with loans and savings through their respective product definitions or directly on each account instance.")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = ChargeRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.PostChargesResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.PostChargesResponse.class)))
     public CommandProcessingResult createCharge(@Parameter(hidden = true) ChargeRequest chargeRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createCharge()
                 .withJson(toApiJsonSerializer.serialize(chargeRequest)).build();
@@ -128,10 +140,9 @@ public class ChargesApiResource {
     @Path("{chargeId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Update a Charge", description = "Updates the details of a Charge.")
+    @Operation(summary = "Update a Charge", operationId = "updateCharge", description = "Updates the details of a Charge.")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = ChargeRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.PutChargesChargeIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.PutChargesChargeIdResponse.class)))
     public CommandProcessingResult updateCharge(@PathParam("chargeId") @Parameter(description = "chargeId") final Long chargeId,
             @Parameter(hidden = true) ChargeRequest chargeRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().updateCharge(chargeId)
@@ -142,9 +153,8 @@ public class ChargesApiResource {
     @DELETE
     @Path("{chargeId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Delete a Charge", description = "Deletes a Charge.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.DeleteChargesChargeIdResponse.class))) })
+    @Operation(summary = "Delete a Charge", operationId = "deleteCharge", description = "Deletes a Charge.")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargesApiResourceSwagger.DeleteChargesChargeIdResponse.class)))
     public CommandProcessingResult deleteCharge(@PathParam("chargeId") @Parameter(description = "chargeId") final Long chargeId) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().deleteCharge(chargeId).build();
         return commandsSourceWritePlatformService.logCommandSource(commandRequest);

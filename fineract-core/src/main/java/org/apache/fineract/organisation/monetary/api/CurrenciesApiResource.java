@@ -27,11 +27,9 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.command.core.CommandPipeline;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.command.core.CommandDispatcher;
 import org.apache.fineract.organisation.monetary.command.CurrencyUpdateCommand;
 import org.apache.fineract.organisation.monetary.data.CurrencyConfigurationData;
 import org.apache.fineract.organisation.monetary.data.CurrencyUpdateRequest;
@@ -46,10 +44,9 @@ import org.springframework.stereotype.Component;
 public class CurrenciesApiResource {
 
     private final OrganisationCurrencyReadPlatformService readPlatformService;
-    private final CommandPipeline commandPipeline;
+    private final CommandDispatcher dispatcher;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Currency Configuration", description = """
             Returns the list of currencies permitted for use AND the list of currencies not selected (but available for selection).
@@ -70,11 +67,9 @@ public class CurrenciesApiResource {
     public CurrencyUpdateResponse updateCurrencies(@Valid CurrencyUpdateRequest request) {
         final var command = new CurrencyUpdateCommand();
 
-        command.setId(UUID.randomUUID());
-        command.setCreatedAt(DateUtils.getAuditOffsetDateTime());
         command.setPayload(request);
 
-        final Supplier<CurrencyUpdateResponse> response = commandPipeline.send(command);
+        final Supplier<CurrencyUpdateResponse> response = dispatcher.dispatch(command);
 
         return response.get();
     }

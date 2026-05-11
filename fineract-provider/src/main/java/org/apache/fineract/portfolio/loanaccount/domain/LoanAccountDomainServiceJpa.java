@@ -189,10 +189,11 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         }
 
         Money totalInterest = interestRefundService.totalInterestByTransactions(null, loan.getId(), refundTransaction.getTransactionDate(),
-                List.of(), loan.getLoanTransactions().stream().map(AbstractPersistableCustom::getId).toList());
+                List.of(), loan.getLoanTransactions().stream().map(AbstractPersistableCustom::getId).toList(),
+                loan.getActiveLoanTermVariations());
         Money newTotalInterest = interestRefundService.totalInterestByTransactions(null, loan.getId(),
                 refundTransaction.getTransactionDate(), List.of(refundTransaction),
-                loan.getLoanTransactions().stream().map(AbstractPersistableCustom::getId).toList());
+                loan.getLoanTransactions().stream().map(AbstractPersistableCustom::getId).toList(), loan.getActiveLoanTermVariations());
         BigDecimal interestRefundAmount = totalInterest.minus(newTotalInterest).getAmount();
 
         if (MathUtil.isZero(interestRefundAmount)) {
@@ -217,6 +218,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             final boolean isRecoveryRepayment, final String chargeRefundChargeType, boolean isAccountTransfer,
             HolidayDetailDTO holidayDetailDto, Boolean isHolidayValidationDone, final boolean isLoanToLoanTransfer) {
         checkClientOrGroupActive(loan);
+        loanTransactionValidator.validateLoanNotClosedOrOverpaidForTransactions(loan, repaymentTransactionType);
 
         LoanBusinessEvent repaymentEvent = getLoanRepaymentTypeBusinessEvent(repaymentTransactionType, isRecoveryRepayment, loan);
         businessEventNotifierService.notifyPreBusinessEvent(repaymentEvent);
@@ -846,12 +848,13 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         if (processLatest) {
             loanTransactionProcessingService.processLatestTransaction(loan.getTransactionProcessingStrategyCode(), refundTransaction,
                     new TransactionCtx(loan.getCurrency(), loan.getRepaymentScheduleInstallments(), loan.getActiveCharges(),
-                            new MoneyHolder(loan.getTotalOverpaidAsMoney()), null));
+                            new MoneyHolder(loan.getTotalOverpaidAsMoney()), null, loan.getActiveLoanTermVariations()));
             loan.getLoanTransactions().add(refundTransaction);
             if (interestRefundTransaction != null) {
                 loanTransactionProcessingService.processLatestTransaction(loan.getTransactionProcessingStrategyCode(),
-                        interestRefundTransaction, new TransactionCtx(loan.getCurrency(), loan.getRepaymentScheduleInstallments(),
-                                loan.getActiveCharges(), new MoneyHolder(loan.getTotalOverpaidAsMoney()), null));
+                        interestRefundTransaction,
+                        new TransactionCtx(loan.getCurrency(), loan.getRepaymentScheduleInstallments(), loan.getActiveCharges(),
+                                new MoneyHolder(loan.getTotalOverpaidAsMoney()), null, loan.getActiveLoanTermVariations()));
                 loan.addLoanTransaction(interestRefundTransaction);
             }
         } else {
@@ -960,7 +963,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
 
         for (LoanDisbursementDetails loanDisbursementDetails : loan.getDisbursementDetails()) {
             if (loanDisbursementDetails.actualDisbursementDate() == null) {
-                totalPrincipal = Money.of(currency, totalPrincipal.getAmount().subtract(loanDisbursementDetails.principal()));
+                totalPrincipal = Money.of(currency, totalPrincipal.getAmount().subtract(loanDisbursementDetails.getPrincipal()));
             }
         }
 

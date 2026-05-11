@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -69,8 +68,7 @@ public class CollateralManagementApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Create a new collateral", description = "Collateral Creation")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = CollateralManagementProductRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.PostCollateralManagementProductResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.PostCollateralManagementProductResponse.class)))
     public CommandProcessingResult createCollateral(
             @Parameter(hidden = true) final CollateralManagementProductRequest collateralManagementProductRequest) {
         final CommandWrapper commandWrapper = new CommandWrapperBuilder().createCollateral()
@@ -80,7 +78,6 @@ public class CollateralManagementApiResource {
 
     @GET
     @Path("{collateralId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Get Collateral", description = "Fetch Collateral")
     public CollateralManagementData getCollateral(
@@ -93,7 +90,6 @@ public class CollateralManagementApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Get All Collaterals", description = "Fetch all Collateral Products")
     public List<CollateralManagementData> getAllCollaterals() {
@@ -104,7 +100,6 @@ public class CollateralManagementApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Get Collateral Template", description = "Get Collateral Template")
     public List<CurrencyData> getCollateralTemplate() {
@@ -117,8 +112,7 @@ public class CollateralManagementApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Update Collateral", description = "Update Collateral")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = CollateralProductRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.PutCollateralProductResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.PutCollateralProductResponse.class)))
     public CommandProcessingResult updateCollateral(
             @PathParam("collateralId") @Parameter(description = "collateralId") final Long collateralId,
             @Parameter(hidden = true) final CollateralProductRequest collateralProductRequest) {
@@ -131,10 +125,8 @@ public class CollateralManagementApiResource {
     @DELETE
     @Path("{collateralId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Delete a Collateral", description = "Delete Collateral")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.DeleteCollateralProductResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.DeleteCollateralProductResponse.class)))
     public CommandProcessingResult deleteCollateral(
             @PathParam("collateralId") @Parameter(description = "collateralId") final Long collateralId) {
 

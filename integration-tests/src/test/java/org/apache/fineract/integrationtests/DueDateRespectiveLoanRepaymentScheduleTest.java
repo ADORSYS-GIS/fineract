@@ -95,6 +95,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
         try {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.02.01").dateFormat("yyyy.MM.dd").locale("en"));
 
@@ -161,35 +163,25 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
             assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertEquals(thirdRepaymentId, response.getTransactions().get(3).getId().intValue());
             assertNull(response.getTransactions().get(3).getReversedOnDate());
             assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(3).getType().getAccrual());
+            assertTrue(response.getTransactions().get(3).getType().getRepayment());
             assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
             assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
+            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
             assertEquals(firstChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
             assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
-            assertEquals(thirdRepaymentId, response.getTransactions().get(4).getId().intValue());
-            assertNull(response.getTransactions().get(4).getReversedOnDate());
-            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(4).getType().getRepayment());
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(4).getLoanChargePaidByList().size());
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -214,6 +206,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
                     new PutGlobalConfigurationsRequest().enabled(true));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.02.01").dateFormat("yyyy.MM.dd").locale("en"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
 
             Integer penalty = ChargesHelper.createCharges(requestSpec, responseSpec,
                     ChargesHelper.getLoanSpecifiedDueDateJSON(ChargesHelper.CHARGE_CALCULATION_TYPE_FLAT, "50", true));
@@ -287,46 +281,24 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
             assertEquals(400.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertEquals(thirdRepaymentId, response.getTransactions().get(3).getId().intValue());
             assertNull(response.getTransactions().get(3).getReversedOnDate());
             assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(3).getType().getAccrual());
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
+            assertTrue(response.getTransactions().get(3).getType().getRepayment());
+            assertEquals(100.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
+            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
             assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
+            assertEquals(350.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
             assertEquals(firstChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
             assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
-            assertEquals(thirdRepaymentId, response.getTransactions().get(4).getId().intValue());
-            assertNull(response.getTransactions().get(4).getReversedOnDate());
-            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(4).getType().getRepayment());
-            assertEquals(100.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(350.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(4).getLoanChargePaidByList().size());
-            assertNull(response.getTransactions().get(5).getReversedOnDate());
-            assertTrue(response.getTransactions().get(5).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(5).getType().getAccrual());
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(5).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getInterestPortion()));
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(5).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOutstandingLoanBalance()));
-            assertEquals(secondChargeId, response.getTransactions().get(5).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(5).getLoanChargePaidByList().size());
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -399,45 +371,19 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getFeeChargesPortion()));
             assertEquals(500.0, Utils.getDoubleValue(response.getTransactions().get(1).getOutstandingLoanBalance()));
 
-            int repaymentOrderNo;
-            int accrualOrderNo;
-
-            if (response.getTransactions().get(2).getType().getAccrual()) {
-                accrualOrderNo = 2;
-                repaymentOrderNo = 3;
-            } else {
-                accrualOrderNo = 3;
-                repaymentOrderNo = 2;
-            }
-
-            assertNull(response.getTransactions().get(accrualOrderNo).getReversedOnDate());
-            assertTrue(response.getTransactions().get(accrualOrderNo).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(accrualOrderNo).getType().getAccrual());
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getInterestPortion()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(accrualOrderNo).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId,
-                    response.getTransactions().get(accrualOrderNo).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(accrualOrderNo).getLoanChargePaidByList().size());
-
-            assertEquals(secondRepaymentId, response.getTransactions().get(repaymentOrderNo).getId().intValue());
-            assertNull(response.getTransactions().get(repaymentOrderNo).getReversedOnDate());
-            assertTrue(response.getTransactions().get(repaymentOrderNo).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(repaymentOrderNo).getType().getRepayment());
-            assertEquals(550.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getAmount()));
-            assertEquals(500.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getInterestPortion()));
-            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(repaymentOrderNo).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId,
-                    response.getTransactions().get(repaymentOrderNo).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(repaymentOrderNo).getLoanChargePaidByList().size());
+            assertEquals(secondRepaymentId, response.getTransactions().get(2).getId().intValue());
+            assertNull(response.getTransactions().get(2).getReversedOnDate());
+            assertTrue(response.getTransactions().get(2).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(2).getType().getRepayment());
+            assertEquals(550.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
+            assertEquals(500.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
+            assertEquals(50.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
+            assertEquals(1, response.getTransactions().get(2).getLoanChargePaidByList().size());
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
@@ -687,6 +633,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
                     new PutGlobalConfigurationsRequest().enabled(true));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.03.01").dateFormat("yyyy.MM.dd").locale("en"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
 
             Integer fee = ChargesHelper.createCharges(requestSpec, responseSpec,
                     ChargesHelper.getLoanSpecifiedDueDateJSON(ChargesHelper.CHARGE_CALCULATION_TYPE_FLAT, "20", false));
@@ -724,35 +672,25 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
+            assertEquals(firstRepaymentId, response.getTransactions().get(1).getId().intValue());
             assertNull(response.getTransactions().get(1).getReversedOnDate());
             assertTrue(response.getTransactions().get(1).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(1).getType().getAccrual());
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(1).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getPrincipalPortion()));
+            assertTrue(response.getTransactions().get(1).getType().getRepayment());
+            assertEquals(1010.0, Utils.getDoubleValue(response.getTransactions().get(1).getAmount()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(1).getPrincipalPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getPenaltyChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getInterestPortion()));
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(1).getFeeChargesPortion()));
+            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(1).getFeeChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(1).getOutstandingLoanBalance()));
             assertEquals(firstChargeId, response.getTransactions().get(1).getLoanChargePaidByList().get(0).getChargeId().intValue());
             assertEquals(1, response.getTransactions().get(1).getLoanChargePaidByList().size());
-            assertEquals(firstRepaymentId, response.getTransactions().get(2).getId().intValue());
-            assertNull(response.getTransactions().get(2).getReversedOnDate());
-            assertTrue(response.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(2).getType().getRepayment());
-            assertEquals(1010.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(2).getLoanChargePaidByList().size());
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -770,6 +708,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
                     new PutGlobalConfigurationsRequest().enabled(true));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.01.28").dateFormat("yyyy.MM.dd").locale("en"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
 
             Integer penalty = ChargesHelper.createCharges(requestSpec, responseSpec,
                     ChargesHelper.getLoanSpecifiedDueDateJSON(ChargesHelper.CHARGE_CALCULATION_TYPE_FLAT, "15", true));
@@ -866,36 +806,25 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(5.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
+            assertEquals(secondRepayment, response.getTransactions().get(2).getId().intValue());
             assertNull(response.getTransactions().get(2).getReversedOnDate());
             assertTrue(response.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(2).getType().getAccrual());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
+            assertTrue(response.getTransactions().get(2).getType().getRepayment());
+            assertEquals(1010.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
+            assertEquals(995.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
             assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
             assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
             assertEquals(1, response.getTransactions().get(2).getLoanChargePaidByList().size());
-
-            assertEquals(secondRepayment, response.getTransactions().get(3).getId().intValue());
-            assertNull(response.getTransactions().get(3).getReversedOnDate());
-            assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(3).getType().getRepayment());
-            assertEquals(1010.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
-            assertEquals(995.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -912,6 +841,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
         try {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.02.15").dateFormat("yyyy.MM.dd").locale("en"));
 
@@ -1035,45 +966,19 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(1000.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
+            assertEquals(secondRepayment, response.getTransactions().get(2).getId().intValue());
             assertNull(response.getTransactions().get(2).getReversedOnDate());
             assertTrue(response.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(2).getType().getAccrual());
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
+            assertTrue(response.getTransactions().get(2).getType().getRepayment());
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertEquals(secondChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
             assertEquals(1, response.getTransactions().get(2).getLoanChargePaidByList().size());
-
-            assertNull(response.getTransactions().get(3).getReversedOnDate());
-            assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(3).getType().getAccrual());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
-            assertEquals(secondChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
-
-            assertEquals(secondRepayment, response.getTransactions().get(4).getId().intValue());
-            assertNull(response.getTransactions().get(4).getReversedOnDate());
-            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(4).getType().getRepayment());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
-            assertEquals(secondChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(4).getLoanChargePaidByList().size());
 
             Integer thirdRepayment = (Integer) loanTransactionHelper.makeRepayment("01 March 2023", Float.parseFloat("1000.00"), loanID)
                     .get("resourceId");
@@ -1092,18 +997,18 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
-            assertEquals(thirdRepayment, response.getTransactions().get(5).getId().intValue());
-            assertNull(response.getTransactions().get(5).getReversedOnDate());
-            assertTrue(response.getTransactions().get(5).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(5).getType().getRepayment());
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(5).getAmount()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(5).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOutstandingLoanBalance()));
-            assertEquals(0, response.getTransactions().get(5).getLoanChargePaidByList().size());
+            assertEquals(thirdRepayment, response.getTransactions().get(3).getId().intValue());
+            assertNull(response.getTransactions().get(3).getReversedOnDate());
+            assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(3).getType().getRepayment());
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
+            assertEquals(0, response.getTransactions().get(3).getLoanChargePaidByList().size());
 
             Integer forthRepayment = (Integer) loanTransactionHelper.makeRepayment("01 March 2023", Float.parseFloat("10.00"), loanID)
                     .get("resourceId");
@@ -1122,23 +1027,25 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
-            assertEquals(forthRepayment, response.getTransactions().get(6).getId().intValue());
-            assertNull(response.getTransactions().get(6).getReversedOnDate());
-            assertTrue(response.getTransactions().get(6).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(6).getType().getRepayment());
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(6).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getInterestPortion()));
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(6).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(6).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(6).getLoanChargePaidByList().size());
+            assertEquals(forthRepayment, response.getTransactions().get(4).getId().intValue());
+            assertNull(response.getTransactions().get(4).getReversedOnDate());
+            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(4).getType().getRepayment());
+            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
+            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
+            assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
+            assertEquals(1, response.getTransactions().get(4).getLoanChargePaidByList().size());
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -1158,6 +1065,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
         try {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.02.15").dateFormat("yyyy.MM.dd").locale("en"));
 
@@ -1281,51 +1190,25 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(response.getStatus().getActive());
 
+            assertEquals(secondRepayment, response.getTransactions().get(2).getId().intValue());
             assertNull(response.getTransactions().get(2).getReversedOnDate());
             assertTrue(response.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(2).getType().getAccrual());
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
+            assertTrue(response.getTransactions().get(2).getType().getRepayment());
+            assertEquals(1030.0, Utils.getDoubleValue(response.getTransactions().get(2).getAmount()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(2).getPrincipalPortion()));
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getPenaltyChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOverpaymentPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getInterestPortion()));
-            assertEquals(20.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(2).getFeeChargesPortion()));
             assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(2).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(2).getLoanChargePaidByList().size());
-
-            assertNull(response.getTransactions().get(3).getReversedOnDate());
-            assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(3).getType().getAccrual());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
-            assertEquals(secondChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
-
-            assertEquals(secondRepayment, response.getTransactions().get(4).getId().intValue());
-            assertNull(response.getTransactions().get(4).getReversedOnDate());
-            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(4).getType().getRepayment());
-            assertEquals(1030.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
-            if (secondChargeId.equals(response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue())) {
-                assertEquals(secondChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
-                assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(1).getChargeId().intValue());
+            if (secondChargeId.equals(response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue())) {
+                assertEquals(secondChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
+                assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(1).getChargeId().intValue());
             } else {
-                assertEquals(secondChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(1).getChargeId().intValue());
-                assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
+                assertEquals(secondChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(1).getChargeId().intValue());
+                assertEquals(firstChargeId, response.getTransactions().get(2).getLoanChargePaidByList().get(0).getChargeId().intValue());
             }
-            assertEquals(2, response.getTransactions().get(4).getLoanChargePaidByList().size());
+            assertEquals(2, response.getTransactions().get(2).getLoanChargePaidByList().size());
 
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.03.07").dateFormat("yyyy.MM.dd").locale("en"));
@@ -1367,32 +1250,19 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalPaid()));
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalOutstanding()));
 
-            assertNull(response.getTransactions().get(5).getReversedOnDate());
-            assertTrue(response.getTransactions().get(5).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(5).getType().getAccrual());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(5).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(5).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOutstandingLoanBalance()));
-            assertEquals(thirdChargeId, response.getTransactions().get(5).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(5).getLoanChargePaidByList().size());
-
-            assertEquals(thirdRepayment, response.getTransactions().get(6).getId().intValue());
-            assertNull(response.getTransactions().get(6).getReversedOnDate());
-            assertTrue(response.getTransactions().get(6).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(6).getType().getRepayment());
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(6).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getPrincipalPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(6).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(6).getFeeChargesPortion()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(6).getOutstandingLoanBalance()));
-            assertEquals(secondChargeId, response.getTransactions().get(6).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(6).getLoanChargePaidByList().size());
+            assertEquals(thirdRepayment, response.getTransactions().get(3).getId().intValue());
+            assertNull(response.getTransactions().get(3).getReversedOnDate());
+            assertTrue(response.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(3).getType().getRepayment());
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getAmount()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getPrincipalPortion()));
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(3).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getInterestPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(3).getFeeChargesPortion()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(3).getOutstandingLoanBalance()));
+            assertEquals(secondChargeId, response.getTransactions().get(3).getLoanChargePaidByList().get(0).getChargeId().intValue());
+            assertEquals(1, response.getTransactions().get(3).getLoanChargePaidByList().size());
 
             Integer forthRepayment = (Integer) loanTransactionHelper.makeRepayment("08 March 2023", Float.parseFloat("1015.00"), loanID)
                     .get("resourceId");
@@ -1421,19 +1291,19 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalPaid()));
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalOutstanding()));
 
-            assertEquals(forthRepayment, response.getTransactions().get(7).getId().intValue());
-            assertNull(response.getTransactions().get(7).getReversedOnDate());
-            assertTrue(response.getTransactions().get(7).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(7).getType().getRepayment());
-            assertEquals(1015.0, Utils.getDoubleValue(response.getTransactions().get(7).getAmount()));
-            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(7).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(7).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(7).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(7).getInterestPortion()));
-            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(7).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(7).getOutstandingLoanBalance()));
-            assertEquals(firstChargeId, response.getTransactions().get(7).getLoanChargePaidByList().get(0).getChargeId().intValue());
-            assertEquals(1, response.getTransactions().get(7).getLoanChargePaidByList().size());
+            assertEquals(forthRepayment, response.getTransactions().get(4).getId().intValue());
+            assertNull(response.getTransactions().get(4).getReversedOnDate());
+            assertTrue(response.getTransactions().get(4).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(4).getType().getRepayment());
+            assertEquals(1015.0, Utils.getDoubleValue(response.getTransactions().get(4).getAmount()));
+            assertEquals(1000.0, Utils.getDoubleValue(response.getTransactions().get(4).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getInterestPortion()));
+            assertEquals(15.0, Utils.getDoubleValue(response.getTransactions().get(4).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(4).getOutstandingLoanBalance()));
+            assertEquals(firstChargeId, response.getTransactions().get(4).getLoanChargePaidByList().get(0).getChargeId().intValue());
+            assertEquals(1, response.getTransactions().get(4).getLoanChargePaidByList().size());
 
             Integer fifthRepayment = (Integer) loanTransactionHelper.makeRepayment("08 March 2023", Float.parseFloat("10.00"), loanID)
                     .get("resourceId");
@@ -1462,28 +1332,30 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalPaid()));
             assertEquals(0.0, Utils.getDoubleValue(response.getRepaymentSchedule().getPeriods().get(2).getPrincipalOutstanding()));
 
-            assertEquals(fifthRepayment, response.getTransactions().get(8).getId().intValue());
-            assertNull(response.getTransactions().get(8).getReversedOnDate());
-            assertTrue(response.getTransactions().get(8).getTransactionRelations().isEmpty());
-            assertTrue(response.getTransactions().get(8).getType().getRepayment());
-            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(8).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(8).getPrincipalPortion()));
-            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(8).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(8).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(8).getInterestPortion()));
-            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(8).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(8).getOutstandingLoanBalance()));
-            if (firstChargeId.equals(response.getTransactions().get(8).getLoanChargePaidByList().get(0).getChargeId().intValue())) {
-                assertEquals(thirdChargeId, response.getTransactions().get(8).getLoanChargePaidByList().get(1).getChargeId().intValue());
+            assertEquals(fifthRepayment, response.getTransactions().get(5).getId().intValue());
+            assertNull(response.getTransactions().get(5).getReversedOnDate());
+            assertTrue(response.getTransactions().get(5).getTransactionRelations().isEmpty());
+            assertTrue(response.getTransactions().get(5).getType().getRepayment());
+            assertEquals(10.0, Utils.getDoubleValue(response.getTransactions().get(5).getAmount()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getPrincipalPortion()));
+            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(5).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getInterestPortion()));
+            assertEquals(5.0, Utils.getDoubleValue(response.getTransactions().get(5).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(response.getTransactions().get(5).getOutstandingLoanBalance()));
+            if (firstChargeId.equals(response.getTransactions().get(5).getLoanChargePaidByList().get(0).getChargeId().intValue())) {
+                assertEquals(thirdChargeId, response.getTransactions().get(5).getLoanChargePaidByList().get(1).getChargeId().intValue());
             } else {
-                assertEquals(firstChargeId, response.getTransactions().get(8).getLoanChargePaidByList().get(1).getChargeId().intValue());
-                assertEquals(thirdChargeId, response.getTransactions().get(8).getLoanChargePaidByList().get(0).getChargeId().intValue());
+                assertEquals(firstChargeId, response.getTransactions().get(5).getLoanChargePaidByList().get(1).getChargeId().intValue());
+                assertEquals(thirdChargeId, response.getTransactions().get(5).getLoanChargePaidByList().get(0).getChargeId().intValue());
             }
-            assertEquals(2, response.getTransactions().get(8).getLoanChargePaidByList().size());
+            assertEquals(2, response.getTransactions().get(5).getLoanChargePaidByList().size());
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -1503,6 +1375,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
                     .date("2023.05.14").dateFormat("yyyy.MM.dd").locale("en"));
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
 
             Integer fee = ChargesHelper.createCharges(requestSpec, responseSpec,
                     ChargesHelper.getLoanSpecifiedDueDateJSON(ChargesHelper.CHARGE_CALCULATION_TYPE_FLAT, "3.65", false));
@@ -1570,17 +1444,6 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(0).getFeeChargesPortion()));
             assertEquals(127.95, Utils.getDoubleValue(loanDetails.getTransactions().get(0).getOutstandingLoanBalance()));
 
-            assertNull(loanDetails.getTransactions().get(1).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(1).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(1).getType().getAccrual());
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getInterestPortion()));
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOutstandingLoanBalance()));
-
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.06.17").dateFormat("yyyy.MM.dd").locale("en"));
             PostLoansLoanIdTransactionsResponse merchantIssuedRefund1 = loanTransactionHelper.makeMerchantIssuedRefund(Long.valueOf(loanID),
@@ -1601,16 +1464,16 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(2.95, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getActive());
 
-            assertNull(loanDetails.getTransactions().get(2).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(2).getType().getMerchantIssuedRefund());
-            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getAmount()));
-            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getFeeChargesPortion()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertNull(loanDetails.getTransactions().get(1).getReversedOnDate());
+            assertTrue(loanDetails.getTransactions().get(1).getTransactionRelations().isEmpty());
+            assertTrue(loanDetails.getTransactions().get(1).getType().getMerchantIssuedRefund());
+            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getAmount()));
+            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getInterestPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getFeeChargesPortion()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOutstandingLoanBalance()));
 
             PostLoansLoanIdChargesChargeIdResponse chargeAdjustmentResponse = this.loanTransactionHelper.chargeAdjustment((long) loanID,
                     (long) penalty1LoanChargeId, new PostLoansLoanIdChargesChargeIdRequest().amount(3.65));
@@ -1629,18 +1492,18 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getActive());
 
-            assertNull(loanDetails.getTransactions().get(3).getReversedOnDate());
-            assertFalse(loanDetails.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertNull(loanDetails.getTransactions().get(2).getReversedOnDate());
+            assertFalse(loanDetails.getTransactions().get(2).getTransactionRelations().isEmpty());
             assertEquals((long) penalty1LoanChargeId,
-                    loanDetails.getTransactions().get(3).getTransactionRelations().iterator().next().getToLoanCharge());
-            assertTrue(loanDetails.getTransactions().get(3).getType().getChargeAdjustment());
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getAmount()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getInterestPortion()));
-            assertEquals(0.7, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOutstandingLoanBalance()));
+                    loanDetails.getTransactions().get(2).getTransactionRelations().iterator().next().getToLoanCharge());
+            assertTrue(loanDetails.getTransactions().get(2).getType().getChargeAdjustment());
+            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getAmount()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getInterestPortion()));
+            assertEquals(0.7, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOutstandingLoanBalance()));
 
             PostLoansLoanIdTransactionsResponse merchantIssuedRefund2 = loanTransactionHelper.makeMerchantIssuedRefund(Long.valueOf(loanID),
                     new PostLoansLoanIdTransactionsRequest().locale("en").dateFormat("dd MMMM yyyy").transactionDate("17 June 2023")
@@ -1660,22 +1523,24 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getClosedObligationsMet());
 
-            assertNull(loanDetails.getTransactions().get(4).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(4).getType().getMerchantIssuedRefund());
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getInterestPortion()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getOutstandingLoanBalance()));
+            assertNull(loanDetails.getTransactions().get(3).getReversedOnDate());
+            assertTrue(loanDetails.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertTrue(loanDetails.getTransactions().get(3).getType().getMerchantIssuedRefund());
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getAmount()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getInterestPortion()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOutstandingLoanBalance()));
 
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("due-date"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 
@@ -1695,6 +1560,8 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
                     .date("2023.05.14").dateFormat("yyyy.MM.dd").locale("en"));
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(false));
 
             Integer fee = ChargesHelper.createCharges(requestSpec, responseSpec,
                     ChargesHelper.getLoanSpecifiedDueDateJSON(ChargesHelper.CHARGE_CALCULATION_TYPE_FLAT, "3.65", false));
@@ -1762,17 +1629,6 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(0).getFeeChargesPortion()));
             assertEquals(127.95, Utils.getDoubleValue(loanDetails.getTransactions().get(0).getOutstandingLoanBalance()));
 
-            assertNull(loanDetails.getTransactions().get(1).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(1).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(1).getType().getAccrual());
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getInterestPortion()));
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOutstandingLoanBalance()));
-
             businessDateHelper.updateBusinessDate(new BusinessDateUpdateRequest().type(BusinessDateUpdateRequest.TypeEnum.BUSINESS_DATE)
                     .date("2023.06.17").dateFormat("yyyy.MM.dd").locale("en"));
 
@@ -1794,16 +1650,16 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(2.95, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getActive());
 
-            assertNull(loanDetails.getTransactions().get(2).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(2).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(2).getType().getMerchantIssuedRefund());
-            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getAmount()));
-            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getInterestPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getFeeChargesPortion()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOutstandingLoanBalance()));
+            assertNull(loanDetails.getTransactions().get(1).getReversedOnDate());
+            assertTrue(loanDetails.getTransactions().get(1).getTransactionRelations().isEmpty());
+            assertTrue(loanDetails.getTransactions().get(1).getType().getMerchantIssuedRefund());
+            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getAmount()));
+            assertEquals(125.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getInterestPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getFeeChargesPortion()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(1).getOutstandingLoanBalance()));
 
             PostLoansLoanIdChargesChargeIdResponse chargeAdjustmentResponse = this.loanTransactionHelper.chargeAdjustment((long) loanID,
                     (long) penalty1LoanChargeId, new PostLoansLoanIdChargesChargeIdRequest().amount(3.65));
@@ -1822,18 +1678,18 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getActive());
 
-            assertNull(loanDetails.getTransactions().get(3).getReversedOnDate());
-            assertFalse(loanDetails.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertNull(loanDetails.getTransactions().get(2).getReversedOnDate());
+            assertFalse(loanDetails.getTransactions().get(2).getTransactionRelations().isEmpty());
             assertEquals((long) penalty1LoanChargeId,
-                    loanDetails.getTransactions().get(3).getTransactionRelations().iterator().next().getToLoanCharge());
-            assertTrue(loanDetails.getTransactions().get(3).getType().getChargeAdjustment());
-            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getAmount()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getInterestPortion()));
-            assertEquals(0.7, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOutstandingLoanBalance()));
+                    loanDetails.getTransactions().get(2).getTransactionRelations().iterator().next().getToLoanCharge());
+            assertTrue(loanDetails.getTransactions().get(2).getType().getChargeAdjustment());
+            assertEquals(3.65, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getAmount()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getInterestPortion()));
+            assertEquals(0.7, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(2).getOutstandingLoanBalance()));
 
             PostLoansLoanIdTransactionsResponse merchantIssuedRefund2 = loanTransactionHelper.makeMerchantIssuedRefund(Long.valueOf(loanID),
                     new PostLoansLoanIdTransactionsRequest().locale("en").dateFormat("dd MMMM yyyy").transactionDate("17 June 2023")
@@ -1853,21 +1709,23 @@ public class DueDateRespectiveLoanRepaymentScheduleTest extends BaseLoanIntegrat
             assertEquals(0.0, Utils.getDoubleValue(loanDetails.getRepaymentSchedule().getPeriods().get(1).getPrincipalOutstanding()));
             assertTrue(loanDetails.getStatus().getClosedObligationsMet());
 
-            assertNull(loanDetails.getTransactions().get(4).getReversedOnDate());
-            assertTrue(loanDetails.getTransactions().get(4).getTransactionRelations().isEmpty());
-            assertTrue(loanDetails.getTransactions().get(4).getType().getMerchantIssuedRefund());
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getAmount()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getPrincipalPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getPenaltyChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getOverpaymentPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getInterestPortion()));
-            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getFeeChargesPortion()));
-            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(4).getOutstandingLoanBalance()));
+            assertNull(loanDetails.getTransactions().get(3).getReversedOnDate());
+            assertTrue(loanDetails.getTransactions().get(3).getTransactionRelations().isEmpty());
+            assertTrue(loanDetails.getTransactions().get(3).getType().getMerchantIssuedRefund());
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getAmount()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPrincipalPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getPenaltyChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOverpaymentPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getInterestPortion()));
+            assertEquals(2.95, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getFeeChargesPortion()));
+            assertEquals(0.0, Utils.getDoubleValue(loanDetails.getTransactions().get(3).getOutstandingLoanBalance()));
         } finally {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(false));
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("due-date"));
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                    new PutGlobalConfigurationsRequest().enabled(true));
         }
     }
 

@@ -112,7 +112,10 @@ public class ExternalEventConfigurationValidationServiceTest {
                 "LoanCapitalizedIncomeTransactionCreatedBusinessEvent", "LoanUndoContractTerminationBusinessEvent",
                 "LoanBuyDownFeeTransactionCreatedBusinessEvent", "LoanBuyDownFeeAdjustmentTransactionCreatedBusinessEvent",
                 "LoanBuyDownFeeAmortizationTransactionCreatedBusinessEvent",
-                "LoanBuyDownFeeAmortizationAdjustmentTransactionCreatedBusinessEvent", "LoanApprovedAmountChangedBusinessEvent");
+                "LoanBuyDownFeeAmortizationAdjustmentTransactionCreatedBusinessEvent", "LoanApprovedAmountChangedBusinessEvent",
+                "SavingsAccountsStayedLockedBusinessEvent", "SavingsAccountForceWithdrawalBusinessEvent",
+                "WorkingCapitalLoanDisbursalTransactionBusinessEvent", "WorkingCapitalLoanUndoDisbursalTransactionBusinessEvent",
+                "WorkingCapitalLoanRepaymentTransactionBusinessEvent", "WorkingCapitalLoanCreditBalanceRefundTransactionBusinessEvent");
 
         List<FineractPlatformTenant> tenants = Arrays
                 .asList(new FineractPlatformTenant(1L, "default", "Default Tenant", "Europe/Budapest", null));
@@ -148,7 +151,8 @@ public class ExternalEventConfigurationValidationServiceTest {
                 () -> underTest.afterPropertiesSet());
 
         // then
-        String expectedMessage = "No external events configured";
+        String expectedMessage = "Configuration not found for external event LoanAccountsStayedLockedBusinessEvent";
+
         String actualMessage = exceptionThrown.getMessage();
 
         assertTrue(actualMessage.contains(expectedMessage));
@@ -206,7 +210,10 @@ public class ExternalEventConfigurationValidationServiceTest {
                 "LoanCapitalizedIncomeTransactionCreatedBusinessEvent", "LoanUndoContractTerminationBusinessEvent",
                 "LoanBuyDownFeeTransactionCreatedBusinessEvent", "LoanBuyDownFeeAdjustmentTransactionCreatedBusinessEvent",
                 "LoanBuyDownFeeAmortizationTransactionCreatedBusinessEvent",
-                "LoanBuyDownFeeAmortizationAdjustmentTransactionCreatedBusinessEvent", "LoanApprovedAmountChangedBusinessEvent");
+                "LoanBuyDownFeeAmortizationAdjustmentTransactionCreatedBusinessEvent", "LoanApprovedAmountChangedBusinessEvent",
+                "SavingsAccountsStayedLockedBusinessEvent", "SavingsAccountForceWithdrawalBusinessEvent",
+                "WorkingCapitalLoanDisbursalTransactionBusinessEvent", "WorkingCapitalLoanUndoDisbursalTransactionBusinessEvent",
+                "WorkingCapitalLoanRepaymentTransactionBusinessEvent", "WorkingCapitalLoanCreditBalanceRefundTransactionBusinessEvent");
 
         List<FineractPlatformTenant> tenants = Arrays
                 .asList(new FineractPlatformTenant(1L, "default", "Default Tenant", "Europe/Budapest", null));

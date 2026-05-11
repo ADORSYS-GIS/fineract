@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -79,7 +78,6 @@ public class CollateralsApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Collateral Details Template", description = "This is a convenience resource. It can be useful when building maintenance user interface screens for client applications. The template data returned consists of any or all of:\n"
             + "\n" + "Field Defaults\n" + "Allowed Value Lists\n" + "Example Request:\n" + "\n" + "loans/1/collaterals/template")
@@ -92,7 +90,6 @@ public class CollateralsApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "List Loan Collaterals", description = "Example Requests:\n" + "\n" + "loans/1/collaterals\n" + "\n" + "\n"
             + "loans/1/collaterals?fields=value,description")
@@ -104,12 +101,10 @@ public class CollateralsApiResource {
 
     @GET
     @Path("{collateralId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve a Collateral", description = "Example Requests:\n" + "\n" + "/loans/1/collaterals/1\n" + "\n" + "\n"
             + "/loans/1/collaterals/1?fields=description,description")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.GetLoansLoanIdCollateralsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.GetLoansLoanIdCollateralsResponse.class)))
     public String retrieveCollateralDetails(@Context final UriInfo uriInfo,
             @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("collateralId") @Parameter(description = "collateralId") final Long CollateralId) {
@@ -132,8 +127,7 @@ public class CollateralsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Create a Collateral", description = "Note: Currently, Collaterals may be added only before a Loan is approved")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoansLoanIdCollateralsRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.PostLoansLoanIdCollateralsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.PostLoansLoanIdCollateralsResponse.class)))
     public CommandProcessingResult createCollateral(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @Parameter(hidden = true) final LoansLoanIdCollateralsRequest loansLoanIdCollateralsRequest) {
 
@@ -149,8 +143,7 @@ public class CollateralsApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Update a Collateral")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoansLoandIdCollateralsCollateralIdRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.PutLoansLoanIdCollateralsCollateralIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.PutLoansLoanIdCollateralsCollateralIdResponse.class)))
     public CommandProcessingResult updateCollateral(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("collateralId") @Parameter(description = "collateralId") final Long collateralId,
             @Parameter(hidden = true) final LoansLoandIdCollateralsCollateralIdRequest loansLoandIdCollateralsCollateralIdRequest) {
@@ -162,11 +155,9 @@ public class CollateralsApiResource {
 
     @DELETE
     @Path("{collateralId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Remove a Collateral", description = "Note: A collateral can only be removed from Loans that are not yet approved.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.DeleteLoansLoanIdCollateralsCollateralIdResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CollateralsApiResourceSwagger.DeleteLoansLoanIdCollateralsCollateralIdResponse.class)))
     public CommandProcessingResult deleteCollateral(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("collateralId") @Parameter(description = "collateralId") final Long collateralId) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().deleteCollateral(loanId, collateralId).build();

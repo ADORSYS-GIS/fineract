@@ -41,6 +41,7 @@ public class FineractErrorDecoder implements ErrorDecoder {
 
                     String developerMessage = extractField(rootNode, "developerMessage");
                     String userMessage = extractField(rootNode, "userMessage");
+                    final String userMessageGlobalisationCode = extractField(rootNode, "userMessageGlobalisationCode");
                     String validationErrors = extractValidationErrors(rootNode);
 
                     if (developerMessage != null || userMessage != null || validationErrors != null) {
@@ -49,7 +50,7 @@ public class FineractErrorDecoder implements ErrorDecoder {
                             enhancedDeveloperMessage = validationErrors;
                         }
                         return new FeignException(response.status(), userMessage != null ? userMessage : enhancedDeveloperMessage,
-                                response.request(), bodyData, enhancedDeveloperMessage, userMessage);
+                                response.request(), bodyData, enhancedDeveloperMessage, userMessage, userMessageGlobalisationCode);
                     }
                 } catch (IOException e) {
                     return defaultDecoder.decode(methodKey, response);
@@ -79,7 +80,7 @@ public class FineractErrorDecoder implements ErrorDecoder {
 
     private String extractValidationErrors(JsonNode rootNode) {
         JsonNode errorsNode = rootNode.get("errors");
-        if (errorsNode != null && errorsNode.isArray() && errorsNode.size() > 0) {
+        if (errorsNode != null && errorsNode.isArray() && !errorsNode.isEmpty()) {
             StringBuilder errors = new StringBuilder("Validation errors: ");
             for (JsonNode error : errorsNode) {
                 String parameterName = extractField(error, "parameterName");

@@ -20,7 +20,6 @@ package org.apache.fineract.portfolio.delinquency.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -127,7 +126,7 @@ public class DelinquencyWritePlatformServiceHelper {
                 changes.put("current", loanDelinquencyTag.getDelinquencyRange());
             }
         }
-        if (loanDelinquencyTagHistory.size() > 0) {
+        if (!loanDelinquencyTagHistory.isEmpty()) {
             this.loanDelinquencyTagRepository.saveAllAndFlush(loanDelinquencyTagHistory);
             // if installment level delinquency is enabled event will be raised at installment level calculation, no
             // need to raise the event here
@@ -139,14 +138,8 @@ public class DelinquencyWritePlatformServiceHelper {
     }
 
     public List<DelinquencyRange> sortDelinquencyRangesByMinAge(List<DelinquencyRange> ranges) {
-        final Comparator<DelinquencyRange> orderByMinAge = new Comparator<DelinquencyRange>() {
-
-            @Override
-            public int compare(DelinquencyRange o1, DelinquencyRange o2) {
-                return o1.getMinimumAgeDays().compareTo(o2.getMinimumAgeDays());
-            }
-        };
-        Collections.sort(ranges, orderByMinAge);
+        final Comparator<DelinquencyRange> orderByMinAge = Comparator.comparing(DelinquencyRange::getMinimumAgeDays);
+        ranges.sort(orderByMinAge);
         return ranges;
     }
 
@@ -173,10 +166,10 @@ public class DelinquencyWritePlatformServiceHelper {
     private void removeDelinquencyTagsForNonExistingInstallments(Long loanId) {
         List<LoanInstallmentDelinquencyTag> currentLoanInstallmentDelinquencyTags = loanInstallmentDelinquencyTagRepository
                 .findByLoanId(loanId);
-        if (currentLoanInstallmentDelinquencyTags != null && currentLoanInstallmentDelinquencyTags.size() > 0) {
+        if (currentLoanInstallmentDelinquencyTags != null && !currentLoanInstallmentDelinquencyTags.isEmpty()) {
             List<Long> loanInstallmentTagsForDelete = currentLoanInstallmentDelinquencyTags.stream()
                     .filter(tag -> tag.getInstallment() == null).map(tag -> tag.getId()).toList();
-            if (loanInstallmentTagsForDelete.size() > 0) {
+            if (!loanInstallmentTagsForDelete.isEmpty()) {
                 loanInstallmentDelinquencyTagRepository.deleteAllLoanInstallmentsTagsByIds(loanInstallmentTagsForDelete);
             }
         }
@@ -260,7 +253,7 @@ public class DelinquencyWritePlatformServiceHelper {
 
         }
 
-        if (installmentDelinquencyTags.size() > 0) {
+        if (!installmentDelinquencyTags.isEmpty()) {
             loanInstallmentDelinquencyTagRepository.saveAllAndFlush(installmentDelinquencyTags);
         }
         return isDelinquencyRangeChanged;

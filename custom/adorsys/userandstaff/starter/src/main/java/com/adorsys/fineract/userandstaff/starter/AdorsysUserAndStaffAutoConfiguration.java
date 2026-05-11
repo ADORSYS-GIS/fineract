@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 @AutoConfiguration
-@ComponentScan({"com.adorsys.fineract.userandstaff.service", "com.adorsys.fineract.userandstaff.api"})
+@ComponentScan({ "com.adorsys.fineract.userandstaff.service", "com.adorsys.fineract.userandstaff.api" })
 public class AdorsysUserAndStaffAutoConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdorsysUserAndStaffAutoConfiguration.class);

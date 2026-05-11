@@ -92,7 +92,6 @@ public class GLAccountsApiResource {
 
     @GET
     @Path("template")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(tags = {
             "General Ledger Account" }, summary = "Retrieve GL Accounts Template", description = """
@@ -122,7 +121,6 @@ public class GLAccountsApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(tags = {
             "General Ledger Account" }, summary = "List General Ledger Account", description = """
@@ -153,7 +151,6 @@ public class GLAccountsApiResource {
 
     @GET
     @Path("{glAccountId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(tags = { "General Ledger Account" }, summary = "Retrieve a General Ledger Account", description = """
             Example Requests:
@@ -181,11 +178,12 @@ public class GLAccountsApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(tags = { "General Ledger Account" }, summary = "Create a General Ledger Account", description = """
-            Note: You may optionally create Hierarchical Chart of Accounts by using the "parentId" property of an Account
-            Mandatory Fields:
-            name, glCode, type, usage and manualEntriesAllowed
-            """)
+    @Operation(tags = {
+            "General Ledger Account" }, summary = "Create a General Ledger Account", operationId = "createGLAccount", description = """
+                    Note: You may optionally create Hierarchical Chart of Accounts by using the "parentId" property of an Account
+                    Mandatory Fields:
+                    name, glCode, type, usage and manualEntriesAllowed
+                    """)
     @RequestBody(content = @Content(schema = @Schema(implementation = GLAccountsApiResourceSwagger.PostGLAccountsRequest.class)))
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLAccountsApiResourceSwagger.PostGLAccountsResponse.class)))
     public CommandProcessingResult createGLAccount(@Parameter(hidden = true) GLAccountCommand glAccountCommand) {
@@ -198,7 +196,8 @@ public class GLAccountsApiResource {
     @Path("{glAccountId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(tags = { "General Ledger Account" }, summary = "Update a GL Account", description = "Updates a GL Account")
+    @Operation(tags = {
+            "General Ledger Account" }, summary = "Update a GL Account", operationId = "updateGLAccount", description = "Updates a GL Account")
     @RequestBody(content = @Content(schema = @Schema(implementation = GLAccountsApiResourceSwagger.PutGLAccountsRequest.class)))
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLAccountsApiResourceSwagger.PutGLAccountsResponse.class)))
     public CommandProcessingResult updateGLAccount(@PathParam("glAccountId") @Parameter(description = "glAccountId") final Long glAccountId,
@@ -210,9 +209,9 @@ public class GLAccountsApiResource {
 
     @DELETE
     @Path("{glAccountId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(tags = { "General Ledger Account" }, summary = "Delete a GL Account", description = "Deletes a GL Account")
+    @Operation(tags = {
+            "General Ledger Account" }, summary = "Delete a GL Account", operationId = "deleteGLAccount", description = "Deletes a GL Account")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GLAccountsApiResourceSwagger.DeleteGLAccountsResponse.class)))
     public CommandProcessingResult deleteGLAccount(
             @PathParam("glAccountId") @Parameter(description = "glAccountId") final Long glAccountId) {

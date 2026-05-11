@@ -19,6 +19,7 @@
 
 package org.apache.fineract.portfolio.rate.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -63,8 +64,8 @@ public class RateApiResource {
 
     @GET
     @Path("{rateId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Retrieve a rate", operationId = "retrieveOneRate")
     public RateData retrieveRate(@PathParam("rateId") Long rateId) {
 
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
@@ -75,6 +76,7 @@ public class RateApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Create a rate", operationId = "createRate")
     public CommandProcessingResult createRate(final RateRequest rateRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createRate().withJson(toApiJsonSerializer.serialize(rateRequest))
                 .build();
@@ -83,8 +85,8 @@ public class RateApiResource {
     }
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "List all rates", operationId = "retrieveAllRates")
     public List<RateData> getAllRates() {
 
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
@@ -96,6 +98,7 @@ public class RateApiResource {
     @Path("{rateId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Update a rate", operationId = "updateRate")
     public CommandProcessingResult updateRate(@PathParam("rateId") Long rateId, final RateRequest rateRequest) {
         final CommandWrapper commandRequest = new CommandWrapperBuilder().updateRate(rateId)
                 .withJson(toApiJsonSerializer.serialize(rateRequest)).build();

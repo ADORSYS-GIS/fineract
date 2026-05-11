@@ -94,9 +94,9 @@ public final class CommonEnumerations {
                 optionData = new EnumOptionData(ConditionType.NOT_EQUAL.getValue().longValue(),
                         codePrefix + ConditionType.NOT_EQUAL.getCode(), "notEqual");
             break;
-            case GRETERTHAN:
-                optionData = new EnumOptionData(ConditionType.GRETERTHAN.getValue().longValue(),
-                        codePrefix + ConditionType.GRETERTHAN.getCode(), "greterthan");
+            case GREATERTHAN:
+                optionData = new EnumOptionData(ConditionType.GREATERTHAN.getValue().longValue(),
+                        codePrefix + ConditionType.GREATERTHAN.getCode(), "greaterthan");
             break;
             case LESSTHAN:
                 optionData = new EnumOptionData(ConditionType.LESSTHAN.getValue().longValue(),
@@ -112,7 +112,7 @@ public final class CommonEnumerations {
     public static List<EnumOptionData> conditionType(final ConditionType[] conditionTypes, final String codePrefix) {
         final List<EnumOptionData> optionDatas = new ArrayList<>();
         for (final ConditionType conditionType : conditionTypes) {
-            if (!conditionType.isInvalid()) {
+            if (conditionType != ConditionType.INVALID) {
                 optionDatas.add(conditionType(conditionType, codePrefix));
             }
         }

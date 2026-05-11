@@ -23,11 +23,13 @@ import com.google.gson.JsonArray;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.validate.ValidationException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,6 +42,7 @@ import org.springframework.util.ObjectUtils;
 public class DataValidatorBuilder {
 
     public static final String VALID_INPUT_SEPARATOR = "_";
+    @Getter
     private final List<ApiParameterError> dataValidationErrors;
     private String resource;
     private String parameter;
@@ -76,10 +79,6 @@ public class DataValidatorBuilder {
 
     public boolean hasError() {
         return !dataValidationErrors.isEmpty();
-    }
-
-    public List<ApiParameterError> getDataValidationErrors() {
-        return dataValidationErrors;
     }
 
     public DataValidatorBuilder resource(final String resource) {
@@ -384,6 +383,31 @@ public class DataValidatorBuilder {
         return this;
     }
 
+    public DataValidatorBuilder percentage() {
+        if (this.value == null && this.ignoreNullValue) {
+            return this;
+        }
+
+        if (this.value != null) {
+            final BigDecimal number = new BigDecimal(this.value.toString());
+            if (number.compareTo(BigDecimal.ZERO) <= 0) {
+                String validationErrorCode = "validation.msg." + this.resource + "." + this.parameter + ".not.greater.than.zero";
+                String defaultEnglishMessage = "The parameter `" + this.parameter + "` must be greater than 0.";
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode, defaultEnglishMessage, this.parameter,
+                        number, 0);
+                this.dataValidationErrors.add(error);
+            }
+            if (number.compareTo(BigDecimal.valueOf(100.0)) > 0) {
+                String validationErrorCode = "validation.msg." + this.resource + "." + this.parameter + ".greater.than.one.hundred";
+                String defaultEnglishMessage = "The parameter `" + this.parameter + "` must be not greater than 100.";
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode, defaultEnglishMessage, this.parameter,
+                        number, 0);
+                this.dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
+
     /*
      * should be used with .notNull() before it
      */
@@ -629,7 +653,13 @@ public class DataValidatorBuilder {
             return this;
         }
 
-        final List<Object> list = (List<Object>) this.value;
+        if (!(this.value instanceof List<?> list)) {
+            String validationErrorCode = "validation.msg." + this.resource + "." + this.parameter + ".is.not.list";
+            String defaultEnglishMessage = "The parameter `" + this.parameter + "` should be a list.";
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode, defaultEnglishMessage, this.parameter);
+            this.dataValidationErrors.add(error);
+            return this;
+        }
         if (CollectionUtils.isEmpty(list)) {
             String validationErrorCode = "validation.msg." + this.resource + "." + this.parameter + ".cannot.be.empty";
             String defaultEnglishMessage = "The parameter `" + this.parameter + "` cannot be empty. You must select at least one.";
@@ -1083,6 +1113,36 @@ public class DataValidatorBuilder {
                     value, scale);
             this.dataValidationErrors.add(error);
             return this;
+        }
+        return this;
+    }
+
+    /**
+     * Validates that the value is a valid {@link DateTimeFormatter} pattern.
+     *
+     * <p>
+     * If the value is a non-blank string, this method attempts to create a {@link DateTimeFormatter} using
+     * {@link DateTimeFormatter#ofPattern(String)}. If the pattern is invalid, a validation error is added.
+     * </p>
+     *
+     * @return this {@code DataValidatorBuilder} for method chaining
+     */
+    public DataValidatorBuilder validDateTimeFormatPattern() {
+        if (this.value == null && this.ignoreNullValue) {
+            return this;
+        }
+
+        if (this.value != null && this.value instanceof String pattern && !StringUtils.isBlank(pattern)) {
+            try {
+                DateTimeFormatter.ofPattern(pattern);
+            } catch (final IllegalArgumentException e) {
+                String validationErrorCode = "validation.msg." + this.resource + "." + this.parameter + ".invalid.dateFormat.pattern";
+                String defaultEnglishMessage = "The parameter `" + this.parameter + "` has an invalid date/time pattern: `" + pattern
+                        + "`.";
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode, defaultEnglishMessage, this.parameter,
+                        pattern);
+                this.dataValidationErrors.add(error);
+            }
         }
         return this;
     }

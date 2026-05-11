@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
@@ -36,11 +37,14 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.serialization.JsonParserHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
+import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.infrastructure.event.business.domain.loan.reaging.LoanReAgeBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.reaging.LoanUndoReAgeBusinessEvent;
+import org.apache.fineract.infrastructure.event.business.domain.loan.transaction.LoanTransactionFlagsData;
 import org.apache.fineract.infrastructure.event.business.domain.loan.transaction.reaging.LoanReAgeTransactionBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.transaction.reaging.LoanUndoReAgeTransactionBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
@@ -55,7 +59,6 @@ import org.apache.fineract.portfolio.loanaccount.data.RepaymentScheduleRelatedLo
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepaymentPeriodData;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
@@ -66,17 +69,16 @@ import org.apache.fineract.portfolio.loanaccount.exception.LoanTransactionNotFou
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
 import org.apache.fineract.portfolio.loanaccount.repository.LoanCapitalizedIncomeBalanceRepository;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanChargeValidator;
-import org.apache.fineract.portfolio.loanaccount.service.InterestScheduleModelRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanRepaymentScheduleService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanScheduleService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.apache.fineract.portfolio.loanaccount.service.ReprocessLoanTransactionsService;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -89,7 +91,6 @@ public class LoanReAgingService {
     private final ExternalIdFactory externalIdFactory;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final LoanTransactionRepository loanTransactionRepository;
-    private final LoanRepaymentScheduleTransactionProcessorFactory loanRepaymentScheduleTransactionProcessorFactory;
     private final NoteRepository noteRepository;
     private final LoanChargeValidator loanChargeValidator;
     private final LoanUtilService loanUtilService;
@@ -99,15 +100,17 @@ public class LoanReAgingService {
     private final LoanRepaymentScheduleService loanRepaymentScheduleService;
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanCapitalizedIncomeBalanceRepository loanCapitalizedIncomeBalanceRepository;
-    private final InterestScheduleModelRepositoryWrapper modelRepository;
-    private final LoanTransactionService loanTransactionService;
 
     public CommandProcessingResult reAge(final Long loanId, final JsonCommand command) {
         final Loan loan = loanAssembler.assembleFrom(loanId);
         reAgingValidator.validateReAge(loan, command);
+        BigDecimal userProvidedTxnAmount = command.bigDecimalValueOfParameterNamed(LoanReAgingApiConstants.transactionAmountParamName);
+
+        final long termsBefore = loan.getTermsCount();
 
         final LoanTransaction reAgeTransaction = createReAgeTransaction(loan, command);
         processReAgeTransaction(loan, reAgeTransaction, true);
+        validateUserProvidedTransactionAmount(userProvidedTxnAmount, reAgeTransaction);
         loanTransactionRepository.saveAndFlush(reAgeTransaction);
         loan.updateLoanScheduleDependentDerivedFields();
 
@@ -116,9 +119,12 @@ public class LoanReAgingService {
         changes.put(LoanReAgingApiConstants.dateFormatParameterName, command.dateFormat());
         persistNote(loan, command, changes);
 
+        final long termsAfter = loan.getTermsCount();
+
         // delinquency recalculation will be triggered by the event in a decoupled way via a listener
         businessEventNotifierService.notifyPostBusinessEvent(new LoanReAgeBusinessEvent(loan));
-        businessEventNotifierService.notifyPostBusinessEvent(new LoanReAgeTransactionBusinessEvent(reAgeTransaction));
+        businessEventNotifierService.notifyPostBusinessEvent(
+                new LoanReAgeTransactionBusinessEvent(reAgeTransaction, new LoanTransactionFlagsData(termsAfter != termsBefore)));
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withEntityId(reAgeTransaction.getId()) //
@@ -127,10 +133,11 @@ public class LoanReAgingService {
                 .withClientId(loan.getClientId()) //
                 .withGroupId(loan.getGroupId()) //
                 .withLoanId(command.getLoanId()) //
-                .with(changes).build();
+                .with(changes) //
+                .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public LoanScheduleData previewReAge(final Long loanId, final String loanExternalId, final ReAgePreviewRequest reAgePreviewRequest) {
         final Loan loan = loanId != null ? loanAssembler.assembleFrom(loanId)
                 : loanAssembler.assembleFrom(ExternalIdFactory.produce(loanExternalId), false);
@@ -192,7 +199,8 @@ public class LoanReAgingService {
                 .withClientId(loan.getClientId()) //
                 .withGroupId(loan.getGroupId()) //
                 .withLoanId(command.getLoanId()) //
-                .with(changes).build();
+                .with(changes) //
+                .build();
     }
 
     private void processReAgeTransaction(final Loan loan, final LoanTransaction reAgeTransaction, final boolean withPostTransactionChecks) {
@@ -275,10 +283,10 @@ public class LoanReAgingService {
     }
 
     private void persistNote(Loan loan, JsonCommand command, Map<String, Object> changes) {
-        if (command.hasParameter("note")) {
-            final String note = command.stringValueOfParameterNamed("note");
+        if (command.hasParameter(LoanReAgingApiConstants.noteParamName)) {
+            final String note = command.stringValueOfParameterNamed(LoanReAgingApiConstants.noteParamName);
             final Note newNote = Note.loanNote(loan, note);
-            changes.put("note", note);
+            changes.put(LoanReAgingApiConstants.noteParamName, note);
 
             this.noteRepository.saveAndFlush(newNote);
         }
@@ -309,17 +317,29 @@ public class LoanReAgingService {
     private LoanReAgeParameter createReAgeParameterFromPreviewRequest(final LoanTransaction reAgeTransaction,
             final ReAgePreviewRequest reAgePreviewRequest) {
         final PeriodFrequencyType periodFrequencyType = PeriodFrequencyType.valueOf(reAgePreviewRequest.getFrequencyType());
-        final Locale locale = reAgePreviewRequest.getLocale() != null ? Locale.forLanguageTag(reAgePreviewRequest.getLocale())
-                : Locale.getDefault();
+        final Locale locale = Optional.ofNullable(reAgePreviewRequest.getLocale()).map(Locale::forLanguageTag).orElse(Locale.getDefault());
         final LocalDate startDate = JsonParserHelper.convertFrom(reAgePreviewRequest.getStartDate(), LoanReAgingApiConstants.startDate,
                 reAgePreviewRequest.getDateFormat(), locale);
         final Integer numberOfInstallments = reAgePreviewRequest.getNumberOfInstallments();
         final Integer periodFrequencyNumber = reAgePreviewRequest.getFrequencyNumber();
 
-        final LoanReAgeInterestHandlingType reAgeInterestHandlingType = LoanReAgeInterestHandlingType.DEFAULT;
+        final LoanReAgeInterestHandlingType reAgeInterestHandlingType = Optional.ofNullable(reAgePreviewRequest.getReAgeInterestHandling())
+                .map(LoanReAgeInterestHandlingType::valueOf).orElse(LoanReAgeInterestHandlingType.DEFAULT);
 
         return new LoanReAgeParameter(reAgeTransaction, periodFrequencyType, periodFrequencyNumber, startDate, numberOfInstallments,
                 reAgeInterestHandlingType, null);
     }
 
+    private void validateUserProvidedTransactionAmount(BigDecimal userProvidedTxnAmount, LoanTransaction reAgeTransaction) {
+        if (userProvidedTxnAmount != null) {
+            final BigDecimal calculatedReageTxnAmount = reAgeTransaction.getAmount();
+            if (!MathUtil.isEqualTo(calculatedReageTxnAmount, userProvidedTxnAmount)) {
+                String errorMessage = String.format(
+                        "User provided re-age amount (%s) is not matching with the calculated re-age amount (%s)", userProvidedTxnAmount,
+                        calculatedReageTxnAmount);
+                throw new GeneralPlatformDomainRuleException("error.msg.loan.reage.amount.not.match.with.calculated.reage.amount",
+                        errorMessage, userProvidedTxnAmount, calculatedReageTxnAmount);
+            }
+        }
+    }
 }

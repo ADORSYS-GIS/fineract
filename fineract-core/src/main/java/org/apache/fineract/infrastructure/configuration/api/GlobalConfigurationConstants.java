@@ -79,6 +79,15 @@ public final class GlobalConfigurationConstants {
     public static final String ASSET_OWNER_TRANSFER_OUTSTANDING_INTEREST_CALCULATION_STRATEGY = "outstanding-interest-calculation-strategy-for-external-asset-transfer";
     public static final String ALLOWED_LOAN_STATUSES_FOR_EXTERNAL_ASSET_TRANSFER = "allowed-loan-statuses-for-external-asset-transfer";
     public static final String ALLOWED_LOAN_STATUSES_OF_DELAYED_SETTLEMENT_FOR_EXTERNAL_ASSET_TRANSFER = "allowed-loan-statuses-of-delayed-settlement-for-external-asset-transfer";
+    public static final String MAX_LOGIN_RETRY_ATTEMPTS = "max-login-retry-attempts";
+    public static final String ENABLE_ORIGINATOR_CREATION_DURING_LOAN_APPLICATION = "enable-originator-creation-during-loan-application";
+    public static final String ENABLE_INSTANT_DELINQUENCY_CALCULATION = "enable-instant-delinquency-calculation";
+    public static final String PASSWORD_REUSE_CHECK_HISTORY_COUNT = "password-reuse-check-history-count";
+    public static final String FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT = "allow-force-withdrawal-on-savings-account";
+    public static final String FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT_LIMIT = "force-withdrawal-on-savings-account-limit";
+    public static final String FORCE_PASSWORD_RESET_ON_FIRST_LOGIN = "force-password-reset-on-first-login";
+    public static final String ALLOW_CASH_AND_NON_CASH_ACCRUAL = "allow-cash-and-non-cash-accrual";
+    public static final String BLOCK_TRANSACTIONS_ON_CLOSED_OVERPAID_LOANS = "block-transactions-on-closed-overpaid-loans";
 
     private GlobalConfigurationConstants() {}
 }

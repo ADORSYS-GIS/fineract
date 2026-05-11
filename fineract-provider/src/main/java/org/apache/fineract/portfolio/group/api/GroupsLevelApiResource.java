@@ -18,8 +18,8 @@
  */
 package org.apache.fineract.portfolio.group.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -41,8 +41,8 @@ public class GroupsLevelApiResource {
     private final GroupLevelReadPlatformService groupLevelReadPlatformService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "Retrieve All Group Levels", operationId = "retrieveAllGroupLevels")
     public List<GroupLevelData> retrieveAllGroups() {
 
         this.context.authenticatedUser().validateHasReadPermission("GROUP");

@@ -40,8 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.fineract.batch.command.internal.AdjustLoanTransactionCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateTransactionLoanCommandStrategy;
 import org.apache.fineract.batch.command.internal.GetDatatableEntryByAppTableIdAndDataTableIdCommandStrategy;
@@ -112,12 +112,18 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
         this.datatableHelper = new DatatableHelper(this.requestSpec, this.responseSpec);
         globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_AUTO_GENERATED_EXTERNAL_ID,
                 new PutGlobalConfigurationsRequest().enabled(true));
+        globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                new PutGlobalConfigurationsRequest().enabled(false));
+
     }
 
     @AfterEach
     public void postActions() {
         globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_AUTO_GENERATED_EXTERNAL_ID,
                 new PutGlobalConfigurationsRequest().enabled(false));
+        globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ALLOW_CASH_AND_NON_CASH_ACCRUAL,
+                new PutGlobalConfigurationsRequest().enabled(true));
+
     }
 
     /**
@@ -413,7 +419,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = Long.valueOf(RandomStringUtils.randomNumeric(4));
+        final Long applyLoanRequestId = ThreadLocalRandom.current().nextLong(1000, 10_000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long createChargeRequestId = disburseLoanRequestId + 1;
@@ -474,7 +480,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = Long.valueOf(RandomStringUtils.randomNumeric(4));
+        final Long applyLoanRequestId = ThreadLocalRandom.current().nextLong(1000, 10_000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long createChargeRequestId = disburseLoanRequestId + 1;
@@ -1637,7 +1643,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
 
         final FromJsonHelper jsonHelper = new FromJsonHelper();
         final JsonObject repayment = jsonHelper.parse(responses.get(5).getBody()).getAsJsonObject().get("transactions").getAsJsonArray()
-                .get(2).getAsJsonObject();
+                .get(1).getAsJsonObject();
         final JsonArray dateArray = repayment.get("reversedOnDate").getAsJsonArray();
         final LocalDate reversedOnDate = LocalDate.of(dateArray.get(0).getAsInt(), dateArray.get(1).getAsInt(),
                 dateArray.get(2).getAsInt());
@@ -1671,7 +1677,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
         final Integer productId = new LoanTransactionHelper(this.requestSpec, this.responseSpec).getLoanProductId(loanProductJSON);
 
         final LocalDate date = LocalDate.now(Utils.getZoneIdOfTenant());
-        final Long applyLoanRequestId = Long.valueOf(RandomStringUtils.randomNumeric(4));
+        final Long applyLoanRequestId = ThreadLocalRandom.current().nextLong(1000, 10_000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long getLoanBeforeTxnRequestId = disburseLoanRequestId + 1;
@@ -1739,7 +1745,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 this.responseSpec, BatchHelper.toJsonString(reversalAndGetBatchRequest));
 
         final JsonObject repayment = jsonHelper.parse(reversalResponses.get(1).getBody()).getAsJsonObject().get("transactions")
-                .getAsJsonArray().get(2).getAsJsonObject();
+                .getAsJsonArray().get(1).getAsJsonObject();
 
         final JsonArray dateArray = repayment.get("reversedOnDate").getAsJsonArray();
         final LocalDate reversedOnDate = LocalDate.of(dateArray.get(0).getAsInt(), dateArray.get(1).getAsInt(),
@@ -1814,7 +1820,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
 
         final FromJsonHelper jsonHelper = new FromJsonHelper();
         final JsonObject repayment = jsonHelper.parse(responses.get(5).getBody()).getAsJsonObject().get("transactions").getAsJsonArray()
-                .get(2).getAsJsonObject();
+                .get(1).getAsJsonObject();
 
         Assertions.assertEquals(HttpStatus.SC_OK, (long) responses.get(4).getStatusCode(),
                 "Verify Status Code 200 for repayment chargeback");
@@ -1886,7 +1892,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
 
         final FromJsonHelper jsonHelper = new FromJsonHelper();
         final JsonObject goodWillCredit = jsonHelper.parse(responses.get(5).getBody()).getAsJsonObject().get("transactions")
-                .getAsJsonArray().get(2).getAsJsonObject();
+                .getAsJsonArray().get(1).getAsJsonObject();
         final JsonArray dateArray = goodWillCredit.get("reversedOnDate").getAsJsonArray();
         final LocalDate reversedOnDate = LocalDate.of(dateArray.get(0).getAsInt(), dateArray.get(1).getAsInt(),
                 dateArray.get(2).getAsInt());
@@ -1972,9 +1978,9 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
 
         final FromJsonHelper jsonHelper = new FromJsonHelper();
         final JsonObject merchantIssuedRefund = jsonHelper.parse(responses.get(7).getBody()).getAsJsonObject().get("transactions")
-                .getAsJsonArray().get(2).getAsJsonObject();
+                .getAsJsonArray().get(1).getAsJsonObject();
         final JsonObject payoutRefund = jsonHelper.parse(responses.get(7).getBody()).getAsJsonObject().get("transactions").getAsJsonArray()
-                .get(3).getAsJsonObject();
+                .get(2).getAsJsonObject();
         final JsonArray merchantIssuedDateArray = merchantIssuedRefund.get("reversedOnDate").getAsJsonArray();
         final LocalDate merchantIssuedDate = LocalDate.of(merchantIssuedDateArray.get(0).getAsInt(),
                 merchantIssuedDateArray.get(1).getAsInt(), merchantIssuedDateArray.get(2).getAsInt());
@@ -2275,7 +2281,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = RandomUtils.nextLong(100, 1000);
+        final Long applyLoanRequestId = ThreadLocalRandom.current().nextLong(100, 1000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long updateLoanRequestId = disburseLoanRequestId + 1;
@@ -2332,7 +2338,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = RandomUtils.nextLong(100, 1000);
+        final long applyLoanRequestId = ThreadLocalRandom.current().nextLong(100, 1000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long updateLoanRequestId = disburseLoanRequestId + 1;
@@ -2399,7 +2405,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = RandomUtils.nextLong(100, 1000);
+        final long applyLoanRequestId = ThreadLocalRandom.current().nextLong(100, 1000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long getLoanRequestId = disburseLoanRequestId + 1;
@@ -2481,7 +2487,7 @@ public class BatchApiTest extends BaseLoanIntegrationTest {
                 .withInterestTypeAsDecliningBalance() //
                 .currencyDetails("0", "100").build(null);
 
-        final Long applyLoanRequestId = RandomUtils.nextLong(100, 1000);
+        final Long applyLoanRequestId = ThreadLocalRandom.current().nextLong(100, 1000);
         final Long approveLoanRequestId = applyLoanRequestId + 1;
         final Long disburseLoanRequestId = approveLoanRequestId + 1;
         final Long getLoanRequestId = disburseLoanRequestId + 1;

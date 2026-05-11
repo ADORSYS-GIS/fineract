@@ -80,6 +80,8 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionComparato
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionToRepaymentScheduleMapping;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
+import org.apache.fineract.portfolio.loanaccount.domain.reaging.LoanReAgeInterestHandlingType;
+import org.apache.fineract.portfolio.loanaccount.domain.reaging.LoanReAgeParameter;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
@@ -207,7 +209,8 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
         if (!accrualTransactions.isEmpty()) {
             if (loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()) {
                 reprocessPeriodicAccruals(loan, accrualTransactions, addEvent);
-            } else if (loan.isNoneOrCashOrUpfrontAccrualAccountingEnabledOnLoanProduct()) {
+            } else if (configurationDomainService.isAllowCashAndNonCashAccrual() ? !loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()
+                    : loan.isUpfrontAccrualAccountingEnabledOnLoanProduct()) {
                 reprocessNonPeriodicAccruals(loan, accrualTransactions, addEvent);
             }
         }
@@ -468,20 +471,36 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
     private void addInterestAccrual(@NonNull final Loan loan, @NonNull final LocalDate tillDate,
             final LoanScheduleGenerator scheduleGenerator, @NonNull final LoanRepaymentScheduleInstallment installment,
             @NonNull final AccrualPeriodsData accrualPeriods) {
-        if (installment.isAdditional() || installment.isReAged()) {
+        // No interest, no need for calculations
+        if (!loan.isInterestBearing()) {
+            return;
+        }
+        final LoanTransaction reAgeTransaction = loan.findReAgeTransaction();
+        final LoanReAgeParameter loanReAgeParameter = reAgeTransaction != null ? reAgeTransaction.getLoanReAgeParameter() : null;
+
+        if (installment.isAdditional() || (installment.isReAged() && loanReAgeParameter != null
+                && !(LoanReAgeInterestHandlingType.EQUAL_AMORTIZATION_FULL_INTEREST.equals(loanReAgeParameter.getInterestHandlingType())
+                        || LoanReAgeInterestHandlingType.EQUAL_AMORTIZATION_PAYABLE_INTEREST
+                                .equals(loanReAgeParameter.getInterestHandlingType())
+                        || LoanReAgeInterestHandlingType.DEFAULT.equals(loanReAgeParameter.getInterestHandlingType())))) {
             return;
         }
         final AccrualPeriodData period = accrualPeriods.getPeriodByInstallmentNumber(installment.getInstallmentNumber());
         final MonetaryCurrency currency = accrualPeriods.getCurrency();
         Money interest = null;
-        final boolean isPastPeriod = isAfterPeriod(tillDate, installment);
-        final boolean isInPeriod = isInPeriod(tillDate, installment, false);
+        LocalDate effectiveDate = tillDate;
+        if (loan.isClosed() && loan.getClosedOnDate() != null && DateUtils.isBefore(loan.getClosedOnDate(), tillDate)) {
+            effectiveDate = loan.getClosedOnDate();
+        } else if (loanBalanceService.isOverPaid(loan) && loan.getOverpaidOnDate() != null
+                && DateUtils.isBefore(loan.getOverpaidOnDate(), tillDate)) {
+            effectiveDate = loan.getOverpaidOnDate();
+        }
+        final boolean isPastPeriod = isAfterPeriod(effectiveDate, installment);
+        final boolean isInPeriod = isInPeriod(effectiveDate, installment, false);
         if (isPastPeriod || loan.isClosed() || loanBalanceService.isOverPaid(loan)) {
             interest = installment.getInterestCharged(currency).minus(installment.getCreditedInterest());
-        } else {
-            if (isInPeriod) { // first period first day is not accrued
-                interest = scheduleGenerator.getPeriodInterestTillDate(installment, tillDate);
-            }
+        } else if (isInPeriod) {
+            interest = scheduleGenerator.getPeriodInterestTillDate(installment, effectiveDate);
         }
         period.setInterestAmount(interest);
         Money accruable = null;
@@ -511,7 +530,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
         Predicate<LoanTransaction> transactionPredicate = t -> !t.isReversed() && t.isInterestWaiver()
                 && !DateUtils.isAfter(t.getTransactionDate(), tillDate);
         return installment.getLoanTransactionToRepaymentScheduleMappings().stream()
-                .filter(tm -> transactionPredicate.test(tm.getLoanTransaction()))
+                .filter(tm -> tm.getLoanTransaction() != null && transactionPredicate.test(tm.getLoanTransaction()))
                 .map(LoanTransactionToRepaymentScheduleMapping::getInterestPortion).reduce(BigDecimal.ZERO, MathUtil::add);
     }
 
@@ -621,7 +640,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
             @NonNull final LocalDate tillDate) {
         return loanChargePaidBy.stream().filter(pb -> {
             final LoanTransaction t = pb.getLoanTransaction();
-            return !t.isReversed() && t.isWaiveCharge() && !DateUtils.isAfter(t.getTransactionDate(), tillDate);
+            return t != null && !t.isReversed() && t.isWaiveCharge() && !DateUtils.isAfter(t.getTransactionDate(), tillDate);
         }).map(LoanChargePaidBy::getAmount).reduce(BigDecimal.ZERO, MathUtil::add);
     }
 

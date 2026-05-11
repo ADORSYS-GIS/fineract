@@ -20,6 +20,8 @@ package org.apache.fineract.portfolio.delinquency.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -47,6 +49,10 @@ public class DelinquencyBucket extends AbstractAuditableWithUTCDateTimeCustom<Lo
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "m_delinquency_bucket_mappings", joinColumns = @JoinColumn(name = "delinquency_bucket_id"), inverseJoinColumns = @JoinColumn(name = "delinquency_range_id"))
     private List<DelinquencyRange> ranges;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bucket_type")
+    private DelinquencyBucketType bucketType;
 
     @Version
     private Long version;

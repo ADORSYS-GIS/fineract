@@ -25,6 +25,7 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_METHOD_NOT_ALLOWED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_NOT_IMPLEMENTED;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
@@ -139,13 +140,23 @@ public class ApiGlobalErrorResponse {
                 "Errors contain reason for domain rule violation.", errors);
     }
 
+    public static ApiGlobalErrorResponse notImplemented(final String globalisationMessageCode, final String defaultUserMessage,
+            final Object... defaultUserMessageArgs) {
+        final List<ApiParameterError> errors = new ArrayList<>();
+        errors.add(ApiParameterError.generalError(globalisationMessageCode, defaultUserMessage, defaultUserMessageArgs));
+
+        return create(SC_NOT_IMPLEMENTED, "validation.msg.not.implemented", "Request was understood but not implemented.",
+                "Errors contain reason for not implemented violation.", errors);
+    }
+
     public static ApiGlobalErrorResponse dataIntegrityError(final String globalisationMessageCode, final String defaultUserMessage,
             final String parameterName, final Object... defaultUserMessageArgs) {
         final List<ApiParameterError> errors = new ArrayList<>();
-        errors.add(ApiParameterError.parameterError(globalisationMessageCode, defaultUserMessage, parameterName, defaultUserMessageArgs));
+        final String developerMessage = "The request caused a data integrity issue to be fired by the database.";
+        errors.add(ApiParameterError.parameterError(globalisationMessageCode, developerMessage, defaultUserMessage, parameterName,
+                defaultUserMessageArgs));
 
-        return create(SC_FORBIDDEN, globalisationMessageCode, "The request caused a data integrity issue to be fired by the database.",
-                defaultUserMessage, errors);
+        return create(SC_FORBIDDEN, globalisationMessageCode, developerMessage, defaultUserMessage, errors);
     }
 
     public static ApiGlobalErrorResponse notFound(final String globalisationMessageCode, final String defaultUserMessage,

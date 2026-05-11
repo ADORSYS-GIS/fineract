@@ -18,15 +18,14 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.api;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -58,31 +57,25 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RunreportsApiResource {
 
-    public static final String IS_SELF_SERVICE_USER_REPORT_PARAMETER = "isSelfServiceUserReport";
-
     private final PlatformSecurityContext context;
     private final ReadReportingService readExtraDataAndReportingService;
     private final ReportingProcessServiceProvider reportingProcessServiceProvider;
 
     @GET
     @Path("/availableExports/{reportName}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Return all available export types for the specific report", description = "Returns the list of all available export types for a given report.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReportExportType.class)))),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid report name or parameters"),
-            @ApiResponse(responseCode = "500", description = "Internal Server Error") })
+    @Operation(summary = "Return all available export types for the specific report", operationId = "retrieveAllAvailableExports", description = "Returns the list of all available export types for a given report.")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReportExportType.class))))
+    @ApiResponse(responseCode = "400", description = "Bad Request - Invalid report name or parameters")
+    @ApiResponse(responseCode = "500", description = "Internal Server Error")
     public Response retrieveAllAvailableExports(
             @PathParam("reportName") @Parameter(description = "Name of the report to get available export types for", example = "Client Listing", required = true) final String reportName,
-            @Context final UriInfo uriInfo,
-            @DefaultValue("false") @QueryParam(IS_SELF_SERVICE_USER_REPORT_PARAMETER) @Parameter(description = "Indicates if this is a self-service user report", example = "false") final boolean isSelfServiceUserReport) {
-
+            @Context final UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParams = new MultivaluedStringMap();
         queryParams.putAll(uriInfo.getQueryParameters());
 
         final boolean parameterType = ApiParameterHelper.parameterType(queryParams);
-        String reportType = readExtraDataAndReportingService.getReportType(reportName, isSelfServiceUserReport, parameterType);
+        String reportType = readExtraDataAndReportingService.getReportType(reportName, parameterType);
         ReportingProcessService reportingProcessService = reportingProcessServiceProvider.findReportingProcessService(reportType);
         if (reportingProcessService == null) {
             throw new PlatformServiceUnavailableException("err.msg.report.service.implementation.missing",
@@ -93,19 +86,16 @@ public class RunreportsApiResource {
 
     @GET
     @Path("{reportName}")
-    @Consumes({ MediaType.APPLICATION_JSON })
+    @Timed(value = "fineract.report.execution", description = "Time taken to execute reports", extraTags = { "component", "reporting" })
     @Produces({ MediaType.APPLICATION_JSON, "text/csv", "application/vnd.ms-excel", "application/pdf", "text/html" })
-    @Operation(summary = "Run a predefined report", description = ReportParameters.FULL_DESCRIPTION)
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK - Report executed successfully", content = @Content(schema = @Schema(implementation = RunreportsApiResourceSwagger.RunReportsResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Missing or invalid parameters"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - Not authorized to run this report"),
-            @ApiResponse(responseCode = "500", description = "Internal Server Error") })
+    @Operation(summary = "Run a predefined report", operationId = "runReport", description = ReportParameters.FULL_DESCRIPTION)
+    @ApiResponse(responseCode = "200", description = "OK - Report executed successfully", content = @Content(schema = @Schema(implementation = RunreportsApiResourceSwagger.RunReportsResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Bad Request - Missing or invalid parameters")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Not authorized to run this report")
+    @ApiResponse(responseCode = "500", description = "Internal Server Error")
     public Response runReport(
             @PathParam("reportName") @Parameter(description = "The name of the report to execute (e.g., 'Client Listing', 'Expected Payments By Date')", example = "Client Listing", required = true) final String reportName,
             @Context final UriInfo uriInfo,
-
-            @DefaultValue("false") @QueryParam(IS_SELF_SERVICE_USER_REPORT_PARAMETER) @Parameter(description = "Whether this is a self-service user report", example = "false") final boolean isSelfServiceUserReport,
 
             @DefaultValue("false") @QueryParam("exportCSV") @Parameter(description = "Set to true to export results as CSV", example = "false") final Boolean exportCSV,
 
@@ -125,15 +115,15 @@ public class RunreportsApiResource {
 
             @QueryParam("R_accountNo") @Parameter(description = "Account number filter", example = "00010001") final String rAccountNo) {
 
-        return processReportRequest(reportName, uriInfo, isSelfServiceUserReport);
+        return processReportRequest(reportName, uriInfo);
     }
 
-    public Response runReport(final String reportName, final UriInfo uriInfo, final boolean isSelfServiceUserReport) {
+    public Response runReport(final String reportName, final UriInfo uriInfo) {
 
-        return processReportRequest(reportName, uriInfo, isSelfServiceUserReport);
+        return processReportRequest(reportName, uriInfo);
     }
 
-    private Response processReportRequest(final String reportName, final UriInfo uriInfo, final boolean isSelfServiceUserReport) {
+    private Response processReportRequest(final String reportName, final UriInfo uriInfo) {
         MultivaluedMap<String, String> queryParams = new MultivaluedStringMap();
         queryParams.putAll(uriInfo.getQueryParameters());
 
@@ -141,10 +131,7 @@ public class RunreportsApiResource {
 
         checkUserPermissionForReport(reportName, parameterTypeValue);
 
-        // Pass through isSelfServiceUserReport so that ReportingProcessService implementations can use it
-        queryParams.putSingle(IS_SELF_SERVICE_USER_REPORT_PARAMETER, Boolean.toString(isSelfServiceUserReport));
-
-        String reportType = readExtraDataAndReportingService.getReportType(reportName, isSelfServiceUserReport, parameterTypeValue);
+        String reportType = readExtraDataAndReportingService.getReportType(reportName, parameterTypeValue);
         ReportingProcessService reportingProcessService = reportingProcessServiceProvider.findReportingProcessService(reportType);
         if (reportingProcessService == null) {
             throw new PlatformServiceUnavailableException("err.msg.report.service.implementation.missing",

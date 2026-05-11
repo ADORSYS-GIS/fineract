@@ -135,7 +135,7 @@ import org.springframework.util.CollectionUtils;
 @DiscriminatorColumn(name = "deposit_type_enum", discriminatorType = DiscriminatorType.INTEGER)
 @DiscriminatorValue("100")
 @SuppressWarnings({ "MemberName" })
-public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long> {
+public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long> implements IDepositAccountType {
 
     private static final Logger LOG = LoggerFactory.getLogger(SavingsAccount.class);
 
@@ -341,6 +341,9 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     @Column(name = "accrued_till_date")
     private LocalDate accruedTillDate;
 
+    @Column(name = "last_closed_business_date")
+    private LocalDate lastClosedBusinessDate;
+
     @Column(name = "total_savings_amount_on_hold", scale = 6, precision = 19, nullable = true)
     private BigDecimal savingsOnHoldAmount;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "account", orphanRemoval = true, fetch = FetchType.LAZY)
@@ -456,9 +459,10 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
      * update summary details after events/transactions on a {@link SavingsAccount}.
      */
     public void setHelpers(final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
-            final SavingsHelper savingsHelper) {
+            final SavingsHelper savingsHelper, final ConfigurationDomainService configurationDomainService) {
         this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
         this.savingsHelper = savingsHelper;
+        this.configurationDomainService = configurationDomainService;
     }
 
     public void setSavingsAccountTransactions(final List<SavingsAccountTransaction> savingsAccountTransactions) {
@@ -669,7 +673,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     private boolean isWithHoldTaxApplicableForInterestPosting() {
-        return this.withHoldTax() && this.depositAccountType().isSavingsDeposit();
+        return this.withHoldTax() && this.depositAccountType() == DepositAccountType.SAVINGS_DEPOSIT;
     }
 
     protected SavingsAccountTransaction findInterestPostingTransactionFor(final LocalDate postingDate) {
@@ -819,7 +823,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate, final boolean backdatedTxnsAllowedTill, final boolean postReversals) {
 
-        // no openingBalance concept supported yet but probably will to allow for migrations.
+        // no openingBalance concept supported yet but probably will to allow for
+        // migrations.
         // Check global configurations and 'pivot' date is null
         Money openingAccountBalance = backdatedTxnsAllowedTill ? Money.of(this.currency, this.summary.getRunningBalanceOnPivotDate())
                 : Money.zero(this.currency);
@@ -830,7 +835,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
         if (hasInterestCalculation() || hasOverdraftInterestCalculation()) {
             // 1. default to calculate interest based on entire history OR
-            // 2. determine latest 'posting period' and find interest credited to that period
+            // 2. determine latest 'posting period' and find interest credited to that
+            // period
 
             // A generate list of EndOfDayBalances (not including interest postings)
             final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType
@@ -1346,11 +1352,13 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
                 if (charge.isEnablePaymentType() && charge.isEnableFreeWithdrawal()) { // discount transaction to
                                                                                        // specific paymentType
-                    if (paymentDetail.getPaymentType().getName().equals(charge.getCharge().getPaymentType().getName())) {
+                    if (paymentDetail != null && paymentDetail.getPaymentType() != null
+                            && paymentDetail.getPaymentType().getName().equals(charge.getCharge().getPaymentType().getName())) {
                         resetFreeChargeDaysCount(charge, transactionAmount, transactionDate, refNo);
                     }
                 } else if (charge.isEnablePaymentType()) { // normal charge-transaction to specific paymentType
-                    if (paymentDetail.getPaymentType().getName().equals(charge.getCharge().getPaymentType().getName())) {
+                    if (paymentDetail != null && paymentDetail.getPaymentType() != null
+                            && paymentDetail.getPaymentType().getName().equals(charge.getCharge().getPaymentType().getName())) {
                         charge.updateWithdralFeeAmount(transactionAmount);
                         this.payCharge(charge, charge.getAmountOutstanding(this.getCurrency()), transactionDate, backdatedTxnsAllowedTill,
                                 refNo);
@@ -1455,7 +1463,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     public void validateAccountBalanceDoesNotBecomeNegative(final BigDecimal transactionAmount, final boolean isException,
-            final List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions, final boolean backdatedTxnsAllowedTill) {
+            final List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions, final boolean backdatedTxnsAllowedTill,
+            final boolean isForceWithdrawal) {
 
         List<SavingsAccountTransaction> transactionsSortedByDate = null;
 
@@ -1503,7 +1512,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             // deal with potential minRequiredBalance and
             // enforceMinRequiredBalance
             if (!isException && transaction.canProcessBalanceCheck() && !isOverdraft()) {
-                if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
+                if (runningBalance.minus(minRequiredBalance).isLessThanZero()
+                        && !isForceWithdrawalAllowed(isForceWithdrawal, runningBalance)) {
                     throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
                             transactionAmount);
                 }
@@ -1516,7 +1526,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         // interest posting
         // and should be checked after processing all transactions
         if (isOverdraft()) {
-            if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
+            if (runningBalance.minus(minRequiredBalance).isLessThanZero() && !isForceWithdrawalAllowed(isForceWithdrawal, runningBalance)) {
                 throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
             }
         }
@@ -1534,6 +1544,31 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                 }
             }
         }
+    }
+
+    /**
+     * Checks whether a force withdrawal is allowed based on the global configuration and the configured negative
+     * balance limit.
+     *
+     * @param isForceWithdrawal
+     *            whether the current transaction is a force withdrawal
+     * @param runningBalance
+     *            the current running balance of the account
+     * @return true if force withdrawal is enabled and the running balance is within the allowed negative limit
+     */
+    private boolean isForceWithdrawalAllowed(final boolean isForceWithdrawal, final Money runningBalance) {
+        if (!isForceWithdrawal || this.configurationDomainService == null) {
+            return false;
+        }
+        if (!this.configurationDomainService.isForceWithdrawalOnSavingsAccountEnabled()) {
+            return false;
+        }
+        Long limit = this.configurationDomainService.retrieveForceWithdrawalOnSavingsAccountLimit();
+        BigDecimal limitBd = BigDecimal.valueOf(limit);
+        if (limitBd.compareTo(BigDecimal.ZERO) > 0) {
+            limitBd = limitBd.negate();
+        }
+        return runningBalance.getAmount().compareTo(limitBd) >= 0;
     }
 
     public void validateAccountBalanceDoesNotBecomeNegative(final String transactionAction,
@@ -2080,7 +2115,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
         boolean matchesCurrentSavingsOfficer = false;
         if (this.savingsOfficer != null) {
-            matchesCurrentSavingsOfficer = this.savingsOfficer.identifiedBy(fromSavingsOfficer);
+            matchesCurrentSavingsOfficer = this.savingsOfficer.getId().equals(fromSavingsOfficer.getId());
         } else {
             matchesCurrentSavingsOfficer = fromSavingsOfficer == null;
         }
@@ -2105,7 +2140,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         } else if (DateUtils.isDateInTheFuture(assignmentDate)) {
             final String errorMessage = "The Savings Officer assignment date (" + assignmentDate + ") cannot be in the future.";
             throw new SavingsOfficerAssignmentDateException("cannot.be.a.future.date", errorMessage, assignmentDate);
-        } else if (latestHistoryRecord != null && this.savingsOfficer.identifiedBy(newSavingsOfficer)) {
+        } else if (latestHistoryRecord != null && this.savingsOfficer.getId().equals(newSavingsOfficer.getId())) {
             latestHistoryRecord.setStartDate(assignmentDate);
         } else if (latestHistoryRecord != null && latestHistoryRecord.matchesStartDateOf(assignmentDate)) {
             latestHistoryRecord.setSavingsOfficer(newSavingsOfficer);
@@ -2465,14 +2500,16 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     public void validateAccountBalanceDoesNotBecomeNegativeMinimal(final BigDecimal transactionAmount, final boolean isException) {
-        // final List<SavingsAccountTransaction> transactionsSortedByDate = retrieveListOfTransactions();
+        // final List<SavingsAccountTransaction> transactionsSortedByDate =
+        // retrieveListOfTransactions();
         Money runningBalance = this.summary.getAccountBalance(getCurrency());
         Money minRequiredBalance = minRequiredBalanceDerived(getCurrency());
         final BigDecimal withdrawalFee = null;
 
         // check last txn date
 
-        // In overdraft cases, minRequiredBalance can be in violation after interest posting
+        // In overdraft cases, minRequiredBalance can be in violation after interest
+        // posting
         // and should be checked after processing all transactions
         if (!isOverdraft()) {
             if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
@@ -2703,7 +2740,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             charge.updateToNextDueDateFrom(getActivationDate());
         }
 
-        // auto pay the activation time charges (No need of checking the pivot date config)
+        // auto pay the activation time charges (No need of checking the pivot date
+        // config)
         this.payActivationCharges(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, false);
         // TODO : AA add activation charges to actual changes list
     }
@@ -3140,8 +3178,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                 throw new PlatformApiDataValidationException(dataValidationErrors);
             }
 
-            if (!DateUtils.isEqual(annualFeeDueDate, transactionDate)) {
-                baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("invalid.date");
+            if (DateUtils.isBefore(transactionDate, annualFeeDueDate)) {
+                baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("transaction.before.dueDate");
                 throw new PlatformApiDataValidationException(dataValidationErrors);
             }
 
@@ -3268,10 +3306,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
     public LocalDate accountSubmittedOrActivationDate() {
         return getActivationDate() == null ? getSubmittedOnDate() : getActivationDate();
-    }
-
-    public DepositAccountType depositAccountType() {
-        return DepositAccountType.fromInt(depositType);
     }
 
     protected boolean isTransferInterestToOtherAccount() {
@@ -3825,10 +3859,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return this.minOverdraftForInterestCalculation;
     }
 
-    public Integer getDepositType() {
-        return this.depositType;
-    }
-
     public BigDecimal getMinRequiredBalance() {
         return this.minRequiredBalance;
     }
@@ -3861,6 +3891,14 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         this.accruedTillDate = accruedTillDate;
     }
 
+    public LocalDate getLastClosedBusinessDate() {
+        return this.lastClosedBusinessDate;
+    }
+
+    public void setLastClosedBusinessDate(LocalDate lastClosedBusinessDate) {
+        this.lastClosedBusinessDate = lastClosedBusinessDate;
+    }
+
     public List<SavingsAccountTransactionDetailsForPostingPeriod> toSavingsAccountTransactionDetailsForPostingPeriodList(
             List<SavingsAccountTransaction> transactions) {
         return transactions.stream()
@@ -3889,5 +3927,10 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return retreiveOrderedNonInterestPostingTransactions().stream()
                 .map(transaction -> transaction.toSavingsAccountTransactionDetailsForPostingPeriod(this.currency, this.allowOverdraft))
                 .toList();
+    }
+
+    @Override
+    public DepositAccountType depositAccountType() {
+        return DepositAccountType.fromInt(100);
     }
 }

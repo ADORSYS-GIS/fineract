@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
@@ -68,12 +69,14 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepayme
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistoryRepository;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.mapper.LoanTermVariationsMapper;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.RescheduleLoansApiConstants;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestDataValidator;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequestRepository;
+import org.apache.fineract.portfolio.loanaccount.rescheduleloan.domain.LoanTermVariationsRepository;
 import org.apache.fineract.portfolio.loanaccount.rescheduleloan.exception.LoanRescheduleRequestNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualsProcessingService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
@@ -117,6 +120,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
     private final LoanScheduleComponent loanSchedule;
     private final LoanTransactionRepository loanTransactionRepository;
     private final LoanLifecycleStateMachine loanLifecycleStateMachine;
+    private final LoanTermVariationsRepository loanTermVariationsRepository;
 
     /**
      * create a new instance of the LoanRescheduleRequest object from the JsonCommand object and persist
@@ -226,9 +230,14 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             this.loanRescheduleRequestRepository.saveAndFlush(loanRescheduleRequest);
 
-            return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequest.getId())
-                    .withLoanId(loan.getId()).withClientId(loan.getClientId()).withOfficeId(loan.getOfficeId())
-                    .withGroupId(loan.getGroupId()).build();
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(jsonCommand.commandId()) //
+                    .withEntityId(loanRescheduleRequest.getId()) //
+                    .withLoanId(loan.getId()) //
+                    .withClientId(loan.getClientId()) //
+                    .withOfficeId(loan.getOfficeId()) //
+                    .withGroupId(loan.getGroupId()) //
+                    .build();
         }
 
         catch (final JpaSystemException | DataIntegrityViolationException dve) {
@@ -246,34 +255,22 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, final Boolean isActive,
             final boolean isSpecificToInstallment, BigDecimal decimalValue, LocalDate dueDate, LocalDate endDate, BigDecimal emi) {
 
-        if (rescheduleFromDate != null && endDate != null && emi != null) {
-            LoanTermVariations parent = null;
-            final Integer termType = LoanTermVariationType.EMI_AMOUNT.getValue();
-            List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
-            for (LoanRepaymentScheduleInstallment installment : installments) {
-                if (!DateUtils.isBefore(installment.getDueDate(), rescheduleFromDate)
-                        && !DateUtils.isAfter(installment.getDueDate(), endDate)) {
-                    createLoanTermVariations(loanRescheduleRequest, termType, loan, installment.getDueDate(), installment.getDueDate(),
-                            loanRescheduleRequestToTermVariationMappings, isActive, true, emi, parent);
-                }
-                if (DateUtils.isAfter(installment.getDueDate(), endDate)) {
-                    break;
-                }
-            }
-        }
+        List<LoanTermVariations> pendingRescheduleVariations = new ArrayList<>();
 
         if (rescheduleFromDate != null && adjustedDueDate != null) {
             LoanTermVariations parent = null;
             final Integer termType = LoanTermVariationType.DUE_DATE.getValue();
-            createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate, adjustedDueDate,
-                    loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, decimalValue, parent);
+            LoanTermVariations loanTermVariation = createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate,
+                    adjustedDueDate, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, decimalValue, parent);
+            pendingRescheduleVariations.add(loanTermVariation);
         }
 
         if (rescheduleFromDate != null && interestRate != null) {
             LoanTermVariations parent = null;
             final Integer termType = LoanTermVariationType.INTEREST_RATE_FROM_INSTALLMENT.getValue();
-            createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate, dueDate,
-                    loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, interestRate, parent);
+            LoanTermVariations loanTermVariation = createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate,
+                    dueDate, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, interestRate, parent);
+            pendingRescheduleVariations.add(loanTermVariation);
         }
 
         if (rescheduleFromDate != null && graceOnPrincipal != null) {
@@ -282,30 +279,109 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             parent = createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate, dueDate,
                     loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, BigDecimal.valueOf(graceOnPrincipal),
                     parent);
+            pendingRescheduleVariations.add(parent);
 
             BigDecimal extraTermsBasedOnGracePeriods = BigDecimal.valueOf(graceOnPrincipal);
-            createLoanTermVariations(loanRescheduleRequest, LoanTermVariationType.EXTEND_REPAYMENT_PERIOD.getValue(), loan,
-                    rescheduleFromDate, dueDate, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment,
-                    extraTermsBasedOnGracePeriods, parent);
+            LoanTermVariations extraTermsVariation = createLoanTermVariations(loanRescheduleRequest,
+                    LoanTermVariationType.EXTEND_REPAYMENT_PERIOD.getValue(), loan, rescheduleFromDate, dueDate,
+                    loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, extraTermsBasedOnGracePeriods, parent);
+            pendingRescheduleVariations.add(extraTermsVariation);
 
         }
 
         if (rescheduleFromDate != null && graceOnInterest != null) {
             LoanTermVariations parent = null;
             final Integer termType = LoanTermVariationType.GRACE_ON_INTEREST.getValue();
-            createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate, dueDate,
-                    loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, BigDecimal.valueOf(graceOnInterest),
-                    parent);
+            LoanTermVariations loanTermVariation = createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate,
+                    dueDate, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment,
+                    BigDecimal.valueOf(graceOnInterest), parent);
+            pendingRescheduleVariations.add(loanTermVariation);
         }
 
         if (rescheduleFromDate != null && extraTerms != null) {
             LoanTermVariations parent = null;
             final Integer termType = LoanTermVariationType.EXTEND_REPAYMENT_PERIOD.getValue();
-            createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate, dueDate,
-                    loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment, BigDecimal.valueOf(extraTerms),
-                    parent);
+            LoanTermVariations loanTermVariation = createLoanTermVariations(loanRescheduleRequest, termType, loan, rescheduleFromDate,
+                    dueDate, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment,
+                    BigDecimal.valueOf(extraTerms), parent);
+            pendingRescheduleVariations.add(loanTermVariation);
+        }
+
+        if (rescheduleFromDate != null && endDate != null && emi != null) {
+            LoanTermVariations parent = null;
+            final Integer termType = LoanTermVariationType.EMI_AMOUNT.getValue();
+            int emiVariationsCreated = 0;
+            List<LocalDate> projectedInstallmentDueDates = getProjectedInstallmentDueDates(loan, rescheduleFromDate,
+                    pendingRescheduleVariations);
+            for (LocalDate installmentDueDate : projectedInstallmentDueDates) {
+                if (!DateUtils.isBefore(installmentDueDate, rescheduleFromDate) && !DateUtils.isAfter(installmentDueDate, endDate)) {
+                    createLoanTermVariations(loanRescheduleRequest, termType, loan, installmentDueDate, installmentDueDate,
+                            loanRescheduleRequestToTermVariationMappings, isActive, true, emi, parent);
+                    emiVariationsCreated++;
+                }
+                if (DateUtils.isAfter(installmentDueDate, endDate)) {
+                    break;
+                }
+            }
+            if (emiVariationsCreated == 0) {
+                List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                final DataValidatorBuilder dataValidatorBuilder = new DataValidatorBuilder(dataValidationErrors)
+                        .resource(RescheduleLoansApiConstants.ENTITY_NAME);
+                dataValidatorBuilder.reset().parameter(RescheduleLoansApiConstants.endDateParamName).failWithCode(
+                        "end.date.before.next.installment", "End date must be on or after the next projected installment date");
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
         }
         loanRescheduleRequest.updateLoanRescheduleRequestToTermVariationMappings(loanRescheduleRequestToTermVariationMappings);
+    }
+
+    private List<LocalDate> getProjectedInstallmentDueDates(final Loan loan, final LocalDate rescheduleFromDate,
+            final List<LoanTermVariations> pendingRescheduleVariations) {
+        ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, rescheduleFromDate);
+        final LoanApplicationTerms loanApplicationTerms = loanTermVariationsMapper.constructLoanApplicationTerms(scheduleGeneratorDTO,
+                loan);
+        List<LoanTermVariationsData> projectedVariations = buildProjectedLoanTermVariations(loanApplicationTerms,
+                pendingRescheduleVariations);
+        loanApplicationTerms.getLoanTermVariations().setExceptionData(projectedVariations);
+
+        final MathContext mathContext = MoneyHelper.getMathContext();
+        final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.loanRepaymentScheduleTransactionProcessorFactory
+                .determineProcessor(loan.transactionProcessingStrategy());
+        final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getLoanScheduleType(),
+                loanApplicationTerms.getInterestMethod());
+        final LoanScheduleDTO projectedLoanSchedule = loanScheduleGenerator.rescheduleNextInstallments(mathContext, loanApplicationTerms,
+                loan, loanApplicationTerms.getHolidayDetailDTO(), loanRepaymentScheduleTransactionProcessor, rescheduleFromDate);
+
+        Set<LocalDate> dueDates = new TreeSet<>();
+        if (projectedLoanSchedule.getInstallments() != null) {
+            for (LoanRepaymentScheduleInstallment installment : projectedLoanSchedule.getInstallments()) {
+                dueDates.add(installment.getDueDate());
+            }
+        } else {
+            for (LoanScheduleModelPeriod period : projectedLoanSchedule.getLoanScheduleModel().getPeriods()) {
+                if (period.isRepaymentPeriod() || period.isDownPaymentPeriod()) {
+                    dueDates.add(period.periodDueDate());
+                }
+            }
+        }
+        return new ArrayList<>(dueDates);
+    }
+
+    private List<LoanTermVariationsData> buildProjectedLoanTermVariations(final LoanApplicationTerms loanApplicationTerms,
+            final List<LoanTermVariations> pendingRescheduleVariations) {
+        final List<LoanTermVariationsData> projectedVariations = new ArrayList<>();
+
+        projectedVariations.addAll(loanApplicationTerms.getLoanTermVariations().getExceptionData());
+        projectedVariations.addAll(loanApplicationTerms.getLoanTermVariations().getDueDateVariation());
+        projectedVariations.addAll(loanApplicationTerms.getLoanTermVariations().getInterestRateChanges());
+        projectedVariations.addAll(loanApplicationTerms.getLoanTermVariations().getInterestRateFromInstallment());
+        projectedVariations.addAll(loanApplicationTerms.getLoanTermVariations().getInterestPauseVariations());
+
+        for (LoanTermVariations pendingVariation : pendingRescheduleVariations) {
+            projectedVariations.add(pendingVariation.toData());
+        }
+
+        return projectedVariations;
     }
 
     private LoanTermVariations createLoanTermVariations(LoanRescheduleRequest loanRescheduleRequest, final Integer termType,
@@ -399,6 +475,17 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                     hasInterestRateChange = true;
                 }
             }
+            if (hasInterestRateChange && loan.isProgressiveSchedule()) {
+                final LocalDate termApplicableFromDate = rescheduleFromDate;
+                LoanTermVariations previousLoanTermVariations = activeLoanTermVariations.stream()
+                        .filter(lt -> lt.getTermType().isInterestRateFromInstallment() //
+                                && lt.getTermApplicableFrom().equals(termApplicableFromDate))
+                        .findFirst().orElse(null);
+                if (previousLoanTermVariations != null) {
+                    previousLoanTermVariations.markAsInactive();
+                    loanTermVariationsRepository.save(previousLoanTermVariations);
+                }
+            }
             BigDecimal annualNominalInterestRate = null;
             List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
             loanTermVariationsMapper.constructLoanTermVariations(scheduleGeneratorDTO.getFloatingRateDTO(), annualNominalInterestRate,
@@ -431,17 +518,18 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             } else {
                 loanSchedule.updateLoanSchedule(loan, loanScheduleDTO.getLoanScheduleModel());
             }
-            loanAccrualsProcessingService.reprocessExistingAccruals(loan, true);
-            loanChargeService.recalculateAllCharges(loan);
-            reprocessLoanTransactionsService.reprocessTransactions(loan);
-
-            this.loanRepaymentScheduleHistoryRepository.saveAll(loanRepaymentScheduleHistoryList);
 
             loan.updateRescheduledByUser(appUser);
             loan.updateRescheduledOnDate(DateUtils.getBusinessLocalDate());
 
             // update the status of the request
             loanRescheduleRequest.approve(appUser, approvedOnDate);
+
+            loanAccrualsProcessingService.reprocessExistingAccruals(loan, true);
+            loanChargeService.recalculateAllCharges(loan);
+            reprocessLoanTransactionsService.reprocessTransactions(loan);
+
+            this.loanRepaymentScheduleHistoryRepository.saveAll(loanRepaymentScheduleHistoryList);
 
             Optional<LocalDate> lastTransactionDateForReprocessing = loanTransactionRepository.findLastTransactionDateForReprocessing(loan);
             if (lastTransactionDateForReprocessing.isPresent()) {
@@ -456,9 +544,15 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                 businessEventNotifierService.notifyPostBusinessEvent(new LoanBalanceChangedBusinessEvent(loan));
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
-                    .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes).withClientId(loan.getClientId())
-                    .withOfficeId(loan.getOfficeId()).withGroupId(loan.getGroupId()).build();
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(jsonCommand.commandId()) //
+                    .withEntityId(loanRescheduleRequestId) //
+                    .withLoanId(loanRescheduleRequest.getLoan().getId()) //
+                    .with(changes) //
+                    .withClientId(loan.getClientId()) //
+                    .withOfficeId(loan.getOfficeId()) //
+                    .withGroupId(loan.getGroupId()) //
+                    .build();
         }
 
         catch (final JpaSystemException | DataIntegrityViolationException dve) {
@@ -529,10 +623,15 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                 }
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
-                    .withLoanId(loanRescheduleRequest.getLoan().getId()).with(changes)
-                    .withClientId(loanRescheduleRequest.getLoan().getClientId()).withOfficeId(loanRescheduleRequest.getLoan().getOfficeId())
-                    .withGroupId(loanRescheduleRequest.getLoan().getGroupId()).build();
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(jsonCommand.commandId()) //
+                    .withEntityId(loanRescheduleRequestId) //
+                    .withLoanId(loanRescheduleRequest.getLoan().getId()) //
+                    .with(changes) //
+                    .withClientId(loanRescheduleRequest.getLoan().getClientId()) //
+                    .withOfficeId(loanRescheduleRequest.getLoan().getOfficeId()) //
+                    .withGroupId(loanRescheduleRequest.getLoan().getGroupId()) //
+                    .build();
         }
 
         catch (final JpaSystemException | DataIntegrityViolationException dve) {

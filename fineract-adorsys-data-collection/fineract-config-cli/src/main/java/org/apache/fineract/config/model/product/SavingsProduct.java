@@ -67,6 +67,20 @@ public class SavingsProduct {
   private String incomeFromRecoveryAccountCode;
   private Long escheatLiabilityAccountId;
 
+  // Payment channel to fund source mappings (per-product routing)
+  private List<PaymentChannelMapping> paymentChannelToFundSourceMappings = new ArrayList<>();
+
+  /**
+   * Maps a payment type to a fund source GL account for this savings product. When a
+   * deposit/withdrawal uses a specific payment type, Fineract routes the GL entry to the configured
+   * fund source account instead of the default.
+   */
+  @Data
+  public static class PaymentChannelMapping {
+    private String paymentTypeName;
+    private String fundSourceGlCode;
+  }
+
   /**
    * Captures unknown fields from YAML to warn about potential model gaps. This helps identify when
    * the YAML contains fields not mapped in the model class.

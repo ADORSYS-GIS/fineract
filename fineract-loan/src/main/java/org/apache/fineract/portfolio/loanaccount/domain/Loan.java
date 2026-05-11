@@ -427,6 +427,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     @Column(name = "enable_installment_level_delinquency", nullable = false)
     private boolean enableInstallmentLevelDelinquency = false;
 
+    @Getter
+    @Column(name = "allow_full_term_for_tranche", nullable = false)
+    private boolean allowFullTermForTranche = false;
+
     public static Loan newIndividualLoanApplication(final String accountNo, final Client client, final AccountType loanType,
             final LoanProduct loanProduct, final Fund fund, final Staff officer, final CodeValue loanPurpose,
             final LoanRepaymentScheduleTransactionProcessor transactionProcessingStrategy,
@@ -436,12 +440,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             final Boolean createStandingInstructionAtDisbursement, final Boolean isFloatingInterestRate,
             final BigDecimal interestRateDifferential, final List<Rate> rates, final BigDecimal fixedPrincipalPercentagePerInstallment,
             final ExternalId externalId, final LoanApplicationTerms loanApplicationTerms, final Boolean enableInstallmentLevelDelinquency,
-            final LocalDate submittedOnDate) {
+            final LocalDate submittedOnDate, final Boolean allowFullTermForTranche) {
         return new Loan(accountNo, client, null, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, null, loanCharges, collateral, null, fixedEmiAmount, disbursementDetails,
                 maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate, interestRateDifferential, rates,
                 fixedPrincipalPercentagePerInstallment, externalId, loanApplicationTerms, enableInstallmentLevelDelinquency,
-                submittedOnDate);
+                submittedOnDate, allowFullTermForTranche);
     }
 
     public static Loan newGroupLoanApplication(final String accountNo, final Group group, final AccountType loanType,
@@ -453,12 +457,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             final Boolean createStandingInstructionAtDisbursement, final Boolean isFloatingInterestRate,
             final BigDecimal interestRateDifferential, final List<Rate> rates, final BigDecimal fixedPrincipalPercentagePerInstallment,
             final ExternalId externalId, final LoanApplicationTerms loanApplicationTerms, final Boolean enableInstallmentLevelDelinquency,
-            final LocalDate submittedOnDate) {
+            final LocalDate submittedOnDate, final Boolean allowFullTermForTranche) {
         return new Loan(accountNo, null, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, null, loanCharges, null, syncDisbursementWithMeeting, fixedEmiAmount, disbursementDetails,
                 maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate, interestRateDifferential, rates,
                 fixedPrincipalPercentagePerInstallment, externalId, loanApplicationTerms, enableInstallmentLevelDelinquency,
-                submittedOnDate);
+                submittedOnDate, allowFullTermForTranche);
     }
 
     public static Loan newIndividualLoanApplicationFromGroup(final String accountNo, final Client client, final Group group,
@@ -470,12 +474,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             final Boolean createStandingInstructionAtDisbursement, final Boolean isFloatingInterestRate,
             final BigDecimal interestRateDifferential, final List<Rate> rates, final BigDecimal fixedPrincipalPercentagePerInstallment,
             final ExternalId externalId, final LoanApplicationTerms loanApplicationTerms, final Boolean enableInstallmentLevelDelinquency,
-            final LocalDate submittedOnDate) {
+            final LocalDate submittedOnDate, final Boolean allowFullTermForTranche) {
         return new Loan(accountNo, client, group, loanType, fund, officer, loanPurpose, transactionProcessingStrategy, loanProduct,
                 loanRepaymentScheduleDetail, null, loanCharges, null, syncDisbursementWithMeeting, fixedEmiAmount, disbursementDetails,
                 maxOutstandingLoanBalance, createStandingInstructionAtDisbursement, isFloatingInterestRate, interestRateDifferential, rates,
                 fixedPrincipalPercentagePerInstallment, externalId, loanApplicationTerms, enableInstallmentLevelDelinquency,
-                submittedOnDate);
+                submittedOnDate, allowFullTermForTranche);
     }
 
     protected Loan() {
@@ -491,7 +495,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             final Boolean createStandingInstructionAtDisbursement, final Boolean isFloatingInterestRate,
             final BigDecimal interestRateDifferential, final List<Rate> rates, final BigDecimal fixedPrincipalPercentagePerInstallment,
             final ExternalId externalId, final LoanApplicationTerms loanApplicationTerms, final Boolean enableInstallmentLevelDelinquency,
-            final LocalDate submittedOnDate) {
+            final LocalDate submittedOnDate, final Boolean allowFullTermForTranche) {
         this.loanRepaymentScheduleDetail = loanRepaymentScheduleDetail;
 
         this.isFloatingInterestRate = isFloatingInterestRate;
@@ -572,6 +576,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             this.loanInterestRecalculationDetails.updateLoan(this);
         }
         this.enableInstallmentLevelDelinquency = enableInstallmentLevelDelinquency;
+        this.allowFullTermForTranche = allowFullTermForTranche;
         this.getLoanProductRelatedDetail()
                 .setEnableAccrualActivityPosting(loanProduct.getLoanProductRelatedDetail().isEnableAccrualActivityPosting());
     }
@@ -809,7 +814,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         if (isMultiDisburmentLoan()) {
             for (LoanDisbursementDetails disbursementDetail : getDisbursementDetails()) {
                 if (disbursementDetail.actualDisbursementDate() != null) {
-                    principal = principal.add(disbursementDetail.principal());
+                    principal = principal.add(disbursementDetail.getPrincipal());
                 }
             }
             return principal;
@@ -994,7 +999,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         if (!details.isEmpty()) {
             principal = BigDecimal.ZERO;
             for (LoanDisbursementDetails disbursementDetails : details) {
-                principal = principal.add(disbursementDetails.principal());
+                principal = principal.add(disbursementDetails.getPrincipal());
             }
         }
         return principal;
@@ -1066,7 +1071,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     public boolean hasLoanOfficer(final Staff fromLoanOfficer) {
         if (this.loanOfficer != null) {
-            return this.loanOfficer.identifiedBy(fromLoanOfficer);
+            return this.loanOfficer.getId().equals(fromLoanOfficer.getId());
         } else {
             return fromLoanOfficer == null;
         }
@@ -1298,7 +1303,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     public LoanDisbursementDetails getDisbursementDetails(final LocalDate transactionDate, final BigDecimal transactionAmount) {
         for (LoanDisbursementDetails disbursementDetail : this.disbursementDetails) {
             if (!disbursementDetail.isReversed() && disbursementDetail.getDisbursementDate().equals(transactionDate)
-                    && (disbursementDetail.principal().compareTo(transactionAmount) == 0)) {
+                    && (disbursementDetail.getPrincipal().compareTo(transactionAmount) == 0)) {
                 return disbursementDetail;
             }
         }
@@ -1312,7 +1317,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
             Collection<LoanDisbursementDetails> loanDisburseDetails = this.getDisbursementDetails();
             for (LoanDisbursementDetails details : loanDisburseDetails) {
                 if (details.actualDisbursementDate() != null) {
-                    principalAmount = principalAmount.add(details.principal());
+                    principalAmount = principalAmount.add(details.getPrincipal());
                 }
             }
         } else if (isApproved()) {
@@ -1631,6 +1636,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         return this.loanTermVariations.stream().filter(LoanTermVariations::isActive).collect(Collectors.toList());
     }
 
+    public void setLoanTermVariations(List<LoanTermVariations> loanTermVariations) {
+        this.loanTermVariations = loanTermVariations;
+    }
+
     public boolean isTopup() {
         return this.isTopup;
     }
@@ -1682,7 +1691,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
     }
 
     public boolean hasInvalidLoanType() {
-        return getLoanType().isInvalid();
+        return getLoanType() == AccountType.INVALID;
     }
 
     public boolean isIndividualLoan() {
@@ -1759,6 +1768,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         return getLoanTransaction(e -> e.isNotReversed() && e.isContractTermination());
     }
 
+    public LoanTransaction findReAgeTransaction() {
+        return getLoanTransaction(LoanTransaction::isReAge);
+    }
+
     public void handleMaturityDateActivate() {
         if (this.expectedMaturityDate != null && !this.expectedMaturityDate.equals(this.actualMaturityDate)) {
             this.actualMaturityDate = this.expectedMaturityDate;
@@ -1781,6 +1794,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     public void updateEnableInstallmentLevelDelinquency(boolean enableInstallmentLevelDelinquency) {
         this.enableInstallmentLevelDelinquency = enableInstallmentLevelDelinquency;
+    }
+
+    public void updateAllowFullTermForTranche(boolean allowFullTermForTranche) {
+        this.allowFullTermForTranche = allowFullTermForTranche;
     }
 
     public void deductFromNetDisbursalAmount(final BigDecimal subtrahend) {
@@ -1819,19 +1836,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         return false;
     }
 
-    public boolean hasChargeOffTransaction() {
-        return getLoanTransactions().stream().anyMatch(LoanTransaction::isChargeOff);
-    }
-
-    public boolean hasAccelerateChargeOffStrategy() {
-        return LoanChargeOffBehaviour.ACCELERATE_MATURITY.equals(getLoanProductRelatedDetail().getChargeOffBehaviour());
-    }
-
     public boolean hasContractTerminationTransaction() {
         return getLoanTransactions().stream().anyMatch(t -> t.isContractTermination() && t.isNotReversed());
     }
 
-    public boolean hasReAgingTransaction() {
-        return getLoanTransactions().stream().anyMatch(t -> t.isReAge() && t.isNotReversed());
+    public long getTermsCount() {
+        return getRepaymentScheduleInstallments().stream().filter(i -> !i.isDownPayment() && !i.isAdditional()).count();
     }
+
 }

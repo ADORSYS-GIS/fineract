@@ -96,7 +96,7 @@ public interface LoanProductTemplates {
                         .repaymentEvery(true)//
                         .graceOnPrincipalAndInterestPayment(true)//
                         .graceOnArrearsAgeing(true))//
-                .allowPartialPeriodInterestCalcualtion(true)//
+                .allowPartialPeriodInterestCalculation(true)//
                 .maxTrancheCount(10)//
                 .outstandingLoanBalance(10000.0)//
                 .charges(Collections.emptyList())//
@@ -171,7 +171,7 @@ public interface LoanProductTemplates {
                 .amortizationType(AmortizationType.EQUAL_INSTALLMENTS)//
                 .interestType(InterestType.DECLINING_BALANCE)//
                 .interestCalculationPeriodType(InterestCalculationPeriodType.SAME_AS_REPAYMENT_PERIOD)//
-                .allowPartialPeriodInterestCalcualtion(false)//
+                .allowPartialPeriodInterestCalculation(false)//
                 .creditAllocation(List.of())//
                 .overdueDaysForNPA(179)//
                 .daysInMonthType(DaysInMonthType.DAYS_30)//
@@ -231,6 +231,18 @@ public interface LoanProductTemplates {
                 .enableInstallmentLevelDelinquency(false)//
                 .transactionProcessingStrategyCode(
                         LoanProductTestBuilder.DUE_PENALTY_FEE_INTEREST_PRINCIPAL_IN_ADVANCE_PRINCIPAL_PENALTY_FEE_INTEREST_STRATEGY);
+    }
+
+    default PostLoanProductsRequest fourInstallmentsCumulativeWithInterestRecalculation() {
+        return fourInstallmentsCumulativeTemplate()//
+                .loanScheduleType(LoanScheduleType.CUMULATIVE.toString())//
+                .isInterestRecalculationEnabled(true)//
+                .interestRecalculationCompoundingMethod(0)//
+                .rescheduleStrategyMethod(RescheduleStrategyMethod.REDUCE_EMI_AMOUNT)//
+                .recalculationRestFrequencyType(1)//
+                .recalculationRestFrequencyInterval(0)//
+                .preClosureInterestCalculationStrategy(1)//
+                .enableAccrualActivityPosting(true);
     }
 
     default PostLoanProductsRequest customizeProduct(PostLoanProductsRequest template,

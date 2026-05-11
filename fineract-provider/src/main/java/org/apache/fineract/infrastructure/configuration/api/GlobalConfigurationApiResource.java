@@ -24,7 +24,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -80,14 +79,12 @@ public class GlobalConfigurationApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Global Configuration | Retrieve Global Configuration for surveys", description = "Returns the list global enable/disable configurations.\n"
             + "\n" + "Example Requests:\n" + "\n" + "configurations\n\n" + "\n"
             + "Returns the list global enable/disable survey configurations.\n" + "\n" + "Example Requests:\n" + "\n"
             + "configurations/survey")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of example \\n response \\nsurveys response   \\ngiven below", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.GetGlobalConfigurationsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "List of example \\n response \\nsurveys response   \\ngiven below", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.GetGlobalConfigurationsResponse.class)))
     public String retrieveConfiguration(@Context final UriInfo uriInfo,
             @DefaultValue("false") @QueryParam("survey") @Parameter(description = "survey") final boolean survey) {
 
@@ -101,12 +98,10 @@ public class GlobalConfigurationApiResource {
 
     @GET
     @Path("{configId}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve Global Configuration", description = "Returns a global enable/disable configurations.\n" + "\n"
-            + "Example Requests:\n" + "\n" + "configurations/1")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationPropertyData.class))) })
+    @Operation(summary = "Retrieve Global Configuration", operationId = "retrieveOneGlobalConfiguration", description = "Returns a global enable/disable configurations.\n"
+            + "\n" + "Example Requests:\n" + "\n" + "configurations/1")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationPropertyData.class)))
     public String retrieveOne(@PathParam("configId") @Parameter(description = "configId") final Long configId,
             @Context final UriInfo uriInfo) {
 
@@ -120,12 +115,10 @@ public class GlobalConfigurationApiResource {
 
     @GET
     @Path("name/{name}")
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Global Configuration", description = "Returns a global enable/disable configuration.\n" + "\n"
             + "Example Requests:\n" + "\n" + "configurations/name/enable-address")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationPropertyData.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationPropertyData.class)))
     public String retrieveOneByName(@PathParam("name") @Parameter(description = "name") final String name, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
@@ -140,10 +133,9 @@ public class GlobalConfigurationApiResource {
     @Path("{configId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Update Global Configuration", description = "Updates an enable/disable global configuration item.")
+    @Operation(summary = "Update Global Configuration", operationId = "updateGlobalConfiguration", description = "Updates an enable/disable global configuration item.")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsResponse.class)))
     public String updateConfiguration(@PathParam("configId") @Parameter(description = "configId") final Long configId,
             @Parameter(hidden = true) final String apiRequestBodyAsJson) {
 
@@ -163,8 +155,7 @@ public class GlobalConfigurationApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Update Global Configuration by name", description = "Updates an enable/disable global configuration item by name")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsRequest.class)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = GlobalConfigurationApiResourceSwagger.PutGlobalConfigurationsResponse.class)))
     public String updateConfigurationByName(@PathParam("configName") @Parameter(description = "configName") final String configName,
             @Parameter(hidden = true) final String apiRequestBodyAsJson) {
 

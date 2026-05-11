@@ -27,6 +27,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanApprovedAmountChangedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
+import org.apache.fineract.portfolio.common.service.Validator;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanApprovedAmountHistory;
@@ -38,6 +39,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedAmountWritePlatformService {
+
+    private static final String ERROR_CODE_MUST_BE_DIFFERENT_FROM_CURRENT_APPROVED_AMOUNT = "must.be.different.from.current.approved.amount";
 
     private final LoanAssembler loanAssembler;
     private final LoanApprovedAmountValidator loanApprovedAmountValidator;
@@ -58,6 +61,8 @@ public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedA
 
         BigDecimal newApprovedAmount = command.bigDecimalValueOfParameterNamed(LoanApiConstants.amountParameterName);
 
+        validateNewApprovedAmountDiffersFromCurrent(loan, newApprovedAmount);
+
         LoanApprovedAmountHistory loanApprovedAmountHistory = new LoanApprovedAmountHistory(loan.getId(), newApprovedAmount,
                 loan.getApprovedPrincipal());
 
@@ -65,7 +70,8 @@ public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedA
         loanApprovedAmountHistoryRepository.saveAndFlush(loanApprovedAmountHistory);
 
         businessEventNotifierService.notifyPostBusinessEvent(new LoanApprovedAmountChangedBusinessEvent(loan));
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
                 .withEntityExternalId(loan.getExternalId()) //
                 .withOfficeId(loan.getOfficeId()) //
@@ -88,7 +94,7 @@ public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedA
         changes.put("oldApprovedAmount", loan.getApprovedPrincipal());
 
         BigDecimal expectedDisbursementAmount = loan.getDisbursementDetails().stream().filter(t -> t.actualDisbursementDate() == null)
-                .map(LoanDisbursementDetails::principal).reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(LoanDisbursementDetails::getPrincipal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal oldAvailableDisbursement = loan.getApprovedPrincipal().subtract(loan.getSummary().getTotalPrincipal())
                 .subtract(expectedDisbursementAmount);
@@ -106,7 +112,8 @@ public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedA
         loanApprovedAmountHistoryRepository.saveAndFlush(loanApprovedAmountHistory);
 
         businessEventNotifierService.notifyPostBusinessEvent(new LoanApprovedAmountChangedBusinessEvent(loan));
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
                 .withEntityId(loan.getId()) //
                 .withEntityExternalId(loan.getExternalId()) //
                 .withOfficeId(loan.getOfficeId()) //
@@ -114,5 +121,13 @@ public class LoanApprovedAmountWritePlatformServiceImpl implements LoanApprovedA
                 .withGroupId(loan.getGroupId()) //
                 .with(changes) //
                 .build();
+    }
+
+    private static void validateNewApprovedAmountDiffersFromCurrent(final Loan loan, final BigDecimal newApprovedAmount) {
+        if (newApprovedAmount.compareTo(loan.getApprovedPrincipal()) == 0) {
+            Validator.validateOrThrowDomainViolation("loan.approved.amount",
+                    baseDataValidator -> baseDataValidator.reset().parameter(LoanApiConstants.amountParameterName).value(newApprovedAmount)
+                            .failWithCode(ERROR_CODE_MUST_BE_DIFFERENT_FROM_CURRENT_APPROVED_AMOUNT));
+        }
     }
 }

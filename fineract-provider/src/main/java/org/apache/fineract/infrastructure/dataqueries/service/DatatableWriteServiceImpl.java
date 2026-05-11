@@ -64,11 +64,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.infrastructure.codes.service.CodeReadPlatformService;
@@ -152,9 +152,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
     @Override
     public void registerDatatable(final String dataTableName, final String entityName, final String entitySubType) {
         Integer category = DataTableApiConstant.CATEGORY_DEFAULT;
-
-        final String permissionSql = this.getPermissionSql(dataTableName);
-        this.registerDataTable(entityName, dataTableName, entitySubType, category, permissionSql);
+        this.registerDataTable(entityName, dataTableName, entitySubType, category);
     }
 
     @Transactional
@@ -167,13 +165,13 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         Integer category = this.getCategory(command);
 
         this.dataTableValidator.validateDataTableRegistration(command.json());
-        final String permissionSql = this.getPermissionSql(dataTableName);
-        this.registerDataTable(applicationTableName, dataTableName, entitySubType, category, permissionSql);
+        this.registerDataTable(applicationTableName, dataTableName, entitySubType, category);
     }
 
     @Transactional
     @Override
     public void registerDatatable(final JsonCommand command, final String permissionSql) {
+        // permissionSql parameter is kept for interface compatibility but ignored in favor of parameterized queries
         final String applicationTableName = datatableReadService.getTableName(command.getUrl());
         final String dataTableName = datatableReadService.getDataTableName(command.getUrl());
         final String entitySubType = command.stringValueOfParameterNamed(ENTITY_SUB_TYPE);
@@ -182,30 +180,23 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
 
         this.dataTableValidator.validateDataTableRegistration(command.json());
 
-        this.registerDataTable(applicationTableName, dataTableName, entitySubType, category, permissionSql);
+        this.registerDataTable(applicationTableName, dataTableName, entitySubType, category);
     }
 
     @Transactional
     @Override
     public void deregisterDatatable(final String datatable) {
         datatableUtil.validateDatatableRegistered(datatable);
-        final String permissionList = "('CREATE_" + datatable + "', 'CREATE_" + datatable + "_CHECKER', 'READ_" + datatable + "', 'UPDATE_"
-                + datatable + "', 'UPDATE_" + datatable + "_CHECKER', 'DELETE_" + datatable + "', 'DELETE_" + datatable + "_CHECKER')";
+        final Object[] permissionCodes = { "CREATE_" + datatable, "CREATE_" + datatable + "_CHECKER", "READ_" + datatable,
+                "UPDATE_" + datatable, "UPDATE_" + datatable + "_CHECKER", "DELETE_" + datatable, "DELETE_" + datatable + "_CHECKER" };
+        final String placeholders = "(?, ?, ?, ?, ?, ?, ?)";
 
-        final String deleteRolePermissionsSql = "delete from m_role_permission where m_role_permission.permission_id in (select id from m_permission where code in "
-                + permissionList + ")";
-
-        final String deletePermissionsSql = "delete from m_permission where code in " + permissionList;
-        final String deleteRegisteredDatatableSql = "delete from x_registered_table where registered_table_name = '" + datatable + "'";
-        final String deleteFromConfigurationSql = "delete from c_configuration where name ='" + datatable + "'";
-
-        String[] sqlArray = new String[4];
-        sqlArray[0] = deleteRolePermissionsSql;
-        sqlArray[1] = deletePermissionsSql;
-        sqlArray[2] = deleteRegisteredDatatableSql;
-        sqlArray[3] = deleteFromConfigurationSql;
-
-        this.jdbcTemplate.batchUpdate(sqlArray); // NOSONAR
+        this.jdbcTemplate
+                .update("DELETE FROM m_role_permission WHERE m_role_permission.permission_id IN (SELECT id FROM m_permission WHERE code IN "
+                        + placeholders + ")", permissionCodes);
+        this.jdbcTemplate.update("DELETE FROM m_permission WHERE code IN " + placeholders, permissionCodes);
+        this.jdbcTemplate.update("DELETE FROM x_registered_table WHERE registered_table_name = ?", datatable);
+        this.jdbcTemplate.update("DELETE FROM c_configuration WHERE name = ?", datatable);
     }
 
     @Transactional
@@ -286,7 +277,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
             sqlBuilder.append(constrainBuilder);
             sqlBuilder.append(")");
             if (databaseTypeResolver.isMySQL()) {
-                sqlBuilder.append(" ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4;");
+                sqlBuilder.append(" ENGINE=InnoDB DEFAULT CHARSET=UTF8MB4 COLLATE=UTF8MB4_UNICODE_CI;");
             }
             log.debug("SQL:: {}", sqlBuilder);
 
@@ -320,7 +311,10 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
             baseDataValidator.throwValidationErrors();
         }
 
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withResourceIdAsString(datatableName).build();
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withResourceIdAsString(datatableName) //
+                .build();
     }
 
     @Transactional
@@ -605,8 +599,8 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         return deleteDatatableEntries(dataTableName, appTableId, datatableId, command);
     }
 
-    private void registerDataTable(final String entityName, final String dataTableName, final String entitySubType, final Integer category,
-            final String permissionsSql) {
+    private void registerDataTable(final String entityName, final String dataTableName, final String entitySubType,
+            final Integer category) {
         datatableUtil.resolveEntity(entityName);
         datatableUtil.validateDatatableName(dataTableName);
         validateDataTableExists(dataTableName);
@@ -622,7 +616,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
 
         try {
             this.namedParameterJdbcTemplate.update(registerDatatableSql, paramMap);
-            this.jdbcTemplate.update(permissionsSql);
+            this.registerPermissions(dataTableName, true);
 
             // add the registered table to the config if it is a ppi
             if (category.equals(DataTableApiConstant.CATEGORY_PPI)) {
@@ -638,24 +632,21 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         }
     }
 
-    private String getPermissionSql(final String dataTableName) {
-        final String createPermission = "'CREATE_" + dataTableName + "'";
-        final String createPermissionChecker = "'CREATE_" + dataTableName + "_CHECKER'";
-        final String readPermission = "'READ_" + dataTableName + "'";
-        final String updatePermission = "'UPDATE_" + dataTableName + "'";
-        final String updatePermissionChecker = "'UPDATE_" + dataTableName + "_CHECKER'";
-        final String deletePermission = "'DELETE_" + dataTableName + "'";
-        final String deletePermissionChecker = "'DELETE_" + dataTableName + "_CHECKER'";
+    private void registerPermissions(final String dataTableName, final boolean canMakerChecker) {
         final List<String> escapedColumns = Stream.of("grouping", "code", "action_name", "entity_name", "can_maker_checker")
                 .map(sqlGenerator::escape).toList();
         final String columns = String.join(", ", escapedColumns);
-
-        return "insert into m_permission (" + columns + ") values " + "('datatable', " + createPermission + ", 'CREATE', '" + dataTableName
-                + "', true)," + "('datatable', " + createPermissionChecker + ", 'CREATE', '" + dataTableName + "', false),"
-                + "('datatable', " + readPermission + ", 'READ', '" + dataTableName + "', false)," + "('datatable', " + updatePermission
-                + ", 'UPDATE', '" + dataTableName + "', true)," + "('datatable', " + updatePermissionChecker + ", 'UPDATE', '"
-                + dataTableName + "', false)," + "('datatable', " + deletePermission + ", 'DELETE', '" + dataTableName + "', true),"
-                + "('datatable', " + deletePermissionChecker + ", 'DELETE', '" + dataTableName + "', false)";
+        final String sql = "INSERT INTO m_permission (" + columns + ") VALUES ('datatable', ?, ?, ?, ?)";
+        final Object[][] permissions = { { "CREATE_" + dataTableName, "CREATE", dataTableName, canMakerChecker },
+                { "CREATE_" + dataTableName + "_CHECKER", "CREATE", dataTableName, false },
+                { "READ_" + dataTableName, "READ", dataTableName, false },
+                { "UPDATE_" + dataTableName, "UPDATE", dataTableName, canMakerChecker },
+                { "UPDATE_" + dataTableName + "_CHECKER", "UPDATE", dataTableName, false },
+                { "DELETE_" + dataTableName, "DELETE", dataTableName, canMakerChecker },
+                { "DELETE_" + dataTableName + "_CHECKER", "DELETE", dataTableName, false }, };
+        for (Object[] params : permissions) {
+            this.jdbcTemplate.update(sql, params);
+        }
     }
 
     private Integer getCategory(final JsonCommand command) {
@@ -689,7 +680,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
 
         if (StringUtils.isNotBlank(code)) {
             if (isConstraintApproach) {
-                codeMappings.put(dataTableNameAlias + "_" + name, this.codeReadPlatformService.retriveCode(code).getId());
+                codeMappings.put(dataTableNameAlias + "_" + name, this.codeReadPlatformService.retrieveCode(code).getId());
                 String fkName = "fk_" + dataTableNameAlias + "_" + name;
                 constrainBuilder.append(", CONSTRAINT ").append(sqlGenerator.escape(fkName)).append(" ").append("FOREIGN KEY (")
                         .append(sqlGenerator.escape(name)).append(") ").append(REFERENCES_CLAUSE)
@@ -753,7 +744,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         if (StringUtils.isNotBlank(code)) {
             if (isConstraintApproach) {
                 String fkName = "fk_" + dataTableNameAlias + "_" + name;
-                codeMappings.put(dataTableNameAlias + "_" + name, this.codeReadPlatformService.retriveCode(code).getId());
+                codeMappings.put(dataTableNameAlias + "_" + name, this.codeReadPlatformService.retrieveCode(code).getId());
                 constrainBuilder.append(",ADD CONSTRAINT  ").append(sqlGenerator.escape(fkName)).append(" ").append("FOREIGN KEY (")
                         .append(sqlGenerator.escape(name)).append(") ").append(REFERENCES_CLAUSE)
                         .append(sqlGenerator.escape(CODE_VALUES_TABLE)).append(" (").append(TABLE_FIELD_ID).append(")");
@@ -823,7 +814,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
                         }
                     }
                     if (newCode != null) {
-                        codeMappings.put(dataTableNameAlias + "_" + newName, this.codeReadPlatformService.retriveCode(newCode).getId());
+                        codeMappings.put(dataTableNameAlias + "_" + newName, this.codeReadPlatformService.retrieveCode(newCode).getId());
                         if (code == null || !StringUtils.equalsIgnoreCase(oldName, newName)) {
                             constrainBuilder.append(", ADD CONSTRAINT  ").append(sqlGenerator.escape(newFkName)).append(" ")
                                     .append("FOREIGN KEY (").append(sqlGenerator.escape(newName)).append(") ").append(REFERENCES_CLAUSE)
@@ -897,9 +888,9 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         String schemaSql = databaseTypeResolver.isMySQL() ? "i.TABLE_SCHEMA = SCHEMA()"
                 : "i.table_catalog = current_catalog AND i.table_schema = current_schema";
         String findFKSql = "SELECT count(*) FROM information_schema.TABLE_CONSTRAINTS i" + " WHERE i.CONSTRAINT_TYPE = 'FOREIGN KEY' AND "
-                + schemaSql + " AND i.TABLE_NAME = '" + datatableName + "' AND i.CONSTRAINT_NAME = '" + fkName + "' ";
+                + schemaSql + " AND i.TABLE_NAME = ? AND i.CONSTRAINT_NAME = ?";
 
-        final Integer count = this.jdbcTemplate.queryForObject(findFKSql, Integer.class); // NOSONAR
+        final Integer count = this.jdbcTemplate.queryForObject(findFKSql, Integer.class, datatableName, fkName); // NOSONAR
         if (count != null && count > 0) {
             codeMappings.add(datatableAlias + "_" + name);
             constrainBuilder.append(", DROP FOREIGN KEY ").append(sqlGenerator.escape(fkName)).append(" ");
@@ -908,40 +899,32 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
 
     private void registerColumnCodeMapping(final Map<String, Long> codeMappings) {
         if (codeMappings != null && !codeMappings.isEmpty()) {
-            final String[] addSqlList = new String[codeMappings.size()];
-            int i = 0;
+            final String sql = "INSERT INTO x_table_column_code_mappings (column_alias_name, code_id) VALUES (?, ?)";
             for (final Map.Entry<String, Long> mapEntry : codeMappings.entrySet()) {
-                addSqlList[i++] = "insert into x_table_column_code_mappings (column_alias_name, code_id) values ('" + mapEntry.getKey()
-                        + "'," + mapEntry.getValue() + ");";
+                this.jdbcTemplate.update(sql, mapEntry.getKey(), mapEntry.getValue());
             }
-
-            this.jdbcTemplate.batchUpdate(addSqlList);
         }
     }
 
     private void deleteColumnCodeMapping(final List<String> columnNames) {
         if (columnNames != null && !columnNames.isEmpty()) {
-            final String[] deleteSqlList = new String[columnNames.size()];
-            int i = 0;
+            final String sql = "DELETE FROM x_table_column_code_mappings WHERE column_alias_name = ?";
             for (final String columnName : columnNames) {
-                deleteSqlList[i++] = "DELETE FROM x_table_column_code_mappings WHERE  column_alias_name='" + columnName + "';";
+                this.jdbcTemplate.update(sql, columnName);
             }
-
-            this.jdbcTemplate.batchUpdate(deleteSqlList);
         }
     }
 
     private int getCodeIdForColumn(final String dataTableNameAlias, final String name) {
-        final StringBuilder checkColumnCodeMapping = new StringBuilder();
-        checkColumnCodeMapping.append("select ccm.code_id from x_table_column_code_mappings ccm where ccm.column_alias_name='")
-                .append(dataTableNameAlias).append("_").append(name).append("'");
+        final String sql = "SELECT ccm.code_id FROM x_table_column_code_mappings ccm WHERE ccm.column_alias_name = ?";
+        final String columnAliasName = dataTableNameAlias + "_" + name;
         Integer codeId = 0;
         try {
-            codeId = this.jdbcTemplate.queryForObject(checkColumnCodeMapping.toString(), Integer.class);
+            codeId = this.jdbcTemplate.queryForObject(sql, Integer.class, columnAliasName);
         } catch (final EmptyResultDataAccessException e) {
             log.warn("Error occurred.", e);
         }
-        return ObjectUtils.defaultIfNull(codeId, 0);
+        return Objects.requireNonNullElse(codeId, 0);
     }
 
     /**
@@ -1294,7 +1277,8 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
                 dataObjectParams);
         businessEventNotifierService.notifyPostBusinessEvent(new DatatableEntryUpdatedBusinessEvent(datatableEntryDetails));
 
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()) //
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
                 .withEntityId(primaryKey) //
                 .withOfficeId(commandProcessingResult.getOfficeId()) //
                 .withGroupId(commandProcessingResult.getGroupId()) //
@@ -1302,7 +1286,8 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
                 .withSavingsId(commandProcessingResult.getSavingsId()) //
                 .withLoanId(commandProcessingResult.getLoanId()) //
                 .withTransactionId(commandProcessingResult.getTransactionId()) //
-                .with(changes).build();
+                .with(changes) //
+                .build();
     }
 
     private static boolean isUserUpdatable(@NonNull EntityTables entityTable, @NonNull ResultsetColumnHeaderData columnHeader) {
@@ -1327,10 +1312,9 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
             whereColumn = TABLE_FIELD_ID;
             whereValue = datatableId;
         }
-        String sql = "DELETE FROM " + sqlGenerator.escape(dataTableName) + " WHERE " + sqlGenerator.escape(whereColumn) + " = "
-                + whereValue;
+        String sql = "DELETE FROM " + sqlGenerator.escape(dataTableName) + " WHERE " + sqlGenerator.escape(whereColumn) + " = ?";
 
-        this.jdbcTemplate.update(sql); // NOSONAR
+        this.jdbcTemplate.update(sql, whereValue); // NOSONAR
         final Map<String, Object> dataParams = null;
         final DatatableEntryDetails datatableEntryDetails = new DatatableEntryDetails(dataTableName, entityTable, datatableId, appTableId,
                 dataParams);
@@ -1351,8 +1335,8 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
     private boolean isDatatableAttachedToEntityDatatableCheck(final String datatableName) {
         String sql = "SELECT COUNT(edc.x_registered_table_name) FROM x_registered_table xrt"
                 + " JOIN m_entity_datatable_check edc ON edc.x_registered_table_name = xrt.registered_table_name"
-                + " WHERE edc.x_registered_table_name = '" + datatableName + "'";
-        final Long count = this.jdbcTemplate.queryForObject(sql, Long.class); // NOSONAR
+                + " WHERE edc.x_registered_table_name = ?";
+        final Long count = this.jdbcTemplate.queryForObject(sql, Long.class, datatableName); // NOSONAR
         return count != null && count > 0;
     }
 

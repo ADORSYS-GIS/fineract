@@ -175,7 +175,8 @@ public final class LoanApplicationValidator {
             LoanProductConstants.LOAN_SCHEDULE_PROCESSING_TYPE, LoanProductConstants.FIXED_LENGTH,
             LoanProductConstants.ENABLE_INSTALLMENT_LEVEL_DELINQUENCY, LoanProductConstants.ENABLE_DOWN_PAYMENT,
             LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT, LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT,
-            LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, LoanApiConstants.daysInYearCustomStrategyParameterName));
+            LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, LoanApiConstants.daysInYearCustomStrategyParameterName,
+            LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, LoanApiConstants.ORIGINATORS_PARAM));
     public static final String LOANAPPLICATION_UNDO = "loanapplication.undo";
 
     private final FromJsonHelper fromApiJsonHelper;
@@ -321,6 +322,18 @@ public final class LoanApplicationValidator {
                         .validateForBooleanValue();
                 if (isEqualAmortization && loanProduct.isInterestRecalculationEnabled()) {
                     throw new EqualAmortizationUnsupportedFeatureException("interest.recalculation", "interest recalculation");
+                }
+            }
+
+            if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element)) {
+                final Boolean allowFullTermForTranche = this.fromApiJsonHelper
+                        .extractBooleanNamed(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element);
+                baseDataValidator.reset().parameter(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE).value(allowFullTermForTranche)
+                        .ignoreIfNull().validateForBooleanValue();
+
+                if (Boolean.TRUE.equals(allowFullTermForTranche) && !loanProduct.isAllowFullTermForTranche()) {
+                    baseDataValidator.reset().parameter(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE).failWithCode("not.allowed.by.product",
+                            "Full term tranche cannot be enabled because the loan product does not allow it");
                 }
             }
 
@@ -946,6 +959,18 @@ public final class LoanApplicationValidator {
                 }
             }
 
+            if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element)) {
+                final Boolean allowFullTermForTranche = this.fromApiJsonHelper
+                        .extractBooleanNamed(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE, element);
+                baseDataValidator.reset().parameter(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE).value(allowFullTermForTranche)
+                        .ignoreIfNull().validateForBooleanValue();
+
+                if (Boolean.TRUE.equals(allowFullTermForTranche) && !loanProduct.isAllowFullTermForTranche()) {
+                    baseDataValidator.reset().parameter(LoanApiConstants.ALLOW_FULL_TERM_FOR_TRANCHE).failWithCode("not.allowed.by.product",
+                            "Full term tranche cannot be enabled because the loan product does not allow it");
+                }
+            }
+
             BigDecimal fixedPrincipalPercentagePerInstallment = this.fromApiJsonHelper
                     .extractBigDecimalWithLocaleNamed(LoanApiConstants.fixedPrincipalPercentagePerInstallmentParamName, element);
             baseDataValidator.reset().parameter(LoanApiConstants.fixedPrincipalPercentagePerInstallmentParamName)
@@ -1247,12 +1272,12 @@ public final class LoanApplicationValidator {
             if (!StringUtils.isBlank(loanTypeStr)) {
                 final AccountType loanType = AccountType.fromName(loanTypeStr);
 
-                if (loanType.isInvalid()) {
+                if (loanType == AccountType.INVALID) {
                     baseDataValidator.reset().parameter(LoanApiConstants.loanTypeParameterName).value(loanType.getValue())
                             .isOneOfEnumValues(AccountType.class);
                 }
 
-                if (!loanType.isInvalid() && loanType.isIndividualAccount()) {
+                if (loanType == AccountType.INVALID && loanType.isIndividualAccount()) {
                     // collateral
                     final String collateralParameterName = LoanApiConstants.collateralParameterName;
                     if (element.isJsonObject() && this.fromApiJsonHelper.parameterExists(collateralParameterName, element)) {

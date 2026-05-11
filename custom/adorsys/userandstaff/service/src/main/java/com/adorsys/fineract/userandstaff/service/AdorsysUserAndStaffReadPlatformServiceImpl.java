@@ -23,7 +23,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.organisation.staff.domain.Staff;
-import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
+import org.apache.fineract.organisation.staff.service.StaffReadService;
 import org.apache.fineract.useradministration.data.AppUserData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepository;
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Service;
 public class AdorsysUserAndStaffReadPlatformServiceImpl implements AdorsysUserAndStaffReadPlatformService {
 
     private final AppUserReadPlatformService appUserReadPlatformService;
-    private final StaffReadPlatformService staffReadPlatformService;
+    private final StaffReadService staffReadPlatformService;
     private final AppUserRepository appUserRepository;
     private final EmployeeDataMapper employeeDataMapper;
 

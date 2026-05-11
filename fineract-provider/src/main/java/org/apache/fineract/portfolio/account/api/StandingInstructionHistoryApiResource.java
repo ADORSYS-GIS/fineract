@@ -23,9 +23,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -56,13 +54,11 @@ public class StandingInstructionHistoryApiResource {
     private final SqlValidator sqlValidator;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Standing Instructions Logged History", description = "The list capability of history can support pagination and sorting \n\n"
+    @Operation(summary = "Standing Instructions Logged History", operationId = "retrieveAllStandingInstructionHistory", description = "The list capability of history can support pagination and sorting \n\n"
             + "Example Requests :\n" + "\n" + "standinginstructionrunhistory\n" + "\n"
             + "standinginstructionrunhistory?orderBy=name&sortOrder=DESC\n" + "\n" + "standinginstructionrunhistory?offset=10&limit=50")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = StandingInstructionHistoryApiResourceSwagger.GetStandingInstructionRunHistoryResponse.class))) })
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = StandingInstructionHistoryApiResourceSwagger.GetStandingInstructionRunHistoryResponse.class)))
     public Page<StandingInstructionHistoryData> retrieveAll(
             @QueryParam("externalId") @Parameter(description = "externalId") final String externalId,
             @QueryParam("offset") @Parameter(description = "offset") final Integer offset,

@@ -18,8 +18,8 @@
  */
 package org.apache.fineract.organisation.teller.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -43,8 +43,8 @@ public class CashierApiResource {
     private final TellerManagementReadPlatformService readPlatformService;
 
     @GET
-    @Consumes({ MediaType.TEXT_HTML, MediaType.APPLICATION_JSON })
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "List Cashiers", operationId = "retrieveAllCashiers")
     public Collection<CashierData> getCashierData(@QueryParam("officeId") final Long officeId, @QueryParam("tellerId") final Long tellerId,
             @QueryParam("staffId") final Long staffId, @QueryParam("date") final String date) {
         final LocalDate dateRestriction = date != null ? LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE)

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanAccountDelinquencyPauseChangedBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanDelinquencyRangeChangeBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
@@ -42,6 +44,9 @@ import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucket;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucketMappings;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucketMappingsRepository;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucketRepository;
+import org.apache.fineract.portfolio.delinquency.domain.DelinquencyBucketType;
+import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentPeriodAndRule;
+import org.apache.fineract.portfolio.delinquency.domain.DelinquencyMinimumPaymentPeriodAndRuleRepository;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyRange;
 import org.apache.fineract.portfolio.delinquency.domain.DelinquencyRangeRepository;
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyAction;
@@ -50,8 +55,10 @@ import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyTagHistor
 import org.apache.fineract.portfolio.delinquency.domain.LoanDelinquencyTagHistoryRepository;
 import org.apache.fineract.portfolio.delinquency.domain.LoanInstallmentDelinquencyTagRepository;
 import org.apache.fineract.portfolio.delinquency.exception.DelinquencyBucketAgesOverlapedException;
+import org.apache.fineract.portfolio.delinquency.exception.DelinquencyBucketNotFoundException;
 import org.apache.fineract.portfolio.delinquency.exception.DelinquencyRangeInvalidAgesException;
 import org.apache.fineract.portfolio.delinquency.helper.DelinquencyEffectivePauseHelper;
+import org.apache.fineract.portfolio.delinquency.spi.DelinquencyBucketUsageChecker;
 import org.apache.fineract.portfolio.delinquency.validator.DelinquencyActionParseAndValidator;
 import org.apache.fineract.portfolio.delinquency.validator.DelinquencyBucketParseAndValidator;
 import org.apache.fineract.portfolio.delinquency.validator.DelinquencyRangeParseAndValidator;
@@ -84,13 +91,18 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
     private final DelinquencyEffectivePauseHelper delinquencyEffectivePauseHelper;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final DelinquencyWritePlatformServiceHelper delinquencyHelper;
+    private final DelinquencyMinimumPaymentPeriodAndRuleRepository delinquencyMinimumPaymentPeriodAndRuleRepository;
+    private final List<DelinquencyBucketUsageChecker> delinquencyBucketUsageCheckers;
 
     @Override
     public CommandProcessingResult createDelinquencyRange(JsonCommand command) {
         DelinquencyRangeData data = dataValidatorRange.validateAndParseUpdate(command);
         Map<String, Object> changes = new HashMap<>();
         DelinquencyRange delinquencyRange = createDelinquencyRange(data, changes);
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyRange.getId()).with(changes)
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyRange.getId()) //
+                .with(changes) //
                 .build();
     }
 
@@ -100,7 +112,10 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
         DelinquencyRange delinquencyRange = this.repositoryRange.getReferenceById(delinquencyRangeId);
         Map<String, Object> changes = new HashMap<>();
         delinquencyRange = updateDelinquencyRange(delinquencyRange, data, changes);
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyRange.getId()).with(changes)
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyRange.getId()) //
+                .with(changes) //
                 .build();
     }
 
@@ -114,9 +129,15 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
                         "Data integrity issue with resource: " + delinquencyRange.getId());
             }
             repositoryRange.delete(delinquencyRange);
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyRange.getId()).build();
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(delinquencyRange.getId()) //
+                    .build();
         }
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyRangeId).build();
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyRangeId) //
+                .build();
     }
 
     @Override
@@ -124,7 +145,10 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
         DelinquencyBucketData data = dataValidatorBucket.validateAndParseUpdate(command);
         Map<String, Object> changes = new HashMap<>();
         DelinquencyBucket delinquencyBucket = createDelinquencyBucket(data, changes);
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyBucket.getId()).with(changes)
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyBucket.getId()) //
+                .with(changes) //
                 .build();
     }
 
@@ -135,22 +159,41 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
 
         Map<String, Object> changes = new HashMap<>();
         delinquencyBucket = updateDelinquencyBucket(delinquencyBucket, data, changes);
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyBucket.getId()).with(changes)
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyBucket.getId()) //
+                .with(changes) //
                 .build();
     }
 
     @Override
     public CommandProcessingResult deleteDelinquencyBucket(Long delinquencyBucketId, JsonCommand command) {
-        final DelinquencyBucket delinquencyBucket = repositoryBucket.getReferenceById(delinquencyBucketId);
-        if (delinquencyBucket != null) {
+        if (repositoryBucket.existsById(delinquencyBucketId)) {
+            final DelinquencyBucket delinquencyBucket = repositoryBucket.getReferenceById(delinquencyBucketId);
             Long delinquencyBucketLinked = this.loanProductRepository.countByDelinquencyBucket(delinquencyBucket);
             if (delinquencyBucketLinked > 0) {
                 throw new PlatformDataIntegrityException("error.msg.data.integrity.issue.entity.linked",
                         "Data integrity issue with resource: " + delinquencyBucket.getId());
             }
+            for (final DelinquencyBucketUsageChecker checker : delinquencyBucketUsageCheckers) {
+                if (checker.hasUsages(delinquencyBucket)) {
+                    throw new PlatformDataIntegrityException("error.msg.data.integrity.issue.entity.linked",
+                            String.format("Data integrity issue with resource: %d", delinquencyBucket.getId()));
+                }
+            }
+
+            delinquencyMinimumPaymentPeriodAndRuleRepository.findByBucketId(delinquencyBucket.getId())
+                    .ifPresent(delinquencyMinimumPaymentPeriodAndRuleRepository::delete);
+
             repositoryBucket.delete(delinquencyBucket);
+        } else {
+            throw new DelinquencyBucketNotFoundException("error.msg.delinquency.bucket.id.not.exist",
+                    "Delinquency bucket with id `" + delinquencyBucketId + "` does not exist.", delinquencyBucketId);
         }
-        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(delinquencyBucketId).build();
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(delinquencyBucketId) //
+                .build();
     }
 
     @Override
@@ -200,7 +243,7 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
                 .withEntityId(loan.getId()) //
                 .withEntityExternalId(loan.getExternalId()) //
                 .with(changes) //
-                .build(); //
+                .build();
     }
 
     @Override
@@ -291,7 +334,7 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
     @Override
     public void cleanLoanDelinquencyTags(Loan loan) {
         List<LoanDelinquencyTagHistory> loanDelinquencyTags = this.loanDelinquencyTagRepository.findByLoan(loan);
-        if (loanDelinquencyTags != null && loanDelinquencyTags.size() > 0) {
+        if (loanDelinquencyTags != null && !loanDelinquencyTags.isEmpty()) {
             this.loanDelinquencyTagRepository.deleteAll(loanDelinquencyTags);
         }
     }
@@ -338,7 +381,18 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
 
         if (delinquencyBucket.isEmpty()) {
             DelinquencyBucket newDelinquencyBucket = new DelinquencyBucket(data.getName());
-            repositoryBucket.save(newDelinquencyBucket);
+            newDelinquencyBucket.setBucketType(data.getBucketType() != null ? data.getBucketType() : DelinquencyBucketType.REGULAR);
+            repositoryBucket.saveAndFlush(newDelinquencyBucket);
+            if (DelinquencyBucketType.WORKING_CAPITAL.equals(newDelinquencyBucket.getBucketType())) {
+                final DelinquencyMinimumPaymentPeriodAndRule minimumPaymentPeriodAndRule = new DelinquencyMinimumPaymentPeriodAndRule();
+                minimumPaymentPeriodAndRule.setBucket(newDelinquencyBucket);
+                minimumPaymentPeriodAndRule.setFrequency(data.getMinimumPaymentPeriodAndRule().getFrequency());
+                minimumPaymentPeriodAndRule.setMinimumPaymentType(data.getMinimumPaymentPeriodAndRule().getMinimumPaymentType());
+                minimumPaymentPeriodAndRule.setFrequencyType(data.getMinimumPaymentPeriodAndRule().getFrequencyType());
+                minimumPaymentPeriodAndRule.setMinimumPayment(data.getMinimumPaymentPeriodAndRule().getMinimumPayment());
+                delinquencyMinimumPaymentPeriodAndRuleRepository.save(minimumPaymentPeriodAndRule);
+            }
+
             setDelinquencyBucketMappings(newDelinquencyBucket, data);
             return newDelinquencyBucket;
         } else {
@@ -350,8 +404,50 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
     private DelinquencyBucket updateDelinquencyBucket(DelinquencyBucket delinquencyBucket, DelinquencyBucketData data,
             Map<String, Object> changes) {
         if (!data.getName().equalsIgnoreCase(delinquencyBucket.getName())) {
+            Optional<DelinquencyBucket> existingEntityByName = repositoryBucket.findByName(data.getName());
+            if (existingEntityByName.isPresent()) {
+                throw new PlatformDataIntegrityException("error.msg.data.integrity.issue.entity.duplicated",
+                        "Data integrity issue with resource: " + existingEntityByName.get().getId());
+            }
             delinquencyBucket.setName(data.getName());
             changes.put(DelinquencyApiConstants.NAME_PARAM_NAME, data.getName());
+        }
+        if (!data.getBucketType().equals(delinquencyBucket.getBucketType())) {
+            changes.put(DelinquencyApiConstants.BUCKET_TYPE_PARAM_NAME, data.getBucketType());
+            delinquencyBucket.setBucketType(data.getBucketType());
+        }
+        final Optional<DelinquencyMinimumPaymentPeriodAndRule> existingRule = delinquencyMinimumPaymentPeriodAndRuleRepository
+                .findByBucketId(delinquencyBucket.getId());
+        if (delinquencyBucket.getBucketType().equals(DelinquencyBucketType.WORKING_CAPITAL)) {
+            DelinquencyMinimumPaymentPeriodAndRule minimumPaymentPeriodAndRule = existingRule.orElse(null);
+            if (minimumPaymentPeriodAndRule == null) {
+                minimumPaymentPeriodAndRule = new DelinquencyMinimumPaymentPeriodAndRule();
+                minimumPaymentPeriodAndRule.setBucket(delinquencyBucket);
+            }
+            if (!Objects.equals(data.getMinimumPaymentPeriodAndRule().getFrequency(), minimumPaymentPeriodAndRule.getFrequency())) {
+                minimumPaymentPeriodAndRule.setFrequency(data.getMinimumPaymentPeriodAndRule().getFrequency());
+                changes.put(DelinquencyApiConstants.FREQUENCY_PARAM_NAME, minimumPaymentPeriodAndRule.getFrequency());
+            }
+            if (!Objects.equals(data.getMinimumPaymentPeriodAndRule().getFrequencyType(), minimumPaymentPeriodAndRule.getFrequencyType())) {
+                minimumPaymentPeriodAndRule.setFrequencyType(data.getMinimumPaymentPeriodAndRule().getFrequencyType());
+                changes.put(DelinquencyApiConstants.FREQUENCY_TYPE_PARAM_NAME, minimumPaymentPeriodAndRule.getFrequencyType());
+            }
+            if (!Objects.equals(data.getMinimumPaymentPeriodAndRule().getMinimumPaymentType(),
+                    minimumPaymentPeriodAndRule.getMinimumPaymentType())) {
+                changes.put(DelinquencyApiConstants.MINIMUM_PAYMENT_TYPE_PARAM_NAME, minimumPaymentPeriodAndRule.getMinimumPaymentType());
+                minimumPaymentPeriodAndRule.setMinimumPaymentType(data.getMinimumPaymentPeriodAndRule().getMinimumPaymentType());
+            }
+            if (!MathUtil.isEqualTo(data.getMinimumPaymentPeriodAndRule().getMinimumPayment(),
+                    minimumPaymentPeriodAndRule.getMinimumPayment())) {
+                changes.put(DelinquencyApiConstants.MINIMUM_PAYMENT_PARAM_NAME, minimumPaymentPeriodAndRule.getMinimumPayment());
+                minimumPaymentPeriodAndRule.setMinimumPayment(data.getMinimumPaymentPeriodAndRule().getMinimumPayment());
+            }
+            delinquencyMinimumPaymentPeriodAndRuleRepository.save(minimumPaymentPeriodAndRule);
+        } else {
+            if (existingRule.isPresent()) {
+                changes.put(DelinquencyApiConstants.MINIMUM_PAYMENT_PERIOD_AND_RULE_PARAM_NAME, null);
+                delinquencyMinimumPaymentPeriodAndRuleRepository.delete(existingRule.get());
+            }
         }
         if (!changes.isEmpty()) {
             delinquencyBucket = repositoryBucket.save(delinquencyBucket);
@@ -362,10 +458,8 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
 
     private void setDelinquencyBucketMappings(DelinquencyBucket delinquencyBucket, DelinquencyBucketData data) {
         List<Long> rangeIds = new ArrayList<>();
-        data.getRanges().forEach(dataRange -> {
-            rangeIds.add(dataRange.getId());
-        });
-
+        data.getRanges().forEach(dataRange -> rangeIds.add(dataRange.getId()));
+        delinquencyBucket.setBucketType(data.getBucketType());
         List<DelinquencyRange> ranges = repositoryRange.findAllById(rangeIds);
         validateDelinquencyRanges(ranges);
         List<DelinquencyBucketMappings> bucketMappings = repositoryBucketMappings.findByDelinquencyBucket(delinquencyBucket);
@@ -383,11 +477,9 @@ public class DelinquencyWritePlatformServiceImpl implements DelinquencyWritePlat
 
         DelinquencyRange prevDelinquencyRange = null;
         for (DelinquencyRange delinquencyRange : ranges) {
-            if (prevDelinquencyRange != null) {
-                if (isOverlapped(prevDelinquencyRange, delinquencyRange)) {
-                    final String errorMessage = "The delinquency ranges age days values are overlaped";
-                    throw new DelinquencyBucketAgesOverlapedException(errorMessage, prevDelinquencyRange, delinquencyRange);
-                }
+            if (prevDelinquencyRange != null && isOverlapped(prevDelinquencyRange, delinquencyRange)) {
+                final String errorMessage = "The delinquency ranges age days values are overlaped";
+                throw new DelinquencyBucketAgesOverlapedException(errorMessage, prevDelinquencyRange, delinquencyRange);
             }
             prevDelinquencyRange = delinquencyRange;
         }
