@@ -16,25 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.data;
+package org.apache.fineract.portfolio.loanaccount.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.portfolio.tax.domain.TaxComponent;
 
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class LoanChargePaidByDTO {
+@Setter
+@Getter
+@Entity
+@Table(name = "m_loan_charge_tax_details")
+public class LoanChargeTaxDetails extends AbstractPersistableCustom<Long> {
 
-    private Long chargeId;
-    private Boolean isPenalty;
-    private Long loanChargeId;
+    @ManyToOne
+    @JoinColumn(name = "loan_charge_id", nullable = false)
+    private LoanCharge loanCharge;
+
+    @ManyToOne
+    @JoinColumn(name = "tax_component_id", nullable = false)
+    private TaxComponent taxComponent;
+
+    @Column(name = "amount", scale = 6, precision = 19, nullable = false)
     private BigDecimal amount;
-    private Integer installmentNumber;
-    private List<ChargeTaxDetailDTO> taxDetails = new ArrayList<>();
 
+    public LoanChargeTaxDetails() {
+
+    }
 }

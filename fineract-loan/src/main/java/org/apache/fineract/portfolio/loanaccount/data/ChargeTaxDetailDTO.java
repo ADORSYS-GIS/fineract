@@ -19,22 +19,22 @@
 package org.apache.fineract.portfolio.loanaccount.data;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Carries the pro-rated tax amount for a single TaxComponent when a LoanCharge is (partially) paid. Used to propagate
+ * tax details from the domain layer to the accounting bridge.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoanChargePaidByDTO {
+public class ChargeTaxDetailDTO {
 
-    private Long chargeId;
-    private Boolean isPenalty;
-    private Long loanChargeId;
+    /** GL account to credit (tax liability account from TaxComponent.creditAccount). */
+    private Long creditAccountId;
+
+    /** Pro-rated tax amount for this component in this payment. */
     private BigDecimal amount;
-    private Integer installmentNumber;
-    private List<ChargeTaxDetailDTO> taxDetails = new ArrayList<>();
-
 }

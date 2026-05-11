@@ -16,25 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.data;
+package org.apache.fineract.accounting.journalentry.data;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoanChargePaidByDTO {
+@RequiredArgsConstructor
+@Getter
+public class ChargeTaxPaymentDTO {
 
-    private Long chargeId;
-    private Boolean isPenalty;
-    private Long loanChargeId;
-    private BigDecimal amount;
-    private Integer installmentNumber;
-    private List<ChargeTaxDetailDTO> taxDetails = new ArrayList<>();
-
+    private final Long loanChargeId;
+    private final Long creditAccountId;
+    private final BigDecimal amount;
+    private final boolean penalty;
 }
