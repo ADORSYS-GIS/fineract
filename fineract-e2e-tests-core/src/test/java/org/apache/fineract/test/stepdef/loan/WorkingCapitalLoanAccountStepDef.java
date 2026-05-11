@@ -651,6 +651,23 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         log.info("Verified working capital loan approval failed with expected error");
     }
 
+    @When("Admin failed to approve the working capital loan on {string} with {string} amount and expected disbursement date on {string} with {string} exceeded product discount amount")
+    public void approveWorkingCapitalLoanWithExceededProductDiscountFailure(final String approveDate, final String approvedAmount,
+            final String expectedDisbursementDate, final String discountAmount) {
+        final PostWorkingCapitalLoansLoanIdRequest approveRequest = workingCapitalLoanRequestFactory
+                .defaultWorkingCapitalLoanApproveRequest()//
+                .approvedOnDate(approveDate)//
+                .approvedLoanAmount(new BigDecimal(approvedAmount))//
+                .discountAmount(new BigDecimal(discountAmount))//
+                .expectedDisbursementDate(expectedDisbursementDate);//
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoans()
+                .stateTransitionWorkingCapitalLoanById(getCreatedLoanId(), "approve", approveRequest));
+
+        assertThat(exception.getStatus()).as(ErrorMessageHelper.discountExceedProductDiscountFailure()).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(ErrorMessageHelper.discountExceedProductDiscountFailure());
+    }
+
     @When("Admin failed to approve the working capital loan on {string} with {string} amount and expected disbursement date on {string} with {string} exceeded discount amount")
     public void approveWorkingCapitalLoanWithExceededDiscountFailure(final String approveDate, final String approvedAmount,
             final String expectedDisbursementDate, final String discountAmount) {
@@ -818,7 +835,14 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     @When("Admin failed to disburse the working capital loan on {string} with {string} amount with {string} exceeded discount amount")
     public void disburseWorkingCapitalLoanWithExceededDiscountFailure(String actualDisbursementDate, String transactionAmount,
             String discountAmount) {
-        String errorMessage = ErrorMessageHelper.discountAmountExceedFailure();
+        String errorMessage = ErrorMessageHelper.discountAmountExceedApprovedFailure();
+        disburseWorkingCapitalLoanFailure(actualDisbursementDate, transactionAmount, discountAmount, errorMessage);
+    }
+
+    @When("Admin failed to disburse the working capital loan on {string} with {string} amount with {string} exceeded product discount amount")
+    public void disburseWorkingCapitalLoanWithExceededProductDiscountFailure(String actualDisbursementDate, String transactionAmount,
+            String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountExceedProductDiscountFailure();
         disburseWorkingCapitalLoanFailure(actualDisbursementDate, transactionAmount, discountAmount, errorMessage);
     }
 
@@ -997,6 +1021,38 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         assertTable(GetWorkingCapitalLoanTransactionIdResponse.class, dataTable, actualTransactions);
     }
 
+    @Then("Admin successfully update discount with {string} amount on Working Capital loan account")
+    public void adminSuccessfullyUpdateDiscountWithAmountOnWorkingCapitalLoanAccount(String discountAmount) {
+        PostWorkingCapitalLoansLoanIdResponse lastDisbursementResponse = testContext().get(TestContextKey.LOAN_DISBURSE_RESPONSE);
+        final PostWorkingCapitalLoansLoanIdRequest request = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDiscountFeeRequest() //
+                .relatedResourceId(lastDisbursementResponse.getResourceId()).transactionAmount(new BigDecimal(discountAmount));
+        executeStateTransition("DISCOUNTFEE", request, "DISCOUNT", false);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to date diff from disbursement date")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToDateDiffFromDisbursementDate(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountDiffDateFromDisburseFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Add discount with {string} amount on Working Capital loan account failed due to already added discount before disbursement")
+    public void addDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToAlreadyAddedDiscountBeforeDisbursement(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountAlreadySetBeforeDisburseFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to override disallowed by product")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToOverrideDisallowedByProduct(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.overrideDisallowedByProductFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to exceed discount amount")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToExceedDiscountAmount(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountExceedProductDiscountFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
     // ====================================
     // Private Helper Methods
     // ====================================
@@ -1146,6 +1202,10 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                         : new Utils.DoubleFormatter(response.getPeriodPaymentRate().doubleValue()).format());
                 case "discount" -> actualValues.add(
                         response.getDiscount() == null ? "null" : new Utils.DoubleFormatter(response.getDiscount().doubleValue()).format());
+                case "discountProposed" -> actualValues.add(response.getDiscountProposed() == null ? "null"
+                        : new Utils.DoubleFormatter(response.getDiscountProposed().doubleValue()).format());
+                case "discountApproved" -> actualValues.add(response.getDiscountApproved() == null ? "null"
+                        : new Utils.DoubleFormatter(response.getDiscountApproved().doubleValue()).format());
                 case "totalPaidPrincipal" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getTotalPaidPrincipal() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getTotalPaidPrincipal().doubleValue()).format());
