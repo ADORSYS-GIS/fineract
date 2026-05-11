@@ -21,6 +21,7 @@ package org.apache.fineract.accounting.journalentry.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +53,12 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
 
     @Override
     public void createJournalEntriesForLoan(final LoanDTO loanDTO) {
-        final Long officeId = loanDTO.getOfficeId();
-        final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(officeId);
-        final Office office = this.helper.getOfficeById(officeId);
+        final Map<Long, GLClosure> latestGLClosureByOfficeId = new HashMap<>();
+        final Map<Long, Office> officeById = new HashMap<>();
         for (final LoanTransactionDTO loanTransactionDTO : loanDTO.getNewLoanTransactions()) {
+            final Long officeId = loanTransactionDTO.getOfficeId() == null ? loanDTO.getOfficeId() : loanTransactionDTO.getOfficeId();
+            final GLClosure latestGLClosure = latestGLClosureByOfficeId.computeIfAbsent(officeId, this.helper::getLatestClosureByBranch);
+            final Office office = officeById.computeIfAbsent(officeId, this.helper::getOfficeById);
             final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
             this.helper.checkForBranchClosures(latestGLClosure, transactionDate);
             final LoanTransactionEnumData transactionType = loanTransactionDTO.getTransactionType();
@@ -102,6 +105,11 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
             // Handle Write Offs
             else if ((transactionType.isWriteOff() || transactionType.isWaiveInterest() || transactionType.isWaiveCharges())) {
                 createJournalEntriesForWriteOffs(loanDTO, loanTransactionDTO, office);
+            }
+
+            // Handle Transfers
+            else if (transactionType.isInitiateTransfer() || transactionType.isApproveTransfer() || transactionType.isWithdrawTransfer()) {
+                createJournalEntriesForTransfers(loanDTO, loanTransactionDTO, office);
             }
 
             // Logic for Refunds of Active Loans
@@ -157,6 +165,29 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 createJournalEntriesForBuyDownFeeAmortizationAdjustment(loanDTO, loanTransactionDTO, office);
             }
         }
+    }
+
+    private void createJournalEntriesForTransfers(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO, final Office office) {
+        final Long loanProductId = loanDTO.getLoanProductId();
+        final Long loanId = loanDTO.getLoanId();
+        final String currencyCode = loanDTO.getCurrencyCode();
+
+        final String transactionId = loanTransactionDTO.getTransactionId();
+        final LocalDate transactionDate = loanTransactionDTO.getTransactionDate();
+        final BigDecimal principalAmount = loanTransactionDTO.getPrincipal();
+
+        if (!MathUtil.isGreaterThanZero(principalAmount)) {
+            return;
+        }
+
+        final boolean isInitiateTransfer = loanTransactionDTO.getTransactionType().isInitiateTransfer();
+        final Integer debitAccount = isInitiateTransfer ? AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue()
+                : AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue();
+        final Integer creditAccount = isInitiateTransfer ? AccrualAccountsForLoan.LOAN_PORTFOLIO.getValue()
+                : AccrualAccountsForLoan.TRANSFERS_SUSPENSE.getValue();
+
+        this.helper.createJournalEntriesForLoan(office, currencyCode, debitAccount, creditAccount, loanProductId, null, loanId,
+                transactionId, transactionDate, principalAmount);
     }
 
     private void createJournalEntriesForCapitalizedIncome(final LoanDTO loanDTO, final LoanTransactionDTO loanTransactionDTO,

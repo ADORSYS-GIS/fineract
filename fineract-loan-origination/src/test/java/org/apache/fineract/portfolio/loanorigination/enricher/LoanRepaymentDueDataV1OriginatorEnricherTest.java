@@ -1,0 +1,151 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.fineract.portfolio.loanorigination.enricher;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+import org.apache.fineract.avro.loan.v1.LoanAccountDataV1;
+import org.apache.fineract.avro.loan.v1.LoanAccountDelinquencyRangeDataV1;
+import org.apache.fineract.avro.loan.v1.LoanRepaymentDueDataV1;
+import org.apache.fineract.avro.loan.v1.OriginatorDetailsV1;
+import org.apache.fineract.portfolio.loanorigination.helper.LoanOriginatorDetailsResolver;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class LoanRepaymentDueDataV1OriginatorEnricherTest {
+
+    @Mock
+    private LoanOriginatorDetailsResolver loanOriginatorDetailsResolver;
+
+    @InjectMocks
+    private LoanRepaymentDueDataV1OriginatorEnricher enricher;
+
+    private LoanRepaymentDueDataV1 loanRepaymentDueData;
+    private Long loanId;
+
+    @BeforeEach
+    void setUp() {
+        loanId = 1L;
+        loanRepaymentDueData = new LoanRepaymentDueDataV1();
+        loanRepaymentDueData.setLoanId(loanId);
+    }
+
+    private static Stream<Arguments> dataTypeTestProvider() {
+        return Stream.of(Arguments.of(LoanRepaymentDueDataV1.class, true), Arguments.of(LoanAccountDataV1.class, false),
+                Arguments.of(LoanAccountDelinquencyRangeDataV1.class, false));
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataTypeTestProvider")
+    @SuppressWarnings("unchecked")
+    void testIsDataTypeSupported(final Class<?> classToTest, final boolean expectedResult) {
+        assertEquals(expectedResult, enricher.isDataTypeSupported((Class<LoanRepaymentDueDataV1>) classToTest));
+    }
+
+    @Test
+    void testEnrich_WithOriginators() {
+        // Given
+        final OriginatorDetailsV1 originatorDetails = createOriginatorDetailsV1(1L, "test-originator-1", "Test Originator 1");
+        when(loanOriginatorDetailsResolver.resolveOriginatorDetails(loanId)).thenReturn(List.of(originatorDetails));
+
+        // When
+        enricher.enrich(loanRepaymentDueData);
+
+        // Then
+        verify(loanOriginatorDetailsResolver).resolveOriginatorDetails(loanId);
+        assertNotNull(loanRepaymentDueData.getOriginators());
+        assertEquals(1, loanRepaymentDueData.getOriginators().size());
+        assertEquals("test-originator-1", loanRepaymentDueData.getOriginators().getFirst().getExternalId());
+    }
+
+    @Test
+    void testEnrich_WithMultipleOriginators() {
+        // Given
+        final OriginatorDetailsV1 details1 = createOriginatorDetailsV1(1L, "test-originator-1", "Test Originator 1");
+        final OriginatorDetailsV1 details2 = createOriginatorDetailsV1(2L, "test-originator-2", "Test Originator 2");
+        when(loanOriginatorDetailsResolver.resolveOriginatorDetails(loanId)).thenReturn(List.of(details1, details2));
+
+        // When
+        enricher.enrich(loanRepaymentDueData);
+
+        // Then
+        verify(loanOriginatorDetailsResolver).resolveOriginatorDetails(loanId);
+        assertNotNull(loanRepaymentDueData.getOriginators());
+        assertEquals(2, loanRepaymentDueData.getOriginators().size());
+        assertEquals("test-originator-1", loanRepaymentDueData.getOriginators().get(0).getExternalId());
+        assertEquals("test-originator-2", loanRepaymentDueData.getOriginators().get(1).getExternalId());
+    }
+
+    @Test
+    void testEnrich_NoOriginators() {
+        // Given
+        when(loanOriginatorDetailsResolver.resolveOriginatorDetails(loanId)).thenReturn(Collections.emptyList());
+
+        // When
+        enricher.enrich(loanRepaymentDueData);
+
+        // Then
+        verify(loanOriginatorDetailsResolver).resolveOriginatorDetails(loanId);
+        assertNull(loanRepaymentDueData.getOriginators());
+    }
+
+    @Test
+    void testEnrich_NullLoanId() {
+        // Given
+        loanRepaymentDueData.setLoanId(null);
+
+        // When
+        enricher.enrich(loanRepaymentDueData);
+
+        // Then
+        verify(loanOriginatorDetailsResolver, never()).resolveOriginatorDetails(any());
+        assertNull(loanRepaymentDueData.getOriginators());
+    }
+
+    @Test
+    void testEnrich_NullData() {
+        // When
+        enricher.enrich(null);
+
+        // Then
+        verify(loanOriginatorDetailsResolver, never()).resolveOriginatorDetails(any());
+    }
+
+    private OriginatorDetailsV1 createOriginatorDetailsV1(final Long id, final String externalId, final String name) {
+        return OriginatorDetailsV1.newBuilder().setId(id).setExternalId(externalId).setName(name).setStatus("ACTIVE")
+                .setOriginatorType(null).setChannelType(null).build();
+    }
+}

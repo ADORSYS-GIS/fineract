@@ -122,6 +122,7 @@ import org.apache.fineract.client.models.PutLoansLoanIdChargeData;
 import org.apache.fineract.client.models.PutLoansLoanIdRequest;
 import org.apache.fineract.client.models.PutLoansLoanIdResponse;
 import org.apache.fineract.test.data.AmortizationType;
+import org.apache.fineract.test.data.ChargeProductResolver;
 import org.apache.fineract.test.data.ChargeProductType;
 import org.apache.fineract.test.data.InterestCalculationPeriodTime;
 import org.apache.fineract.test.data.InterestRateFrequencyType;
@@ -129,6 +130,7 @@ import org.apache.fineract.test.data.InterestType;
 import org.apache.fineract.test.data.LoanStatus;
 import org.apache.fineract.test.data.LoanTermFrequencyType;
 import org.apache.fineract.test.data.RepaymentFrequencyType;
+import org.apache.fineract.test.data.RepaymentStartDateType;
 import org.apache.fineract.test.data.TransactionProcessingStrategyCode;
 import org.apache.fineract.test.data.TransactionType;
 import org.apache.fineract.test.data.codevalue.CodeNames;
@@ -202,6 +204,7 @@ public class LoanStepDef extends AbstractStepDef {
     private final CodeHelper codeHelper;
     private final EventProperties eventProperties;
     private final JobPollingProperties jobPollingProperties;
+    private final ChargeProductResolver chargeProductResolver;
 
     private void storePaymentTransactionResponse(ApiResponse<PostLoansLoanIdTransactionsResponse> apiResponse) {
         testContext().set(TestContextKey.LOAN_PAYMENT_TRANSACTION_RESPONSE, apiResponse.getData());
@@ -312,7 +315,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue);
 
         String idempotencyKey = UUID.randomUUID().toString();
@@ -338,7 +341,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue);
 
         ApiResponse<PostLoansLoanIdTransactionsResponse> paymentTransactionApiResponse = ok(() -> fineractClient.loanTransactions()
@@ -361,7 +364,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue)
                 .externalId(externalId);
 
@@ -411,7 +414,7 @@ public class LoanStepDef extends AbstractStepDef {
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        final PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        final PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue)
                 .interestRefundCalculation(interestRefundCalculation);
 
@@ -601,7 +604,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue);
 
         ApiResponse<PostLoansLoanIdTransactionsResponse> paymentTransactionApiResponse = ok(() -> fineractClient.loanTransactions()
@@ -614,13 +617,14 @@ public class LoanStepDef extends AbstractStepDef {
 
     @When("Admin makes Credit Balance Refund transaction on {string} with {double} EUR transaction amount")
     public void createCBR(String transactionDate, double transactionAmount) throws IOException {
+        eventCheckHelper.sleepIfEventVerificationEnabled(1000L);
         eventStore.reset();
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
         String transactionTypeValue = "creditBalanceRefund";
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount);
 
         ApiResponse<PostLoansLoanIdTransactionsResponse> paymentTransactionApiResponse = ok(() -> fineractClient.loanTransactions()
@@ -658,7 +662,7 @@ public class LoanStepDef extends AbstractStepDef {
         String errorMessageExpected = String.format("Loan: %s, Credit Balance Refund transaction cannot be created for the future.",
                 loanId);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount);
 
         checkCBRerror(paymentTransactionRequest, errorCodeExpected, errorMessageExpected);
@@ -669,7 +673,7 @@ public class LoanStepDef extends AbstractStepDef {
         int errorCodeExpected = 400;
         String errorMessageExpected = "Loan Credit Balance Refund is not allowed. Loan Account is not Overpaid.";
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount);
         checkCBRerror(paymentTransactionRequest, errorCodeExpected, errorMessageExpected);
     }
@@ -677,7 +681,7 @@ public class LoanStepDef extends AbstractStepDef {
     @When("Admin creates a fully customized loan with the following data:")
     public void createFullyCustomizedLoan(final DataTable table) {
         final List<List<String>> data = table.asLists();
-        createCustomizedLoan(data.get(1), false);
+        createCustomizedLoan(data, null);
     }
 
     @When("Admin creates a fully customized loan with loan product`s charges and following data:")
@@ -686,10 +690,10 @@ public class LoanStepDef extends AbstractStepDef {
         createCustomizedLoanWithProductCharges(data.get(1));
     }
 
-    @When("Admin creates a fully customized loan with emi and the following data:")
-    public void createFullyCustomizedLoanWithEmi(final DataTable table) {
+    @When("Admin creates a fully customized loan with {string} emi and the following data:")
+    public void createFullyCustomizedLoanWithEmi(final String emiStr, final DataTable table) {
         final List<List<String>> data = table.asLists();
-        createCustomizedLoan(data.get(1), true);
+        createCustomizedLoan(data, emiStr);
     }
 
     @When("Admin creates a fully customized loan with interestRateFrequencyType and following data:")
@@ -1428,7 +1432,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue);
 
         String idempotencyKey = testContext().get(TestContextKey.TRANSACTION_IDEMPOTENCY_KEY);
@@ -1449,7 +1453,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = LoanRequestFactory.defaultPaymentTransactionRequest()
+        PostLoansLoanIdTransactionsRequest paymentTransactionRequest = loanRequestFactory.defaultPaymentTransactionRequest()
                 .transactionDate(transactionDate).transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue);
 
         String idempotencyKey = testContext().get(TestContextKey.TRANSACTION_IDEMPOTENCY_KEY);
@@ -1537,7 +1541,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdRequest approveRequest = LoanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
+        PostLoansLoanIdRequest approveRequest = loanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
                 .approvedLoanAmount(new BigDecimal(approvedAmount)).expectedDisbursementDate(expectedDisbursementDate);
 
         PostLoansLoanIdResponse loanApproveResponse = ok(
@@ -1553,7 +1557,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void rejectLoan(String rejectDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest rejectRequest = LoanRequestFactory.defaultLoanRejectRequest().rejectedOnDate(rejectDate);
+        PostLoansLoanIdRequest rejectRequest = loanRequestFactory.defaultLoanRejectRequest().rejectedOnDate(rejectDate);
 
         PostLoansLoanIdResponse loanRejectResponse = ok(
                 () -> fineractClient.loans().stateTransitions(loanId, rejectRequest, Map.of("command", "reject")));
@@ -1568,7 +1572,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void withdrawnLoan(String withdrawnDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest withdawnRequest = LoanRequestFactory.defaultLoanWithdrawnRequest().withdrawnOnDate(withdrawnDate);
+        PostLoansLoanIdRequest withdawnRequest = loanRequestFactory.defaultLoanWithdrawnRequest().withdrawnOnDate(withdrawnDate);
 
         PostLoansLoanIdResponse loanWithdrawnResponse = ok(
                 () -> fineractClient.loans().stateTransitions(loanId, withdawnRequest, Map.of("command", "withdrawnByApplicant")));
@@ -1583,7 +1587,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void approveSecondLoan(String approveDate, String approvedAmount, String expectedDisbursementDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_SECOND_LOAN_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest approveRequest = LoanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
+        PostLoansLoanIdRequest approveRequest = loanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
                 .approvedLoanAmount(new BigDecimal(approvedAmount)).expectedDisbursementDate(expectedDisbursementDate);
 
         PostLoansLoanIdResponse loanApproveResponse = ok(
@@ -1609,7 +1613,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void failedLoanApproveWithDate(String approveDate, String approvedAmount, String expectedDisbursementDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest approveRequest = LoanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
+        PostLoansLoanIdRequest approveRequest = loanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
                 .approvedLoanAmount(new BigDecimal(approvedAmount)).expectedDisbursementDate(expectedDisbursementDate);
 
         CallFailedRuntimeException exception = fail(
@@ -1622,7 +1626,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void failedLoanApproveWithAmount(String approveDate, String approvedAmount, String expectedDisbursementDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest approveRequest = LoanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
+        PostLoansLoanIdRequest approveRequest = loanRequestFactory.defaultLoanApproveRequest().approvedOnDate(approveDate)
                 .approvedLoanAmount(new BigDecimal(approvedAmount)).expectedDisbursementDate(expectedDisbursementDate);
 
         CallFailedRuntimeException exception = fail(
@@ -1637,7 +1641,7 @@ public class LoanStepDef extends AbstractStepDef {
         long loanId = loanResponse.getLoanId();
         String resourceId = String.valueOf(loanId);
 
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         PostLoansLoanIdResponse loanDisburseResponse = ok(
@@ -1689,7 +1693,7 @@ public class LoanStepDef extends AbstractStepDef {
                 .expectedDisbursementDate(FORMATTER.format(LocalDate.parse(detail.getExpectedDisbursementDate(), parsingFormatter))));
         disbursementData.sort(Comparator.comparing(detail -> LocalDate.parse(detail.getExpectedDisbursementDate(), parsingFormatter)));
 
-        PostAddAndDeleteDisbursementDetailRequest disbursementDetailRequest = LoanRequestFactory
+        PostAddAndDeleteDisbursementDetailRequest disbursementDetailRequest = loanRequestFactory
                 .defaultLoanDisbursementDetailRequest(disbursementData);
         CommandProcessingResult loanDisburseResponse = ok(
                 () -> fineractClient.loanDisbursementDetails().addAndDeleteDisbursementDetail(loanId, disbursementDetailRequest));
@@ -1742,7 +1746,7 @@ public class LoanStepDef extends AbstractStepDef {
         long loanId = loanResponse.getLoanId();
         String resourceId = String.valueOf(loanId);
 
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         PostLoansLoanIdResponse loanDisburseResponse = ok(() -> fineractClient.loans().stateTransitions(loanId, disburseRequest,
@@ -1767,7 +1771,7 @@ public class LoanStepDef extends AbstractStepDef {
         final PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         assertNotNull(loanResponse);
         final long loanId = loanResponse.getLoanId();
-        final PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        final PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount))
                 .fixedEmiAmount(new BigDecimal(fixedEmiAmount));
         performLoanDisbursementAndVerifyStatus(loanId, disburseRequest);
@@ -1779,7 +1783,7 @@ public class LoanStepDef extends AbstractStepDef {
         final PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         assertNotNull(loanResponse);
         final long loanId = loanResponse.getLoanId();
-        final PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        final PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount))
                 .fixedEmiAmount(new BigDecimal(fixedEmiAmount)).adjustRepaymentDate(adjustRepaymentDate);
         performLoanDisbursementAndVerifyStatus(loanId, disburseRequest);
@@ -1789,7 +1793,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseSecondLoan(String actualDisbursementDate, String transactionAmount) throws IOException {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_SECOND_LOAN_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         PostLoansLoanIdResponse loanDisburseResponse = ok(
@@ -1835,7 +1839,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseLoanFailureWithDate(String actualDisbursementDate, String transactionAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1848,7 +1852,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseLoanFailureWithAmount(String actualDisbursementDate, String transactionAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1862,7 +1866,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseLoanFailureIsNotAllowed(String disbursementDate, String disbursementAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest().actualDisbursementDate(disbursementDate)
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest().actualDisbursementDate(disbursementDate)
                 .transactionAmount(new BigDecimal(disbursementAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1875,7 +1879,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseIsNotAllowedExceedApprovedAmountFailure(String disbursementDate, String disbursementAmount) {
         final PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         final long loanId = loanResponse.getLoanId();
-        final PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        final PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(disbursementDate).transactionAmount(new BigDecimal(disbursementAmount));
 
         final CallFailedRuntimeException exception = fail(
@@ -1888,7 +1892,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseChargedOffLoanFailure(String actualDisbursementDate, String transactionAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1902,7 +1906,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disburseLoanFailureWithPastDate(String actualDisbursementDate, String transactionAmount, String futureApproveDate) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         String futureApproveDateISO = FORMATTER_EVENTS.format(FORMATTER.parse(futureApproveDate));
@@ -1917,7 +1921,7 @@ public class LoanStepDef extends AbstractStepDef {
     public void disbursementForbiddenExceedApprovedAmount(String actualDisbursementDate, String transactionAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1931,7 +1935,7 @@ public class LoanStepDef extends AbstractStepDef {
             String totalDisbursalAmount, String maxDisbursalAmount) {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         CallFailedRuntimeException exception = fail(
@@ -1959,7 +1963,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -1986,7 +1990,7 @@ public class LoanStepDef extends AbstractStepDef {
         Long chargeOffReasonCodeId = codeHelper.retrieveCodeByName(CHARGE_OFF_REASONS).getId();
         long chargeOffReasonId = codeValueResolver.resolve(chargeOffReasonCodeId, chargeOffReasonCodeValue);
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest()
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest()
                 .chargeOffReasonId(chargeOffReasonId).transactionDate(transactionDate).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         PostLoansLoanIdTransactionsResponse chargeOffResponse = ok(
@@ -2014,7 +2018,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -2028,7 +2032,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -2048,7 +2052,7 @@ public class LoanStepDef extends AbstractStepDef {
     }
 
     public PostLoansLoanIdTransactionsResponse undoChargeOff(Long loanId) {
-        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = LoanRequestFactory.defaultUndoChargeOffRequest();
+        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = loanRequestFactory.defaultUndoChargeOffRequest();
 
         PostLoansLoanIdTransactionsResponse chargeOffUndoResponse = ok(() -> fineractClient.loanTransactions()
                 .executeLoanTransaction(loanId, chargeOffUndoRequest, Map.of("command", "undo-charge-off")));
@@ -2057,7 +2061,7 @@ public class LoanStepDef extends AbstractStepDef {
     }
 
     public PostLoansLoanIdTransactionsResponse makeChargeOffTransaction(Long loanId, String transactionDate) {
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         PostLoansLoanIdTransactionsResponse chargeOffResponse = ok(
@@ -2071,7 +2075,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -2085,7 +2089,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffRequest = LoanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest chargeOffRequest = loanRequestFactory.defaultChargeOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -2099,7 +2103,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = LoanRequestFactory.defaultUndoChargeOffRequest();
+        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = loanRequestFactory.defaultUndoChargeOffRequest();
 
         CallFailedRuntimeException exception = fail(() -> fineractClient.loanTransactions().executeLoanTransaction(loanId,
                 chargeOffUndoRequest, Map.of("command", "undo-charge-off")));
@@ -2728,7 +2732,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getResourceId();
 
-        PutLoansLoanIdRequest putLoansLoanIdRequest = LoanRequestFactory.enableFraudFlag();
+        PutLoansLoanIdRequest putLoansLoanIdRequest = loanRequestFactory.enableFraudFlag();
 
         PutLoansLoanIdResponse responseMod = ok(
                 () -> fineractClient.loans().modifyLoanApplication(loanId, putLoansLoanIdRequest, Map.of("command", "markAsFraud")));
@@ -2746,7 +2750,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getResourceId();
 
-        PutLoansLoanIdRequest putLoansLoanIdRequest = LoanRequestFactory.disableFraudFlag();
+        PutLoansLoanIdRequest putLoansLoanIdRequest = loanRequestFactory.disableFraudFlag();
 
         PutLoansLoanIdResponse responseMod = ok(
                 () -> fineractClient.loans().modifyLoanApplication(loanId, putLoansLoanIdRequest, Map.of("command", "markAsFraud")));
@@ -2764,7 +2768,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long loanId = loanResponse.getResourceId();
 
-        PutLoansLoanIdRequest putLoansLoanIdRequest = LoanRequestFactory.disableFraudFlag();
+        PutLoansLoanIdRequest putLoansLoanIdRequest = loanRequestFactory.disableFraudFlag();
 
         CallFailedRuntimeException exception = fail(
                 () -> fineractClient.loans().modifyLoanApplication(loanId, putLoansLoanIdRequest, Map.of("command", "markAsFraud")));
@@ -3267,7 +3271,7 @@ public class LoanStepDef extends AbstractStepDef {
         long loanId = loanResponse.getLoanId();
 
         String reversalExternalId = Utils.randomStringGenerator("reversalExtId_", 10);
-        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = LoanRequestFactory.defaultUndoChargeOffRequest()
+        PostLoansLoanIdTransactionsRequest chargeOffUndoRequest = loanRequestFactory.defaultUndoChargeOffRequest()
                 .reversalExternalId(reversalExternalId);
 
         PostLoansLoanIdTransactionsResponse chargeOffUndoResponse = ok(() -> fineractClient.loanTransactions()
@@ -3395,7 +3399,7 @@ public class LoanStepDef extends AbstractStepDef {
         PostLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdTransactionsRequest writeOffRequest = LoanRequestFactory.defaultWriteOffRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest writeOffRequest = loanRequestFactory.defaultWriteOffRequest().transactionDate(transactionDate)
                 .dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         PostLoansLoanIdTransactionsResponse writeOffResponse = ok(
@@ -3432,7 +3436,7 @@ public class LoanStepDef extends AbstractStepDef {
         DefaultPaymentType paymentType = DefaultPaymentType.valueOf(repaymentType);
         long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        PostLoansLoanIdTransactionsRequest repaymentRequest = LoanRequestFactory.defaultRepaymentRequest().transactionDate(transactionDate)
+        PostLoansLoanIdTransactionsRequest repaymentRequest = loanRequestFactory.defaultRepaymentRequest().transactionDate(transactionDate)
                 .transactionAmount(transactionAmount).paymentTypeId(paymentTypeValue).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
 
         CallFailedRuntimeException exception = fail(
@@ -3622,60 +3626,94 @@ public class LoanStepDef extends AbstractStepDef {
                 });
     }
 
-    private void createCustomizedLoan(final List<String> loanData, final boolean withEmi) {
-        final String loanProduct = loanData.get(0);
-        final String submitDate = loanData.get(1);
-        final String principal = loanData.get(2);
-        final BigDecimal interestRate = new BigDecimal(loanData.get(3));
-        final String interestTypeStr = loanData.get(4);
-        final String interestCalculationPeriodStr = loanData.get(5);
-        final String amortizationTypeStr = loanData.get(6);
-        final Integer loanTermFrequency = Integer.valueOf(loanData.get(7));
-        final String loanTermFrequencyType = loanData.get(8);
-        final Integer repaymentFrequency = Integer.valueOf(loanData.get(9));
-        final String repaymentFrequencyTypeStr = loanData.get(10);
-        final Integer numberOfRepayments = Integer.valueOf(loanData.get(11));
-        final Integer graceOnPrincipalPayment = Integer.valueOf(loanData.get(12));
-        final Integer graceOnInterestPayment = Integer.valueOf(loanData.get(13));
-        final Integer graceOnInterestCharged = Integer.valueOf(loanData.get(14));
-        final String transactionProcessingStrategyCode = loanData.get(15);
-
+    private void createCustomizedLoan(final List<List<String>> loanData, final String emiStr) {
         final PostClientsResponse clientResponse = testContext().get(TestContextKey.CLIENT_CREATE_RESPONSE);
         final Long clientId = clientResponse.getClientId();
+        final PostLoansRequest loansRequest = loanRequestFactory.defaultLoansRequest(clientId).expectedDisbursementDate(null);
 
-        final DefaultLoanProduct product = DefaultLoanProduct.valueOf(loanProduct);
-        final Long loanProductId = loanProductResolver.resolve(product);
+        for (var i = 0; i < loanData.getFirst().size(); i++) {
+            String value = loanData.getLast().get(i);
+            switch (loanData.getFirst().get(i)) {
+                case "LoanProduct" -> {
+                    final DefaultLoanProduct product = DefaultLoanProduct.valueOf(value);
+                    final Long loanProductId = loanProductResolver.resolve(product);
+                    loansRequest.productId(loanProductId);
+                }
+                case "submitted on date" -> {
+                    loansRequest.submittedOnDate(value);
+                }
+                case "expected disbursement date" -> {
+                    loansRequest.expectedDisbursementDate(value);
+                }
+                case "with Principal" -> {
+                    loansRequest.principal(new BigDecimal(value));
+                }
+                case "ANNUAL interest rate %" -> {
+                    loansRequest.interestRatePerPeriod(new BigDecimal(value));
+                }
+                case "interest type" -> {
+                    final InterestType interestType = InterestType.valueOf(value);
+                    final Integer interestTypeValue = interestType.getValue();
+                    loansRequest.interestType(interestTypeValue);
+                }
+                case "interest calculation period" -> {
+                    final InterestCalculationPeriodTime interestCalculationPeriod = InterestCalculationPeriodTime.valueOf(value);
+                    final Integer interestCalculationPeriodValue = interestCalculationPeriod.getValue();
+                    loansRequest.interestCalculationPeriodType(interestCalculationPeriodValue);
+                }
+                case "amortization type" -> {
+                    final AmortizationType amortizationType = AmortizationType.valueOf(value);
+                    final Integer amortizationTypeValue = amortizationType.getValue();
+                    loansRequest.amortizationType(amortizationTypeValue);
+                }
+                case "loanTermFrequency" -> {
+                    loansRequest.loanTermFrequency(Integer.valueOf(value));
+                }
+                case "loanTermFrequencyType" -> {
+                    final LoanTermFrequencyType termFrequencyType = LoanTermFrequencyType.valueOf(value);
+                    final Integer loanTermFrequencyTypeValue = termFrequencyType.getValue();
+                    loansRequest.loanTermFrequencyType(loanTermFrequencyTypeValue);
+                }
+                case "repaymentEvery" -> {
+                    loansRequest.repaymentEvery(Integer.valueOf(value));
+                }
+                case "repaymentFrequencyType" -> {
+                    final RepaymentFrequencyType repaymentFrequencyType = RepaymentFrequencyType.valueOf(value);
+                    final Integer repaymentFrequencyTypeValue = repaymentFrequencyType.getValue();
+                    loansRequest.repaymentFrequencyType(repaymentFrequencyTypeValue);
+                }
+                case "numberOfRepayments" -> {
+                    loansRequest.numberOfRepayments(Integer.valueOf(value));
+                }
+                case "graceOnPrincipalPayment" -> {
+                    loansRequest.graceOnPrincipalPayment(Integer.valueOf(value));
+                }
+                case "graceOnInterestPayment" -> {
+                    loansRequest.graceOnInterestPayment(Integer.valueOf(value));
+                }
+                case "interest free period" -> {
+                    loansRequest.graceOnInterestCharged(Integer.valueOf(value));
+                }
+                case "Payment strategy" -> {
+                    final TransactionProcessingStrategyCode processingStrategyCode = TransactionProcessingStrategyCode.valueOf(value);
+                    final String transactionProcessingStrategyCodeValue = processingStrategyCode.getValue();
+                    loansRequest.transactionProcessingStrategyCode(transactionProcessingStrategyCodeValue);
+                }
+                case "Repayment start date type" -> {
+                    final RepaymentStartDateType repaymentStartDateType = RepaymentStartDateType.valueOf(value);
+                    loansRequest.repaymentStartDateType(repaymentStartDateType.getValue());
+                }
+                default -> throw new UnsupportedOperationException(loanData.getFirst().get(i) + " is not covered");
+            }
+        }
 
-        final LoanTermFrequencyType termFrequencyType = LoanTermFrequencyType.valueOf(loanTermFrequencyType);
-        final Integer loanTermFrequencyTypeValue = termFrequencyType.getValue();
+        // Fallback value
+        if (loansRequest.getExpectedDisbursementDate() == null) {
+            loansRequest.expectedDisbursementDate(loansRequest.getSubmittedOnDate());
+        }
 
-        final RepaymentFrequencyType repaymentFrequencyType = RepaymentFrequencyType.valueOf(repaymentFrequencyTypeStr);
-        final Integer repaymentFrequencyTypeValue = repaymentFrequencyType.getValue();
-
-        final InterestType interestType = InterestType.valueOf(interestTypeStr);
-        final Integer interestTypeValue = interestType.getValue();
-
-        final InterestCalculationPeriodTime interestCalculationPeriod = InterestCalculationPeriodTime.valueOf(interestCalculationPeriodStr);
-        final Integer interestCalculationPeriodValue = interestCalculationPeriod.getValue();
-
-        final AmortizationType amortizationType = AmortizationType.valueOf(amortizationTypeStr);
-        final Integer amortizationTypeValue = amortizationType.getValue();
-
-        final TransactionProcessingStrategyCode processingStrategyCode = TransactionProcessingStrategyCode
-                .valueOf(transactionProcessingStrategyCode);
-        final String transactionProcessingStrategyCodeValue = processingStrategyCode.getValue();
-
-        final PostLoansRequest loansRequest = loanRequestFactory.defaultLoansRequest(clientId).productId(loanProductId)
-                .principal(new BigDecimal(principal)).interestRatePerPeriod(interestRate).interestType(interestTypeValue)
-                .interestCalculationPeriodType(interestCalculationPeriodValue).amortizationType(amortizationTypeValue)
-                .loanTermFrequency(loanTermFrequency).loanTermFrequencyType(loanTermFrequencyTypeValue)
-                .numberOfRepayments(numberOfRepayments).repaymentEvery(repaymentFrequency)
-                .repaymentFrequencyType(repaymentFrequencyTypeValue).submittedOnDate(submitDate).expectedDisbursementDate(submitDate)
-                .graceOnPrincipalPayment(graceOnPrincipalPayment).graceOnInterestPayment(graceOnInterestPayment)
-                .graceOnInterestPayment(graceOnInterestCharged).transactionProcessingStrategyCode(transactionProcessingStrategyCodeValue);
-
-        if (withEmi) {
-            loansRequest.fixedEmiAmount(new BigDecimal(555));
+        if (emiStr != null) {
+            loansRequest.fixedEmiAmount(new BigDecimal(emiStr));
         }
 
         final PostLoansResponse response = ok(
@@ -3947,7 +3985,7 @@ public class LoanStepDef extends AbstractStepDef {
         final String transactionProcessingStrategyCodeValue = processingStrategyCode.getValue();
 
         ChargeProductType chargeProductType = ChargeProductType.valueOf(chargesCalculationType);
-        Long chargeId = chargeProductType.getValue();
+        Long chargeId = chargeProductResolver.resolve(chargeProductType);
 
         List<PostLoansRequestChargeData> charges = new ArrayList<>();
         charges.add(new PostLoansRequestChargeData().chargeId(chargeId).amount(chargesAmount));
@@ -4053,7 +4091,7 @@ public class LoanStepDef extends AbstractStepDef {
         final String transactionProcessingStrategyCodeValue = processingStrategyCode.getValue();
 
         ChargeProductType chargeProductType = ChargeProductType.valueOf(chargesCalculationType);
-        Long chargeId = chargeProductType.getValue();
+        Long chargeId = chargeProductResolver.resolve(chargeProductType);
 
         List<PostLoansRequestChargeData> charges = new ArrayList<>();
         charges.add(new PostLoansRequestChargeData().chargeId(chargeId).amount(chargesAmount));
@@ -4973,7 +5011,7 @@ public class LoanStepDef extends AbstractStepDef {
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = LoanRequestFactory.defaultCapitalizedIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = loanRequestFactory.defaultCapitalizedIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-CAP-INC-" + UUID.randomUUID());
 
@@ -4990,7 +5028,7 @@ public class LoanStepDef extends AbstractStepDef {
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = LoanRequestFactory.defaultCapitalizedIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = loanRequestFactory.defaultCapitalizedIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-CAP-INC-" + UUID.randomUUID()).classificationId(24L);
 
@@ -5027,7 +5065,7 @@ public class LoanStepDef extends AbstractStepDef {
         final Long classificationId = getClassificationCodeValueId(CodeNames.CAPITALIZED_INCOME_TRANSACTION_CLASSIFICATION.getValue(),
                 classificationCodeName);
 
-        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = LoanRequestFactory.defaultCapitalizedIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = loanRequestFactory.defaultCapitalizedIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-CAP-INC-" + UUID.randomUUID()).classificationId(classificationId);
 
@@ -5060,7 +5098,7 @@ public class LoanStepDef extends AbstractStepDef {
         final long loanId = loanResponse.getLoanId();
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
-        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = LoanRequestFactory.defaultCapitalizedIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = loanRequestFactory.defaultCapitalizedIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-CAP-INC-" + UUID.randomUUID());
 
@@ -5078,7 +5116,7 @@ public class LoanStepDef extends AbstractStepDef {
         final long loanId = loanResponse.getLoanId();
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
-        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = LoanRequestFactory.defaultCapitalizedIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest capitalizedIncomeRequest = loanRequestFactory.defaultCapitalizedIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-CAP-INC-" + UUID.randomUUID());
 
@@ -5335,7 +5373,7 @@ public class LoanStepDef extends AbstractStepDef {
         assert loanResponse != null;
         final long loanId = loanResponse.getLoanId();
 
-        final PostLoansLoanIdRequest contractTerminationRequest = LoanRequestFactory.defaultLoanContractTerminationRequest();
+        final PostLoansLoanIdRequest contractTerminationRequest = loanRequestFactory.defaultLoanContractTerminationRequest();
 
         final PostLoansLoanIdResponse loanContractTerminationResponse = ok(() -> fineractClient.loans().stateTransitions(loanId,
                 contractTerminationRequest, Map.of("command", "contractTermination")));
@@ -5353,7 +5391,7 @@ public class LoanStepDef extends AbstractStepDef {
         assert loanResponse != null;
         final long loanId = loanResponse.getLoanId();
 
-        final PostLoansLoanIdRequest contractTerminationRequest = LoanRequestFactory.defaultLoanContractTerminationRequest();
+        final PostLoansLoanIdRequest contractTerminationRequest = loanRequestFactory.defaultLoanContractTerminationRequest();
 
         final PostLoansLoanIdResponse loanContractTerminationResponse = ok(() -> fineractClient.loans().stateTransitions(loanId,
                 contractTerminationRequest, Map.of("command", "contractTermination")));
@@ -5379,7 +5417,7 @@ public class LoanStepDef extends AbstractStepDef {
             return Boolean.TRUE.equals(t.getType().getContractTermination());
         }).findFirst().orElse(null);
 
-        final PostLoansLoanIdRequest request = LoanRequestFactory.defaultContractTerminationUndoRequest();
+        final PostLoansLoanIdRequest request = loanRequestFactory.defaultContractTerminationUndoRequest();
 
         final PostLoansLoanIdResponse response = ok(
                 () -> fineractClient.loans().stateTransitions(loanId, request, Map.of("command", "undoContractTermination")));
@@ -5441,7 +5479,7 @@ public class LoanStepDef extends AbstractStepDef {
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = LoanRequestFactory.defaultBuyDownFeeIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = loanRequestFactory.defaultBuyDownFeeIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-BUY-DOWN-FEE" + UUID.randomUUID());
 
@@ -5458,7 +5496,7 @@ public class LoanStepDef extends AbstractStepDef {
         final DefaultPaymentType paymentType = DefaultPaymentType.valueOf(transactionPaymentType);
         final Long paymentTypeValue = paymentTypeResolver.resolve(paymentType);
 
-        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = LoanRequestFactory.defaultBuyDownFeeIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = loanRequestFactory.defaultBuyDownFeeIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-BUY-DOWN-FEE" + UUID.randomUUID()).classificationId(25L);
 
@@ -5514,7 +5552,7 @@ public class LoanStepDef extends AbstractStepDef {
         final Long classificationId = getClassificationCodeValueId(CodeNames.BUYDOWN_FEE_TRANSACTION_CLASSIFICATION.getValue(),
                 classificationCodeValueName);
 
-        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = LoanRequestFactory.defaultBuyDownFeeIncomeRequest()
+        final PostLoansLoanIdTransactionsRequest buyDownFeeRequest = loanRequestFactory.defaultBuyDownFeeIncomeRequest()
                 .transactionDate(transactionDate).transactionAmount(Double.valueOf(amount)).paymentTypeId(paymentTypeValue)
                 .externalId("EXT-BUY-DOWN-FEE" + UUID.randomUUID()).classificationId(classificationId);
 
@@ -5895,7 +5933,7 @@ public class LoanStepDef extends AbstractStepDef {
         }).toList();
 
         final LoanAmortizationAllocationResponse loanAmortizationAllocationResponse = transactionsMatch.getFirst().getType().getCode()
-                .substring(20).equals(GetLoansLoanIdLoanTransactionEnumData.SERIALIZED_NAME_CAPITALIZED_INCOME)
+                .substring(20).equals(GetLoansLoanIdLoanTransactionEnumData.JSON_PROPERTY_CAPITALIZED_INCOME)
                         ? ok(() -> fineractClient.loanCapitalizedIncome().retrieveCapitalizedIncomeAllocationData(loanId,
                                 transactionsMatch.getFirst().getId()))
                         : ok(() -> fineractClient.loanBuyDownFees().retrieveBuyDownFeesAllocationData(loanId,
@@ -5931,7 +5969,7 @@ public class LoanStepDef extends AbstractStepDef {
         }).toList().get(nthTransaction);
 
         final LoanAmortizationAllocationResponse loanAmortizationAllocationResponse = transactionMatch.getType().getCode().substring(20)
-                .equals(GetLoansLoanIdLoanTransactionEnumData.SERIALIZED_NAME_CAPITALIZED_INCOME)
+                .equals(GetLoansLoanIdLoanTransactionEnumData.JSON_PROPERTY_CAPITALIZED_INCOME)
                         ? ok(() -> fineractClient.loanCapitalizedIncome().retrieveCapitalizedIncomeAllocationData(loanId,
                                 transactionMatch.getId()))
                         : ok(() -> fineractClient.loanBuyDownFees().retrieveBuyDownFeesAllocationData(loanId, transactionMatch.getId()));
@@ -6036,7 +6074,7 @@ public class LoanStepDef extends AbstractStepDef {
         assertNotNull(loanResponse);
         long loanId = loanResponse.getLoanId();
 
-        PostLoansLoanIdRequest disburseRequest = LoanRequestFactory.defaultLoanDisburseRequest()
+        PostLoansLoanIdRequest disburseRequest = loanRequestFactory.defaultLoanDisburseRequest()
                 .actualDisbursementDate(actualDisbursementDate).transactionAmount(new BigDecimal(transactionAmount));
 
         PostLoansLoanIdResponse loanDisburseResponse = ok(
