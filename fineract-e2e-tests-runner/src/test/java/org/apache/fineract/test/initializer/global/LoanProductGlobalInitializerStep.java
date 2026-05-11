@@ -1437,6 +1437,32 @@ public class LoanProductGlobalInitializerStep implements FineractGlobalInitializ
         });
 
         tasks.add(() -> {
+            // LP2 + zero-interest progressive schedule + installmentAmountInMultiplesOf=10
+            // (LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10)
+            final String nameMultOf10 = DefaultLoanProduct.LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10.getName();
+
+            final PostLoanProductsRequest loanProductsRequestAdvZeroInterestMultOf10 = loanProductsRequestFactory
+                    .defaultLoanProductsRequestLP2()//
+                    .name(nameMultOf10)//
+                    .installmentAmountInMultiplesOf(10)//
+                    .enableDownPayment(false)//
+                    .enableAutoRepaymentForDownPayment(null)//
+                    .disbursedAmountPercentageForDownPayment(null)//
+                    .transactionProcessingStrategyCode(ADVANCED_PAYMENT_ALLOCATION.getValue())//
+                    .loanScheduleType("PROGRESSIVE") //
+                    .loanScheduleProcessingType("HORIZONTAL")//
+                    .paymentAllocation(List.of(//
+                            createPaymentAllocation("DEFAULT", "NEXT_INSTALLMENT"), //
+                            createPaymentAllocation("GOODWILL_CREDIT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("MERCHANT_ISSUED_REFUND", "REAMORTIZATION"), //
+                            createPaymentAllocation("PAYOUT_REFUND", "NEXT_INSTALLMENT")));
+            final PostLoanProductsResponse responseAdvZeroInterestMultOf10 = createLoanProductIdempotent(
+                    loanProductsRequestAdvZeroInterestMultOf10);
+            TestContext.INSTANCE.set(TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10,
+                    responseAdvZeroInterestMultOf10);
+        });
+
+        tasks.add(() -> {
             // LP2 with progressive loan schedule + horizontal + interest EMI + 360/30 + multidisbursement +
             // accelerate-maturity chargeOff behaviour
             // (LP2_ADV_PYMNT_INTEREST_DAILY_INTEREST_RECALCULATION_ACCELERATE_MATURITY_CHARGE_OFF_BEHAVIOUR)
