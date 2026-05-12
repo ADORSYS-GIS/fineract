@@ -83,6 +83,7 @@ import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.WorkingCapitalLoanCommandTemplateData;
 import org.apache.fineract.client.models.WorkingCapitalLoanPeriodPaymentRateChangeData;
 import org.apache.fineract.test.data.LoanStatus;
+import org.apache.fineract.test.data.TransactionType;
 import org.apache.fineract.test.data.paymenttype.DefaultPaymentType;
 import org.apache.fineract.test.data.paymenttype.PaymentTypeResolver;
 import org.apache.fineract.test.data.workingcapitalproduct.DefaultWorkingCapitalLoanProduct;
@@ -2095,9 +2096,18 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     @Then("Customer makes repayment on {string} with {double} transaction amount on Working Capital loan")
     public void makeWorkingCapitalLoanRepayment(final String transactionDate, final double transactionAmount) {
+        makeWorkingCapitalLoanRepaymentLike("REPAYMENT", transactionDate, transactionAmount);
+    }
+
+    @Then("Customer makes {string} transaction on {string} with {double} transaction amount on Working Capital loan")
+    public void makeWorkingCapitalLoanRepaymentLike(final String transactionTypeInput, final String transactionDate,
+            final double transactionAmount) {
         final Long loanId = getCreatedLoanId();
+        final TransactionType transactionType = TransactionType.valueOf(transactionTypeInput);
+        final String transactionTypeValue = transactionType.getValue();
         final PostWorkingCapitalLoanTransactionsRequest repaymentRequest = buildRepaymentRequest(transactionDate, transactionAmount, null);
-        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentById(loanId, repaymentRequest);
+        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentLikeById(loanId, transactionTypeValue,
+                repaymentRequest);
         validateRepaymentResponse(response, transactionAmount, transactionDate, loanId);
     }
 
@@ -2117,7 +2127,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final PostWorkingCapitalLoanTransactionsPaymentDetailRequest paymentDetails = buildPaymentDetailsFromTable(table);
         final PostWorkingCapitalLoanTransactionsRequest repaymentRequest = buildRepaymentRequest(transactionDate, transactionAmount,
                 paymentDetails);
-        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentById(loanId, repaymentRequest);
+        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentLikeById(loanId, "repayment", repaymentRequest);
         validateRepaymentResponse(response, transactionAmount, transactionDate, loanId);
     }
 
@@ -2179,12 +2189,12 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         return request;
     }
 
-    private PostWorkingCapitalLoanTransactionsResponse executeRepaymentById(final Long loanId,
+    private PostWorkingCapitalLoanTransactionsResponse executeRepaymentLikeById(final Long loanId, final String transactionType,
             final PostWorkingCapitalLoanTransactionsRequest repaymentRequest) {
-        log.debug("Making repayment for loan ID: {}, transactionDate: {}, transactionAmount: {}", loanId,
+        log.debug("Making {} for loan ID: {}, transactionDate: {}, transactionAmount: {}", transactionType, loanId,
                 repaymentRequest.getTransactionDate(), repaymentRequest.getTransactionAmount());
 
-        return ok(() -> fineractClient.workingCapitalLoanTransactions().executeWorkingCapitalLoanTransactionById(loanId, "repayment",
+        return ok(() -> fineractClient.workingCapitalLoanTransactions().executeWorkingCapitalLoanTransactionById(loanId, transactionType,
                 repaymentRequest));
     }
 
@@ -2332,6 +2342,25 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         }
 
         return paymentDetails;
+    }
+
+    @Then("Initiating a {string} transaction on {string} with {double} transaction amount on Working Capital loan results an error with the following data:")
+    public void initiateTransactionResultsAnErrorWithDetails(final String transactionTypeInput, final String transactionDate,
+            final double transactionAmount, final DataTable table) {
+        final Long loanId = getCreatedLoanId();
+        final TransactionType transactionType = TransactionType.valueOf(transactionTypeInput);
+        final String transactionTypeValue = transactionType.getValue();
+        final PostWorkingCapitalLoanTransactionsRequest transactionRequest = buildRepaymentRequest(transactionDate, transactionAmount,
+                null);
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoanTransactions()
+                .executeWorkingCapitalLoanTransactionById(loanId, transactionTypeValue, transactionRequest));
+
+        if (table != null) {
+            verifyRepaymentErrorWithTable(exception, table);
+        }
+
+        log.debug("Verified working capital loan {} transaction failed with expected error for loan {}", transactionTypeValue, loanId);
     }
 
     @Then("Initiating a repayment on {string} with {double} transaction amount on Working Capital loan results an error with the following data:")
