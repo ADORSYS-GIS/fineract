@@ -47,6 +47,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.ExpectedDisbursementDate
 import org.apache.fineract.portfolio.workingcapitalloan.WorkingCapitalLoanConstants;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanTransactionRepository;
+import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductRelatedDetail;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -83,17 +84,67 @@ public class WorkingCapitalLoanDataValidator {
 
     private static final Set<String> UNDO_DISBURSAL_SUPPORTED_PARAMETERS = new HashSet<>(
             Arrays.asList("locale", "dateFormat", WorkingCapitalLoanConstants.noteParamName));
-    private static final Set<String> ADD_DISCOUNT_SUPPORTED_PARAMETERS = new HashSet<>(Arrays.asList("locale", "dateFormat",
-            WorkingCapitalLoanConstants.discountAmountParamName, WorkingCapitalLoanConstants.noteParamName));
     private static final Set<String> REPAYMENT_SUPPORTED_PARAMETERS = new HashSet<>(Arrays.asList("locale", "dateFormat",
             WorkingCapitalLoanConstants.transactionDateParamName, WorkingCapitalLoanConstants.transactionAmountParamName,
             WorkingCapitalLoanConstants.classificationIdParamName, WorkingCapitalLoanConstants.noteParamName,
             WorkingCapitalLoanConstants.paymentDetailsParamName, WorkingCapitalLoanConstants.externalIdParameterName));
+    private static final Set<String> DISCOUNT_TRANSACTION_SUPPORTED_PARAMETERS = new HashSet<>(
+            Arrays.asList("locale", "dateFormat", WorkingCapitalLoanConstants.noteParamName,
+                    WorkingCapitalLoanConstants.transactionAmountParamName, WorkingCapitalLoanConstants.classificationIdParamName,
+                    WorkingCapitalLoanConstants.relatedResourceIdParamName, WorkingCapitalLoanConstants.paymentDetailsParamName,
+                    WorkingCapitalLoanConstants.noteParamName, WorkingCapitalLoanConstants.transactionDateParamName));
     private static final Set<String> CREDIT_BALANCE_REFUND_SUPPORTED_PARAMETERS = new HashSet<>(REPAYMENT_SUPPORTED_PARAMETERS);
 
     private static final int NOTE_MAX_LENGTH = 1000;
     private static final int EXTERNAL_ID_MAX_LENGTH = 100;
     private static final int PAYMENT_DETAIL_STRING_MAX_LENGTH = 50;
+
+    public void validateDiscountTransaction(final WorkingCapitalLoan loan, final String json, BigDecimal discountAmount,
+            final String note) {
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json,
+                WorkingCapitalLoanDataValidator.DISCOUNT_TRANSACTION_SUPPORTED_PARAMETERS);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(WorkingCapitalLoanConstants.RESOURCE_NAME);
+
+        if (isDiscountOverrideAllowed(loan)) {
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
+                    .failWithCode("override.not.allowed.by.product");
+        }
+        baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName).value(discountAmount).ignoreIfNull()
+                .zeroOrPositiveAmount();
+
+        final BigDecimal currentDiscount = loan.getLoanProductRelatedDetails() != null ? loan.getLoanProductRelatedDetails().getDiscount()
+                : null;
+        if (currentDiscount == null) {
+            validateDiscountAmountWithProductDiscount(discountAmount, loan.getLoanProduct().getRelatedDetail(), baseDataValidator);
+        }
+
+        final LocalDate actualDisbursementDate = loan.getDisbursementDetails() != null && !loan.getDisbursementDetails().isEmpty()
+                ? loan.getDisbursementDetails().getFirst().getActualDisbursementDate()
+                : null;
+        if (actualDisbursementDate == null) {
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.actualDisbursementDateParamName)
+                    .failWithCode("loan.not.disbursed");
+        }
+
+        final LocalDate businessDate = DateUtils.getBusinessLocalDate();
+        if (actualDisbursementDate != null && !actualDisbursementDate.equals(businessDate)) {
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.actualDisbursementDateParamName).value(businessDate)
+                    .failWithCode("transaction.date.must.be.equal.disbursement.date");
+        }
+
+        baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.noteParamName).value(note).ignoreIfNull()
+                .notExceedingLengthOf(NOTE_MAX_LENGTH);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
 
     public void validateApproval(final String json, final WorkingCapitalLoan loan) {
         if (StringUtils.isBlank(json)) {
@@ -150,7 +201,7 @@ public class WorkingCapitalLoanDataValidator {
                     .failWithCode("cannot.be.before.approval.date");
         }
 
-        // discountAmount must be >= 0 and <= current (creation-time) discount
+        // discountAmount must be >= 0 and <= proposed discount (creation-time) discount
         if (this.fromApiJsonHelper.parameterHasValue(WorkingCapitalLoanConstants.discountAmountParamName, element)) {
             if (isDiscountOverrideAllowed(loan)) {
                 baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
@@ -160,17 +211,31 @@ public class WorkingCapitalLoanDataValidator {
                     .extractBigDecimalNamed(WorkingCapitalLoanConstants.discountAmountParamName, element, new HashSet<>());
             baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName).value(discountAmount).ignoreIfNull()
                     .zeroOrPositiveAmount();
-
             final BigDecimal currentDiscount = loan.getLoanProductRelatedDetails() != null
-                    ? loan.getLoanProductRelatedDetails().getDiscount()
+                    ? loan.getLoanProductRelatedDetails().getDiscountProposed()
                     : null;
-            if (discountAmount != null && currentDiscount != null && discountAmount.compareTo(currentDiscount) > 0) {
-                baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
-                        .failWithCode("amount.cannot.exceed.created.discount");
+            if (currentDiscount != null) {
+                if (discountAmount.compareTo(currentDiscount) > 0) {
+                    baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
+                            .failWithCode("amount.cannot.exceed.created.discount");
+                }
+            } else {
+                validateDiscountAmountWithProductDiscount(discountAmount, loan.getLoanProduct().getRelatedDetail(), baseDataValidator);
             }
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void validateDiscountAmountWithProductDiscount(final BigDecimal discountAmount,
+            final WorkingCapitalLoanProductRelatedDetail productRelatedDetail, final DataValidatorBuilder baseDataValidator) {
+        if (discountAmount != null) {
+            final BigDecimal productDiscount = productRelatedDetail != null ? productRelatedDetail.getDiscount() : null;
+            if (productDiscount != null && discountAmount.compareTo(productDiscount) > 0) {
+                baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
+                        .failWithCode("amount.cannot.exceed.product.discount");
+            }
+        }
     }
 
     public void validateRejection(final String json, final WorkingCapitalLoan loan) {
@@ -290,12 +355,19 @@ public class WorkingCapitalLoanDataValidator {
             baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName).value(discountAmount).ignoreIfNull()
                     .zeroOrPositiveAmount();
 
+            // discountAmount must be >= 0 and <= approved discount (approval-time) discount
             final BigDecimal currentDiscount = loan.getLoanProductRelatedDetails() != null
-                    ? loan.getLoanProductRelatedDetails().getDiscount()
+                    ? loan.getLoanProductRelatedDetails().getDiscountApproved()
                     : null;
-            if (discountAmount != null && currentDiscount != null && discountAmount.compareTo(currentDiscount) > 0) {
-                baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
-                        .failWithCode("amount.cannot.exceed.created.discount");
+            if (discountAmount != null) {
+                if (currentDiscount != null) {
+                    if (discountAmount.compareTo(currentDiscount) > 0) {
+                        baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
+                                .failWithCode("amount.cannot.exceed.approved.discount");
+                    }
+                } else {
+                    validateDiscountAmountWithProductDiscount(discountAmount, loan.getLoanProduct().getRelatedDetail(), baseDataValidator);
+                }
             }
         }
 
@@ -381,56 +453,6 @@ public class WorkingCapitalLoanDataValidator {
         final String note = this.fromApiJsonHelper.extractStringNamed(WorkingCapitalLoanConstants.noteParamName, element);
         baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.noteParamName).value(note).ignoreIfNull()
                 .notExceedingLengthOf(NOTE_MAX_LENGTH);
-        throwExceptionIfValidationWarningsExist(dataValidationErrors);
-    }
-
-    public void validateUpdateDiscount(final String json, final WorkingCapitalLoan loan) {
-        if (StringUtils.isBlank(json)) {
-            throw new InvalidJsonException();
-        }
-
-        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, ADD_DISCOUNT_SUPPORTED_PARAMETERS);
-
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(WorkingCapitalLoanConstants.RESOURCE_NAME);
-        final JsonElement element = this.fromApiJsonHelper.parse(json);
-
-        if (isDiscountOverrideAllowed(loan)) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
-                    .failWithCode("override.not.allowed.by.product");
-        }
-
-        final BigDecimal discountAmount = this.fromApiJsonHelper.extractBigDecimalNamed(WorkingCapitalLoanConstants.discountAmountParamName,
-                element, new HashSet<>());
-        baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName).value(discountAmount).notNull()
-                .zeroOrPositiveAmount();
-        final BigDecimal currentDiscount = loan.getLoanProductRelatedDetails() != null ? loan.getLoanProductRelatedDetails().getDiscount()
-                : null;
-        if (discountAmount != null && currentDiscount != null && discountAmount.compareTo(currentDiscount) > 0) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.discountAmountParamName)
-                    .failWithCode("amount.cannot.exceed.created.discount");
-        }
-
-        final LocalDate actualDisbursementDate = loan.getDisbursementDetails() != null && !loan.getDisbursementDetails().isEmpty()
-                ? loan.getDisbursementDetails().getFirst().getActualDisbursementDate()
-                : null;
-        if (actualDisbursementDate == null) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.actualDisbursementDateParamName)
-                    .failWithCode("loan.not.disbursed");
-        }
-
-        final LocalDate businessDate = DateUtils.getBusinessLocalDate();
-        if (actualDisbursementDate != null && !actualDisbursementDate.equals(businessDate)) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.actualDisbursementDateParamName).value(businessDate)
-                    .failWithCode("transaction.date.must.be.equal.disbursement.date");
-        }
-
-        final String note = this.fromApiJsonHelper.extractStringNamed(WorkingCapitalLoanConstants.noteParamName, element);
-        baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.noteParamName).value(note).ignoreIfNull()
-                .notExceedingLengthOf(NOTE_MAX_LENGTH);
-
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 

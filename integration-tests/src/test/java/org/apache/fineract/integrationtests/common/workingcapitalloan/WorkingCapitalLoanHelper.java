@@ -18,9 +18,16 @@
  */
 package org.apache.fineract.integrationtests.common.workingcapitalloan;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.time.LocalDate;
 import java.util.Map;
 import org.apache.fineract.client.feign.ObjectMapperFactory;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoanTransactionsApi;
@@ -32,7 +39,6 @@ import org.apache.fineract.client.models.PostWorkingCapitalLoanTransactionsReque
 import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansResponse;
-import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdDiscountRequest;
 import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 
@@ -173,26 +179,6 @@ public class WorkingCapitalLoanHelper {
         return FeignCalls.fail(() -> transactionsApi().executeWorkingCapitalLoanTransactionById(loanId, "creditBalanceRefund", request));
     }
 
-    public Long updateDiscountById(final Long loanId, final String jsonBody) {
-        PutWorkingCapitalLoansLoanIdDiscountRequest request = fromJson(jsonBody, PutWorkingCapitalLoansLoanIdDiscountRequest.class);
-        return FeignCalls.ok(() -> api().updateWorkingCapitalLoanDiscountById(loanId, request)).getResourceId();
-    }
-
-    public Long updateDiscountByExternalId(final String loanExternalId, final String jsonBody) {
-        PutWorkingCapitalLoansLoanIdDiscountRequest request = fromJson(jsonBody, PutWorkingCapitalLoansLoanIdDiscountRequest.class);
-        return FeignCalls.ok(() -> api().updateWorkingCapitalLoanDiscountByExternalId(loanExternalId, request)).getResourceId();
-    }
-
-    public CallFailedRuntimeException runUpdateDiscountByIdExpectingFailure(final Long loanId, final String jsonBody) {
-        PutWorkingCapitalLoansLoanIdDiscountRequest request = fromJson(jsonBody, PutWorkingCapitalLoansLoanIdDiscountRequest.class);
-        return FeignCalls.fail(() -> api().updateWorkingCapitalLoanDiscountById(loanId, request));
-    }
-
-    public CallFailedRuntimeException runUpdateDiscountByExternalIdExpectingFailure(final String loanExternalId, final String jsonBody) {
-        PutWorkingCapitalLoansLoanIdDiscountRequest request = fromJson(jsonBody, PutWorkingCapitalLoansLoanIdDiscountRequest.class);
-        return FeignCalls.fail(() -> api().updateWorkingCapitalLoanDiscountByExternalId(loanExternalId, request));
-    }
-
     public String retrieveTransactionsByLoanIdRaw(final Long loanId) {
         Object response = FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionsById(loanId));
         return toJson(response);
@@ -293,4 +279,25 @@ public class WorkingCapitalLoanHelper {
             throw new IllegalArgumentException("Failed to serialize response", e);
         }
     }
+
+    public JsonObject retrieveLoan(final Long loanId) {
+        final String response = retrieveById(loanId);
+        assertNotNull(response);
+        return new Gson().fromJson(response, JsonObject.class);
+    }
+
+    public LocalDate getSubmittedOnDate(final Long loanId) {
+        final JsonObject data = retrieveLoan(loanId);
+        return extractDate(data.get("submittedOnDate"));
+    }
+
+    public LocalDate extractDate(final JsonElement element) {
+        assertNotNull(element, "Expected date element");
+        if (element.isJsonArray()) {
+            final JsonArray arr = element.getAsJsonArray();
+            return LocalDate.of(arr.get(0).getAsInt(), arr.get(1).getAsInt(), arr.get(2).getAsInt());
+        }
+        return LocalDate.parse(element.getAsString());
+    }
+
 }
