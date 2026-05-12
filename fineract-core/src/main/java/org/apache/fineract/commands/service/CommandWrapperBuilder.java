@@ -922,6 +922,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updatePeriodPaymentRateWorkingCapitalLoanApplication(final Long loanId) {
+        this.actionName = "UPDATERATE";
+        this.entityName = "WORKINGCAPITALLOAN";
+        this.entityId = loanId;
+        this.href = "/workingcapitalloans/" + loanId;
+        return this;
+    }
+
     public CommandWrapperBuilder createClientIdentifier(final Long clientId) {
         this.actionName = ACTION_CREATE;
         this.entityName = ENTITY_CLIENTIDENTIFIER;

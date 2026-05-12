@@ -16,29 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.data;
+package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import java.util.List;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanPeriodPaymentRateChangeData;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class ProjectedAmortizationSchedulePaymentData {
+public interface WorkingCapitalLoanPeriodPaymentRateChangeReadService {
 
-    private final int paymentNo;
-    private final LocalDate paymentDate;
-    private final BigDecimal expectedPaymentAmount;
-    private final BigDecimal discountFactor;
-    private final BigDecimal npvValue;
-    private final BigDecimal balance;
-    private final BigDecimal expectedAmortizationAmount;
-    private final BigDecimal actualPaymentAmount;
-    private final BigDecimal actualAmortizationAmount;
-    private final BigDecimal incomeModification;
-    private final BigDecimal deferredBalance;
-
+    List<WorkingCapitalLoanPeriodPaymentRateChangeData> retrieveRateChangeHistory(Long loanId);
 }

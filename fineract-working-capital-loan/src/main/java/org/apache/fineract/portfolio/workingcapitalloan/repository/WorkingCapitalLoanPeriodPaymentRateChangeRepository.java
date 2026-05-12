@@ -16,29 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.data;
+package org.apache.fineract.portfolio.workingcapitalloan.repository;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import java.util.List;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPeriodPaymentRateChange;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class ProjectedAmortizationSchedulePaymentData {
+@Repository
+public interface WorkingCapitalLoanPeriodPaymentRateChangeRepository
+        extends JpaRepository<WorkingCapitalLoanPeriodPaymentRateChange, Long> {
 
-    private final int paymentNo;
-    private final LocalDate paymentDate;
-    private final BigDecimal expectedPaymentAmount;
-    private final BigDecimal discountFactor;
-    private final BigDecimal npvValue;
-    private final BigDecimal balance;
-    private final BigDecimal expectedAmortizationAmount;
-    private final BigDecimal actualPaymentAmount;
-    private final BigDecimal actualAmortizationAmount;
-    private final BigDecimal incomeModification;
-    private final BigDecimal deferredBalance;
+    List<WorkingCapitalLoanPeriodPaymentRateChange> findByWorkingCapitalLoanIdOrderByIdDesc(Long loanId);
 
+    List<WorkingCapitalLoanPeriodPaymentRateChange> findByWorkingCapitalLoanIdAndReversedFalse(Long loanId);
 }

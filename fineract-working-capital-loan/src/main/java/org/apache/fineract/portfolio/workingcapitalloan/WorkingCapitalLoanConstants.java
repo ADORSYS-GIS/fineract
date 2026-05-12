@@ -81,4 +81,8 @@ public final class WorkingCapitalLoanConstants {
 
     public static final String WRITE_OFF_REASONS = "WriteOffReasons";
     public static final String CHARGE_OFF_REASONS = "ChargeOffReasons";
+
+    // Period payment rate change parameters
+    public static final String periodPaymentRateParamName = "periodPaymentRate";
+    public static final String previousPeriodPaymentRateParamName = "previousRate";
 }

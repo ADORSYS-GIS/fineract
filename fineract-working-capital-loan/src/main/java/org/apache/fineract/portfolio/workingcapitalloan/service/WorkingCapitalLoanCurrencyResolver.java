@@ -18,16 +18,20 @@
  */
 package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-import java.math.MathContext;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
-import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleModel;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 
-public interface ProjectedAmortizationScheduleModelParserService {
+public final class WorkingCapitalLoanCurrencyResolver {
 
-    String toJson(@NonNull ProjectedAmortizationScheduleModel model);
+    private WorkingCapitalLoanCurrencyResolver() {}
 
-    @Nullable
-    ProjectedAmortizationScheduleModel fromJson(@Nullable String json, @NonNull MathContext mc, @NonNull CurrencyData currency);
+    public static CurrencyData resolveCurrency(final WorkingCapitalLoan loan) {
+        if (loan.getLoanProductRelatedDetails() != null && loan.getLoanProductRelatedDetails().getCurrency() != null) {
+            return loan.getLoanProductRelatedDetails().getCurrency().toData();
+        }
+        if (loan.getLoanProduct() != null && loan.getLoanProduct().getCurrency() != null) {
+            return loan.getLoanProduct().getCurrency().toData();
+        }
+        throw new IllegalStateException("No currency found for loan " + loan.getId());
+    }
 }

@@ -20,25 +20,9 @@ package org.apache.fineract.portfolio.workingcapitalloan.data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import java.time.OffsetDateTime;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class ProjectedAmortizationSchedulePaymentData {
-
-    private final int paymentNo;
-    private final LocalDate paymentDate;
-    private final BigDecimal expectedPaymentAmount;
-    private final BigDecimal discountFactor;
-    private final BigDecimal npvValue;
-    private final BigDecimal balance;
-    private final BigDecimal expectedAmortizationAmount;
-    private final BigDecimal actualPaymentAmount;
-    private final BigDecimal actualAmortizationAmount;
-    private final BigDecimal incomeModification;
-    private final BigDecimal deferredBalance;
+public record WorkingCapitalLoanPeriodPaymentRateChangeData(Long id, Long loanId, LocalDate effectiveDate, BigDecimal previousRate,
+        BigDecimal newRate, boolean reversed, LocalDate reversedOnDate, OffsetDateTime createdDate) {
 
 }
