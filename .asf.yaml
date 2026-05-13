@@ -27,8 +27,6 @@ github:
           - "develop"
           - "release/*"
           - "maintenance/*"
-          # temporary (to test protections below)
-          - "protected-branch-test"
       restrict_deletion: true
       restrict_force_push: true
       required_signatures: true
