@@ -19,10 +19,20 @@ github:
     merge: true
     squash: false
     rebase: false
-  protected_branches:
-    develop:
-      required_linear_history: false
+  rulesets:
+    - name: "Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "develop"
+          - "release/*"
+          - "maintenance/*"
+          # temporary (to test protections below)
+          - "protected-branch-test"
+      restrict_deletion: true
+      restrict_force_push: true
       required_signatures: true
+      required_linear_history: false
       required_conversation_resolution: true
 notifications:
   commits: commits@fineract.apache.org
