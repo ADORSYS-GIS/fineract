@@ -1463,6 +1463,38 @@ public class LoanProductGlobalInitializerStep implements FineractGlobalInitializ
         });
 
         tasks.add(() -> {
+            // LP2 + declining-balance 6% APR + installmentAmountInMultiplesOf=1 (LP2 default) + no downpayment
+            // Used to verify that the safeRoundingForEMI fallback distributes principal+interest across installments
+            // when the unrounded EMI rounds to zero under multiplesOf.
+            // (LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF)
+            final String nameInterestDecliningCurrencyMultiplesOf = DefaultLoanProduct.LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF
+                    .getName();
+
+            final PostLoanProductsRequest loanProductsRequestAdvInterestDecliningCurrencyMultiplesOf = loanProductsRequestFactory
+                    .defaultLoanProductsRequestLP2()//
+                    .name(nameInterestDecliningCurrencyMultiplesOf)//
+                    .enableDownPayment(false)//
+                    .enableAutoRepaymentForDownPayment(null)//
+                    .disbursedAmountPercentageForDownPayment(null)//
+                    .interestRatePerPeriod(6.0)//
+                    .maxInterestRatePerPeriod(50.0)//
+                    .interestRateFrequencyType(INTEREST_RATE_FREQUENCY_TYPE_YEAR)//
+                    .transactionProcessingStrategyCode(ADVANCED_PAYMENT_ALLOCATION.getValue())//
+                    .loanScheduleType("PROGRESSIVE") //
+                    .loanScheduleProcessingType("HORIZONTAL")//
+                    .paymentAllocation(List.of(//
+                            createPaymentAllocation("DEFAULT", "NEXT_INSTALLMENT"), //
+                            createPaymentAllocation("GOODWILL_CREDIT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("MERCHANT_ISSUED_REFUND", "REAMORTIZATION"), //
+                            createPaymentAllocation("PAYOUT_REFUND", "NEXT_INSTALLMENT")));
+            final PostLoanProductsResponse responseAdvInterestDecliningCurrencyMultiplesOf = createLoanProductIdempotent(
+                    loanProductsRequestAdvInterestDecliningCurrencyMultiplesOf);
+            TestContext.INSTANCE.set(
+                    TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF,
+                    responseAdvInterestDecliningCurrencyMultiplesOf);
+        });
+
+        tasks.add(() -> {
             // LP2 with progressive loan schedule + horizontal + interest EMI + 360/30 + multidisbursement +
             // accelerate-maturity chargeOff behaviour
             // (LP2_ADV_PYMNT_INTEREST_DAILY_INTEREST_RECALCULATION_ACCELERATE_MATURITY_CHARGE_OFF_BEHAVIOUR)

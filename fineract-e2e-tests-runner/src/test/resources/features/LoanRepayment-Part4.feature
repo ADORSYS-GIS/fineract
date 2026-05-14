@@ -598,6 +598,7 @@ Feature: LoanRepayment - Part4
     Then Loan is closed with zero outstanding balance and it's all installments have obligations met
     When Admin set "LP2_DOWNPAYMENT_ADV_PMT_ALLOC_PROGRESSIVE_LOAN_SCHEDULE_VERTICAL_INTEREST_RECALC" loan product "REPAYMENT" transaction type to "NEXT_INSTALLMENT" future installment allocation rule
 
+  @TestRailId:C80938
   Scenario: Disbursement with EMI smaller than installmentAmountInMultiplesOf=10 distributes residual across installments instead of collapsing onto one
     When Admin sets the business date to "26 October 2025"
     When Admin creates a client with random data
@@ -644,7 +645,8 @@ Feature: LoanRepayment - Part4
       | 27 October 2025  | Repayment        | 4.0    | 4.0       | 0.0      | 0.0  | 0.0       | 0.0          | false    | false    |
     Then Loan is closed with zero outstanding balance and it's all installments have obligations met
 
-  Scenario: Multi-tranche progressive disbursement with both sub-multiplesOf tranches distributes residual across installments
+  @TestRailId:C80939
+  Scenario: Multi-tranche progressive disbursement with both sub-multiplesOf tranches distributes residual across all installments
     When Admin sets the business date to "26 October 2025"
     When Admin creates a client with random data
     When Admin creates a fully customized loan with loan product`s charges and following data:
