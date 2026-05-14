@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.infrastructure.hooks.data;
+package org.apache.fineract.infrastructure.hooks.domain;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,14 +26,17 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.fineract.infrastructure.hooks.data.HookEntityData;
+import org.apache.fineract.infrastructure.hooks.data.HookGroupingData;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-public class EventResultSetExtractor implements ResultSetExtractor<List<Grouping>> {
+@Deprecated(forRemoval = true)
+public class HookEventResultSetExtractor implements ResultSetExtractor<List<HookGroupingData>> {
 
     @Override
-    public List<Grouping> extractData(final ResultSet rs) throws SQLException, DataAccessException {
-        final List<Grouping> groupings = new ArrayList<>();
+    public List<HookGroupingData> extractData(final ResultSet rs) throws SQLException, DataAccessException {
+        final List<HookGroupingData> groupings = new ArrayList<>();
 
         final Map<String, Map<String, List<String>>> groupToEntityMapping = new HashMap<>();
         Map<String, List<String>> entityToActionMapping = new HashMap<>();
@@ -63,11 +66,11 @@ public class EventResultSetExtractor implements ResultSetExtractor<List<Grouping
         }
 
         for (final Map.Entry<String, Map<String, List<String>>> groupingEntry : groupToEntityMapping.entrySet()) {
-            final List<Entity> entities = new ArrayList<>();
-            final Grouping group = new Grouping();
+            final List<HookEntityData> entities = new ArrayList<>();
+            final HookGroupingData group = new HookGroupingData();
             group.setName(groupingEntry.getKey());
             for (final Map.Entry<String, List<String>> entityEntry : groupingEntry.getValue().entrySet()) {
-                final Entity entity = new Entity();
+                final HookEntityData entity = new HookEntityData();
                 entity.setName(entityEntry.getKey());
                 final List<String> actions = new ArrayList<>(entityEntry.getValue());
                 Collections.sort(actions);
@@ -75,12 +78,12 @@ public class EventResultSetExtractor implements ResultSetExtractor<List<Grouping
                 entities.add(entity);
             }
 
-            entities.sort(Comparator.comparing(Entity::getName));
+            entities.sort(Comparator.comparing(HookEntityData::getName));
             group.setEntities(entities);
             groupings.add(group);
         }
 
-        groupings.sort(Comparator.comparing(Grouping::getName));
+        groupings.sort(Comparator.comparing(HookGroupingData::getName));
 
         return groupings;
     }

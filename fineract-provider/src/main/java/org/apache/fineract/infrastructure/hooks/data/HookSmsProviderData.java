@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.infrastructure.hooks.processor.data;
+package org.apache.fineract.infrastructure.hooks.data;
 
 import static org.apache.fineract.infrastructure.hooks.api.HookApiConstants.payloadURLName;
 import static org.apache.fineract.infrastructure.hooks.api.HookApiConstants.phoneNumberName;
@@ -31,19 +31,18 @@ import org.apache.fineract.infrastructure.hooks.domain.HookConfiguration;
 
 @Getter
 @Setter
-public class SmsProviderData {
+public class HookSmsProviderData {
 
     private String url;
     private String phoneNo;
     private String smsProvider;
     private String smsProviderAccountId;
     private String smsProviderToken;
-
     private String tenantId;
     private String mifosToken;
     private String endpoint;
 
-    public SmsProviderData(final Set<HookConfiguration> config) {
+    public HookSmsProviderData(final Set<HookConfiguration> config) {
 
         for (final HookConfiguration conf : config) {
             final String fieldName = conf.getFieldName();

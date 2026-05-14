@@ -16,12 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanproduct.productmix.data;
+package org.apache.fineract.infrastructure.hooks.data;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,12 +30,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductMixDeleteRequest implements Serializable {
+public class HookUpdateResponse implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @NotNull
-    @Positive
-    private Long productId;
+    private Long resourceId;
+    private Map<String, Object> changes;
 }

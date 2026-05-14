@@ -16,27 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanproduct.productmix.data;
+package org.apache.fineract.infrastructure.hooks.mapper;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import java.io.Serial;
-import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.List;
+import java.util.Set;
+import org.apache.fineract.infrastructure.core.config.MapstructMapperConfig;
+import org.apache.fineract.infrastructure.hooks.data.HookFieldData;
+import org.apache.fineract.infrastructure.hooks.domain.HookConfiguration;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Builder
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProductMixDeleteRequest implements Serializable {
+@Mapper(config = MapstructMapperConfig.class)
+public interface HookFieldMapper {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    @Mapping(ignore = true, target = "id")
+    @Mapping(ignore = true, target = "hook")
+    HookConfiguration map(HookFieldData source);
 
-    @NotNull
-    @Positive
-    private Long productId;
+    Set<HookConfiguration> map(List<HookFieldData> source);
 }
