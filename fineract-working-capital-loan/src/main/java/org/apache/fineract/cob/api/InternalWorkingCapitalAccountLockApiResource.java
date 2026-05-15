@@ -33,9 +33,9 @@ import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.fineract.cob.domain.LoanAccountLock;
-import org.apache.fineract.cob.domain.LoanAccountLockRepository;
 import org.apache.fineract.cob.domain.LockOwner;
+import org.apache.fineract.cob.domain.WorkingCapitalAccountLockRepository;
+import org.apache.fineract.cob.domain.WorkingCapitalLoanAccountLock;
 import org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType;
 import org.apache.fineract.infrastructure.core.boot.FineractProfiles;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
@@ -46,13 +46,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Profile(FineractProfiles.TEST)
 @Component
-@Path("/v1/internal/loans")
-@Tag(name = "Loan Account Lock")
+@Path("/v1/internal/working-capital-loans")
+@Tag(name = "Working Capital Loan Account Lock")
 @RequiredArgsConstructor
 @Slf4j
-public class InternalLoanAccountLockApiResource implements InitializingBean {
+public class InternalWorkingCapitalAccountLockApiResource implements InitializingBean {
 
-    private final LoanAccountLockRepository loanAccountLockRepository;
+    private final WorkingCapitalAccountLockRepository workingCapitalAccountLockRepository;
 
     @Override
     @SuppressFBWarnings("SLF4J_SIGN_ONLY_FORMAT")
@@ -64,7 +64,6 @@ public class InternalLoanAccountLockApiResource implements InitializingBean {
         log.warn("DO NOT USE THIS IN PRODUCTION!");
         log.warn("                                                            ");
         log.warn("------------------------------------------------------------");
-
     }
 
     @POST
@@ -72,21 +71,22 @@ public class InternalLoanAccountLockApiResource implements InitializingBean {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @SuppressFBWarnings("SLF4J_SIGN_ONLY_FORMAT")
-    public Response placeLockOnLoanAccount(@Context final UriInfo uriInfo, @PathParam("loanId") final Long loanId,
+    public Response placeLockOnWorkingCapitalLoanAccount(@Context final UriInfo uriInfo, @PathParam("loanId") final Long loanId,
             @PathParam("lockOwner") final String lockOwner, @RequestBody(required = false) final LockRequest request) {
         log.warn("------------------------------------------------------------");
         log.warn("                                                            ");
-        log.warn("Placing lock on loan: {}", loanId);
+        log.warn("Placing lock on working capital loan: {}", loanId);
         log.warn("                                                            ");
         log.warn("------------------------------------------------------------");
 
         final LocalDate cobBusinessDate = resolveCobBusinessDate(request);
-        final LoanAccountLock loanAccountLock = new LoanAccountLock(loanId, LockOwner.valueOf(lockOwner), cobBusinessDate);
+        final WorkingCapitalLoanAccountLock loanAccountLock = new WorkingCapitalLoanAccountLock(loanId, LockOwner.valueOf(lockOwner),
+                cobBusinessDate);
 
         if (request != null && StringUtils.isNotBlank(request.getError())) {
             loanAccountLock.setError(request.getError(), request.getError());
         }
-        loanAccountLockRepository.save(loanAccountLock);
+        workingCapitalAccountLockRepository.save(loanAccountLock);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 

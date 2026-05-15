@@ -16,18 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.cob.service;
+package org.apache.fineract.cob.api;
 
-import org.apache.fineract.cob.domain.AccountLockRepository;
-import org.apache.fineract.cob.domain.CustomLoanAccountLockRepository;
-import org.apache.fineract.cob.domain.LoanAccountLock;
-import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import lombok.Data;
 
-@Service
-public class LoanAccountLockService extends AbstractAccountLockService<LoanAccountLock> {
+@Data
+public class LockRequest {
 
-    public LoanAccountLockService(final AccountLockRepository<LoanAccountLock> loanAccountLockRepository,
-            final CustomLoanAccountLockRepository<LoanAccountLock> customLoanAccountLockRepository) {
-        super(loanAccountLockRepository, customLoanAccountLockRepository);
-    }
+    private String error;
+    private LocalDate cobBusinessDate;
+    private Boolean nullCobBusinessDate;
 }

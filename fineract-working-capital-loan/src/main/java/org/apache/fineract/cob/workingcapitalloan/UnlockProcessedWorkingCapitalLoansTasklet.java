@@ -16,12 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.cob.api;
+package org.apache.fineract.cob.workingcapitalloan;
 
-import lombok.Data;
+import org.apache.fineract.cob.domain.WorkingCapitalLoanAccountLock;
+import org.apache.fineract.cob.service.AccountLockService;
+import org.apache.fineract.cob.tasklet.UnlockProcessedAccountsTasklet;
 
-@Data
-public class LockRequest {
+public class UnlockProcessedWorkingCapitalLoansTasklet extends UnlockProcessedAccountsTasklet<WorkingCapitalLoanAccountLock> {
 
-    private String error;
+    public UnlockProcessedWorkingCapitalLoansTasklet(final AccountLockService<WorkingCapitalLoanAccountLock> accountLockService) {
+        super(accountLockService);
+    }
 }

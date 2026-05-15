@@ -16,18 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.cob.service;
+package org.apache.fineract.cob.loan;
 
-import org.apache.fineract.cob.domain.AccountLockRepository;
-import org.apache.fineract.cob.domain.CustomLoanAccountLockRepository;
 import org.apache.fineract.cob.domain.LoanAccountLock;
-import org.springframework.stereotype.Service;
+import org.apache.fineract.cob.service.AccountLockService;
+import org.apache.fineract.cob.tasklet.UnlockProcessedAccountsTasklet;
 
-@Service
-public class LoanAccountLockService extends AbstractAccountLockService<LoanAccountLock> {
+public class UnlockProcessedLoansTasklet extends UnlockProcessedAccountsTasklet<LoanAccountLock> {
 
-    public LoanAccountLockService(final AccountLockRepository<LoanAccountLock> loanAccountLockRepository,
-            final CustomLoanAccountLockRepository<LoanAccountLock> customLoanAccountLockRepository) {
-        super(loanAccountLockRepository, customLoanAccountLockRepository);
+    public UnlockProcessedLoansTasklet(final AccountLockService<LoanAccountLock> accountLockService) {
+        super(accountLockService);
     }
 }
