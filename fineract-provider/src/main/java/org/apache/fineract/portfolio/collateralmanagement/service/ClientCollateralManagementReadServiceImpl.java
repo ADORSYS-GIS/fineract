@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralManagementData;
 import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralTemplateData;
 import org.apache.fineract.portfolio.collateralmanagement.data.LoanTransactionData;
@@ -38,9 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ClientCollateralManagementReadPlatformServiceImpl implements ClientCollateralManagementReadPlatformService {
+public class ClientCollateralManagementReadServiceImpl implements ClientCollateralManagementReadService {
 
-    private final PlatformSecurityContext context;
     private final ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper;
     private final LoanTransactionRepository loanTransactionRepository;
 
@@ -51,7 +49,6 @@ public class ClientCollateralManagementReadPlatformServiceImpl implements Client
 
     @Override
     public List<LoanCollateralTemplateData> getLoanCollateralTemplate(Long clientId) {
-        this.context.authenticatedUser();
         Collection<ClientCollateralManagement> clientCollateralManagements = this.clientCollateralManagementRepositoryWrapper
                 .getCollateralsPerClient(clientId);
         List<LoanCollateralTemplateData> loanCollateralTemplateDataList = new ArrayList<>();

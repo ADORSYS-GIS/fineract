@@ -18,12 +18,30 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.data;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public record ClientCollateralRequest(BigDecimal quantity, Long collateralId, String locale) implements Serializable {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClientCollateralCreateRequest implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    @Hidden
+    private Long clientId;
+
+    private BigDecimal quantity;
+
+    private Long collateralId;
+
+    private String locale;
 }

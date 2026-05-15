@@ -18,20 +18,21 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.service;
 
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralCreateRequest;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralCreateResponse;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralDeleteRequest;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralDeleteResponse;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralUpdateRequest;
+import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralUpdateResponse;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagement;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagementRepositoryWrapper;
 import org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain;
@@ -42,53 +43,75 @@ import org.apache.fineract.portfolio.collateralmanagement.exception.CollateralNo
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagement;
 
 @RequiredArgsConstructor
-public class ClientCollateralManagementWritePlatformServiceImpl implements ClientCollateralManagementWritePlatformService {
+public class ClientCollateralManagementWriteServiceImpl implements ClientCollateralManagementWriteService {
 
     private final ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper;
     private final CollateralManagementRepositoryWrapper collateralManagementRepositoryWrapper;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
-    public static final String COLLATERAL_ID = "collateralId";
-    public static final String QUANTITY = "quantity";
 
-    @Transactional
+    private static final String COLLATERAL_ID = "collateralId";
+    private static final String QUANTITY = "quantity";
+
     @Override
-    public CommandProcessingResult addClientCollateralProduct(final JsonCommand command) {
+    public ClientCollateralCreateResponse createClientCollateralProduct(final ClientCollateralCreateRequest request) {
+        validateForCreation(request);
 
-        validateForCreation(command);
-
-        Long collateralId = command.longValueOfParameterNamed(COLLATERAL_ID);
-        BigDecimal quantity = command.bigDecimalValueOfParameterNamed(QUANTITY);
-
-        final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(command.getClientId(), false);
-
-        final CollateralManagementDomain collateralManagementData = this.collateralManagementRepositoryWrapper.getCollateral(collateralId);
-        final ClientCollateralManagement clientCollateralManagement = ClientCollateralManagement.createNew(quantity, client,
+        final Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(request.getClientId(), false);
+        final CollateralManagementDomain collateralManagementData = this.collateralManagementRepositoryWrapper
+                .getCollateral(request.getCollateralId());
+        final ClientCollateralManagement clientCollateralManagement = ClientCollateralManagement.createNew(request.getQuantity(), client,
                 collateralManagementData);
         this.clientCollateralManagementRepositoryWrapper.saveAndFlush(clientCollateralManagement);
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withClientId(command.getClientId()) //
-                .withEntityId(clientCollateralManagement.getId()) //
+
+        return ClientCollateralCreateResponse.builder().resourceId(clientCollateralManagement.getId()).clientId(request.getClientId())
                 .build();
     }
 
-    private void validateForCreation(final JsonCommand command) {
+    @Override
+    public ClientCollateralUpdateResponse updateClientCollateralProduct(final ClientCollateralUpdateRequest request) {
+        validateForUpdate(request);
 
-        String errorCode = "parameter.";
+        final ClientCollateralManagement collateral = this.clientCollateralManagementRepositoryWrapper
+                .getCollateral(request.getCollateralId());
+        final BigDecimal oldQuantity = collateral.getQuantity();
+        boolean changed = false;
+        if (request.getQuantity() != null && request.getQuantity().compareTo(oldQuantity) != 0) {
+            collateral.updateQuantity(request.getQuantity());
+            changed = true;
+        }
+        this.clientCollateralManagementRepositoryWrapper.updateClientCollateralProduct(collateral);
+
+        ClientCollateralUpdateResponse.ClientCollateralUpdateResponseBuilder builder = ClientCollateralUpdateResponse.builder()
+                .resourceId(request.getCollateralId()).clientId(request.getClientId());
+        if (changed) {
+            builder.changes(
+                    ClientCollateralUpdateResponse.Changes.builder().quantity(request.getQuantity()).locale(request.getLocale()).build());
+        }
+        return builder.build();
+    }
+
+    @Override
+    public ClientCollateralDeleteResponse deleteClientCollateralProduct(final ClientCollateralDeleteRequest request) {
+        final ClientCollateralManagement clientCollateralManagement = this.clientCollateralManagementRepositoryWrapper
+                .getCollateral(request.getCollateralId());
+        validateForDeletion(clientCollateralManagement, request.getCollateralId());
+        this.clientCollateralManagementRepositoryWrapper.deleteClientCollateralProduct(request.getCollateralId());
+
+        return ClientCollateralDeleteResponse.builder().resourceId(request.getCollateralId()).build();
+    }
+
+    private void validateForCreation(final ClientCollateralCreateRequest request) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("client-collateral");
 
-        if (!command.parameterExists(COLLATERAL_ID)) {
-            errorCode += "collateralId.not.exists";
-            baseDataValidator.reset().parameter(COLLATERAL_ID).failWithCode(errorCode);
+        if (request.getCollateralId() == null) {
+            baseDataValidator.reset().parameter(COLLATERAL_ID).failWithCode("parameter.collateralId.not.exists");
         }
 
-        if (!command.parameterExists(QUANTITY)) {
-            errorCode += ".quantity.not.exists";
-            baseDataValidator.reset().parameter(QUANTITY).failWithCode(errorCode);
+        if (request.getQuantity() == null) {
+            baseDataValidator.reset().parameter(QUANTITY).failWithCode("parameter.quantity.not.exists");
         } else {
-            BigDecimal quantity = command.bigDecimalValueOfParameterNamed(QUANTITY);
-            baseDataValidator.reset().parameter(QUANTITY).value(quantity).notNull().positiveAmount();
+            baseDataValidator.reset().parameter(QUANTITY).value(request.getQuantity()).notNull().positiveAmount();
         }
 
         if (!dataValidationErrors.isEmpty()) {
@@ -96,41 +119,21 @@ public class ClientCollateralManagementWritePlatformServiceImpl implements Clien
         }
     }
 
-    @Transactional
-    @Override
-    public CommandProcessingResult updateClientCollateralProduct(final JsonCommand command) {
-        validateForUpdate(command);
-        final ClientCollateralManagement collateral = this.clientCollateralManagementRepositoryWrapper.getCollateral(command.entityId());
-        final Map<String, Object> changes = collateral.update(command);
-        this.clientCollateralManagementRepositoryWrapper.updateClientCollateralProduct(collateral);
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(command.entityId()) //
-                .withClientId(command.getClientId()) //
-                .with(changes) //
-                .build();
-    }
-
-    private void validateForUpdate(final JsonCommand command) {
-        final Long clientCollateralId = command.entityId();
-        String errorCode = "parameter.";
+    private void validateForUpdate(final ClientCollateralUpdateRequest request) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("client-collateral");
-        BigDecimal quantity = null;
 
-        if (!command.parameterExists(QUANTITY)) {
-            errorCode += ".quantity.not.exists";
-            baseDataValidator.reset().parameter(QUANTITY).failWithCode(errorCode);
+        if (request.getQuantity() == null) {
+            baseDataValidator.reset().parameter(QUANTITY).failWithCode("parameter..quantity.not.exists");
         } else {
-            quantity = command.bigDecimalValueOfParameterNamed(QUANTITY);
-            baseDataValidator.reset().parameter(QUANTITY).value(quantity).notNull().positiveAmount();
+            baseDataValidator.reset().parameter(QUANTITY).value(request.getQuantity()).notNull().positiveAmount();
         }
 
         final ClientCollateralManagement clientCollateralManagement = this.clientCollateralManagementRepositoryWrapper
-                .getCollateral(clientCollateralId);
+                .getCollateral(request.getCollateralId());
 
         if (clientCollateralManagement == null) {
-            throw new ClientCollateralNotFoundException(clientCollateralId);
+            throw new ClientCollateralNotFoundException(request.getCollateralId());
         }
 
         BigDecimal totalQuantity = BigDecimal.ZERO;
@@ -140,26 +143,13 @@ public class ClientCollateralManagementWritePlatformServiceImpl implements Clien
             }
         }
 
-        if (totalQuantity.compareTo(quantity) >= 0) {
-            baseDataValidator.reset().parameter(QUANTITY).value(quantity).notLessThanMin(totalQuantity);
+        if (totalQuantity.compareTo(request.getQuantity()) >= 0) {
+            baseDataValidator.reset().parameter(QUANTITY).value(request.getQuantity()).notLessThanMin(totalQuantity);
         }
 
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
-
-    }
-
-    @Transactional
-    @Override
-    public CommandProcessingResult deleteClientCollateralProduct(final Long collateralId) {
-        final ClientCollateralManagement clientCollateralManagement = this.clientCollateralManagementRepositoryWrapper
-                .getCollateral(collateralId);
-        validateForDeletion(clientCollateralManagement, collateralId);
-        this.clientCollateralManagementRepositoryWrapper.deleteClientCollateralProduct(collateralId);
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(collateralId) //
-                .build();
     }
 
     private void validateForDeletion(final ClientCollateralManagement clientCollateralManagement, final Long clientCollateralId) {
@@ -177,5 +167,4 @@ public class ClientCollateralManagementWritePlatformServiceImpl implements Clien
             }
         }
     }
-
 }

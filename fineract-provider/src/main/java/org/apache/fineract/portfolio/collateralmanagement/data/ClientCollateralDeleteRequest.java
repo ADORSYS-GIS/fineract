@@ -16,18 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.collateralmanagement.service;
+package org.apache.fineract.portfolio.collateralmanagement.data;
 
-import java.util.List;
-import org.apache.fineract.portfolio.collateralmanagement.data.ClientCollateralManagementData;
-import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralTemplateData;
+import io.swagger.v3.oas.annotations.Hidden;
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface ClientCollateralManagementReadPlatformService {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClientCollateralDeleteRequest implements Serializable {
 
-    ClientCollateralManagementData getClientCollateralManagementData(Long collateralId);
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    List<ClientCollateralManagementData> getClientCollaterals(Long clientId, Long prodId);
+    @Hidden
+    private Long collateralId;
 
-    List<LoanCollateralTemplateData> getLoanCollateralTemplate(Long clientId);
-
+    @Hidden
+    private Long clientId;
 }

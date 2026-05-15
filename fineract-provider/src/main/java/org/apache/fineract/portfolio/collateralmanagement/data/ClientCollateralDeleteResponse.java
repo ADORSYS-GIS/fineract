@@ -20,10 +20,15 @@ package org.apache.fineract.portfolio.collateralmanagement.data;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
+import lombok.Builder;
+import lombok.Data;
 
-public record UpdateClientCollateralRequest(BigDecimal quantity, String locale) implements Serializable {
+@Data
+@Builder
+public class ClientCollateralDeleteResponse implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private Long resourceId;
 }

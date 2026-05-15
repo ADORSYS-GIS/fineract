@@ -16,17 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.collateralmanagement.service;
+package org.apache.fineract.portfolio.collateralmanagement.data;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import io.swagger.v3.oas.annotations.Hidden;
+import java.io.Serial;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface ClientCollateralManagementWritePlatformService {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ClientCollateralUpdateRequest implements Serializable {
 
-    CommandProcessingResult addClientCollateralProduct(JsonCommand command);
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    CommandProcessingResult updateClientCollateralProduct(JsonCommand command);
+    @Hidden
+    private Long clientId;
 
-    CommandProcessingResult deleteClientCollateralProduct(Long collateralId);
+    @Hidden
+    private Long collateralId;
 
+    private BigDecimal quantity;
+
+    private String locale;
 }
