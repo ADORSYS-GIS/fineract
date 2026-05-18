@@ -18,10 +18,10 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.service;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralDeleteRequest;
+import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralDeleteResponse;
 
-public interface LoanCollateralManagementWritePlatformService {
+public interface LoanCollateralManagementWriteService {
 
-    CommandProcessingResult deleteLoanCollateral(JsonCommand command);
+    LoanCollateralDeleteResponse deleteLoanCollateral(LoanCollateralDeleteRequest request);
 }

@@ -16,17 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.collateralmanagement.service;
+package org.apache.fineract.portfolio.collateralmanagement.data;
 
-import java.util.List;
-import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralResponseData;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagement;
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.Builder;
+import lombok.Data;
 
-public interface LoanCollateralManagementReadPlatformService {
+@Data
+@Builder
+public class LoanCollateralDeleteResponse implements Serializable {
 
-    List<LoanCollateralManagement> getLoanCollaterals(Long loanId);
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    LoanCollateralResponseData getLoanCollateralResponseData(Long collateralId);
+    private Long resourceId;
 
-    List<LoanCollateralResponseData> getLoanCollateralResponseDataList(Long loanId);
+    private Long loanId;
 }

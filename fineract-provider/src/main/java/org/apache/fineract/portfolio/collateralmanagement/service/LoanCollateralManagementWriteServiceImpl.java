@@ -20,9 +20,8 @@ package org.apache.fineract.portfolio.collateralmanagement.service;
 
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralDeleteRequest;
+import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralDeleteResponse;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagement;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagementRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagement;
@@ -30,15 +29,15 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagement
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
-public class LoanCollateralManagementWritePlatformServiceImpl implements LoanCollateralManagementWritePlatformService {
+public class LoanCollateralManagementWriteServiceImpl implements LoanCollateralManagementWriteService {
 
     private final LoanCollateralManagementRepository loanCollateralManagementRepository;
     private final ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper;
 
     @Transactional
     @Override
-    public CommandProcessingResult deleteLoanCollateral(JsonCommand command) {
-        final Long id = command.entityId();
+    public LoanCollateralDeleteResponse deleteLoanCollateral(LoanCollateralDeleteRequest request) {
+        final Long id = request.getId();
         final LoanCollateralManagement loanCollateralManagement = this.loanCollateralManagementRepository.findById(id).orElseThrow();
         ClientCollateralManagement clientCollateralManagement = loanCollateralManagement.getClientCollateralManagement();
         BigDecimal loanQuantity = loanCollateralManagement.getQuantity();
@@ -46,10 +45,6 @@ public class LoanCollateralManagementWritePlatformServiceImpl implements LoanCol
         clientCollateralManagement.updateQuantity(clientQuantity.add(loanQuantity));
         this.clientCollateralManagementRepositoryWrapper.saveAndFlush(clientCollateralManagement);
         this.loanCollateralManagementRepository.deleteById(id);
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(id) //
-                .withLoanId(command.getLoanId()) //
-                .build();
+        return LoanCollateralDeleteResponse.builder().resourceId(id).loanId(request.getLoanId()).build();
     }
 }

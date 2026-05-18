@@ -34,10 +34,10 @@ import org.apache.fineract.portfolio.collateralmanagement.service.CollateralMana
 import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWritePlatformService;
 import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWritePlatformServiceImpl;
 import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralAssembler;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadPlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWritePlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWritePlatformServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadService;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWriteService;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWriteServiceImpl;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagementRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
@@ -91,18 +91,18 @@ public class CollateralManagementConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(LoanCollateralManagementReadPlatformService.class)
-    public LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService(PlatformSecurityContext context,
+    @ConditionalOnMissingBean(LoanCollateralManagementReadService.class)
+    public LoanCollateralManagementReadService loanCollateralManagementReadService(
             LoanCollateralManagementRepository loanCollateralManagementRepository, LoanRepository loanRepository) {
-        return new LoanCollateralManagementReadPlatformServiceImpl(context, loanCollateralManagementRepository, loanRepository);
+        return new LoanCollateralManagementReadServiceImpl(loanCollateralManagementRepository, loanRepository);
     }
 
     @Bean
-    @ConditionalOnMissingBean(LoanCollateralManagementWritePlatformService.class)
-    public LoanCollateralManagementWritePlatformService loanCollateralManagementWritePlatformService(
+    @ConditionalOnMissingBean(LoanCollateralManagementWriteService.class)
+    public LoanCollateralManagementWriteService loanCollateralManagementWriteService(
             LoanCollateralManagementRepository loanCollateralManagementRepository,
             ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper) {
-        return new LoanCollateralManagementWritePlatformServiceImpl(loanCollateralManagementRepository,
+        return new LoanCollateralManagementWriteServiceImpl(loanCollateralManagementRepository,
                 clientCollateralManagementRepositoryWrapper);
     }
 }

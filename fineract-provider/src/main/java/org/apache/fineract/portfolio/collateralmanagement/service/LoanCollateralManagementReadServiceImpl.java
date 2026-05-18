@@ -22,7 +22,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import lombok.RequiredArgsConstructor;
 import org.apache.fineract.portfolio.collateralmanagement.data.LoanCollateralResponseData;
 import org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain;
 import org.apache.fineract.portfolio.collateralmanagement.exception.LoanCollateralManagementNotFoundException;
@@ -33,30 +33,21 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class LoanCollateralManagementReadPlatformServiceImpl implements LoanCollateralManagementReadPlatformService {
+public class LoanCollateralManagementReadServiceImpl implements LoanCollateralManagementReadService {
 
-    private final PlatformSecurityContext context;
-    private LoanCollateralManagementRepository loanCollateralManagementRepository;
-    private LoanRepository loanRepository;
-
-    public LoanCollateralManagementReadPlatformServiceImpl(final PlatformSecurityContext context,
-            final LoanCollateralManagementRepository loanCollateralManagementRepository, final LoanRepository loanRepository) {
-        this.context = context;
-        this.loanCollateralManagementRepository = loanCollateralManagementRepository;
-        this.loanRepository = loanRepository;
-    }
+    private final LoanCollateralManagementRepository loanCollateralManagementRepository;
+    private final LoanRepository loanRepository;
 
     @Override
     public List<LoanCollateralManagement> getLoanCollaterals(Long loanId) {
-        this.context.authenticatedUser();
         Loan loan = this.loanRepository.findById(loanId).orElseThrow(() -> new LoanNotFoundException(loanId));
         return this.loanCollateralManagementRepository.findByLoan(loan);
     }
 
     @Override
     public LoanCollateralResponseData getLoanCollateralResponseData(Long collateralId) {
-        this.context.authenticatedUser();
         LoanCollateralManagement loanCollateralManagement = this.loanCollateralManagementRepository.findById(collateralId)
                 .orElseThrow(() -> new LoanCollateralManagementNotFoundException(collateralId));
         final CollateralManagementDomain collateralManagementDomain = loanCollateralManagement.getClientCollateralManagement()
@@ -69,7 +60,6 @@ public class LoanCollateralManagementReadPlatformServiceImpl implements LoanColl
 
     @Override
     public List<LoanCollateralResponseData> getLoanCollateralResponseDataList(Long loanId) {
-        this.context.authenticatedUser();
         Loan loan = this.loanRepository.findById(loanId).orElseThrow(() -> new LoanNotFoundException(loanId));
         List<LoanCollateralResponseData> loanCollateralResponseDataCollection = new ArrayList<>();
         Set<LoanCollateralManagement> loanCollateralManagements = loan.getLoanCollateralManagements();
@@ -84,5 +74,4 @@ public class LoanCollateralManagementReadPlatformServiceImpl implements LoanColl
         }
         return loanCollateralResponseDataCollection;
     }
-
 }
