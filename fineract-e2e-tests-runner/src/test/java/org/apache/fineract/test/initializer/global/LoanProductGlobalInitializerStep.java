@@ -1437,6 +1437,64 @@ public class LoanProductGlobalInitializerStep implements FineractGlobalInitializ
         });
 
         tasks.add(() -> {
+            // LP2 + zero-interest progressive schedule + installmentAmountInMultiplesOf=10
+            // (LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10)
+            final String nameMultOf10 = DefaultLoanProduct.LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10.getName();
+
+            final PostLoanProductsRequest loanProductsRequestAdvZeroInterestMultOf10 = loanProductsRequestFactory
+                    .defaultLoanProductsRequestLP2()//
+                    .name(nameMultOf10)//
+                    .installmentAmountInMultiplesOf(10)//
+                    .enableDownPayment(false)//
+                    .enableAutoRepaymentForDownPayment(null)//
+                    .disbursedAmountPercentageForDownPayment(null)//
+                    .transactionProcessingStrategyCode(ADVANCED_PAYMENT_ALLOCATION.getValue())//
+                    .loanScheduleType("PROGRESSIVE") //
+                    .loanScheduleProcessingType("HORIZONTAL")//
+                    .paymentAllocation(List.of(//
+                            createPaymentAllocation("DEFAULT", "NEXT_INSTALLMENT"), //
+                            createPaymentAllocation("GOODWILL_CREDIT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("MERCHANT_ISSUED_REFUND", "REAMORTIZATION"), //
+                            createPaymentAllocation("PAYOUT_REFUND", "NEXT_INSTALLMENT")));
+            final PostLoanProductsResponse responseAdvZeroInterestMultOf10 = createLoanProductIdempotent(
+                    loanProductsRequestAdvZeroInterestMultOf10);
+            TestContext.INSTANCE.set(TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_ZERO_INTEREST_MULT_OF_10,
+                    responseAdvZeroInterestMultOf10);
+        });
+
+        tasks.add(() -> {
+            // LP2 + declining-balance 6% APR + installmentAmountInMultiplesOf=1 (LP2 default) + no downpayment
+            // Used to verify that the safeRoundingForEMI fallback distributes principal+interest across installments
+            // when the unrounded EMI rounds to zero under multiplesOf.
+            // (LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF)
+            final String nameInterestDecliningCurrencyMultiplesOf = DefaultLoanProduct.LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF
+                    .getName();
+
+            final PostLoanProductsRequest loanProductsRequestAdvInterestDecliningCurrencyMultiplesOf = loanProductsRequestFactory
+                    .defaultLoanProductsRequestLP2()//
+                    .name(nameInterestDecliningCurrencyMultiplesOf)//
+                    .enableDownPayment(false)//
+                    .enableAutoRepaymentForDownPayment(null)//
+                    .disbursedAmountPercentageForDownPayment(null)//
+                    .interestRatePerPeriod(6.0)//
+                    .maxInterestRatePerPeriod(50.0)//
+                    .interestRateFrequencyType(INTEREST_RATE_FREQUENCY_TYPE_YEAR)//
+                    .transactionProcessingStrategyCode(ADVANCED_PAYMENT_ALLOCATION.getValue())//
+                    .loanScheduleType("PROGRESSIVE") //
+                    .loanScheduleProcessingType("HORIZONTAL")//
+                    .paymentAllocation(List.of(//
+                            createPaymentAllocation("DEFAULT", "NEXT_INSTALLMENT"), //
+                            createPaymentAllocation("GOODWILL_CREDIT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("MERCHANT_ISSUED_REFUND", "REAMORTIZATION"), //
+                            createPaymentAllocation("PAYOUT_REFUND", "NEXT_INSTALLMENT")));
+            final PostLoanProductsResponse responseAdvInterestDecliningCurrencyMultiplesOf = createLoanProductIdempotent(
+                    loanProductsRequestAdvInterestDecliningCurrencyMultiplesOf);
+            TestContext.INSTANCE.set(
+                    TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INTEREST_DECLINING_CURRENCY_MULTIPLES_OF,
+                    responseAdvInterestDecliningCurrencyMultiplesOf);
+        });
+
+        tasks.add(() -> {
             // LP2 with progressive loan schedule + horizontal + interest EMI + 360/30 + multidisbursement +
             // accelerate-maturity chargeOff behaviour
             // (LP2_ADV_PYMNT_INTEREST_DAILY_INTEREST_RECALCULATION_ACCELERATE_MATURITY_CHARGE_OFF_BEHAVIOUR)
@@ -4959,6 +5017,47 @@ public class LoanProductGlobalInitializerStep implements FineractGlobalInitializ
             TestContext.INSTANCE.set(
                     TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF_ACCRUAL_ACTIVITY,
                     responseLoanProductsRequestLP2AdvPaymentIntEmiActualActualIntRefundFullZeroIntChargeOffAccrualActivity);
+        });
+
+        tasks.add(() -> {
+            // LP2 + zero-interest chargeOff behaviour + progressive loan schedule + horizontal + interest recalculation
+            // + accrual activity posting, with LAST_INSTALLMENT future-installment allocation rule baked in for every
+            // advanced-allocation transaction type - exercises code paths that the more common NEXT_INSTALLMENT
+            // configuration does not reach.
+            // (LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF_ACC_LAST_INSTALLMENT)
+            final String nameLastInst = DefaultLoanProduct.LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF_ACC_LAST_INSTALLMENT
+                    .getName();
+            final PostLoanProductsRequest loanProductsRequestLP2AdvPaymentIntEmiActualActualIntRefundFullZeroIntChargeOffAccLastInstallment = loanProductsRequestFactory
+                    .defaultLoanProductsRequestLP2Emi()//
+                    .multiDisburseLoan(true)//
+                    .disallowExpectedDisbursements(true)//
+                    .maxTrancheCount(500)//
+                    .isInterestRecalculationEnabled(true)//
+                    .preClosureInterestCalculationStrategy(1)//
+                    .rescheduleStrategyMethod(4)//
+                    .interestRecalculationCompoundingMethod(0)//
+                    .recalculationRestFrequencyType(2)//
+                    .recalculationRestFrequencyInterval(1)//
+                    .supportedInterestRefundTypes(supportedInterestRefundTypes).paymentAllocation(List.of(//
+                            createPaymentAllocation("DEFAULT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("GOODWILL_CREDIT", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("MERCHANT_ISSUED_REFUND", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("PAYOUT_REFUND", "LAST_INSTALLMENT"), //
+                            createPaymentAllocation("INTEREST_REFUND", "LAST_INSTALLMENT")))
+                    .name(nameLastInst)//
+                    .shortName(loanProductsRequestFactory.generateShortNameSafely())//
+                    .enableAccrualActivityPosting(true)//
+                    .allowApprovedDisbursedAmountsOverApplied(true)//
+                    .overAppliedCalculationType(OverAppliedCalculationType.FIXED_SIZE.value)//
+                    .overAppliedNumber(1000)//
+                    .enableInstallmentLevelDelinquency(true)//
+                    .interestRecognitionOnDisbursementDate(true)//
+                    .chargeOffBehaviour("ZERO_INTEREST");//
+            final PostLoanProductsResponse responseLoanProductsRequestLP2AdvPaymentIntEmiActualActualIntRefundFullZeroIntChargeOffAccLastInstallment = createLoanProductIdempotent(
+                    loanProductsRequestLP2AdvPaymentIntEmiActualActualIntRefundFullZeroIntChargeOffAccLastInstallment);
+            TestContext.INSTANCE.set(
+                    TestContextKey.DEFAULT_LOAN_PRODUCT_CREATE_RESPONSE_LP2_ADV_PYMNT_INT_DAILY_EMI_ACTUAL_ACTUAL_INT_REFUND_FULL_ZERO_INT_CHARGE_OFF_ACC_LAST_INSTALLMENT,
+                    responseLoanProductsRequestLP2AdvPaymentIntEmiActualActualIntRefundFullZeroIntChargeOffAccLastInstallment);
         });
 
         tasks.add(() -> {

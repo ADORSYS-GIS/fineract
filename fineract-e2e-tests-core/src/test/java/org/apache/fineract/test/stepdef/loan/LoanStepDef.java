@@ -2169,12 +2169,20 @@ public class LoanStepDef extends AbstractStepDef {
                 () -> fineractClient.loans().retrieveLoan(loanId, Map.of("staffInSelectedOfficeOnly", "false")));
         testContext().set(TestContextKey.LOAN_RESPONSE, loanDetailsResponse);
 
-        Double totalOverpaidActual = loanDetailsResponse.getTotalOverpaid().doubleValue();
         Double totalOutstandingActual = loanDetailsResponse.getSummary().getTotalOutstanding().doubleValue();
         double totalOutstandingExpected = 0.0;
         assertThat(totalOutstandingActual)
                 .as(ErrorMessageHelper.wrongAmountInTotalOutstanding(totalOutstandingActual, totalOutstandingExpected))
                 .isEqualTo(totalOutstandingExpected);
+        // Loan API omits `totalOverpaid` when the loan has no overpayment (CLOSED_OBLIGATIONS_MET with zero
+        // overpayment). Tolerate that omission only when the scenario expects 0.0 - otherwise fail loudly so
+        // a regression where the API stops emitting the field is caught immediately.
+        double totalOverpaidActual = Optional.ofNullable(loanDetailsResponse.getTotalOverpaid()).map(BigDecimal::doubleValue)
+                .orElseGet(() -> {
+                    assertThat(totalOverpaidExpected)
+                            .as("Loan API returned null totalOverpaid but scenario expected %s", totalOverpaidExpected).isEqualTo(0.0);
+                    return 0.0;
+                });
         assertThat(totalOverpaidActual)
                 .as(ErrorMessageHelper.wrongAmountInTransactionsOverpayment(totalOverpaidActual, totalOverpaidExpected))
                 .isEqualTo(totalOverpaidExpected);
@@ -3716,6 +3724,12 @@ public class LoanStepDef extends AbstractStepDef {
                 case "Repayment start date type" -> {
                     final RepaymentStartDateType repaymentStartDateType = RepaymentStartDateType.valueOf(value);
                     loansRequest.repaymentStartDateType(repaymentStartDateType.getValue());
+                }
+                case "withLinkedSavingsAccountId" -> {
+                    boolean withLinkedSavingsAccountId = Boolean.parseBoolean(value);
+                    if (withLinkedSavingsAccountId) {
+                        loansRequest.setLinkAccountId(testContext().get(TestContextKey.LAST_SAVINGS_ACCOUNT_ID));
+                    }
                 }
                 default -> throw new UnsupportedOperationException(loanData.getFirst().get(i) + " is not covered");
             }
