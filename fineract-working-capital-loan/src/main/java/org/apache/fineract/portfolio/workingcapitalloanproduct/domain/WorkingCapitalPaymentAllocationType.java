@@ -29,9 +29,12 @@ import org.apache.fineract.infrastructure.core.api.ApiFacingEnum;
 @RequiredArgsConstructor
 public enum WorkingCapitalPaymentAllocationType implements ApiFacingEnum<WorkingCapitalPaymentAllocationType> {
 
-    PENALTY("PENALTY", "Penalty"), //
-    FEE("FEE", "Fee"), //
-    PRINCIPAL("PRINCIPAL", "Principal"); //
+    DUE_PENALTY("DUE_PENALTY", "Due Penalty"), //
+    DUE_FEE("DUE_FEE", "Due Fee"), //
+    DUE_PRINCIPAL("DUE_PRINCIPAL", "Due Principal"), //
+    IN_ADVANCE_PENALTY("IN_ADVANCE_PENALTY", "In Advance Penalty"), //
+    IN_ADVANCE_FEE("IN_ADVANCE_FEE", "In Advance Fee"), //
+    IN_ADVANCE_PRINCIPAL("IN_ADVANCE_PRINCIPAL", "In Advance Principal"); //
 
     private final String code;
     private final String humanReadableName;
