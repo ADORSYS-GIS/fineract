@@ -16,20 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.template.domain;
+package org.apache.fineract.template.data;
 
-import java.time.format.DateTimeFormatterBuilder;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public final class TemplateFunctions {
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TemplateUpdateRequest implements Serializable {
 
-    public static final TemplateFunctions INSTANCE = new TemplateFunctions();
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    private TemplateFunctions() {}
-
-    public static String now() {
-        var dateFormat = new DateTimeFormatterBuilder().appendPattern("yyyy/MM/dd HH:mm").toFormatter();
-
-        return dateFormat.format(DateUtils.getLocalDateTimeOfSystem());
-    }
+    @NotNull(message = "{org.apache.fineract.infrastructure.template.id.not-null}")
+    private Long id;
+    private String name;
+    private String text;
+    public Integer entity;
+    public Integer type;
+    private List<TemplateMapperData> mappers;
 }

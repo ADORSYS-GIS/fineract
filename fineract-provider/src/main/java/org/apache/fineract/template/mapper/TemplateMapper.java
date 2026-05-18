@@ -16,20 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.template.domain;
+package org.apache.fineract.template.mapper;
 
-import java.time.format.DateTimeFormatterBuilder;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import java.util.List;
+import org.apache.fineract.infrastructure.core.config.MapstructMapperConfig;
+import org.apache.fineract.template.data.TemplateData;
+import org.apache.fineract.template.domain.Template;
+import org.mapstruct.Mapper;
 
-public final class TemplateFunctions {
+@Mapper(config = MapstructMapperConfig.class, uses = { TemplateMapperMapper.class })
+public interface TemplateMapper {
 
-    public static final TemplateFunctions INSTANCE = new TemplateFunctions();
+    TemplateData map(Template source);
 
-    private TemplateFunctions() {}
-
-    public static String now() {
-        var dateFormat = new DateTimeFormatterBuilder().appendPattern("yyyy/MM/dd HH:mm").toFormatter();
-
-        return dateFormat.format(DateUtils.getLocalDateTimeOfSystem());
-    }
+    List<TemplateData> map(List<Template> source);
 }

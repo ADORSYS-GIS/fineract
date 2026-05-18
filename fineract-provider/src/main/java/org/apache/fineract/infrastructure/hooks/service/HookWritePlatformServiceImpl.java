@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -57,19 +58,21 @@ import org.apache.fineract.infrastructure.hooks.domain.HookTemplateRepository;
 import org.apache.fineract.infrastructure.hooks.exception.HookNotFoundException;
 import org.apache.fineract.infrastructure.hooks.exception.HookTemplateNotFoundException;
 import org.apache.fineract.infrastructure.hooks.mapper.HookEventMapper;
-import org.apache.fineract.infrastructure.hooks.mapper.HookFieldMapper;
 import org.apache.fineract.infrastructure.hooks.processor.ProcessorHelper;
 import org.apache.fineract.template.domain.Template;
 import org.apache.fineract.template.domain.TemplateRepository;
 import org.apache.fineract.template.exception.TemplateNotFoundException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Slf4j
 @RequiredArgsConstructor
+@Service
+@ConditionalOnMissingBean(value = HookWritePlatformService.class, ignored = HookWritePlatformServiceImpl.class)
 public class HookWritePlatformServiceImpl implements HookWritePlatformService {
 
     private final HookRepository hookRepository;
@@ -77,7 +80,6 @@ public class HookWritePlatformServiceImpl implements HookWritePlatformService {
     private final TemplateRepository ugdTemplateRepository;
     private final ProcessorHelper processorHelper;
     private final HookEventMapper hookEventMapper;
-    private final HookFieldMapper hookFieldMapper;
 
     @Transactional
     @Override

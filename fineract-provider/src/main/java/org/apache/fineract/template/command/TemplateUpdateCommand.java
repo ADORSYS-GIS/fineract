@@ -16,20 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.template.domain;
+package org.apache.fineract.template.command;
 
-import java.time.format.DateTimeFormatterBuilder;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.apache.fineract.command.core.Command;
+import org.apache.fineract.template.data.TemplateUpdateRequest;
 
-public final class TemplateFunctions {
-
-    public static final TemplateFunctions INSTANCE = new TemplateFunctions();
-
-    private TemplateFunctions() {}
-
-    public static String now() {
-        var dateFormat = new DateTimeFormatterBuilder().appendPattern("yyyy/MM/dd HH:mm").toFormatter();
-
-        return dateFormat.format(DateUtils.getLocalDateTimeOfSystem());
-    }
-}
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class TemplateUpdateCommand extends Command<TemplateUpdateRequest> {}

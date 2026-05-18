@@ -16,20 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.template.domain;
+package org.apache.fineract.template.data;
 
-import java.time.format.DateTimeFormatterBuilder;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import jakarta.validation.constraints.Size;
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public final class TemplateFunctions {
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TemplateCreateRequest implements Serializable {
 
-    public static final TemplateFunctions INSTANCE = new TemplateFunctions();
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    private TemplateFunctions() {}
-
-    public static String now() {
-        var dateFormat = new DateTimeFormatterBuilder().appendPattern("yyyy/MM/dd HH:mm").toFormatter();
-
-        return dateFormat.format(DateUtils.getLocalDateTimeOfSystem());
-    }
+    @Size(max = 200, message = "{org.apache.fineract.infrastructure.template.name.size}")
+    private String name;
+    private Integer type;
+    private Integer entity;
+    private String text;
 }

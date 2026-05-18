@@ -387,6 +387,15 @@ public class SecurityConfig {
                     .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_WRITE, "UPDATE_HOOK")
                     .requestMatchers(API_MATCHER.matcher(HttpMethod.DELETE, "/api/*/hooks/*"))
                     .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_WRITE, "DELETE_HOOK")
+                    // template
+                    .requestMatchers(API_MATCHER.matcher(HttpMethod.GET, "/api/*/templates/*"))
+                    .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_READ, "READ_TEMPLATE")
+                    .requestMatchers(API_MATCHER.matcher(HttpMethod.POST, "/api/*/templates/*"))
+                    .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_WRITE, "CREATE_TEMPLATE")
+                    .requestMatchers(API_MATCHER.matcher(HttpMethod.PUT, "/api/*/templates/*"))
+                    .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_WRITE, "UPDATE_TEMPLATE")
+                    .requestMatchers(API_MATCHER.matcher(HttpMethod.DELETE, "/api/*/templates/*"))
+                    .hasAnyAuthority(ALL_FUNCTIONS, ALL_FUNCTIONS_WRITE, "DELETE_TEMPLATE")
 
                     .requestMatchers(API_MATCHER.matcher(HttpMethod.POST, "/api/*/twofactor/validate")).fullyAuthenticated()
                     .requestMatchers(API_MATCHER.matcher("/api/*/twofactor")).fullyAuthenticated()

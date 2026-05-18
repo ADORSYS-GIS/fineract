@@ -16,20 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.template.domain;
+package org.apache.fineract.template.exception;
 
-import java.time.format.DateTimeFormatterBuilder;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-public final class TemplateFunctions {
+public class TemplateTypeInvalidException extends AbstractPlatformResourceNotFoundException {
 
-    public static final TemplateFunctions INSTANCE = new TemplateFunctions();
-
-    private TemplateFunctions() {}
-
-    public static String now() {
-        var dateFormat = new DateTimeFormatterBuilder().appendPattern("yyyy/MM/dd HH:mm").toFormatter();
-
-        return dateFormat.format(DateUtils.getLocalDateTimeOfSystem());
+    public TemplateTypeInvalidException(final Integer typeId) {
+        super("error.msg.template.typeId.invalid", "Template with type ID " + typeId + " invalid", typeId);
     }
 }
