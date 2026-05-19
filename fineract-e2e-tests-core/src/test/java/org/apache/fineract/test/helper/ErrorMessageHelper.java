@@ -1045,6 +1045,10 @@ public final class ErrorMessageHelper {
         return "One or more payment allocation types are invalid or not recognized";
     }
 
+    public static String paymentAllocationRulesDuplicateFailure() {
+        return "The list of provided payment allocation rules must not contain any duplicates";
+    }
+
     public static String workingCapitalLoanProductIdentifiedDoesNotExistFailure(String identifierId) {
         return String.format("Working Capital Loan Product with identifier %s does not exist", identifierId);
     }
