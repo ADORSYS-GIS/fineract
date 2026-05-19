@@ -86,7 +86,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest();
 
@@ -110,7 +110,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final Long productId = createProductWithKnownDefaults(productRepaymentEvery, productRepaymentFrequencyType, productDiscount);
         final Long clientId = createClient();
         final BigDecimal principal = BigDecimal.valueOf(5000);
-        final BigDecimal periodPaymentRate = BigDecimal.ONE;
+        final BigDecimal periodPaymentRate = WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT;
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(5500);
         final LocalDate expectedDisbursementDate = LocalDate.now(ZoneId.systemDefault()).plusDays(7);
 
@@ -165,7 +165,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest();
 
@@ -213,7 +213,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .withBreachId(null) //
                 .withNearBreachId(nearBreachId) //
@@ -228,7 +228,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .withBreachId(breachId) //
                 .withNearBreachId(nearBreachId) //
@@ -251,7 +251,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final String accountNo = "wcl-get-" + UUID.randomUUID().toString().substring(0, 8);
         final String externalId = "wcl-get-ext-" + UUID.randomUUID().toString().substring(0, 8);
         final BigDecimal principal = BigDecimal.valueOf(6000);
-        final BigDecimal periodPaymentRate = BigDecimal.valueOf(1.05);
+        final BigDecimal periodPaymentRate = BigDecimal.valueOf(10.5);
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(6300);
         final BigDecimal discount = BigDecimal.valueOf(25);
         final LocalDate submittedOnDate = LocalDate.now(ZoneId.systemDefault());
@@ -302,7 +302,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(3000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(3150)) //
                 .withAccountNo(accountNo) //
                 .buildSubmitRequest());
@@ -339,21 +339,21 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(1000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(1100)) //
                 .buildSubmitRequest());
         final Long loanId2 = applicationHelper.submit(new WorkingCapitalLoanApplicationTestBuilder() //
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(2000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(2200)) //
                 .buildSubmitRequest());
         final Long loanId3 = applicationHelper.submit(new WorkingCapitalLoanApplicationTestBuilder() //
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(3000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(3300)) //
                 .buildSubmitRequest());
 
@@ -393,7 +393,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final String accountNo = "wcl-extget-" + UUID.randomUUID().toString().substring(0, 8);
         final String externalId = "wcl-by-ext-" + UUID.randomUUID().toString().substring(0, 8);
         final BigDecimal principal = BigDecimal.valueOf(7000);
-        final BigDecimal periodPaymentRate = BigDecimal.valueOf(1.15);
+        final BigDecimal periodPaymentRate = BigDecimal.valueOf(11.5);
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(8050);
         final BigDecimal discount = BigDecimal.ZERO;
         final LocalDate submittedOnDate = LocalDate.now(ZoneId.systemDefault());
@@ -486,7 +486,8 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         }
         if (loanData != null) {
             if (loanData.getPeriodPaymentRate() != null) {
-                assertEquals(0, BigDecimal.valueOf(1.0).compareTo(loanData.getPeriodPaymentRate()));
+                assertEquals(0, WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT
+                        .compareTo(loanData.getPeriodPaymentRate()));
             }
             if (loanData.getRepaymentEvery() != null) {
                 assertEquals(30, loanData.getRepaymentEvery());
@@ -554,7 +555,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest());
 
@@ -577,14 +578,14 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest());
 
         final String newAccountNo = "wcl-mod-" + UUID.randomUUID().toString().substring(0, 8);
         final String newExternalId = "wcl-mod-ext-" + UUID.randomUUID().toString().substring(0, 8);
         final BigDecimal principal = BigDecimal.valueOf(9000);
-        final BigDecimal periodPaymentRate = BigDecimal.valueOf(1.2);
+        final BigDecimal periodPaymentRate = BigDecimal.valueOf(12);
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(10800);
         final BigDecimal discount = BigDecimal.valueOf(100);
         final LocalDate submittedOnDate = LocalDate.now(ZoneId.systemDefault());
@@ -638,7 +639,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest());
 
@@ -655,7 +656,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final String accountNo = "wcl-" + UUID.randomUUID().toString().substring(0, 8);
         final String externalId = "wcl-ext-" + UUID.randomUUID().toString().substring(0, 8);
         final BigDecimal principal = BigDecimal.valueOf(7500);
-        final BigDecimal periodPaymentRate = BigDecimal.valueOf(1.1);
+        final BigDecimal periodPaymentRate = BigDecimal.valueOf(11);
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(8250);
         final BigDecimal discount = BigDecimal.valueOf(50);
         final LocalDate submittedOnDate = LocalDate.now(ZoneId.systemDefault());
@@ -711,7 +712,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final String accountNo = "wcl-paged-" + UUID.randomUUID().toString().substring(0, 8);
         final String externalId = "wcl-paged-ext-" + UUID.randomUUID().toString().substring(0, 8);
         final BigDecimal principal = BigDecimal.valueOf(5500);
-        final BigDecimal periodPaymentRate = BigDecimal.valueOf(1.05);
+        final BigDecimal periodPaymentRate = BigDecimal.valueOf(10.5);
         final BigDecimal totalPaymentVolume = BigDecimal.valueOf(5775);
         final BigDecimal discount = BigDecimal.ZERO;
         final LocalDate submittedOnDate = LocalDate.now(ZoneId.systemDefault());
@@ -768,7 +769,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withProductId(productId) //
                 .withExternalId(externalId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest());
 
@@ -797,7 +798,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withProductId(productId) //
                 .withExternalId(externalId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .buildSubmitRequest());
 
@@ -816,7 +817,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withClientId(clientId) //
                 .withProductId(productId) //
                 .withPrincipal(BigDecimal.valueOf(5000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)) //
                 .withDiscount(discountProposed) //
                 .buildSubmitRequest());
@@ -958,9 +959,9 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withPrincipalAmountMin(BigDecimal.valueOf(1000)) //
                 .withPrincipalAmountMax(BigDecimal.valueOf(50000)) //
                 .withPrincipalAmountDefault(BigDecimal.valueOf(10000)) //
-                .withMinPeriodPaymentRate(BigDecimal.ONE) //
-                .withMaxPeriodPaymentRate(BigDecimal.valueOf(2)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withMinPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_MIN_PERIOD_PAYMENT_RATE_PERCENT) //
+                .withMaxPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_MAX_PERIOD_PAYMENT_RATE_PERCENT) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withDelinquencyBucketId(delinquencyBucketId) //
                 .withAllowAttributeOverrides(Map.of(//
                         "delinquencyBucketClassification", Boolean.TRUE, //
@@ -985,9 +986,9 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withPrincipalAmountMin(BigDecimal.valueOf(1000)) //
                 .withPrincipalAmountMax(BigDecimal.valueOf(50000)) //
                 .withPrincipalAmountDefault(BigDecimal.valueOf(10000)) //
-                .withMinPeriodPaymentRate(BigDecimal.ONE) //
-                .withMaxPeriodPaymentRate(BigDecimal.valueOf(2)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withMinPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_MIN_PERIOD_PAYMENT_RATE_PERCENT) //
+                .withMaxPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_MAX_PERIOD_PAYMENT_RATE_PERCENT) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withDelinquencyBucketId(delinquencyBucketId) //
                 .withRepaymentEvery(repaymentEvery) //
                 .withRepaymentFrequencyType(repaymentFrequencyType) //
@@ -1008,7 +1009,7 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withName(uniqueName) //
                 .withShortName(uniqueShortName) //
                 .withPrincipalAmountDefault(BigDecimal.valueOf(10000)) //
-                .withPeriodPaymentRate(BigDecimal.ONE) //
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT) //
                 .withRepaymentEvery(1) //
                 .withRepaymentFrequencyType("MONTHS") //
                 .withBreachId(breachId) //

@@ -1300,10 +1300,13 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     public void addDiscountFeeWCLoanDisbursement(String discountAmount) {
         PostWorkingCapitalLoansLoanIdResponse lastDisbursementResponse = testContext().get(TestContextKey.LOAN_DISBURSE_RESPONSE);
 
-        final PostWorkingCapitalLoansLoanIdRequest request = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDiscountFeeRequest() //
-                .relatedResourceId(lastDisbursementResponse.getResourceId()).transactionAmount(new BigDecimal(discountAmount));
+        final PostWorkingCapitalLoanTransactionsRequest request = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().relatedResourceId(lastDisbursementResponse.getResourceId())
+                .transactionAmount(new BigDecimal(discountAmount));
 
-        executeStateTransition("DISCOUNTFEE", request, TestContextKey.WORKING_CAPITAL_LOAN_DISCOUNT_FEE_RESPONSE, false);
+        final PostWorkingCapitalLoanTransactionsResponse response = ok(() -> fineractClient.workingCapitalLoanTransactions()
+                .executeWorkingCapitalLoanTransactionById(getCreatedLoanId(), "discountFee", request));
+        testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_DISCOUNT_FEE_RESPONSE, response);
     }
 
     @When("Admin adds Discount fee with {string} amount and a random externalId on Working Capital loan account for last disbursement")
@@ -1398,6 +1401,55 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         verifyErrorResponse(exception, table);
     }
 
+    @And("Admin adds Discount fee adjustment with {string} amount on Working Capital loan account for last discount")
+    public void addDiscountFeeAdjustmentWCLoan(final String adjustmentAmount) {
+        final PostWorkingCapitalLoanTransactionsResponse lastDiscountResponse = testContext().get("DISCOUNT");
+        Assertions.assertNotNull(lastDiscountResponse);
+        final PostWorkingCapitalLoanTransactionsRequest request = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().relatedResourceId(lastDiscountResponse.getResourceId())
+                .transactionAmount(new BigDecimal(adjustmentAmount));
+        executeDiscountFeeAdjustmentById(getCreatedLoanId(), request);
+    }
+
+    @And("Admin adds Discount fee adjustment with {string} amount on transaction date {string} on Working Capital loan account for last discount")
+    public void addDiscountFeeAdjustmentWCLoanWithTransactionDate(final String adjustmentAmount, final String transactionDate) {
+        final PostWorkingCapitalLoanTransactionsResponse lastDiscountResponse = testContext().get("DISCOUNT");
+        Assertions.assertNotNull(lastDiscountResponse);
+        final PostWorkingCapitalLoanTransactionsRequest request = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().relatedResourceId(lastDiscountResponse.getResourceId())
+                .transactionAmount(new BigDecimal(adjustmentAmount)).transactionDate(transactionDate);
+        executeDiscountFeeAdjustmentById(getCreatedLoanId(), request);
+    }
+
+    @And("Admin loads discount fee transaction from Working Capital loan for adjustment")
+    public void loadDiscountFeeTransactionFromLoanForAdjustment() {
+        final GetWorkingCapitalLoansLoanIdResponse loan = retrieveLoanDetails(getCreatedLoanId());
+        assert loan.getTransactions() != null;
+        final GetWorkingCapitalLoanTransactionIdResponse discountTxn = loan.getTransactions().stream()
+                .filter(t -> t.getType() != null && "loanTransactionType.discountFee".equals(t.getType().getCode()))
+                .filter(t -> !Boolean.TRUE.equals(t.getReversed())).reduce((first, second) -> second)
+                .orElseThrow(() -> new IllegalStateException("Active discount fee transaction not found on loan"));
+        final PostWorkingCapitalLoanTransactionsResponse synthetic = new PostWorkingCapitalLoanTransactionsResponse()
+                .resourceId(discountTxn.getId());
+        testContext().set("DISCOUNT", synthetic);
+    }
+
+    @And("Add Discount fee adjustment with {string} amount on Working Capital loan account failed due to exceeding discount amount")
+    public void addDiscountFeeAdjustmentExceededFailure(final String adjustmentAmount) {
+        addDiscountFeeAdjustmentFailedCheck(adjustmentAmount, null, ErrorMessageHelper.discountAdjustmentExceedFailure());
+    }
+
+    @Then("Add Discount fee adjustment with {string} amount and transaction date {string} on Working Capital loan account failed due to transaction date before discount fee date")
+    public void addDiscountFeeAdjustmentBeforeDiscountDateFailure(final String adjustmentAmount, final String transactionDate) {
+        addDiscountFeeAdjustmentFailedCheck(adjustmentAmount, transactionDate,
+                ErrorMessageHelper.discountAdjustmentBeforeDiscountDateFailure());
+    }
+
+    @Then("Add Discount fee adjustment with {string} amount and transaction date {string} on Working Capital loan account failed due to backdated transaction date")
+    public void addDiscountFeeAdjustmentBackdatedFailure(final String adjustmentAmount, final String transactionDate) {
+        addDiscountFeeAdjustmentFailedCheck(adjustmentAmount, transactionDate, ErrorMessageHelper.discountAdjustmentBackdatedFailure());
+    }
+
     @And("Working Capital Loan has transactions:")
     public void workingCapitalLoanHasTransactions(final DataTable dataTable) throws InvocationTargetException, IllegalAccessException {
         final GetWorkingCapitalLoanTransactionsResponse getWorkingCapitalLoansLoanIdResponse = retrieveLoanTransactions(getCreatedLoanId());
@@ -1417,11 +1469,32 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     }
 
     @Then("Admin successfully update discount with {string} amount on Working Capital loan account")
-    public void adminSuccessfullyUpdateDiscountWithAmountOnWorkingCapitalLoanAccount(String discountAmount) {
-        PostWorkingCapitalLoansLoanIdResponse lastDisbursementResponse = testContext().get(TestContextKey.LOAN_DISBURSE_RESPONSE);
-        final PostWorkingCapitalLoansLoanIdRequest request = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoanDiscountFeeRequest() //
-                .relatedResourceId(lastDisbursementResponse.getResourceId()).transactionAmount(new BigDecimal(discountAmount));
-        executeStateTransition("DISCOUNTFEE", request, TestContextKey.WORKING_CAPITAL_LOAN_DISCOUNT_FEE_RESPONSE, false);
+    public void adminSuccessfullyUpdateDiscountWithAmountOnWorkingCapitalLoanAccount(final String discountAmount) {
+        addDiscountFeeWCLoanDisbursement(discountAmount);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to date diff from disbursement date")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToDateDiffFromDisbursementDate(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountDiffDateFromDisburseFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Add discount with {string} amount on Working Capital loan account failed due to already added discount before disbursement")
+    public void addDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToAlreadyAddedDiscountBeforeDisbursement(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountAlreadySetBeforeDisburseFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to override disallowed by product")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToOverrideDisallowedByProduct(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.overrideDisallowedByProductFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
+    }
+
+    @Then("Update discount with {string} amount on Working Capital loan account failed due to exceed discount amount")
+    public void updateDiscountWithAmountOnWorkingCapitalLoanAccountFailedDueToExceedDiscountAmount(String discountAmount) {
+        String errorMessage = ErrorMessageHelper.discountExceedProductDiscountFailure();
+        addDiscountFeeFailedCheck(discountAmount, errorMessage);
     }
 
     @When("Admin update Working Capital period payment rate with {string} value")
@@ -1577,6 +1650,49 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         }
 
         testContext().set(responseKey, response);
+    }
+
+    public void addDiscountFeeFailedCheck(String discountAmount, String errorMessage) {
+        final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        Assertions.assertNotNull(loanResponse);
+        Assertions.assertNotNull(loanResponse.getLoanId());
+        long loanId = loanResponse.getLoanId();
+        PostWorkingCapitalLoansLoanIdResponse lastDisbursementResponse = testContext().get(TestContextKey.LOAN_DISBURSE_RESPONSE);
+        Assertions.assertNotNull(lastDisbursementResponse);
+
+        final PostWorkingCapitalLoanTransactionsRequest updateDiscountRequest = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().relatedResourceId(lastDisbursementResponse.getResourceId())
+                .transactionAmount(new BigDecimal(discountAmount));
+
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoanTransactions()
+                .executeWorkingCapitalLoanTransactionById(loanId, "discountFee", updateDiscountRequest));
+        assertThat(exception.getStatus()).as(errorMessage).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(errorMessage);
+    }
+
+    private void addDiscountFeeAdjustmentFailedCheck(final String adjustmentAmount, final String transactionDateOrNull,
+            final String errorMessage) {
+        final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        Assertions.assertNotNull(loanResponse);
+        Assertions.assertNotNull(loanResponse.getLoanId());
+        final long loanId = loanResponse.getLoanId();
+        final PostWorkingCapitalLoanTransactionsResponse lastDiscountResponse = testContext().get("DISCOUNT");
+        Assertions.assertNotNull(lastDiscountResponse);
+        final PostWorkingCapitalLoanTransactionsRequest adjustmentRequest = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().relatedResourceId(lastDiscountResponse.getResourceId())
+                .transactionAmount(new BigDecimal(adjustmentAmount));
+        if (transactionDateOrNull != null) {
+            adjustmentRequest.transactionDate(transactionDateOrNull);
+        }
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.workingCapitalLoanTransactions()
+                .executeWorkingCapitalLoanTransactionById(loanId, "discountFeeAdjustment", adjustmentRequest));
+        assertThat(exception.getStatus()).as(errorMessage).isEqualTo(400);
+        assertThat(exception.getDeveloperMessage()).contains(errorMessage);
+    }
+
+    private void executeDiscountFeeAdjustmentById(final Long loanId, final PostWorkingCapitalLoanTransactionsRequest request) {
+        ok(() -> fineractClient.workingCapitalLoanTransactions().executeWorkingCapitalLoanTransactionById(loanId, "discountFeeAdjustment",
+                request));
     }
 
     // Data Extraction Helpers
@@ -2297,12 +2413,13 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
             final boolean containsExpectedValues = matchingPeriods.stream()
                     .anyMatch(period -> matchesExpectedWcAmortizationRow(headers, expectedValues, period));
             assertThat(containsExpectedValues).as(
-                    "Wrong value in line %s of amortization schedule. actual=%s, expected=%s", i, matchingPeriods.stream()
+                    "Wrong value in line %s of amortization schedule: \n actual=%s,\n expected=%s", i, matchingPeriods.stream()
                             .map(period -> fetchValuesOfWcAmortizationSchedule(headers, period)).collect(Collectors.toList()),
                     expectedValues).isTrue();
         }
 
-        assertThat(linesActual).as("Wrong number of lines in WC amortization schedule. actual=%s, expected=%s", linesActual, linesExpected)
+        assertThat(linesActual)
+                .as("Wrong number of lines in WC amortization schedule: \n actual=%s,\n expected=%s", linesActual, linesExpected)
                 .isEqualTo(linesExpected);
     }
 

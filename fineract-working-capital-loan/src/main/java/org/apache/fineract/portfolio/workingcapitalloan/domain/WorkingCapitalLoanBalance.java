@@ -86,6 +86,10 @@ public class WorkingCapitalLoanBalance extends AbstractAuditableWithUTCDateTimeC
     @Setter
     private BigDecimal totalDiscountFee = BigDecimal.ZERO;
 
+    @Column(name = "total_discount_fee_adjustment", scale = 6, precision = 19, nullable = false)
+    @Setter
+    private BigDecimal totalDiscountFeeAdjustment = BigDecimal.ZERO;
+
     @Version
     @Column(name = "version")
     private Integer version;

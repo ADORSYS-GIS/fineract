@@ -109,7 +109,8 @@ public class WorkingCapitalLoanRepaymentTest {
     public void testRepaymentUpdatesTransactionAllocationBalanceAndStatus() {
         final Long productId = createProductWithDiscountAllowed();
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT)
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)).withDiscount(BigDecimal.valueOf(100)).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate,
@@ -136,7 +137,8 @@ public class WorkingCapitalLoanRepaymentTest {
         externalEventHelper.enableBusinessEvent(WC_REPAYMENT_TXN_EVENT);
         final Long productId = createProduct();
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT)
                 .withTotalPaymentVolume(BigDecimal.valueOf(5500)).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
@@ -200,9 +202,9 @@ public class WorkingCapitalLoanRepaymentTest {
     @Test
     public void testRepaymentWhenLoanNotDisbursedFails() {
         final Long productId = createProduct();
-        final Long loanId = submitAndTrack(
-                new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId).withProductId(productId)
-                        .withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
+        final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
                 WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
@@ -216,9 +218,9 @@ public class WorkingCapitalLoanRepaymentTest {
     public void testRepaymentWithDateBeforeDisbursementFails() {
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         final Long productId = createProduct();
-        final Long loanId = submitAndTrack(
-                new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId).withProductId(productId)
-                        .withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
+        final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT).buildSubmitRequest());
         loanHelper.approveById(loanId,
                 WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
         loanHelper.disburseById(loanId,
@@ -247,7 +249,8 @@ public class WorkingCapitalLoanRepaymentTest {
         final Long productId = createProduct();
         final String loanExternalId = "wcl-loan-ext-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT)
                 .withExternalId(loanExternalId).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
@@ -300,7 +303,8 @@ public class WorkingCapitalLoanRepaymentTest {
         final Long productId = createProductForReferenceSchedule();
         final LocalDate disbursementDate = LocalDate.of(2019, 1, 1);
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(9000)).withPeriodPaymentRate(new BigDecimal("0.18"))
+                .withProductId(productId).withPrincipal(BigDecimal.valueOf(9000))
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT)
                 .withTotalPaymentVolume(BigDecimal.valueOf(100000)).withDiscount(BigDecimal.valueOf(1000))
                 .withSubmittedOnDate(disbursementDate).buildSubmitRequest());
         loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(disbursementDate,
@@ -321,7 +325,7 @@ public class WorkingCapitalLoanRepaymentTest {
         assertEqualBigDecimal(BigDecimal.valueOf(1000), schedule.getDiscountFeeAmount());
         assertEqualBigDecimal(BigDecimal.valueOf(9000), schedule.getNetDisbursementAmount());
         assertEqualBigDecimal(BigDecimal.valueOf(100000), schedule.getTotalPaymentVolume());
-        assertEqualBigDecimal(BigDecimal.valueOf(0.18), schedule.getPeriodPaymentRate());
+        assertEqualBigDecimal(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT, schedule.getPeriodPaymentRate());
         assertEquals(360, schedule.getNpvDayCount());
         assert schedule.getExpectedPaymentAmount() != null;
         assertTrue(schedule.getExpectedPaymentAmount().compareTo(BigDecimal.ZERO) > 0, "expectedPaymentAmount should be positive");
@@ -347,7 +351,8 @@ public class WorkingCapitalLoanRepaymentTest {
     private Long createApprovedAndDisbursedLoan(final Long productId, final BigDecimal principal, final BigDecimal disburseAmount,
             final LocalDate approvedOnDate) {
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(principal).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
+                .withProductId(productId).withPrincipal(principal)
+                .withPeriodPaymentRate(WorkingCapitalLoanProductTestBuilder.DEFAULT_PERIOD_PAYMENT_RATE_PERCENT).buildSubmitRequest());
         loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, principal, null));
         loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, disburseAmount));
         return loanId;

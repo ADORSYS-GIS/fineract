@@ -597,9 +597,9 @@ public class WorkingCapitalLoanProductValidationTest {
     public void testCreateWorkingCapitalLoanProductWithMinGreaterThanMaxPeriodPaymentRate() {
         // Given
         final PostWorkingCapitalLoanProductsRequest request = new WorkingCapitalLoanProductTestBuilder() //
-                .withMinPeriodPaymentRate(BigDecimal.valueOf(2.0)) //
-                .withPeriodPaymentRate(BigDecimal.valueOf(1.0)) //
-                .withMaxPeriodPaymentRate(BigDecimal.valueOf(3.0)) //
+                .withMinPeriodPaymentRate(BigDecimal.valueOf(20)) //
+                .withPeriodPaymentRate(BigDecimal.valueOf(10)) //
+                .withMaxPeriodPaymentRate(BigDecimal.valueOf(30)) //
                 .build();
 
         // When & Then - Should throw CallFailedRuntimeException with status 400
@@ -615,9 +615,9 @@ public class WorkingCapitalLoanProductValidationTest {
     public void testCreateWorkingCapitalLoanProductWithDefaultLessThanMinPeriodPaymentRate() {
         // Given
         final PostWorkingCapitalLoanProductsRequest request = new WorkingCapitalLoanProductTestBuilder() //
-                .withMinPeriodPaymentRate(BigDecimal.valueOf(1.0)) //
-                .withPeriodPaymentRate(BigDecimal.valueOf(0.5)) //
-                .withMaxPeriodPaymentRate(BigDecimal.valueOf(2.0)) //
+                .withMinPeriodPaymentRate(BigDecimal.valueOf(10)) //
+                .withPeriodPaymentRate(BigDecimal.valueOf(5)) //
+                .withMaxPeriodPaymentRate(BigDecimal.valueOf(25)) //
                 .build();
 
         // When & Then - Should throw CallFailedRuntimeException with status 400
@@ -633,9 +633,9 @@ public class WorkingCapitalLoanProductValidationTest {
     public void testCreateWorkingCapitalLoanProductWithDefaultGreaterThanMaxPeriodPaymentRate() {
         // Given
         final PostWorkingCapitalLoanProductsRequest request = new WorkingCapitalLoanProductTestBuilder() //
-                .withMinPeriodPaymentRate(BigDecimal.valueOf(0.5)) //
-                .withPeriodPaymentRate(BigDecimal.valueOf(3.0)) //
-                .withMaxPeriodPaymentRate(BigDecimal.valueOf(2.0)) //
+                .withMinPeriodPaymentRate(BigDecimal.valueOf(5)) //
+                .withPeriodPaymentRate(BigDecimal.valueOf(30)) //
+                .withMaxPeriodPaymentRate(BigDecimal.valueOf(25)) //
                 .build();
 
         // When & Then - Should throw CallFailedRuntimeException with status 400

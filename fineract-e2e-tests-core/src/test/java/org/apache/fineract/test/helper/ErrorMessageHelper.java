@@ -1106,6 +1106,18 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: override.not.allowed.by.product.";
     }
 
+    public static String discountAdjustmentExceedFailure() {
+        return "Failed data validation due to: cannot.be.more.than.discount.fee.";
+    }
+
+    public static String discountAdjustmentBackdatedFailure() {
+        return "Failed data validation due to: backdated.not.allowed.";
+    }
+
+    public static String discountAdjustmentBeforeDiscountDateFailure() {
+        return "Failed data validation due to: cannot.be.before.discount.fee.date.";
+    }
+
     public static String nearBreachCannotEnableWithoutBreachFailure() {
         return "Failed data validation due to: cannot.enable.near.breach.without.breach.";
     }
