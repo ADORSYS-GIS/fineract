@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +36,19 @@ import org.apache.fineract.client.models.ChargeData;
 import org.apache.fineract.client.models.ChargeRequest;
 import org.apache.fineract.client.models.EnumOptionData;
 import org.apache.fineract.client.models.GetChargesResponse;
+import org.apache.fineract.client.models.GetLoansLoanIdChargesChargeIdResponse;
+import org.apache.fineract.client.models.GetLoansLoanIdChargesTemplateResponse;
 import org.apache.fineract.client.models.PostChargesResponse;
+import org.apache.fineract.client.models.PostLoansLoanIdChargesRequest;
+import org.apache.fineract.client.models.PostLoansLoanIdChargesResponse;
+import org.apache.fineract.client.models.PostWorkingCapitalLoansResponse;
 import org.apache.fineract.test.data.ChargeCalculationType;
 import org.apache.fineract.test.data.ChargeProductAppliesTo;
 import org.apache.fineract.test.data.ChargeTimeType;
 import org.apache.fineract.test.factory.WorkingCapitalChargeRequestFactory;
 import org.apache.fineract.test.stepdef.AbstractStepDef;
 import org.apache.fineract.test.support.TestContextKey;
+import org.junit.jupiter.api.Assertions;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -90,6 +97,13 @@ public class WorkingCapitalChargeStepDef extends AbstractStepDef {
         ok(() -> fineractClient.charges().deleteCharge(getChargeId()));
     }
 
+    @When("Admin fails to delete working capital loan charge with status {int} message {string}")
+    public void adminFailsToDeleteWorkingCapitalLoanChargeWithMessage(int expectedHttpCode, String expectedErrorMessage) {
+        final CallFailedRuntimeException exception = fail(() -> fineractClient.charges().deleteCharge(getChargeId()));
+        assertHttpStatus(exception, expectedHttpCode);
+        assertErrorMessage(exception, expectedErrorMessage);
+    }
+
     @Then("Admin retrieves working capital loan charge and verifies it is a penalty")
     public void retrieveAndVerifyPenalty() {
         final Long id = getChargeId();
@@ -106,6 +120,55 @@ public class WorkingCapitalChargeStepDef extends AbstractStepDef {
         assertThat(chargeData.getChargePaymentMode()).as("Charge payment mode should not be null").isNotNull();
         assertThat(chargeData.getChargePaymentMode().getId()).as("Payment mode should be Regular (0)").isEqualTo(REGULAR_PAYMENT_MODE_ID);
         log.info("Verified WCL charge ID {} has Regular payment mode", id);
+    }
+
+    @Then("Admin retrieves working capital loan charge template by loan id")
+    public void getWorkingCapitalLoanChargesTemplateByLoanId() {
+        Long loanId = getLoanId();
+        Long chargeId = getChargeId();
+        Assertions.assertNotNull(chargeId);
+
+        GetLoansLoanIdChargesTemplateResponse response = ok(
+                () -> fineractClient.workingCapitalLoanCharges().retrieveTemplateWorkingCapitalLoanCharge(loanId));
+
+        Assertions.assertNotNull(response.getChargeOptions());
+
+        boolean anyMatch = response.getChargeOptions().stream().anyMatch(cO -> chargeId.equals(cO.getId()));
+        Assertions.assertTrue(anyMatch);
+
+    }
+
+    @Then("Admin add working capital loan charge by loan id and charge id with amount {double} and due date {string}")
+    public void admin_add_working_capital_loan_charge_by_loan_id_and_charge_id_with_amount(Double amount, String dueDate) {
+        Long loanId = getLoanId();
+        Assertions.assertNotNull(loanId);
+        Long chargeId = getChargeId();
+        Assertions.assertNotNull(chargeId);
+
+        PostLoansLoanIdChargesRequest request = new PostLoansLoanIdChargesRequest() //
+                .chargeId(chargeId).amount(amount).dueDate(dueDate).dateFormat("dd-MM-yyyy").locale("en");
+        PostLoansLoanIdChargesResponse response = ok(() -> fineractClient.workingCapitalLoanCharges().createLoanCharge(loanId, request));
+        Assertions.assertNotNull(response);
+        Assertions.assertNotNull(response.getResourceId());
+
+        addLoanChargeId(response.getResourceId());
+
+    }
+
+    @Then("Working Capital Loan has the created charges")
+    public void verifyWorkingCapitalLoanChargesAreCreated() {
+        Long loanId = getLoanId();
+        Assertions.assertNotNull(loanId);
+        List<GetLoansLoanIdChargesChargeIdResponse> responses = ok(
+                () -> fineractClient.workingCapitalLoanCharges().retrieveAllWorkingCapitalLoanChargesByLoanId(loanId));
+        Assertions.assertNotNull(responses);
+        List<Long> loanChargeIds = getLoanChargeIds();
+        for (GetLoansLoanIdChargesChargeIdResponse response : responses) {
+            Assertions.assertTrue(loanChargeIds.contains(response.getId()));
+        }
+        for (Long chargeId : loanChargeIds) {
+            ok(() -> fineractClient.workingCapitalLoanCharges().retrieveWorkingCapitalLoanCharge(loanId, chargeId));
+        }
     }
 
     @Then("Admin retrieves the charge template for Working Capital Loan")
@@ -180,10 +243,32 @@ public class WorkingCapitalChargeStepDef extends AbstractStepDef {
         return testContext().get(TestContextKey.WORKING_CAPITAL_CHARGE_ID);
     }
 
+    private void addLoanChargeId(Long loanChargeId) {
+        List<Long> loanChargeIds = getLoanChargeIds();
+        if (!loanChargeIds.contains(loanChargeId)) {
+            loanChargeIds.add(loanChargeId);
+        }
+    }
+
+    private List<Long> getLoanChargeIds() {
+        List<Long> ids = testContext().get(TestContextKey.WORKING_CAPITAL_LOAN_CHARGE_IDS);
+        if (ids == null) {
+            ids = new ArrayList<>();
+            testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_CHARGE_IDS, ids);
+        }
+        return ids;
+    }
+
     private ChargeData getChargeTemplate() {
         final ChargeData templateData = testContext().get(TestContextKey.WORKING_CAPITAL_CHARGE_TEMPLATE);
         assertThat(templateData).as("Charge template should not be null").isNotNull();
         return templateData;
+    }
+
+    private Long getLoanId() {
+        PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
+        Assertions.assertNotNull(loanResponse);
+        return loanResponse.getLoanId();
     }
 
     // Assertion Helpers

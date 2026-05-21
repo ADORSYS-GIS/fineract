@@ -16,16 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.fineract.portfolio.charge.domain;
 
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
-public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
+@Converter
+public class ChargePaymentModeConverter implements AttributeConverter<ChargePaymentMode, Integer> {
 
-    @Query("select lc.id from WorkingCapitalLoanCharge lc where lc.charge.id = :chargeId and lc.active = true")
-    Optional<Long> isAnyWorkingCapitalLoansAssociateWithThisCharge(@Param("chargeId") Long chargeId);
+    @Override
+    public Integer convertToDatabaseColumn(ChargePaymentMode attribute) {
+        return attribute == null ? null : attribute.getValue();
+    }
+
+    @Override
+    public ChargePaymentMode convertToEntityAttribute(Integer dbData) {
+        return dbData == null ? null : ChargePaymentMode.fromInt(dbData);
+    }
 }

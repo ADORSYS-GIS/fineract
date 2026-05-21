@@ -16,16 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.charge.domain;
 
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+package org.apache.fineract.portfolio.workingcapitalloan.serialization;
 
-public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
+public final class WorkingCapitalLoanChargeConstants {
 
-    @Query("select lc.id from WorkingCapitalLoanCharge lc where lc.charge.id = :chargeId and lc.active = true")
-    Optional<Long> isAnyWorkingCapitalLoansAssociateWithThisCharge(@Param("chargeId") Long chargeId);
+    private WorkingCapitalLoanChargeConstants() {}
+
+    public static final String chargeIdParamName = "chargeId";
+    public static final String amountParamName = "amount";
+    public static final String dueDateParamName = "dueDate";
+    public static final String localeParamName = "locale";
+    public static final String dateFormatParamName = "dateFormat";
+    public static final String externalIdParamName = "externalId";
 }

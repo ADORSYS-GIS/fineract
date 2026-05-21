@@ -16,16 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.charge.domain;
 
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-public interface ChargeRepository extends JpaRepository<Charge, Long>, JpaSpecificationExecutor<Charge> {
+import java.util.List;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanChargeData;
 
-    @Query("select lc.id from WorkingCapitalLoanCharge lc where lc.charge.id = :chargeId and lc.active = true")
-    Optional<Long> isAnyWorkingCapitalLoansAssociateWithThisCharge(@Param("chargeId") Long chargeId);
+public interface WorkingCapitalLoanChargeReadPlatformService {
+
+    WorkingCapitalLoanChargeData retrieveLoanChargeDetails(Long id, Long loanId);
+
+    List<WorkingCapitalLoanChargeData> retrieveLoanCharges(Long loanId);
 }
