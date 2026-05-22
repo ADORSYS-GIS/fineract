@@ -16,18 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.accounting;
+package org.apache.fineract.portfolio.workingcapitalloan.service;
 
+import java.time.LocalDate;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransactionAllocation;
 
-public interface WorkingCapitalLoanAccountingProcessor {
+public interface WorkingCapitalLoanDiscountFeeAmortizationService {
 
-    void postJournalEntries(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn, WorkingCapitalLoanTransactionAllocation allocation,
-            boolean isChargedOff);
-
-    void postReversalJournalEntries(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn);
-
-    void postJournalEntriesForDiscountFeeAmortization(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn, boolean isChargedOff);
+    void processDiscountFeeAmortization(WorkingCapitalLoan loan, LocalDate transactionDate);
 }
