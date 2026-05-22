@@ -28,7 +28,6 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.base.Strings;
@@ -193,37 +192,11 @@ public class SavingsAccountTransactionTest {
         String datatableJson = new Gson().toJson(columnMap);
         this.datatableHelper.createDatatable(datatableJson, "");
 
-        SavingsAccountHelper batchWithTransactionHelper = new SavingsAccountHelper(requestSpec, concurrentResponseSpec);
-        SavingsAccountHelper batchWithoutTransactionHelper = new SavingsAccountHelper(requestSpec,
-                new ResponseSpecBuilder().expectStatusCode(anyOf(is(SC_OK), is(SC_CONFLICT), is(SC_FORBIDDEN))).build());
-        String transactionDate = SavingsAccountHelper.TRANSACTION_DATE;
-        String transactionAmount = "10";
-        ExecutorService executor = Executors.newFixedThreadPool(30);
-        ArrayList<Future<?>> results = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            log.info("Starting concurrent transaction number {}", i);
-            SavingsTransactionData transactionData = SavingsTransactionData.builder().transactionDate(transactionDate)
-                    .transactionAmount(transactionAmount).paymentTypeId(PAYMENT_TYPE_ID).note("note_" + i).build();
-            Runnable workerWithTransaction = new TransactionExecutor(batchWithTransactionHelper, savingsId, transactionData, true,
-                    datatableName, columnNames);
-            results.add(executor.submit(workerWithTransaction));
-            Runnable workerWithoutTransaction = new TransactionExecutor(batchWithoutTransactionHelper, savingsId, transactionData, false,
-                    datatableName, columnNames);
-            results.add(executor.submit(workerWithoutTransaction));
-        }
-
-        executor.shutdown();
-        // Wait until all threads are finish
-        while (!executor.isTerminated()) {
-
-        }
-        this.datatableHelper.deleteDatatable(datatableName);
         try {
             runConcurrentSavingsBatchTransactions(savingsId, datatableName, columnNames);
         } finally {
             this.datatableHelper.deleteDatatable(datatableName);
         }
-        log.info("\nFinished all threads");
     }
 
     @Test
