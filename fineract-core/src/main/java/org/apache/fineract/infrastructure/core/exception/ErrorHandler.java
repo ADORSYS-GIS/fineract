@@ -20,6 +20,7 @@ package org.apache.fineract.infrastructure.core.exception;
 
 import static org.springframework.core.ResolvableType.forClassWithGenerics;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import jakarta.persistence.PersistenceException;
 import jakarta.validation.constraints.NotNull;
@@ -75,11 +76,11 @@ public final class ErrorHandler {
         HY00("HY", "Lock wait timeout exceeded", "Record has changed since last read");
 
         private final String code;
-        private final List<String> messages;
+        private final ImmutableList<String> messages;
 
         PessimisticLockingFailureCode(String code, String... messages) {
             this.code = code;
-            this.messages = List.of(messages);
+            this.messages = ImmutableList.copyOf(messages);
         }
 
         private static Throwable match(Throwable t) {
