@@ -3330,6 +3330,22 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                         SavingsCompoundingInterestPeriodType.QUATERLY, SavingsCompoundingInterestPeriodType.BI_ANNUAL,
                         SavingsCompoundingInterestPeriodType.ANNUAL));
 
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNIVERSARY_MONTHLY,
+                Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY));
+
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNIVERSARY_QUARTERLY,
+                Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY,
+                        SavingsCompoundingInterestPeriodType.QUATERLY));
+
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNIVERSARY_BIANNUAL,
+                Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY,
+                        SavingsCompoundingInterestPeriodType.QUATERLY, SavingsCompoundingInterestPeriodType.BI_ANNUAL));
+
+        postingtoCompoundMap.put(SavingsPostingInterestPeriodType.ANNIVERSARY_ANNUAL,
+                Arrays.asList(SavingsCompoundingInterestPeriodType.DAILY, SavingsCompoundingInterestPeriodType.MONTHLY,
+                        SavingsCompoundingInterestPeriodType.QUATERLY, SavingsCompoundingInterestPeriodType.BI_ANNUAL,
+                        SavingsCompoundingInterestPeriodType.ANNUAL));
+
         SavingsPostingInterestPeriodType savingsPostingInterestPeriodType = SavingsPostingInterestPeriodType
                 .fromInt(interestPostingPeriodType);
         SavingsCompoundingInterestPeriodType savingsCompoundingInterestPeriodType = SavingsCompoundingInterestPeriodType
@@ -3338,7 +3354,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (postingtoCompoundMap.get(savingsPostingInterestPeriodType) == null) {
             baseDataValidator.failWithCodeNoParameterAddedToErrorCode("posting.period.type.is.less.than.compound.period.type",
                     savingsPostingInterestPeriodType.name(), savingsCompoundingInterestPeriodType.name());
-
         }
     }
 
