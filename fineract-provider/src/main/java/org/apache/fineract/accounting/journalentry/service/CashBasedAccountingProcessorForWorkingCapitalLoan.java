@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.fineract.accounting.common.AccountingConstants.CashAccountsForLoan;
 import org.apache.fineract.accounting.glaccount.domain.GLAccount;
 import org.apache.fineract.accounting.journalentry.domain.JournalEntry;
@@ -31,6 +32,8 @@ import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.portfolio.PortfolioProductType;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.workingcapitalloan.accounting.WorkingCapitalLoanAccountingProcessor;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
@@ -47,7 +50,7 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
     private final JournalEntryRepository journalEntryRepository;
 
     @Override
-    public void postJournalEntriesForRepayment(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn,
+    public void postJournalEntries(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn,
             final WorkingCapitalLoanTransactionAllocation allocation, final boolean isChargedOff) {
         final Office office = loan.getClient().getOffice();
         final Long productId = loan.getLoanProduct().getId();
@@ -63,13 +66,43 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
         final BigDecimal overpaymentPortion = txn.getTransactionAmount().subtract(principalPortion).subtract(feesPortion)
                 .subtract(penaltiesPortion).max(BigDecimal.ZERO);
 
-        if (isChargedOff) {
-            postChargedOffRepaymentEntries(office, productId, currencyCode, transactionDate, paymentTypeId, txn, principalPortion,
-                    feesPortion, penaltiesPortion, overpaymentPortion);
-        } else {
-            postRegularRepaymentEntries(office, productId, currencyCode, transactionDate, paymentTypeId, txn, principalPortion, feesPortion,
-                    penaltiesPortion, overpaymentPortion);
+        switch (txn.getTypeOf()) {
+            case LoanTransactionType.REPAYMENT -> {
+                if (isChargedOff) {
+                    postChargedOffRepaymentEntries(office, productId, currencyCode, transactionDate, paymentTypeId, txn, principalPortion,
+                            feesPortion, penaltiesPortion, overpaymentPortion);
+                } else {
+                    postRegularRepaymentEntries(office, productId, currencyCode, transactionDate, paymentTypeId, txn, principalPortion,
+                            feesPortion, penaltiesPortion, overpaymentPortion);
+                }
+            }
+            case LoanTransactionType.GOODWILL_CREDIT -> {
+                if (!isChargedOff) {
+                    postGoodwillCreditJournalEntries(loan, txn, principalPortion, feesPortion, penaltiesPortion, overpaymentPortion);
+                } else {
+                    throw new NotImplementedException("Charge off is not implemented yet for Goodwill Credit for Working Capital Loan");
+                }
+            }
+            default -> {
+                throw new NotImplementedException(
+                        "Post Journal Entries is not implemented yet for " + txn.getTypeOf().getCode() + " for Working Capital Loan");
+            }
         }
+    }
+
+    private void postGoodwillCreditJournalEntries(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn, BigDecimal principalPortion,
+            BigDecimal feesPortion, BigDecimal penaltiesPortion, BigDecimal overpaymentPortion) {
+        BigDecimal overpaymentPlusPrincipal = principalPortion.add(overpaymentPortion);
+        JournalEntryPostingHelper accountPostHelper = new JournalEntryPostingHelper(loan, txn);
+        // debit
+        accountPostHelper.postDebitJournalEntry(CashAccountsForLoan.GOODWILL_CREDIT, overpaymentPlusPrincipal);
+        accountPostHelper.postDebitJournalEntry(CashAccountsForLoan.INCOME_FROM_GOODWILL_CREDIT_FEES, feesPortion);
+        accountPostHelper.postDebitJournalEntry(CashAccountsForLoan.INCOME_FROM_GOODWILL_CREDIT_PENALTY, penaltiesPortion);
+        // credit
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.LOAN_PORTFOLIO, principalPortion);
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.FEES_RECEIVABLE, feesPortion);
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.PENALTIES_RECEIVABLE, penaltiesPortion);
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.OVERPAYMENT, overpaymentPortion);
     }
 
     @Override
@@ -164,10 +197,79 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
         }
     }
 
+    @Override
+    public void postJournalEntriesForDiscountFeeAmortization(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn,
+            final boolean isChargedOff) {
+        final Office office = loan.getClient().getOffice();
+        final Long productId = loan.getLoanProduct().getId();
+        final String currencyCode = loan.getLoanProductRelatedDetails().getCurrency().getCode();
+        final LocalDate transactionDate = txn.getTransactionDate();
+        final Long loanId = loan.getId();
+        final Long txnId = txn.getId();
+        final BigDecimal amount = txn.getTransactionAmount();
+
+        helper.checkForBranchClosures(helper.getLatestClosureByBranch(office.getId()), transactionDate);
+
+        if (MathUtil.isGreaterThanZero(amount)) {
+            final GLAccount deferredIncomeAccount = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId,
+                    CashAccountsForLoan.DEFERRED_INCOME_LIABILITY.getValue(), null);
+            helper.createDebitJournalEntryForWorkingCapitalLoan(office, currencyCode, deferredIncomeAccount, loanId, txnId, transactionDate,
+                    amount, null);
+
+            final CashAccountsForLoan creditAccountType = isChargedOff ? CashAccountsForLoan.CHARGE_OFF_EXPENSE
+                    : CashAccountsForLoan.INCOME_FROM_DISCOUNT_FEE;
+            final GLAccount creditAccount = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId, creditAccountType.getValue(),
+                    null);
+            helper.createCreditJournalEntryForWorkingCapitalLoan(office, currencyCode, creditAccount, loanId, txnId, transactionDate,
+                    amount, null);
+        }
+    }
+
     private Long extractPaymentTypeId(final WorkingCapitalLoanTransaction txn) {
         if (txn.getPaymentDetail() != null && txn.getPaymentDetail().getPaymentType() != null) {
             return txn.getPaymentDetail().getPaymentType().getId();
         }
         return null;
+    }
+
+    private class JournalEntryPostingHelper {
+
+        final Office office;
+        final Long productId;
+        final String currencyCode;
+        final LocalDate transactionDate;
+        final Long paymentTypeId;
+        final Long loanId;
+        final Long txnId;
+        final PaymentDetail paymentDetail;
+
+        JournalEntryPostingHelper(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn) {
+            paymentTypeId = extractPaymentTypeId(txn);
+            transactionDate = txn.getTransactionDate();
+            currencyCode = loan.getLoanProductRelatedDetails().getCurrency().getCode();
+            productId = loan.getLoanProduct().getId();
+            office = loan.getClient().getOffice();
+            loanId = loan.getId();
+            txnId = txn.getId();
+            paymentDetail = txn.getPaymentDetail();
+        }
+
+        void postCreditJournalEntry(CashAccountsForLoan accountType, BigDecimal amount) {
+            if (MathUtil.isGreaterThanZero(amount)) {
+                final GLAccount account = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId, accountType.getValue(),
+                        paymentTypeId);
+                helper.createCreditJournalEntryForWorkingCapitalLoan(office, currencyCode, account, loanId, txnId, transactionDate, amount,
+                        paymentDetail);
+            }
+        }
+
+        void postDebitJournalEntry(CashAccountsForLoan accountType, BigDecimal amount) {
+            if (MathUtil.isGreaterThanZero(amount)) {
+                final GLAccount account = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId, accountType.getValue(),
+                        paymentTypeId);
+                helper.createDebitJournalEntryForWorkingCapitalLoan(office, currencyCode, account, loanId, txnId, transactionDate, amount,
+                        paymentDetail);
+            }
+        }
     }
 }

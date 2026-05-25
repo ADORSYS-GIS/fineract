@@ -20,7 +20,6 @@ package org.apache.fineract.portfolio.collateralmanagement.starter;
 
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
-import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepository;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagementRepositoryWrapper;
@@ -29,15 +28,15 @@ import org.apache.fineract.portfolio.collateralmanagement.service.ClientCollater
 import org.apache.fineract.portfolio.collateralmanagement.service.ClientCollateralManagementReadServiceImpl;
 import org.apache.fineract.portfolio.collateralmanagement.service.ClientCollateralManagementWriteService;
 import org.apache.fineract.portfolio.collateralmanagement.service.ClientCollateralManagementWriteServiceImpl;
-import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementReadPlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWritePlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWritePlatformServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementReadService;
+import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementReadServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWriteService;
+import org.apache.fineract.portfolio.collateralmanagement.service.CollateralManagementWriteServiceImpl;
 import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralAssembler;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadPlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWritePlatformService;
-import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWritePlatformServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadService;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementReadServiceImpl;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWriteService;
+import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralManagementWriteServiceImpl;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagementRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
@@ -66,19 +65,18 @@ public class CollateralManagementConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(CollateralManagementReadPlatformService.class)
-    public CollateralManagementReadPlatformService collateralManagementReadPlatformService(PlatformSecurityContext context,
+    @ConditionalOnMissingBean(CollateralManagementReadService.class)
+    public CollateralManagementReadService collateralManagementReadService(
             CollateralManagementRepositoryWrapper collateralManagementRepositoryWrapper) {
-        return new CollateralManagementReadPlatformServiceImpl(context, collateralManagementRepositoryWrapper);
+        return new CollateralManagementReadServiceImpl(collateralManagementRepositoryWrapper);
     }
 
     @Bean
-    @ConditionalOnMissingBean(CollateralManagementWritePlatformService.class)
-    public CollateralManagementWritePlatformService collateralManagementWritePlatformService(
+    @ConditionalOnMissingBean(CollateralManagementWriteService.class)
+    public CollateralManagementWriteService collateralManagementWriteService(
             CollateralManagementRepositoryWrapper collateralManagementRepositoryWrapper,
-            ApplicationCurrencyRepository applicationCurrencyRepository, FromJsonHelper fromApiJsonHelper) {
-        return new CollateralManagementWritePlatformServiceImpl(collateralManagementRepositoryWrapper, applicationCurrencyRepository,
-                fromApiJsonHelper);
+            ApplicationCurrencyRepository applicationCurrencyRepository) {
+        return new CollateralManagementWriteServiceImpl(collateralManagementRepositoryWrapper, applicationCurrencyRepository);
     }
 
     @Bean
@@ -91,18 +89,18 @@ public class CollateralManagementConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(LoanCollateralManagementReadPlatformService.class)
-    public LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService(PlatformSecurityContext context,
+    @ConditionalOnMissingBean(LoanCollateralManagementReadService.class)
+    public LoanCollateralManagementReadService loanCollateralManagementReadService(
             LoanCollateralManagementRepository loanCollateralManagementRepository, LoanRepository loanRepository) {
-        return new LoanCollateralManagementReadPlatformServiceImpl(context, loanCollateralManagementRepository, loanRepository);
+        return new LoanCollateralManagementReadServiceImpl(loanCollateralManagementRepository, loanRepository);
     }
 
     @Bean
-    @ConditionalOnMissingBean(LoanCollateralManagementWritePlatformService.class)
-    public LoanCollateralManagementWritePlatformService loanCollateralManagementWritePlatformService(
+    @ConditionalOnMissingBean(LoanCollateralManagementWriteService.class)
+    public LoanCollateralManagementWriteService loanCollateralManagementWriteService(
             LoanCollateralManagementRepository loanCollateralManagementRepository,
             ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper) {
-        return new LoanCollateralManagementWritePlatformServiceImpl(loanCollateralManagementRepository,
+        return new LoanCollateralManagementWriteServiceImpl(loanCollateralManagementRepository,
                 clientCollateralManagementRepositoryWrapper);
     }
 }

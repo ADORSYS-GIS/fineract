@@ -1564,6 +1564,9 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 case "totalPaidPrincipal" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getTotalPaidPrincipal() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getTotalPaidPrincipal().doubleValue()).format());
+                case "overpaymentAmount" ->
+                    actualValues.add(response.getBalance() == null || response.getBalance().getOverpaymentAmount() == null ? null
+                            : new Utils.DoubleFormatter(response.getBalance().getOverpaymentAmount().doubleValue()).format());
                 case "realizedIncome" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getRealizedIncome() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getRealizedIncome().doubleValue()).format());
@@ -2703,19 +2706,21 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     }
 
     @Then("Working Capital Loan Transactions tab has a {string} transaction with date {string} which has the following Journal entries:")
-    public void verifyWorkingCapitalLoanTransactionJournalEntries(String transactionType, String transactionDate, DataTable table)
-            throws IOException {
+    public void verifyWorkingCapitalLoanTransactionJournalEntries(String transactionType, String transactionDate, DataTable table) {
         Long loanId = getCreatedLoanId();
-        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, transactionType,
+        TransactionType resolvedTransactionType = resolveTransactionType(transactionType);
+        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, resolvedTransactionType,
                 transactionDate, false);
+
         verifyJournalEntries(transactionsMatch, loanId, table);
     }
 
     @Then("Working Capital Loan Transactions tab has {int} {string} transactions with date {string} which have the following Journal entries:")
     public void verifyMultipleWorkingCapitalLoanTransactionsJournalEntries(int expectedCount, String transactionType,
-            String transactionDate, DataTable table) throws IOException {
+            String transactionDate, DataTable table) {
         Long loanId = getCreatedLoanId();
-        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, transactionType,
+        TransactionType resolvedTransactionType = resolveTransactionType(transactionType);
+        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, resolvedTransactionType,
                 transactionDate, false);
 
         assertThat(transactionsMatch.size()).as("The number of transactions does not match the expected count! Expected: " + expectedCount
@@ -2725,22 +2730,27 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     }
 
     @Then("Working Capital Loan Transactions tab has a reversed {string} transaction with date {string} which has the following Journal entries:")
-    public void verifyReversedWorkingCapitalLoanTransactionJournalEntries(String transactionType, String transactionDate, DataTable table)
-            throws IOException {
+    public void verifyReversedWorkingCapitalLoanTransactionJournalEntries(String transactionType, String transactionDate, DataTable table) {
         Long loanId = getCreatedLoanId();
-        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, transactionType,
+        TransactionType resolvedTransactionType = resolveTransactionType(transactionType);
+        List<GetWorkingCapitalLoanTransactionIdResponse> transactionsMatch = findMatchingTransactions(loanId, resolvedTransactionType,
                 transactionDate, true);
         verifyJournalEntries(transactionsMatch, loanId, table);
     }
 
-    private List<GetWorkingCapitalLoanTransactionIdResponse> findMatchingTransactions(Long loanId, String transactionType,
+    private TransactionType resolveTransactionType(String transactionType) {
+        return TransactionType.valueOf(transactionType.toUpperCase().replace(' ', '_'));
+    }
+
+    private List<GetWorkingCapitalLoanTransactionIdResponse> findMatchingTransactions(Long loanId, TransactionType transactionType,
             String transactionDate, boolean reversed) {
         GetWorkingCapitalLoansLoanIdResponse loanDetailsResponse = ok(
                 () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
 
+        String expectedCode = "loanTransactionType." + transactionType.getValue();
         return loanDetailsResponse.getTransactions().stream()
                 .filter(t -> t.getType() != null && transactionDate.equals(DATE_FORMATTER.format(t.getTransactionDate()))
-                        && transactionType.equalsIgnoreCase(t.getType().getValue())
+                        && expectedCode.equals(t.getType().getCode())
                         && (reversed ? Boolean.TRUE.equals(t.getReversed()) : !Boolean.TRUE.equals(t.getReversed())))
                 .collect(Collectors.toList());
     }
@@ -2772,7 +2782,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     @When("Customer undo {string}th {string} transaction made on {string} on Working Capital loan")
     public void undoWorkingCapitalLoanTransaction(String nthItemStr, String transactionType, String transactionDate) throws IOException {
-        // TODO: Implement undo transaction for working capital loans when backend support is available (PS-3194)
+        // TODO: Implement undo transaction for working capital loans when backend support is available
+        // ("[BE] WC - Transaction Type- Repayment- Backdated and Undo Repayment")
         throw new UnsupportedOperationException("Undo transaction for working capital loans is not yet implemented");
     }
 
