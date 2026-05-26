@@ -20,41 +20,46 @@ package org.apache.fineract.portfolio.workingcapitalloan.data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.fineract.infrastructure.codes.data.CodeValueData;
-import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
-import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
-import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkingCapitalLoanTransactionData implements Serializable {
+public class WorkingCapitalLoanSummaryData implements Serializable {
 
-    private Long id;
-    private Long wcLoanId;
     private CurrencyData currency;
-    private LoanTransactionEnumData type;
-    private LocalDate transactionDate;
-    private LocalDate submittedOnDate;
-    private BigDecimal transactionAmount;
-    private ExternalId externalId;
-    private Boolean reversed;
-    private ExternalId reversalExternalId;
-    private LocalDate reversedOnDate;
 
-    private CodeValueData classification;
-    private PaymentDetailData paymentDetailData;
-    // Portions from allocation (principal, fee, penalty).
-    private BigDecimal principalPortion;
-    private BigDecimal feeChargesPortion;
-    private BigDecimal penaltyChargesPortion;
+    // Principal
+    private BigDecimal principalDisbursed;
+    private BigDecimal principalPaid;
+    private BigDecimal principalOutstanding;
+
+    // Discount fee
+    private BigDecimal discountCharged;
+    private BigDecimal discountPaid;
+    private BigDecimal discountOutstanding;
+
+    // Income recognition
+    private BigDecimal realizedIncome;
+    private BigDecimal unrealizedIncome;
+
+    // Overpayment
+    private BigDecimal overpaymentAmount;
+
+    // Aggregates
+    private BigDecimal totalExpectedRepayment;
+    private BigDecimal totalRepayment;
+    private BigDecimal totalOutstanding;
+
+    // Transaction summaries
+    private BigDecimal totalDisbursement;
+    private BigDecimal totalRepaymentTransaction;
+    private BigDecimal totalDiscountFee;
 }
