@@ -20,12 +20,9 @@ package org.apache.fineract.integrationtests.common.loans;
 
 import static org.apache.fineract.client.feign.util.FeignCalls.ok;
 
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.fineract.client.util.JSON;
+import org.apache.fineract.client.models.COBPartition;
 import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 
 @Slf4j
@@ -33,11 +30,9 @@ public final class CobHelper {
 
     private CobHelper() {}
 
-    public static List<Map<String, Object>> getCobPartitions(int partitionSize) {
-        final String response = ok(() -> FineractFeignClientHelper.getFineractFeignClient().internalCob().getCobPartitions(partitionSize));
-        log.info("---------------------------------GET COB PARTITIONS---------------------------------------------");
-        Type listType = new TypeToken<List<Map<String, Object>>>() {}.getType();
-        return new JSON().getGson().fromJson(response, listType);
+    public static List<COBPartition> getCobPartitions(int partitionSize) {
+        return ok(() -> FineractFeignClientHelper.getFineractFeignClient().internalCob().getCobPartitions(partitionSize));
+
     }
 
     public static void fastForwardLoansLastCOBDate(final Long loanId, final String cobDate) {
