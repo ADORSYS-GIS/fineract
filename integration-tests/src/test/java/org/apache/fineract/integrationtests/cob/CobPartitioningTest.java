@@ -164,7 +164,7 @@ public class CobPartitioningTest extends BaseLoanIntegrationTest {
             closeLatch.await();
 
             // Let's retrieve the partitions
-            List<Map<String, Object>> cobPartitions = CobHelper.getCobPartitions(REQUEST_SPEC, RESPONSE_SPEC, 3, "");
+            List<Map<String, Object>> cobPartitions = CobHelper.getCobPartitions(3);
             log.info("\nLoans created: {},\nRetrieved partitions: {}", loanIds, cobPartitions);
             Assertions.assertEquals(2, cobPartitions.size());
 
