@@ -1293,6 +1293,7 @@ Feature: Working Capital Discount
       | product.name | submittedOnDate | expectedDisbursementDate | status   | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP         | 2026-01-01      | 2026-01-01               | Approved | 100.0     | 100.0             | 100.0              | 1.0               | null             | 14.0             | null     |
 
+  @TestRailId:C83039
   Scenario: Discount fee added via DISCOUNTFEE without externalId gets an auto-generated externalId
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1313,6 +1314,7 @@ Feature: Working Capital Discount
     Then In Working Capital Loan Transactions all transactions have non-blank external-id
     Then All active Discount Fee transactions have an auto-generated externalId
 
+  @TestRailId:C83040
   Scenario: Discount fee added after disbursement with user-generated externalId is persisted as-is
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1333,6 +1335,7 @@ Feature: Working Capital Discount
     Then In Working Capital Loan Transactions all transactions have non-blank external-id
     Then Active Discount Fee transactions contain the user-generated externalId from DISCOUNTFEE
 
+  @TestRailId:C83041
   Scenario: Discount provided during disbursement without externalId gets an auto-generated externalId
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1352,6 +1355,7 @@ Feature: Working Capital Discount
     Then In Working Capital Loan Transactions all transactions have non-blank external-id
     Then All active Discount Fee transactions have an auto-generated externalId
 
+  @TestRailId:C83042
   Scenario: Discount provided during disbursement with user-generated discountExternalId is persisted as-is
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1371,6 +1375,7 @@ Feature: Working Capital Discount
     Then In Working Capital Loan Transactions all transactions have non-blank external-id
     Then Active Discount Fee transactions contain the user-generated discountExternalId from disburse
 
+  @TestRailId:C83043
   Scenario: Reusing the same discountExternalId across two working capital loans on disburse is rejected
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1394,6 +1399,7 @@ Feature: Working Capital Discount
       | HTTP response code | Error message  |
       | 400                | already.exists |
 
+  @TestRailId:C83044
   Scenario: Providing discountExternalId on disburse without discountAmount is rejected
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1407,6 +1413,7 @@ Feature: Working Capital Discount
       | HTTP response code | Error message                         |
       | 400                | not.allowed.without.positive.discount |
 
+  @TestRailId:C83045
   Scenario: Providing discountExternalId on disburse with zero discountAmount is rejected
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1420,6 +1427,7 @@ Feature: Working Capital Discount
       | HTTP response code | Error message                         |
       | 400                | not.allowed.without.positive.discount |
 
+  @TestRailId:C83046
   Scenario: Providing the same externalId for both disburse and discountExternalId is rejected
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -1433,6 +1441,7 @@ Feature: Working Capital Discount
       | HTTP response code | Error message                             |
       | 400                | must.differ.from.disbursement.external.id |
 
+  @TestRailId:C83047
   Scenario: Reusing the same externalId on DISCOUNTFEE across two working capital loans is rejected
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data

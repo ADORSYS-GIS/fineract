@@ -2741,12 +2741,14 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 Object actual = methods.get(iM).invoke(actualValues);
                 String expected = expectedValues.get(iM);
                 String message = "Line " + (i + 1) + " has miss match on field: " + header.get(iM);
-                switch (actual) {
-                    case BigDecimal bigDecimal -> Assertions.assertEquals(Double.parseDouble(expected), bigDecimal.doubleValue(), message);
-                    case LoanTransactionEnumData loanTransactionEnumData ->
-                        Assertions.assertEquals(expected, loanTransactionEnumData.getValue(), message);
-                    case LocalDate localDate -> Assertions.assertEquals(expected, FORMATTER.format(localDate), message);
-                    default -> Assertions.assertEquals(expectedValues.get(iM), actual == null ? null : actual.toString(), message);
+                if (actual instanceof BigDecimal) {
+                    Assertions.assertEquals(Double.parseDouble(expected), ((BigDecimal) actual).doubleValue(), message);
+                } else if (actual instanceof LoanTransactionEnumData) {
+                    Assertions.assertEquals(expected, ((LoanTransactionEnumData) actual).getValue(), message);
+                } else if (actual instanceof LocalDate) {
+                    Assertions.assertEquals(expected, FORMATTER.format((LocalDate) actual), message);
+                } else {
+                    Assertions.assertEquals(expectedValues.get(iM), actual == null ? null : actual.toString(), message);
                 }
             }
         }
