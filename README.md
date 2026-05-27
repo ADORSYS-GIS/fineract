@@ -197,7 +197,12 @@ You must go to https://localhost:8443 and remember to accept the self-signed SSL
 
 [Docker Hub](https://hub.docker.com/r/apache/fineract) has a pre-built container image of this project, built continuously.
 
-You must specify the MySQL tenants database JDBC URL by passing it to the `fineract` container via environment
+The official Fineract Docker image includes the PostgreSQL JDBC driver only. MySQL and MariaDB JDBC drivers are
+**not** included due to license incompatibility (see LICENSE section below). To use Fineract with MySQL or MariaDB,
+download the driver from the vendor and either build your own Docker image on top of the official one, mount it
+via a Docker volume, or install it from the OS package manager inside a custom image.
+
+You must specify the tenants database JDBC URL by passing it to the `fineract` container via environment
 variables; please consult the [`docker-compose.yml`](docker-compose.yml) for exact details how to specify those.
 
 The logfiles and the Java Flight Recorder output are available in `PROJECT_ROOT/build/fineract/logs`. If you use IntelliJ then you can double-click on the `.jfr` file and open it with the IDE. You can also download [Azul Mission Control](https://www.azul.com/products/components/azul-mission-control/) to analyze the Java Flight Recorder file.
@@ -406,12 +411,21 @@ LICENSE
 
 This project is licensed under [Apache License Version 2.0](https://github.com/apache/fineract/blob/develop/APACHE_LICENSETEXT.md).
 
-The Connector/J JDBC Driver client library from [MariaDB](https://www.mariadb.org) is licensed under the LGPL.
-The library is often used in development when running integration tests that use the Liquibase library. That JDBC
-driver is however not distributed with the Fineract product and is not required to use the product.
-If you are a developer and object to using the LGPL licensed Connector/J JDBC driver,
-simply do not run the integration tests that use the Liquibase library and use another JDBC driver.
-As discussed in [LEGAL-462](https://issues.apache.org/jira/browse/LEGAL-462), this project therefore
+The following libraries are **not** included in Fineract binary distribution artifacts (binary tarball, WAR, bootJar,
+or Docker image) because their licenses are [Category X](https://www.apache.org/legal/resolved.html#category-x)
+under the Apache Software Foundation third-party license policy:
+
+- **MariaDB Connector/J** (`org.mariadb.jdbc:mariadb-java-client`) — LGPL
+- **MySQL Connector/J** (`com.mysql:mysql-connector-j`) — GPL with FOSS exception
+- **SpotBugs Annotations** (`com.github.spotbugs:spotbugs-annotations`) — LGPL
+
+These libraries may be present on the compile classpath during development and testing but are excluded from
+all distributed artifacts. If you need MySQL or MariaDB support (both are deprecated; PostgreSQL is the
+recommended database), download the appropriate JDBC driver from the vendor's website and provide it at
+runtime via `-Dloader.path` as shown in the [How to build the JAR file](#how-to-build-the-jar-file) section above.
+
+As discussed in [LEGAL-462](https://issues.apache.org/jira/browse/LEGAL-462) and
+[LEGAL-726](https://issues.apache.org/jira/browse/LEGAL-726), this project therefore
 complies with the [Apache Software Foundation third-party license policy](https://www.apache.org/legal/resolved.html).
 
 
