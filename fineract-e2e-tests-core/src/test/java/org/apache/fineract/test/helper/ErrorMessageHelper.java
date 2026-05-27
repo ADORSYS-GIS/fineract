@@ -1106,6 +1106,14 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: override.not.allowed.by.product.";
     }
 
+    public static String discountAlreadySetBeforeDisburseFailure() {
+        return "Discount was already set before disbursement and cannot be added again";
+    }
+
+    public static String discountDiffDateFromDisburseFailure() {
+        return "Failed data validation due to: transaction.date.must.be.equal.disbursement.date.";
+    }
+
     public static String discountAdjustmentExceedFailure() {
         return "Failed data validation due to: cannot.be.more.than.discount.fee.";
     }
@@ -1118,8 +1126,24 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: cannot.be.before.discount.fee.date.";
     }
 
+    public static String discountAdjustmentFutureDateFailure() {
+        return "Failed data validation due to: cannot.be.a.future.date.";
+    }
+
+    public static String discountAdjustmentZeroAmountFailure() {
+        return "The parameter `transactionAmount` must be greater than 0.";
+    }
+
+    public static String discountAdjustmentNotActiveLoanFailure() {
+        return "Failed data validation due to: adjustment.only.allowed.for.active.loan.";
+    }
+
     public static String nearBreachCannotEnableWithoutBreachFailure() {
         return "Failed data validation due to: cannot.enable.near.breach.without.breach.";
+    }
+
+    public static String discountExceedProductDiscountFailure() {
+        return "Failed data validation due to: amount.cannot.exceed.product.discount.";
     }
 
     public static String nearBreachMustBeLowerThenBreachFailure() {

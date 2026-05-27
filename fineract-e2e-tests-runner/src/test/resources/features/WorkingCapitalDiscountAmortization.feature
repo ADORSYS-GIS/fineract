@@ -24,8 +24,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0     | 18.0              | null             | null             | 1000.0   |
@@ -46,7 +46,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9850.0    | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
+      | 10000.0   | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -80,8 +80,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -136,7 +136,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 8850.0    | 150.0              | 100000.0           | 0.0            | 0.0              | 0.0               |
+      | 9000.0    | 150.0              | 100000.0           | 0.0            | 0.0              | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type         | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -164,8 +164,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -186,7 +186,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9850.0    | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
+      | 10000.0   | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -198,7 +198,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9850.0    | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
+      | 10000.0   | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -233,7 +233,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
 # --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -254,7 +254,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9950.0    | 50.0               | 100000.0           | 9.61           | 990.39           | 0.0               |
+      | 10000.0   | 50.0               | 100000.0           | 9.61           | 990.39           | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -281,7 +281,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
 # --- realized income should be equal to discount amount --- #
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9900.0    | 100.0              | 100000.0           | 19.18          | 980.82           | 0.0               |
+      | 10000.0   | 100.0              | 100000.0           | 19.18          | 980.82           | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -317,8 +317,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -337,7 +337,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9850.0    | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
+      | 10000.0   | 150.0              | 100000.0           | 28.7           | 971.3            | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -371,8 +371,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -393,7 +393,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9950.0    | 50.0               | 100000.0           | 9.61           | 990.39           | 0.0               |
+      | 10000.0   | 50.0               | 100000.0           | 9.61           | 990.39           | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -427,8 +427,8 @@ Feature: WorkingCapitalDiscountFeeAmortization
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 9000.0    | 9000.0            | 100000.0           | 18.0              | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "1000" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "1000" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | null             | null             | 1000.0   |
@@ -457,7 +457,7 @@ Feature: WorkingCapitalDiscountFeeAmortization
     When Admin runs inline COB job for Working Capital Loan
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | totalPaymentVolume | realizedIncome | unrealizedIncome | overpaymentAmount |
-      | 9900.0    | 100.0              | 100000.0           | 19.18          | 980.82           | 0.0               |
+      | 10000.0   | 100.0              | 100000.0           | 19.18          | 980.82           | 0.0               |
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
