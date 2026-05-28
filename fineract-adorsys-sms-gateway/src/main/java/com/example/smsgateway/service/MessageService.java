@@ -27,11 +27,10 @@ public class MessageService {
         if (templateId != -1) {
             try {
                 String template = fineractService.getSmsTemplate(templateId);
-                logger.info("Using template: {}", template);
                 String phoneNumber = fineractService.getClientPhoneNumber(payload.getClientId());
                 String message = buildMessage(template, payload);
 
-                logger.info("Sending SMS to {}: \"{}\"", phoneNumber, message);
+                logger.info("Sending Fineract event SMS for action {}", actionName);
                 smsService.sendSms(phoneNumber, message);
             } catch (Exception e) {
                 logger.error("Error processing SMS request", e);

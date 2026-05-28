@@ -1,10 +1,10 @@
 twilio:
   account:
-    sid: ${TWILIO_ACCOUNT_SID}
+    sid: ${TWILIO_ACCOUNT_SID:}
   auth:
-    token: ${TWILIO_AUTH_TOKEN}
+    token: ${TWILIO_AUTH_TOKEN:}
   sender:
-    number: ${TWILIO_SENDER_NUMBER}
+    number: ${TWILIO_SENDER_NUMBER:}
 fineract:
   api:
     url: ${FINERACT_API_URL:https://fineract:8443/fineract-provider/api/v1}

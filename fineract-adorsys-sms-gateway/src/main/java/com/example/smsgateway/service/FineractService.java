@@ -37,7 +37,6 @@ public class FineractService {
         logger.info("Fetching client phone number from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String clientJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
-        logger.info("Received client data: {}", clientJson);
         return parsePhoneNumber(clientJson);
     }
 
@@ -46,7 +45,6 @@ public class FineractService {
         logger.info("Fetching SMS template from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String templateJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
-        logger.info("Received template data: {}", templateJson);
         return parseTemplate(templateJson);
     }
 
@@ -55,7 +53,6 @@ public class FineractService {
         logger.info("Fetching account balance from {}", url);
         HttpEntity<String> request = new HttpEntity<>(createHeaders());
         String accountJson = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, String.class).getBody();
-        logger.info("Received account data: {}", accountJson);
         return parseAccountBalance(accountJson);
     }
 

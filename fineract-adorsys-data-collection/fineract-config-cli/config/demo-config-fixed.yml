@@ -976,7 +976,7 @@ roles:
   - ALLOCATECASHIER_TELLER_CHECKER
   - SETTLECASHFROMCASHIER_TELLER_CHECKER
   - UPDATECASHIERALLOCATION_TELLER_CHECKER
-- name: Accountant
+- name: accountant
   description: Accountant for financial management (Maker)
   disabled: false
   permissions:
@@ -1253,7 +1253,7 @@ users:
   email: c.biaka@mfi.cm
   officeName: Head Office
   roles:
-  - Accountant
+  - accountant
   password: Ac0untant@2024!
   staffName: Christine Biaka
 - username: supervisor
@@ -2789,6 +2789,6 @@ tellerAccountingRules:
   officeName: Bamenda Branch
 businessDate:
   type: BUSINESS_DATE
-  date: 16 January 2026
+  date: 16 may 2026
   dateFormat: dd MMMM yyyy
   locale: en
