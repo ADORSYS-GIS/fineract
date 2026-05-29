@@ -18,7 +18,7 @@
 
 services:
   fineract:
-    image: latest
+    image: fineract:latest
     user: "${FINERACT_USER}:${FINERACT_GROUP}"
     volumes:
       - ${PWD}/config/docker/logback/logback-override.xml:/app/logback-override.xml
