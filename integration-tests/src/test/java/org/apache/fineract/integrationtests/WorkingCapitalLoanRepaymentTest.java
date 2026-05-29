@@ -37,6 +37,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdRequest;
+import org.apache.fineract.client.models.PostWorkingCapitalLoansRequest;
 import org.apache.fineract.client.models.ProjectedAmortizationScheduleData;
 import org.apache.fineract.client.models.ProjectedAmortizationSchedulePaymentData;
 import org.apache.fineract.infrastructure.event.external.data.ExternalEventResponse;
@@ -56,7 +58,8 @@ import org.junit.jupiter.api.Test;
 public class WorkingCapitalLoanRepaymentTest {
 
     private static final String WC_REPAYMENT_TXN_EVENT = "WorkingCapitalLoanRepaymentTransactionBusinessEvent";
-    private static final String CLEANUP_EMPTY_COMMAND_JSON = "{\"locale\":\"en\",\"dateFormat\":\"yyyy-MM-dd\"}";
+    private static final PostWorkingCapitalLoansLoanIdRequest CLEANUP_EMPTY_COMMAND_REQUEST = WorkingCapitalLoanApplicationTestBuilder
+            .buildUndoApproveRequest();
 
     private final WorkingCapitalLoanHelper loanHelper = new WorkingCapitalLoanHelper();
     private final WorkingCapitalLoanProductHelper productHelper = new WorkingCapitalLoanProductHelper();
@@ -73,12 +76,12 @@ public class WorkingCapitalLoanRepaymentTest {
                 continue;
             }
             try {
-                loanHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson());
+                loanHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseRequest());
             } catch (final CallFailedRuntimeException ignored) {
                 // best-effort cleanup
             }
             try {
-                loanHelper.undoApprovalById(loanId, CLEANUP_EMPTY_COMMAND_JSON);
+                loanHelper.undoApprovalById(loanId, CLEANUP_EMPTY_COMMAND_REQUEST);
             } catch (final CallFailedRuntimeException ignored) {
                 // best-effort cleanup
             }
@@ -107,17 +110,17 @@ public class WorkingCapitalLoanRepaymentTest {
         final Long productId = createProductWithDiscountAllowed();
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
                 .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
-                .withTotalPayment(BigDecimal.valueOf(5500)).withDiscount(BigDecimal.valueOf(100)).buildSubmitJson());
+                .withTotalPaymentVolume(BigDecimal.valueOf(5500)).withDiscount(BigDecimal.valueOf(100)).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
-        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, BigDecimal.valueOf(5000),
-                BigDecimal.valueOf(100)));
+        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate,
+                BigDecimal.valueOf(5000), BigDecimal.valueOf(100)));
         final LocalDate disbursementDate = Utils.getLocalDateOfTenant();
-        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(disbursementDate,
+        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(disbursementDate,
                 BigDecimal.valueOf(5000), BigDecimal.valueOf(100), null, null, null, null, null, null, null));
         final LocalDate repaymentDate = disbursementDate.plusDays(1);
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(5200), null, "repayment", 1, "repayment-account")));
+                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder
+                        .buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(5200), null, "repayment", 1, "repayment-account")));
 
         final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
         assertStatus(loanData, "loanStatusType.overpaid");
@@ -125,7 +128,7 @@ public class WorkingCapitalLoanRepaymentTest {
         assertEqualBigDecimal(BigDecimal.ZERO, loanData.getBalance().getPrincipalOutstanding());
         assertEqualBigDecimal(BigDecimal.valueOf(100), loanData.getBalance().getOverpaymentAmount());
         // expected transactions: disburse, discount fee, repayment
-        assertEquals(3, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanIdRaw(loanId).getContent()).size());
+        assertEquals(3, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanId(loanId).getContent()).size());
     }
 
     @Test
@@ -134,16 +137,16 @@ public class WorkingCapitalLoanRepaymentTest {
         final Long productId = createProduct();
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
                 .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
-                .withTotalPayment(BigDecimal.valueOf(5500)).buildSubmitJson());
+                .withTotalPaymentVolume(BigDecimal.valueOf(5500)).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
-                WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, BigDecimal.valueOf(5000), null));
+                WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
         loanHelper.disburseById(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(approvedOnDate, BigDecimal.valueOf(5000)));
+                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, BigDecimal.valueOf(5000)));
         final LocalDate repaymentDate = approvedOnDate.plusDays(1);
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), () -> {
             externalEventHelper.deleteAllExternalEvents();
-            loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
+            loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(repaymentDate,
                     BigDecimal.valueOf(100), null, "repayment", 1, "repayment-account"));
         });
         final List<ExternalEventResponse> events = externalEventHelper.getExternalEventsByType(WC_REPAYMENT_TXN_EVENT);
@@ -157,7 +160,7 @@ public class WorkingCapitalLoanRepaymentTest {
     public void testRepaymentWithMissingTransactionDateFails() {
         final Long loanId = createApprovedAndDisbursedLoan(createProduct(), BigDecimal.valueOf(5000), BigDecimal.valueOf(5000));
         final CallFailedRuntimeException ex = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(null, BigDecimal.valueOf(100), null, null, null, null));
+                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(null, BigDecimal.valueOf(100), null, null, null, null));
         assertEquals(400, ex.getStatus());
     }
 
@@ -169,7 +172,7 @@ public class WorkingCapitalLoanRepaymentTest {
         final CallFailedRuntimeException[] exHolder = new CallFailedRuntimeException[1];
         BusinessDateHelper.runAt(approvedOnDate.plusDays(1).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> exHolder[0] = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildRepaymentJson(approvedOnDate.plusDays(1), null, null, null, null, null)));
+                        .buildRepaymentRequest(approvedOnDate.plusDays(1), null, null, null, null, null)));
         assertEquals(400, exHolder[0].getStatus());
     }
 
@@ -177,7 +180,7 @@ public class WorkingCapitalLoanRepaymentTest {
     public void testRepaymentWithFutureDateFails() {
         final Long loanId = createApprovedAndDisbursedLoan(createProduct(), BigDecimal.valueOf(5000), BigDecimal.valueOf(5000));
         final CallFailedRuntimeException ex = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(Utils.getLocalDateOfTenant().plusDays(30),
+                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(Utils.getLocalDateOfTenant().plusDays(30),
                         BigDecimal.valueOf(100), null, null, null, null));
         assertEquals(400, ex.getStatus());
     }
@@ -190,20 +193,21 @@ public class WorkingCapitalLoanRepaymentTest {
         final CallFailedRuntimeException[] exHolder = new CallFailedRuntimeException[1];
         BusinessDateHelper.runAt(approvedOnDate.plusDays(1).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> exHolder[0] = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildRepaymentJson(approvedOnDate.plusDays(1), BigDecimal.valueOf(100), 0L, null, null, null)));
+                        .buildRepaymentRequest(approvedOnDate.plusDays(1), BigDecimal.valueOf(100), 0L, null, null, null)));
         assertEquals(400, exHolder[0].getStatus());
     }
 
     @Test
     public void testRepaymentWhenLoanNotDisbursedFails() {
         final Long productId = createProduct();
-        final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitJson());
+        final Long loanId = submitAndTrack(
+                new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId).withProductId(productId)
+                        .withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
-                WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, BigDecimal.valueOf(5000), null));
+                WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
         final CallFailedRuntimeException ex = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(approvedOnDate, BigDecimal.valueOf(100), null, null, null,
+                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(approvedOnDate, BigDecimal.valueOf(100), null, null, null,
                         null));
         assertEquals(400, ex.getStatus());
     }
@@ -212,16 +216,17 @@ public class WorkingCapitalLoanRepaymentTest {
     public void testRepaymentWithDateBeforeDisbursementFails() {
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         final Long productId = createProduct();
-        final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitJson());
+        final Long loanId = submitAndTrack(
+                new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId).withProductId(productId)
+                        .withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
         loanHelper.approveById(loanId,
-                WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, BigDecimal.valueOf(5000), null));
+                WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
         loanHelper.disburseById(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(approvedOnDate, BigDecimal.valueOf(5000)));
+                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, BigDecimal.valueOf(5000)));
         final CallFailedRuntimeException[] exHolder = new CallFailedRuntimeException[1];
         BusinessDateHelper.runAt(approvedOnDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> exHolder[0] = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildRepaymentJson(approvedOnDate.minusDays(1), BigDecimal.valueOf(100), null, null, null, null)));
+                        .buildRepaymentRequest(approvedOnDate.minusDays(1), BigDecimal.valueOf(100), null, null, null, null)));
         assertEquals(400, exHolder[0].getStatus());
     }
 
@@ -233,7 +238,7 @@ public class WorkingCapitalLoanRepaymentTest {
         final CallFailedRuntimeException[] exHolder = new CallFailedRuntimeException[1];
         BusinessDateHelper.runAt(approvedOnDate.plusDays(1).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> exHolder[0] = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildRepaymentJson(approvedOnDate.plusDays(1), BigDecimal.valueOf(-100), null, null, null, null)));
+                        .buildRepaymentRequest(approvedOnDate.plusDays(1), BigDecimal.valueOf(-100), null, null, null, null)));
         assertEquals(400, exHolder[0].getStatus());
     }
 
@@ -243,17 +248,17 @@ public class WorkingCapitalLoanRepaymentTest {
         final String loanExternalId = "wcl-loan-ext-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
                 .withProductId(productId).withPrincipal(BigDecimal.valueOf(5000)).withPeriodPaymentRate(BigDecimal.ONE)
-                .withExternalId(loanExternalId).buildSubmitJson());
+                .withExternalId(loanExternalId).buildSubmitRequest());
         final LocalDate approvedOnDate = Utils.getLocalDateOfTenant();
         loanHelper.approveById(loanId,
-                WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, BigDecimal.valueOf(5000), null));
+                WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, BigDecimal.valueOf(5000), null));
         loanHelper.disburseById(loanId,
-                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(approvedOnDate, BigDecimal.valueOf(5000)));
+                WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, BigDecimal.valueOf(5000)));
         final LocalDate repaymentDate = approvedOnDate.plusDays(1);
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> loanHelper.makeRepaymentByLoanExternalId(loanExternalId, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildRepaymentJson(repaymentDate, BigDecimal.valueOf(100), null, "repayment", 1, "repayment-account")));
-        assertEquals(2, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanIdRaw(loanId).getContent()).size());
+                        .buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(100), null, "repayment", 1, "repayment-account")));
+        assertEquals(2, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanId(loanId).getContent()).size());
     }
 
     @Test
@@ -268,9 +273,9 @@ public class WorkingCapitalLoanRepaymentTest {
 
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> loanHelper.makeRepaymentByLoanId(loanId1, WorkingCapitalLoanDisbursementTestBuilder
-                        .buildTransactionJson(repaymentDate, BigDecimal.valueOf(100), null, null, null, null, sharedExternalId)));
+                        .buildTransactionRequest(repaymentDate, BigDecimal.valueOf(100), null, null, null, null, sharedExternalId)));
         final CallFailedRuntimeException ex = loanHelper.runRepaymentByLoanIdExpectingFailure(loanId2,
-                WorkingCapitalLoanDisbursementTestBuilder.buildTransactionJson(repaymentDate, BigDecimal.valueOf(100), null, null, null,
+                WorkingCapitalLoanDisbursementTestBuilder.buildTransactionRequest(repaymentDate, BigDecimal.valueOf(100), null, null, null,
                         null, sharedExternalId));
         assertEquals(400, ex.getStatus());
     }
@@ -282,8 +287,8 @@ public class WorkingCapitalLoanRepaymentTest {
                 approvedOnDate);
         final LocalDate repaymentDate = approvedOnDate.plusDays(1);
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
+                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder
+                        .buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
         final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
         assertStatus(loanData, "loanStatusType.closed.obligations.met");
         assert loanData.getBalance() != null;
@@ -296,11 +301,11 @@ public class WorkingCapitalLoanRepaymentTest {
         final LocalDate disbursementDate = LocalDate.of(2019, 1, 1);
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
                 .withProductId(productId).withPrincipal(BigDecimal.valueOf(9000)).withPeriodPaymentRate(new BigDecimal("0.18"))
-                .withTotalPayment(BigDecimal.valueOf(100000)).withDiscount(BigDecimal.valueOf(1000)).withSubmittedOnDate(disbursementDate)
-                .buildSubmitJson());
-        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(disbursementDate, BigDecimal.valueOf(9000),
-                BigDecimal.valueOf(1000)));
-        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(disbursementDate,
+                .withTotalPaymentVolume(BigDecimal.valueOf(100000)).withDiscount(BigDecimal.valueOf(1000))
+                .withSubmittedOnDate(disbursementDate).buildSubmitRequest());
+        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(disbursementDate,
+                BigDecimal.valueOf(9000), BigDecimal.valueOf(1000)));
+        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(disbursementDate,
                 BigDecimal.valueOf(9000), BigDecimal.valueOf(1000), null, null, null, null, null, null, null));
 
         for (int day = 1; day <= 3; day++) {
@@ -308,14 +313,14 @@ public class WorkingCapitalLoanRepaymentTest {
             final LocalDate repaymentDate = disbursementDate.plusDays(day);
             BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                     () -> loanHelper.makeRepaymentByLoanId(loanId,
-                            WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate, BigDecimal.valueOf(50), null,
+                            WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(50), null,
                                     "reference-schedule-day-" + repaymentDay, 1, "repayment-account")));
         }
 
         final ProjectedAmortizationScheduleData schedule = loanHelper.retrieveAmortizationScheduleByLoanIdRaw(loanId);
         assertEqualBigDecimal(BigDecimal.valueOf(1000), schedule.getDiscountFeeAmount());
         assertEqualBigDecimal(BigDecimal.valueOf(9000), schedule.getNetDisbursementAmount());
-        assertEqualBigDecimal(BigDecimal.valueOf(100000), schedule.getTotalPaymentValue());
+        assertEqualBigDecimal(BigDecimal.valueOf(100000), schedule.getTotalPaymentVolume());
         assertEqualBigDecimal(BigDecimal.valueOf(0.18), schedule.getPeriodPaymentRate());
         assertEquals(360, schedule.getNpvDayCount());
         assert schedule.getExpectedPaymentAmount() != null;
@@ -342,9 +347,9 @@ public class WorkingCapitalLoanRepaymentTest {
     private Long createApprovedAndDisbursedLoan(final Long productId, final BigDecimal principal, final BigDecimal disburseAmount,
             final LocalDate approvedOnDate) {
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(principal).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitJson());
-        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, principal, null));
-        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(approvedOnDate, disburseAmount));
+                .withProductId(productId).withPrincipal(principal).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
+        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, principal, null));
+        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, disburseAmount));
         return loanId;
     }
 
@@ -673,7 +678,7 @@ public class WorkingCapitalLoanRepaymentTest {
         return ClientHelper.createClient(ClientHelper.defaultClientCreationRequest()).getClientId();
     }
 
-    private Long submitAndTrack(final String submitJson) {
+    private Long submitAndTrack(final PostWorkingCapitalLoansRequest submitJson) {
         final Long loanId = loanHelper.submit(submitJson);
         createdLoanIds.add(loanId);
         return loanId;

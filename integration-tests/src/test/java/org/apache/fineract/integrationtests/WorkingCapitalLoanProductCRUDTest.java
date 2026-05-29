@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +46,7 @@ import org.apache.fineract.client.models.StringEnumOptionData;
 import org.apache.fineract.client.models.WorkingCapitalBreachData;
 import org.apache.fineract.client.models.WorkingCapitalBreachRequest;
 import org.apache.fineract.client.models.WorkingCapitalNearBreachData;
+import org.apache.fineract.client.models.WorkingCapitalNearBreachRequest;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.workingcapitalloanbreach.WorkingCapitalBreachHelper;
 import org.apache.fineract.integrationtests.common.workingcapitalloannearbreach.WorkingCapitalNearBreachHelper;
@@ -280,8 +280,7 @@ public class WorkingCapitalLoanProductCRUDTest {
         final List<String> paymentAllocationTypes = List.of("DUE_PENALTY", "DUE_FEE", "DUE_PRINCIPAL", "IN_ADVANCE_PENALTY",
                 "IN_ADVANCE_FEE", "IN_ADVANCE_PRINCIPAL");
         final HashMap<String, Boolean> allowAttributeOverrides = new HashMap<>();
-        allowAttributeOverrides.put("amortizationType", true);
-        allowAttributeOverrides.put("interestType", false);
+        allowAttributeOverrides.put("breach", true);
 
         // Get fund and delinquency bucket from template
         final GetWorkingCapitalLoanProductsTemplateResponse template = wclProductHelper.retrieveTemplate();
@@ -363,9 +362,14 @@ public class WorkingCapitalLoanProductCRUDTest {
 
         final WorkingCapitalBreachData expectedBreach = getBreachData(template);
         final Long breachId = (expectedBreach != null) ? expectedBreach.getId() : null;
-        final WorkingCapitalNearBreachData nearBreach = getNearBreachData(5, "DAYS");
-        final Long nearBreachId = (nearBreach != null) ? nearBreach.getId() : null;
-
+        // Create a near breach with default values
+        final WorkingCapitalNearBreachRequest nearBreachRequest = new WorkingCapitalNearBreachRequest() //
+                .nearBreachName(Utils.randomStringGenerator("NearBreach", 20)) //
+                .nearBreachFrequency(5) //
+                .nearBreachFrequencyType("DAYS") //
+                .nearBreachThreshold(BigDecimal.valueOf(30)); //
+        final Long nearBreachId = nearBreachHelper.create(nearBreachRequest).getResourceId();
+        WorkingCapitalNearBreachData nearBreach = nearBreachHelper.retrieveWorkingCapitalNearBreach(nearBreachId);
         // All configurable attributes
         final HashMap<String, Boolean> allowAttributeOverrides = new HashMap<>();
         allowAttributeOverrides.put("delinquencyBucketClassification", false);
@@ -533,8 +537,12 @@ public class WorkingCapitalLoanProductCRUDTest {
         WorkingCapitalBreachData expectedBreach = breachHelper.retrieveWorkingCapitalBreach(breachId);
 
         assert expectedBreach.getBreachFrequencyType() != null;
-        Long nearBreachId = nearBreachHelper.create(nearBreachHelper.nearBreachJson(Utils.randomStringGenerator("NearBreach", 20),
-                expectedBreach.getBreachFrequency(), expectedBreach.getBreachFrequencyType().getCode(), BigDecimal.valueOf(30.0)));
+        final WorkingCapitalNearBreachRequest request = new WorkingCapitalNearBreachRequest() //
+                .nearBreachName(Utils.randomStringGenerator("NearBreach", 20)) //
+                .nearBreachFrequency(expectedBreach.getBreachFrequency()) //
+                .nearBreachFrequencyType(expectedBreach.getBreachFrequencyType().getCode()) //
+                .nearBreachThreshold(BigDecimal.valueOf(30)); //
+        Long nearBreachId = nearBreachHelper.create(request).getResourceId();
 
         // Given
         final String uniqueName = "Test wcl Product " + UUID.randomUUID().toString().substring(0, 8);
@@ -563,8 +571,12 @@ public class WorkingCapitalLoanProductCRUDTest {
         assertThat(exception.getDeveloperMessage()).contains("near.breach.frequency.must.be.lower.than.breach.frequency");
 
         // Given - Higher Frequency between Near Breach and Breach
-        nearBreachId = nearBreachHelper.create(nearBreachHelper.nearBreachJson(Utils.randomStringGenerator("NearBreach", 20),
-                expectedBreach.getBreachFrequency() + 2, expectedBreach.getBreachFrequencyType().getCode(), BigDecimal.valueOf(30.0)));
+        final WorkingCapitalNearBreachRequest request2 = new WorkingCapitalNearBreachRequest() //
+                .nearBreachName(Utils.randomStringGenerator("NearBreach", 20)) //
+                .nearBreachFrequency(expectedBreach.getBreachFrequency() + 2) //
+                .nearBreachFrequencyType(expectedBreach.getBreachFrequencyType().getCode()) //
+                .nearBreachThreshold(BigDecimal.valueOf(30)); //
+        nearBreachId = nearBreachHelper.create(request2).getResourceId();
         PostWorkingCapitalLoanProductsRequest requestFail3 = new WorkingCapitalLoanProductTestBuilder().withName(uniqueName)
                 .withBreachId(breachId).withNearBreachId(nearBreachId) //
                 .withShortName(uniqueShortName).build();
@@ -595,13 +607,5 @@ public class WorkingCapitalLoanProductCRUDTest {
             breach = breachHelper.retrieveWorkingCapitalBreach(breachId);
         }
         return breach;
-    }
-
-    private WorkingCapitalNearBreachData getNearBreachData(final Integer frequency, final String frequencyType) {
-        // Create a near breach with default values
-        final JsonObject createBody = nearBreachHelper.nearBreachJson(Utils.randomStringGenerator("NearBreach", 20), frequency,
-                frequencyType, BigDecimal.valueOf(30.0));
-        final Long nearBreachId = nearBreachHelper.create(createBody);
-        return nearBreachHelper.retrieveWorkingCapitalNearBreach(nearBreachId);
     }
 }

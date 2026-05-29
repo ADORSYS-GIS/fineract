@@ -1,3 +1,4 @@
+@WorkingCapital
 @WorkingCapitalAmortizationScheduleFeature
 Feature: WorkingCapitalAmortizationSchedule
 
@@ -6,12 +7,12 @@ Feature: WorkingCapitalAmortizationSchedule
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a working capital loan with the following data:
-      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPayment | periodPaymentRate | discount |
+      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
       | WCLP        | 01 January 2026 | 01 January 2026          | 100             | 100          | 1                 | 0        |
-    When Admin generates a projected amortization schedule with discountFeeAmount 1000.0, netDisbursementAmount 9000.0, totalPaymentValue 100000.0, periodPaymentRate 0.18, npvDayCount 360, expectedDisbursementDate "2019-01-01"
+    When Admin generates a projected amortization schedule with discountFeeAmount 1000.0, netDisbursementAmount 9000.0, totalPaymentVolume 100000.0, periodPaymentRate 0.18, npvDayCount 360, expectedDisbursementDate "2019-01-01"
     And Admin retrieves the projected amortization schedule
     Then The retrieved amortization schedule has the following summary fields:
-      | discountFeeAmount | netDisbursementAmount | totalPaymentValue | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
+      | discountFeeAmount | netDisbursementAmount | totalPaymentVolume | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
       | 1000.00           | 9000.00               | 100000.00         | 0.18              | 360         | 50.00                 | 200                   |
     And The retrieved amortization schedule has payments with the following details:
       | paymentNo | date       | expectedPaymentAmount | discountFactor | npvValue | balance | expectedAmortizationAmount | actualPaymentAmount | actualAmortizationAmount | incomeModification | deferredBalance |
@@ -222,16 +223,16 @@ Feature: WorkingCapitalAmortizationSchedule
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a working capital loan with the following data:
-      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPayment | periodPaymentRate | discount |
+      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
       | WCLP        | 01 January 2026 | 01 January 2026          | 100             | 100          | 18                | 0        |
     Then Admin successfully approves the working capital loan on "01 January 2026" with "100" amount and expected disbursement date on "01 January 2026"
     Then Admin successfully disburse the Working Capital loan on "01 January 2026" with "100" EUR transaction amount
     Then Working Capital loan status will be "ACTIVE"
 
-    When Admin generates a projected amortization schedule with discountFeeAmount 1000.0, netDisbursementAmount 9000.0, totalPaymentValue 1000.0, periodPaymentRate 18, npvDayCount 360, expectedDisbursementDate "2019-01-01"
+    When Admin generates a projected amortization schedule with discountFeeAmount 1000.0, netDisbursementAmount 9000.0, totalPaymentVolume 1000.0, periodPaymentRate 18, npvDayCount 360, expectedDisbursementDate "2019-01-01"
     And Admin retrieves the projected amortization schedule
     Then The retrieved amortization schedule has the following summary fields:
-      | discountFeeAmount | netDisbursementAmount | totalPaymentValue | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
+      | discountFeeAmount | netDisbursementAmount | totalPaymentVolume | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
       | 1000.00           | 9000.00               | 1000.00           | 18                | 360         | 50.00                 | 200                   |
     And The retrieved amortization schedule has payments with the following details:
       | paymentNo | date       | expectedPaymentAmount | discountFactor | npvValue | balance | expectedAmortizationAmount | actualPaymentAmount | actualAmortizationAmount | incomeModification | deferredBalance |
@@ -442,7 +443,7 @@ Feature: WorkingCapitalAmortizationSchedule
     And Admin update Working Capital period payment rate with "17" value
     And Admin retrieves the projected amortization schedule
     Then The retrieved amortization schedule has the following summary fields:
-      | discountFeeAmount | netDisbursementAmount | totalPaymentValue | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
+      | discountFeeAmount | netDisbursementAmount | totalPaymentVolume | periodPaymentRate | npvDayCount | expectedPaymentAmount | originalPaymentNumber |
       | 1000.00           | 9000.00               | 1000.00           | 18                | 360         | 50.00                 | 200                   |
     And The retrieved amortization schedule has payments with the following details:
       | paymentNo | date       | expectedPaymentAmount | discountFactor | npvValue | balance | expectedAmortizationAmount | actualPaymentAmount | actualAmortizationAmount | incomeModification | deferredBalance |

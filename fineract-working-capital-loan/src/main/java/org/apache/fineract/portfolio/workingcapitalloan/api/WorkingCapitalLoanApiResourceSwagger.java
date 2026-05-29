@@ -153,7 +153,9 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public LocalDate expectedMaturityDate;
         @Schema(example = "[2024, 12, 31]", description = "Actual maturity date (when loan is fully paid)")
         public LocalDate actualMaturityDate;
-        /** Full list of disbursement details (for multi-disbursement support). */
+        /**
+         * Full list of disbursement details (for multi-disbursement support).
+         */
         public List<GetDisbursementDetail> disbursementDetails;
     }
 
@@ -191,6 +193,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "30")
         public Integer repaymentEvery;
         public StringEnumOptionData repaymentFrequencyType;
+        @Schema(example = "10500.00")
+        public BigDecimal totalPaymentVolume;
         @Schema(example = "0.0", description = "Discount set during loan disbursement")
         public BigDecimal discount;
         @Schema(example = "0.0", description = "Proposed discount at loan submission time")
@@ -216,12 +220,14 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "[2024, 1, 14]", description = "Last closed business date (COB)")
         public LocalDate lastClosedBusinessDate;
         public List<GetPaymentAllocation> paymentAllocation;
-        /** Full list of disbursement details (timeline uses the first). */
+        /**
+         * Full list of disbursement details (timeline uses the first).
+         */
         public List<GetDisbursementDetail> disbursementDetails;
-        /** Running balances (principal outstanding, total payment, etc.). */
+        /**
+         * Running balances (principal outstanding, total payment, etc.).
+         */
         public GetBalance balance;
-        @Schema(description = "Transaction history (e.g. disbursement).")
-        public List<WorkingCapitalLoanTransactionsApiResourceSwagger.GetWorkingCapitalLoanTransactionIdResponse> transactions;
         @Schema(description = "Working Capital Delinquency Collection Data")
         public WorkingCapitalCollection collectionData;
     }
@@ -234,17 +240,39 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "1")
         public Long id;
         @Schema(example = "10000.00")
-        public java.math.BigDecimal principalOutstanding;
-        @Schema(example = "0.00")
-        public java.math.BigDecimal totalPaidPrincipal;
-        @Schema(example = "10500.00")
-        public java.math.BigDecimal totalPayment;
-        @Schema(example = "0.00")
-        public java.math.BigDecimal realizedIncome;
-        @Schema(example = "0.00")
-        public java.math.BigDecimal unrealizedIncome;
-        @Schema(example = "0.00")
-        public java.math.BigDecimal overpaymentAmount;
+        public BigDecimal principal;
+        @Schema(example = "10000.00")
+        public BigDecimal principalPaid;
+        @Schema(example = "10000.00")
+        public BigDecimal principalOutstanding;
+        @Schema(example = "10000.00")
+        public BigDecimal fee;
+        @Schema(example = "10000.00")
+        public BigDecimal feePaid;
+        @Schema(example = "10000.00")
+        public BigDecimal feeOutstanding;
+        @Schema(example = "10000.00")
+        public BigDecimal penalty;
+        @Schema(example = "10000.00")
+        public BigDecimal penaltyPaid;
+        @Schema(example = "10000.00")
+        public BigDecimal penaltyOutstanding;
+        @Schema(example = "10000.00")
+        public BigDecimal realizedIncomeFromDiscountFee;
+        @Schema(example = "10000.00")
+        public BigDecimal unrealizedIncomeFromDiscountFee;
+        @Schema(example = "10000.00")
+        public BigDecimal overpaymentAmount;
+        @Schema(example = "10000.00")
+        public BigDecimal totalExpectedRepayment;
+        @Schema(example = "10000.00")
+        public BigDecimal totalRepayment;
+        @Schema(example = "10000.00")
+        public BigDecimal totalOutstanding;
+        @Schema(example = "10000.00")
+        public BigDecimal totalDisbursement;
+        @Schema(example = "10000.00")
+        public BigDecimal totalDiscountFee;
     }
 
     @Schema(description = "Single disbursement detail (expected and actual)")
@@ -271,19 +299,6 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "DEFAULT")
         public String transactionType;
         public List<GetPaymentAllocationOrder> paymentAllocationOrder;
-    }
-
-    @Schema(description = "Loan transaction type enum data (same as basic loan)")
-    public static final class LoanTransactionEnumData {
-
-        private LoanTransactionEnumData() {}
-
-        @Schema(example = "1")
-        public Long id;
-        @Schema(example = "loanTransactionType.disbursement")
-        public String code;
-        @Schema(example = "Disbursement")
-        public String value;
     }
 
     @Schema(description = "GetPaymentAllocationOrder")
@@ -315,7 +330,7 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "10000.00", requiredMode = Schema.RequiredMode.REQUIRED, description = "Principal (disbursement) amount")
         public BigDecimal principalAmount;
         @Schema(example = "10500.00")
-        public BigDecimal totalPayment;
+        public BigDecimal totalPaymentVolume;
         @Schema(example = "15 January 2024")
         public String submittedOnDate;
         @Schema(example = "1 February 2024")
@@ -341,7 +356,7 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Integer delinquencyGraceDays;
         @Schema(example = "LOAN_CREATION", description = "Delinquency start type: LOAN_CREATION or DISBURSEMENT")
         public String delinquencyStartType;
-        public List<PostPaymentAllocationRule> paymentAllocationRules;
+        public List<PostPaymentAllocationRule> paymentAllocation;
 
         @Schema(example = "en_GB")
         public String locale;
@@ -422,7 +437,7 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "10000.00", description = "Principal (disbursement) amount")
         public BigDecimal principalAmount;
         @Schema(example = "10500.00")
-        public BigDecimal totalPayment;
+        public BigDecimal totalPaymentVolume;
         @Schema(example = "15 January 2024")
         public String submittedOnDate;
         @Schema(example = "1 February 2024")
@@ -448,7 +463,7 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Integer delinquencyGraceDays;
         @Schema(example = "LOAN_CREATION", description = "Delinquency start type: LOAN_CREATION or DISBURSEMENT")
         public String delinquencyStartType;
-        public List<PostWorkingCapitalLoansRequest.PostPaymentAllocationRule> paymentAllocationRules;
+        public List<PostWorkingCapitalLoansRequest.PostPaymentAllocationRule> paymentAllocation;
 
         @Schema(example = "en_GB")
         public String locale;

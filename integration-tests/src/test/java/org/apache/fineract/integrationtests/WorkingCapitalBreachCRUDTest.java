@@ -38,7 +38,7 @@ public class WorkingCapitalBreachCRUDTest {
 
     @Test
     public void testTemplateEndpoint() {
-        final WorkingCapitalBreachTemplateResponse template = breachHelper.retrieveTemplateRaw();
+        final WorkingCapitalBreachTemplateResponse template = breachHelper.retrieveTemplate();
         assertNotNull(template.getBreachFrequencyTypeOptions());
         assertNotNull(template.getBreachAmountCalculationTypeOptions());
         assertFalse(template.getBreachFrequencyTypeOptions().isEmpty());
@@ -52,7 +52,7 @@ public class WorkingCapitalBreachCRUDTest {
         final Long breachId = breachHelper.create(createBody);
         assertNotNull(breachId);
 
-        final WorkingCapitalBreachData created = breachHelper.retrieveOneRaw(breachId);
+        final WorkingCapitalBreachData created = breachHelper.retrieveOne(breachId);
         assertEquals("Default WCL Breach", created.getName());
         assertEquals(15, created.getBreachFrequency());
         assert created.getBreachFrequencyType() != null;
@@ -61,7 +61,7 @@ public class WorkingCapitalBreachCRUDTest {
         assertEquals("PERCENTAGE", created.getBreachAmountCalculationType().getId());
         assertEquals(0, BigDecimal.valueOf(7.5).compareTo(created.getBreachAmount()));
 
-        final List<WorkingCapitalBreachData> all = breachHelper.retrieveAllRaw();
+        final List<WorkingCapitalBreachData> all = breachHelper.retrieveAll();
         boolean found = false;
         for (WorkingCapitalBreachData workingCapitalBreachData : all) {
             if (Objects.equals(workingCapitalBreachData.getId(), breachId)) {
@@ -77,7 +77,7 @@ public class WorkingCapitalBreachCRUDTest {
         final Long updatedId = breachHelper.update(breachId, updateBody);
         assertEquals(breachId, updatedId);
 
-        final WorkingCapitalBreachData updated = breachHelper.retrieveOneRaw(breachId);
+        final WorkingCapitalBreachData updated = breachHelper.retrieveOne(breachId);
         assertEquals("Updated WCL Breach", updated.getName());
         assertEquals(20, updated.getBreachFrequency());
         assert updated.getBreachFrequencyType() != null;

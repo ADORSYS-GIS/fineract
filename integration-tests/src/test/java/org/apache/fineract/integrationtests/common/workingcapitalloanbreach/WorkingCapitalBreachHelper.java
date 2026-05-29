@@ -18,12 +18,8 @@
  */
 package org.apache.fineract.integrationtests.common.workingcapitalloanbreach;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 import java.util.List;
-import org.apache.fineract.client.feign.ObjectMapperFactory;
 import org.apache.fineract.client.feign.services.WorkingCapitalBreachApi;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.feign.util.FeignCalls;
@@ -34,8 +30,6 @@ import org.apache.fineract.client.models.WorkingCapitalBreachTemplateResponse;
 import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 
 public class WorkingCapitalBreachHelper {
-
-    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getShared();
 
     private static WorkingCapitalBreachApi api() {
         return FineractFeignClientHelper.getFineractFeignClient().workingCapitalBreaches();
@@ -56,25 +50,23 @@ public class WorkingCapitalBreachHelper {
         return response.getResourceId();
     }
 
-    public WorkingCapitalBreachTemplateResponse retrieveTemplateRaw() {
+    public WorkingCapitalBreachTemplateResponse retrieveTemplate() {
         return FeignCalls.ok(() -> api().retrieveWorkingCapitalBreachTemplate());
     }
 
-    public List<WorkingCapitalBreachData> retrieveAllRaw() {
+    public List<WorkingCapitalBreachData> retrieveAll() {
         return FeignCalls.ok(() -> api().retrieveAllWorkingCapitalBreaches());
     }
 
-    public WorkingCapitalBreachData retrieveOneRaw(final Long breachId) {
+    public WorkingCapitalBreachData retrieveOne(final Long breachId) {
         return FeignCalls.ok(() -> api().retrieveWorkingCapitalBreach(breachId));
     }
 
-    public CallFailedRuntimeException runCreateExpectingFailure(final JsonObject body) {
-        final WorkingCapitalBreachRequest request = fromJson(body, WorkingCapitalBreachRequest.class);
+    public CallFailedRuntimeException runCreateExpectingFailure(final WorkingCapitalBreachRequest request) {
         return FeignCalls.fail(() -> api().createWorkingCapitalBreach(request));
     }
 
-    public CallFailedRuntimeException runUpdateExpectingFailure(final Long breachId, final JsonObject body) {
-        final WorkingCapitalBreachRequest request = fromJson(body, WorkingCapitalBreachRequest.class);
+    public CallFailedRuntimeException runUpdateExpectingFailure(final Long breachId, final WorkingCapitalBreachRequest request) {
         return FeignCalls.fail(() -> api().updateWorkingCapitalBreach(breachId, request));
     }
 
@@ -88,14 +80,6 @@ public class WorkingCapitalBreachHelper {
 
     public WorkingCapitalBreachData retrieveWorkingCapitalBreach(final Long breachId) {
         return FeignCalls.ok(() -> api().retrieveWorkingCapitalBreach(breachId));
-    }
-
-    private static <T> T fromJson(final JsonObject json, final Class<T> type) {
-        try {
-            return OBJECT_MAPPER.readValue(json.toString(), type);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid breach JSON for " + type.getSimpleName(), e);
-        }
     }
 
     public WorkingCapitalBreachRequest createBreachRequest(final String name, final Integer breachFrequency,

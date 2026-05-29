@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.models.GetJournalEntriesTransactionIdResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
@@ -36,6 +37,8 @@ import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsRespon
 import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.JournalEntryTransactionItem;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest.AccountingRuleEnum;
+import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdRequest;
+import org.apache.fineract.client.models.PostWorkingCapitalLoansRequest;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignAccountHelper;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignJournalEntryHelper;
 import org.apache.fineract.integrationtests.common.BusinessDateHelper;
@@ -57,7 +60,8 @@ import org.junit.jupiter.api.Test;
  */
 public class WorkingCapitalLoanRepaymentAccountingTest {
 
-    private static final String CLEANUP_EMPTY_COMMAND_JSON = "{\"locale\":\"en\",\"dateFormat\":\"yyyy-MM-dd\"}";
+    private static final PostWorkingCapitalLoansLoanIdRequest CLEANUP_EMPTY_COMMAND_REQUEST = WorkingCapitalLoanApplicationTestBuilder
+            .buildUndoApproveRequest();
 
     private final WorkingCapitalLoanHelper loanHelper = new WorkingCapitalLoanHelper();
     private final WorkingCapitalLoanProductHelper productHelper = new WorkingCapitalLoanProductHelper();
@@ -104,12 +108,12 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
                 continue;
             }
             try {
-                loanHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson());
+                loanHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseRequest());
             } catch (final CallFailedRuntimeException ignored) {
                 // best-effort cleanup (loan may not be disbursed / client inactive / loan already removed)
             }
             try {
-                loanHelper.undoApprovalById(loanId, CLEANUP_EMPTY_COMMAND_JSON);
+                loanHelper.undoApprovalById(loanId, CLEANUP_EMPTY_COMMAND_REQUEST);
             } catch (final CallFailedRuntimeException ignored) {
                 // best-effort cleanup (loan may not be approved / already removed)
             }
@@ -136,21 +140,25 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     @Test
     public void testRepaymentCreatesJournalEntriesPrincipalOnly() {
         final Long productId = createCashBasedProduct();
-        final LocalDate approvedOnDate = LocalDate.now(ZoneId.systemDefault());
-        final Long loanId = createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), approvedOnDate);
-
-        final LocalDate repaymentDate = approvedOnDate.plusDays(1);
-        BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(3000), null, "partial repayment", 1, "repayment-account")));
+        final LocalDate currentDate = LocalDate.now(ZoneId.systemDefault());
+        AtomicLong loanId = new AtomicLong(0L);
+        BusinessDateHelper.runAt(currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), () -> {
+            loanId.set(createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), currentDate));
+        });
+        final LocalDate repaymentDate = currentDate.plusDays(1);
+        BusinessDateHelper
+                .runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
+                        () -> loanHelper.makeRepaymentByLoanId(loanId.get(),
+                                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(3000),
+                                        null, "partial repayment", 1, "repayment-account")));
 
         // Verify loan status is still active (partial repayment)
-        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId.get());
         assert loanData.getStatus() != null;
         assertEquals("loanStatusType.active", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 3000, Cr Loan Portfolio 3000
-        final Long repaymentTxnId = getRepaymentTransactionId(loanId);
+        final Long repaymentTxnId = getRepaymentTransactionId(loanId.get());
         assertNotNull(repaymentTxnId, "Expected a repayment transaction to exist");
         final List<JournalEntryTransactionItem> entries = getJournalEntriesForWCTransaction(repaymentTxnId);
         assertEquals(2, entries.size(), "Expected 2 journal entries (1 debit + 1 credit)");
@@ -162,21 +170,25 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     @Test
     public void testRepaymentWithOverpaymentCreatesJournalEntries() {
         final Long productId = createCashBasedProduct();
-        final LocalDate approvedOnDate = LocalDate.now(ZoneId.systemDefault());
-        final Long loanId = createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), approvedOnDate);
-
-        final LocalDate repaymentDate = approvedOnDate.plusDays(1);
-        BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(5200), null, "overpayment repayment", 1, "repayment-account")));
+        final LocalDate currentDate = LocalDate.now(ZoneId.systemDefault());
+        AtomicLong loanId = new AtomicLong(0L);
+        BusinessDateHelper.runAt(currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), () -> {
+            loanId.set(createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), currentDate));
+        });
+        final LocalDate repaymentDate = currentDate.plusDays(1);
+        BusinessDateHelper
+                .runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
+                        () -> loanHelper.makeRepaymentByLoanId(loanId.get(),
+                                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(5200),
+                                        null, "overpayment repayment", 1, "repayment-account")));
 
         // Verify loan status is overpaid
-        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId.get());
         assert loanData.getStatus() != null;
         assertEquals("loanStatusType.overpaid", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 5200, Cr Loan Portfolio 5000, Cr Overpayment 200
-        final Long repaymentTxnId = getRepaymentTransactionId(loanId);
+        final Long repaymentTxnId = getRepaymentTransactionId(loanId.get());
         assertNotNull(repaymentTxnId, "Expected a repayment transaction to exist");
         final List<JournalEntryTransactionItem> entries = getJournalEntriesForWCTransaction(repaymentTxnId);
         assertEquals(3, entries.size(), "Expected 3 journal entries (1 debit + 2 credits)");
@@ -189,21 +201,23 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     @Test
     public void testFullRepaymentCreatesJournalEntries() {
         final Long productId = createCashBasedProduct();
-        final LocalDate approvedOnDate = LocalDate.now(ZoneId.systemDefault());
-        final Long loanId = createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), approvedOnDate);
-
-        final LocalDate repaymentDate = approvedOnDate.plusDays(1);
+        final LocalDate currentDate = LocalDate.now(ZoneId.systemDefault());
+        AtomicLong loanId = new AtomicLong(0L);
+        BusinessDateHelper.runAt(currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), () -> {
+            loanId.set(createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), currentDate));
+        });
+        final LocalDate repaymentDate = currentDate.plusDays(1);
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
+                () -> loanHelper.makeRepaymentByLoanId(loanId.get(), WorkingCapitalLoanDisbursementTestBuilder
+                        .buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
 
         // Verify loan status is closed
-        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId.get());
         assert loanData.getStatus() != null;
         assertEquals("loanStatusType.closed.obligations.met", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 5000, Cr Loan Portfolio 5000
-        final Long repaymentTxnId = getRepaymentTransactionId(loanId);
+        final Long repaymentTxnId = getRepaymentTransactionId(loanId.get());
         assertNotNull(repaymentTxnId, "Expected a repayment transaction to exist");
         final List<JournalEntryTransactionItem> entries = getJournalEntriesForWCTransaction(repaymentTxnId);
         assertEquals(2, entries.size(), "Expected 2 journal entries (1 debit + 1 credit)");
@@ -215,24 +229,28 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     @Test
     public void testRepaymentWithNoAccountingCreatesNoJournalEntries() {
         // Create product with NONE accounting rule
-        final String uniqueName = "WCL NoAcct " + UUID.randomUUID().toString().substring(0, 8);
-        final String uniqueShortName = UUID.randomUUID().toString().replace("-", "").substring(0, 4);
-        final Long productId = productHelper
-                .createWorkingCapitalLoanProduct(
-                        new WorkingCapitalLoanProductTestBuilder().withName(uniqueName).withShortName(uniqueShortName).build())
-                .getResourceId();
-        createdProductIds.add(productId);
+        final LocalDate currentDate = LocalDate.now(ZoneId.systemDefault());
+        AtomicLong loanId = new AtomicLong(0L);
+        BusinessDateHelper.runAt(currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), () -> {
+            final String uniqueName = "WCL NoAcct " + UUID.randomUUID().toString().substring(0, 8);
+            final String uniqueShortName = UUID.randomUUID().toString().replace("-", "").substring(0, 4);
+            final Long productId = productHelper
+                    .createWorkingCapitalLoanProduct(
+                            new WorkingCapitalLoanProductTestBuilder().withName(uniqueName).withShortName(uniqueShortName).build())
+                    .getResourceId();
+            createdProductIds.add(productId);
 
-        final LocalDate approvedOnDate = LocalDate.now(ZoneId.systemDefault());
-        final Long loanId = createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), approvedOnDate);
-
-        final LocalDate repaymentDate = approvedOnDate.plusDays(1);
-        BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
-                () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
-                        BigDecimal.valueOf(3000), null, "no accounting repayment", 1, "repayment-account")));
+            loanId.set(createApprovedAndDisbursedLoan(productId, BigDecimal.valueOf(5000), currentDate));
+        });
+        final LocalDate repaymentDate = currentDate.plusDays(1);
+        BusinessDateHelper
+                .runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
+                        () -> loanHelper.makeRepaymentByLoanId(loanId.get(),
+                                WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentRequest(repaymentDate, BigDecimal.valueOf(3000),
+                                        null, "no accounting repayment", 1, "repayment-account")));
 
         // Verify no journal entries were created
-        final Long repaymentTxnId = getRepaymentTransactionId(loanId);
+        final Long repaymentTxnId = getRepaymentTransactionId(loanId.get());
         assertNotNull(repaymentTxnId, "Expected a repayment transaction to exist");
         final List<JournalEntryTransactionItem> entries = getJournalEntriesForWCTransaction(repaymentTxnId);
         assertTrue(entries.isEmpty(), "Expected no journal entries for NONE accounting rule");
@@ -265,14 +283,14 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
 
     private Long createApprovedAndDisbursedLoan(final Long productId, final BigDecimal principal, final LocalDate approvedOnDate) {
         final Long loanId = submitAndTrack(new WorkingCapitalLoanApplicationTestBuilder().withClientId(createdClientId)
-                .withProductId(productId).withPrincipal(principal).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitJson());
-        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(approvedOnDate, principal, null));
-        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(approvedOnDate, principal));
+                .withProductId(productId).withPrincipal(principal).withPeriodPaymentRate(BigDecimal.ONE).buildSubmitRequest());
+        loanHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildApproveRequest(approvedOnDate, principal, null));
+        loanHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseRequest(approvedOnDate, principal));
         return loanId;
     }
 
     private Long getRepaymentTransactionId(final Long loanId) {
-        final GetWorkingCapitalLoanTransactionsResponse transactions = loanHelper.retrieveTransactionsByLoanIdRaw(loanId);
+        final GetWorkingCapitalLoanTransactionsResponse transactions = loanHelper.retrieveTransactionsByLoanId(loanId);
         if (transactions.getContent() == null) {
             return null;
         }
@@ -315,7 +333,7 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
         return ClientHelper.createClient(ClientHelper.defaultClientCreationRequest()).getClientId();
     }
 
-    private Long submitAndTrack(final String submitJson) {
+    private Long submitAndTrack(final PostWorkingCapitalLoansRequest submitJson) {
         final Long loanId = loanHelper.submit(submitJson);
         createdLoanIds.add(loanId);
         return loanId;
