@@ -22,9 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,6 +31,9 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.models.GetJournalEntriesTransactionIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.JournalEntryTransactionItem;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest.AccountingRuleEnum;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignAccountHelper;
@@ -145,8 +145,9 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
                         BigDecimal.valueOf(3000), null, "partial repayment", 1, "repayment-account")));
 
         // Verify loan status is still active (partial repayment)
-        final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
-        assertEquals("loanStatusType.active", loanData.getAsJsonObject("status").get("code").getAsString());
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        assert loanData.getStatus() != null;
+        assertEquals("loanStatusType.active", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 3000, Cr Loan Portfolio 3000
         final Long repaymentTxnId = getRepaymentTransactionId(loanId);
@@ -170,8 +171,9 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
                         BigDecimal.valueOf(5200), null, "overpayment repayment", 1, "repayment-account")));
 
         // Verify loan status is overpaid
-        final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
-        assertEquals("loanStatusType.overpaid", loanData.getAsJsonObject("status").get("code").getAsString());
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        assert loanData.getStatus() != null;
+        assertEquals("loanStatusType.overpaid", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 5200, Cr Loan Portfolio 5000, Cr Overpayment 200
         final Long repaymentTxnId = getRepaymentTransactionId(loanId);
@@ -196,8 +198,9 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
                         BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
 
         // Verify loan status is closed
-        final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
-        assertEquals("loanStatusType.closed.obligations.met", loanData.getAsJsonObject("status").get("code").getAsString());
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
+        assert loanData.getStatus() != null;
+        assertEquals("loanStatusType.closed.obligations.met", loanData.getStatus().getCode());
 
         // Verify journal entries: Dr Fund Source 5000, Cr Loan Portfolio 5000
         final Long repaymentTxnId = getRepaymentTransactionId(loanId);
@@ -269,13 +272,13 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     }
 
     private Long getRepaymentTransactionId(final Long loanId) {
-        final JsonArray content = JsonParser.parseString(loanHelper.retrieveTransactionsByLoanIdRaw(loanId)).getAsJsonObject()
-                .getAsJsonArray("content");
-        for (int i = 0; i < content.size(); i++) {
-            final JsonObject txn = content.get(i).getAsJsonObject();
-            final JsonObject txnType = txn.getAsJsonObject("type");
-            if (txnType != null && "loanTransactionType.repayment".equals(txnType.get("code").getAsString())) {
-                return txn.get("id").getAsLong();
+        final GetWorkingCapitalLoanTransactionsResponse transactions = loanHelper.retrieveTransactionsByLoanIdRaw(loanId);
+        if (transactions.getContent() == null) {
+            return null;
+        }
+        for (final GetWorkingCapitalLoanTransactionIdResponse txn : transactions.getContent()) {
+            if (txn.getType() != null && "loanTransactionType.repayment".equals(txn.getType().getCode())) {
+                return txn.getId();
             }
         }
         return null;
@@ -294,15 +297,18 @@ public class WorkingCapitalLoanRepaymentAccountingTest {
     private void assertJournalEntry(final List<JournalEntryTransactionItem> entries, final String expectedType,
             final Account expectedAccount, final double expectedAmount) {
         final boolean found = entries.stream().anyMatch(entry -> {
+            assert entry != null;
+            assert entry.getEntryType() != null;
             final boolean typeMatch = expectedType.equals(entry.getEntryType().getValue());
             final boolean accountMatch = expectedAccount.getAccountID().longValue() == entry.getGlAccountId();
             final boolean amountMatch = Double.compare(expectedAmount, entry.getAmount()) == 0;
             return typeMatch && accountMatch && amountMatch;
         });
-        assertTrue(found,
-                "Expected journal entry: " + expectedType + " " + expectedAccount.getAccountID() + " amount=" + expectedAmount
-                        + " not found in entries: " + entries.stream()
-                                .map(e -> e.getEntryType().getValue() + " acct=" + e.getGlAccountId() + " amt=" + e.getAmount()).toList());
+        assertTrue(found, "Expected journal entry: " + expectedType + " " + expectedAccount.getAccountID() + " amount=" + expectedAmount
+                + " not found in entries: " + entries.stream().map(e -> {
+                    assert e.getEntryType() != null;
+                    return e.getEntryType().getValue() + " acct=" + e.getGlAccountId() + " amt=" + e.getAmount();
+                }).toList());
     }
 
     private static Long createClient() {

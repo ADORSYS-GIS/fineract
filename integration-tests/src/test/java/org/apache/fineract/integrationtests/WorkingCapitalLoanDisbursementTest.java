@@ -20,25 +20,27 @@ package org.apache.fineract.integrationtests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.models.GetCodesResponse;
+import org.apache.fineract.client.models.GetDisbursementDetail;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.PostCodeValueDataResponse;
 import org.apache.fineract.client.models.PostCodeValuesDataRequest;
+import org.apache.fineract.client.models.ProjectedAmortizationScheduleData;
 import org.apache.fineract.client.models.PutGlobalConfigurationsRequest;
 import org.apache.fineract.infrastructure.configuration.api.GlobalConfigurationConstants;
 import org.apache.fineract.infrastructure.event.external.data.ExternalEventResponse;
@@ -135,37 +137,30 @@ public class WorkingCapitalLoanDisbursementTest {
                 BigDecimal.valueOf(5000));
         applicationHelper.disburseById(loanId, disburseJson);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
         assertStatus(data, "loanStatusType.active");
-        assertTrue(data.has("balance") && !data.get("balance").isJsonNull(), "GET loan after disburse should include balance");
-        final JsonObject balance = data.getAsJsonObject("balance");
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), balance.get("principalOutstanding"));
+        assertNotNull(data.getBalance(), "GET loan after disburse should include balance");
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getBalance().getPrincipalOutstanding());
 
-        assertTrue(data.has("disbursementDetails") && data.get("disbursementDetails").isJsonArray(),
-                "GET loan after disburse should include disbursementDetails array");
-        assertFalse(data.getAsJsonArray("disbursementDetails").isEmpty(), "disbursementDetails should not be empty");
-        final JsonObject disbursement = data.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject();
-        assertTrue(disbursement.has("actualDisbursementDate"));
-        assertDateEquals(actualDisbursementDate, disbursement.get("actualDisbursementDate"));
-        assertTrue(disbursement.has("actualAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), disbursement.get("actualAmount"));
+        assertNotNull(data.getDisbursementDetails(), "GET loan after disburse should include disbursementDetails array");
+        assertFalse(data.getDisbursementDetails().isEmpty(), "disbursementDetails should not be empty");
+        final GetDisbursementDetail disbursement = data.getDisbursementDetails().getFirst();
+        assertNotNull(disbursement.getActualDisbursementDate());
+        assertDateEquals(actualDisbursementDate, disbursement.getActualDisbursementDate());
+        assertNotNull(disbursement.getActualAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), disbursement.getActualAmount());
 
-        assertTrue(data.has("transactions"), "GET loan after disburse should include transactions");
-        assertTrue(data.get("transactions").isJsonArray());
-        assertEquals(1, data.getAsJsonArray("transactions").size(), "After disburse there should be one transaction");
-        final JsonObject txn = data.getAsJsonArray("transactions").get(0).getAsJsonObject();
-        assertTrue(txn.has("type") && txn.has("transactionAmount"));
-        assertEquals("loanTransactionType.disbursement", txn.getAsJsonObject("type").get("code").getAsString());
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("transactionAmount"));
-        assertTrue(txn.has("reversed") && !txn.get("reversed").getAsBoolean(), "Disbursement transaction should not be reversed");
-        assertTrue(txn.has("principalPortion"), "Transaction should include allocation principalPortion");
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("principalPortion"));
-        assertTrue(txn.has("feeChargesPortion"), "Transaction should include allocation feeChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("feeChargesPortion"));
-        assertTrue(txn.has("penaltyChargesPortion"), "Transaction should include allocation penaltyChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("penaltyChargesPortion"));
+        assertNotNull(data.getTransactions(), "GET loan after disburse should include transactions");
+        assertEquals(1, data.getTransactions().size(), "After disburse there should be one transaction");
+        final GetWorkingCapitalLoanTransactionIdResponse txn = data.getTransactions().getFirst();
+        assertNotNull(txn.getType());
+        assertEquals("loanTransactionType.disbursement", txn.getType().getCode());
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getTransactionAmount());
+        assertNotEquals(Boolean.TRUE, txn.getReversed(), "Disbursement transaction should not be reversed");
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getPrincipalPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getFeeChargesPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getPenaltyChargesPortion());
     }
 
     @Test
@@ -191,21 +186,18 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(actualDisbursementDate,
                 BigDecimal.valueOf(5000), classificationId));
 
-        final String response = applicationHelper.retrieveById(loanId);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
-        assertTrue(data.has("transactions") && data.get("transactions").isJsonArray());
-        final JsonObject txn = data.getAsJsonArray("transactions").get(0).getAsJsonObject();
-        assertTrue(txn.has("classification") && !txn.get("classification").isJsonNull(),
-                "Disbursement transaction should include classification");
-        final JsonObject classification = txn.getAsJsonObject("classification");
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data.getTransactions());
+        final GetWorkingCapitalLoanTransactionIdResponse txn = data.getTransactions().getFirst();
+        assertNotNull(txn);
+        assertNotNull(txn.getClassification(), "Disbursement transaction should include classification");
         assert classificationId != null;
-        assertEquals(classificationId.longValue(), classification.get("id").getAsLong());
-
-        final long transactionId = txn.get("id").getAsLong();
-        final String txnByIdJson = applicationHelper.retrieveTransactionByLoanIdAndTransactionIdRaw(loanId, transactionId);
-        final JsonObject txnById = JsonParser.parseString(txnByIdJson).getAsJsonObject();
-        assertTrue(txnById.has("classification") && !txnById.get("classification").isJsonNull());
-        assertEquals(classificationId.longValue(), txnById.getAsJsonObject("classification").get("id").getAsLong());
+        assertEquals(classificationId.longValue(), txn.getClassification().getId());
+        final long transactionId = txn.getId();
+        final GetWorkingCapitalLoanTransactionIdResponse txnById = applicationHelper.retrieveTransactionByLoanIdAndTransactionIdRaw(loanId,
+                transactionId);
+        assertNotNull(txnById.getClassification());
+        assertEquals(classificationId.longValue(), txnById.getClassification().getId());
     }
 
     @Test
@@ -290,60 +282,46 @@ public class WorkingCapitalLoanDisbursementTest {
                 discountAmount, note, paymentTypeId, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber);
         applicationHelper.disburseById(loanId, disburseJson);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
 
         assertStatus(data, "loanStatusType.active");
-        assertTrue(data.has("balance") && !data.get("balance").isJsonNull(), "GET loan after disburse should include balance");
-        assertEqualBigDecimal(transactionAmount.add(discountAmount), data.getAsJsonObject("balance").get("principalOutstanding"));
-        assertEqualBigDecimal(discountAmount, data.get("discount"));
-        assertTrue(data.has("id"));
-        assertEquals(loanId.longValue(), data.get("id").getAsLong());
-        assertTrue(data.has("client") && !data.get("client").isJsonNull());
-        assertTrue(data.has("product") && !data.get("product").isJsonNull());
+        assertNotNull(data.getBalance(), "GET loan after disburse should include balance");
+        assertEqualBigDecimal(transactionAmount.add(discountAmount), data.getBalance().getPrincipalOutstanding());
+        assertEqualBigDecimal(discountAmount, data.getDiscount());
+        assertEquals(loanId, data.getId());
+        assertNotNull(data.getClient());
+        assertNotNull(data.getProduct());
 
-        if (data.has("timeline") && !data.get("timeline").isJsonNull()) {
-            final JsonObject timeline = data.getAsJsonObject("timeline");
-            assertTrue(timeline.has("actualDisbursementDate"));
-            assertDateEquals(actualDisbursementDate, timeline.get("actualDisbursementDate"));
-            assertTrue(timeline.has("approvedOnDate"));
-            assertTrue(timeline.has("actualMaturityDate"), "timeline should include actualMaturityDate (null until fully paid)");
-            assertTrue(timeline.get("actualMaturityDate").isJsonNull() || timeline.get("actualMaturityDate") == null,
-                    "Expected actualMaturityDate to be null after disbursement");
-            assertTrue(timeline.has("disbursementDetails") && timeline.get("disbursementDetails").isJsonArray(),
-                    "timeline should include disbursementDetails list");
-            assertFalse(timeline.getAsJsonArray("disbursementDetails").isEmpty(), "timeline disbursementDetails should not be empty");
+        if (data.getTimeline() != null) {
+            assertNotNull(data.getTimeline().getActualDisbursementDate());
+            assertDateEquals(actualDisbursementDate, data.getTimeline().getActualDisbursementDate());
+            assertNotNull(data.getTimeline().getApprovedOnDate());
+            assertNull(data.getTimeline().getActualMaturityDate(), "Expected actualMaturityDate to be null after disbursement");
+            assertNotNull(data.getTimeline().getDisbursementDetails(), "timeline should include disbursementDetails list");
+            assertFalse(data.getTimeline().getDisbursementDetails().isEmpty(), "timeline disbursementDetails should not be empty");
         }
-        assertTrue(data.has("disbursementDetails") && data.get("disbursementDetails").isJsonArray(),
-                "GET loan after disburse should include disbursementDetails array");
-        assertFalse(data.getAsJsonArray("disbursementDetails").isEmpty(), "disbursementDetails should not be empty");
-        final JsonObject disbursement = data.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject();
-        assertTrue(disbursement.has("expectedDisbursementDate"), "disbursementDetails should include expectedDisbursementDate");
-        assertTrue(disbursement.has("expectedAmount"), "disbursementDetails should include expectedAmount");
-        assertTrue(disbursement.has("actualDisbursementDate"));
-        assertDateEquals(actualDisbursementDate, disbursement.get("actualDisbursementDate"));
-        assertTrue(disbursement.has("actualAmount"));
-        assertEqualBigDecimal(transactionAmount, disbursement.get("actualAmount"));
+        assertNotNull(data.getDisbursementDetails(), "GET loan after disburse should include disbursementDetails array");
+        assertFalse(data.getDisbursementDetails().isEmpty(), "disbursementDetails should not be empty");
+        final GetDisbursementDetail disbursement = data.getDisbursementDetails().getFirst();
+        assertNotNull(disbursement.getExpectedDisbursementDate(), "disbursementDetails should include expectedDisbursementDate");
+        assertNotNull(disbursement.getExpectedAmount(), "disbursementDetails should include expectedAmount");
+        assertDateEquals(actualDisbursementDate, disbursement.getActualDisbursementDate());
+        assertEqualBigDecimal(transactionAmount, disbursement.getActualAmount());
 
-        assertTrue(data.has("transactions") && data.get("transactions").isJsonArray());
-        assertEquals(2, data.getAsJsonArray("transactions").size());
-        final JsonObject txn = data.getAsJsonArray("transactions").get(0).getAsJsonObject();
-        assertEqualBigDecimal(transactionAmount, txn.get("transactionAmount"));
-        assertTrue(txn.has("principalPortion"), "Transaction should include allocation principalPortion");
-        assertEqualBigDecimal(transactionAmount, txn.get("principalPortion"));
-        assertTrue(txn.has("feeChargesPortion"), "Transaction should include allocation feeChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("feeChargesPortion"));
-        assertTrue(txn.has("penaltyChargesPortion"), "Transaction should include allocation penaltyChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("penaltyChargesPortion"));
-        assertTrue(txn.has("paymentDetailData") && !txn.get("paymentDetailData").isJsonNull(),
-                "Transaction should include paymentDetailData");
-        final JsonObject paymentDetailData = txn.getAsJsonObject("paymentDetailData");
-        assertEquals(accountNumber, paymentDetailData.get("accountNumber").getAsString());
-        assertEquals(checkNumber, paymentDetailData.get("checkNumber").getAsString());
-        assertEquals(routingCode, paymentDetailData.get("routingCode").getAsString());
-        assertEquals(receiptNumber, paymentDetailData.get("receiptNumber").getAsString());
-        assertEquals(bankNumber, paymentDetailData.get("bankNumber").getAsString());
+        assertNotNull(data.getTransactions());
+        assertEquals(2, data.getTransactions().size());
+        final GetWorkingCapitalLoanTransactionIdResponse txn = data.getTransactions().getFirst();
+        assertEqualBigDecimal(transactionAmount, txn.getTransactionAmount());
+        assertEqualBigDecimal(transactionAmount, txn.getPrincipalPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getFeeChargesPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getPenaltyChargesPortion());
+        assertNotNull(txn.getPaymentDetailData(), "Transaction should include paymentDetailData");
+        assertEquals(accountNumber, txn.getPaymentDetailData().getAccountNumber());
+        assertEquals(checkNumber, txn.getPaymentDetailData().getCheckNumber());
+        assertEquals(routingCode, txn.getPaymentDetailData().getRoutingCode());
+        assertEquals(receiptNumber, txn.getPaymentDetailData().getReceiptNumber());
+        assertEquals(bankNumber, txn.getPaymentDetailData().getBankNumber());
     }
 
     @Test
@@ -367,32 +345,24 @@ public class WorkingCapitalLoanDisbursementTest {
 
         applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson());
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
         assertStatus(data, "loanStatusType.approved");
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.get("approvedPrincipal"));
-        assertTrue(data.has("balance") && !data.get("balance").isJsonNull(), "GET loan after undo should include balance");
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getAsJsonObject("balance").get("principalOutstanding"));
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getApprovedPrincipal());
+        assertNotNull(data.getBalance(), "GET loan after undo should include balance");
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getBalance().getPrincipalOutstanding());
 
-        assertTrue(data.has("disbursementDetails") && data.get("disbursementDetails").isJsonArray(),
-                "GET loan after undo should include disbursementDetails array");
-        assertFalse(data.getAsJsonArray("disbursementDetails").isEmpty(), "disbursementDetails should not be empty");
-        final JsonObject disbursement = data.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject();
-        assertTrue(!disbursement.has("actualDisbursementDate") || disbursement.get("actualDisbursementDate").isJsonNull(),
-                "Expected actualDisbursementDate to be absent or null after undo");
-        assertTrue(!disbursement.has("actualAmount") || disbursement.get("actualAmount").isJsonNull(),
-                "Expected actualAmount to be absent or null after undo");
-        assertTrue(data.has("timeline") && !data.get("timeline").isJsonNull(), "GET loan after undo should include timeline");
-        final JsonObject timeline = data.getAsJsonObject("timeline");
-        assertTrue(timeline.has("actualMaturityDate"), "timeline should include actualMaturityDate (null until fully paid)");
-        assertTrue(timeline.get("actualMaturityDate").isJsonNull() || timeline.get("actualMaturityDate") == null,
-                "Expected actualMaturityDate to be null after undo");
+        assertNotNull(data.getDisbursementDetails(), "GET loan after undo should include disbursementDetails array");
+        assertFalse(data.getDisbursementDetails().isEmpty(), "disbursementDetails should not be empty");
+        final GetDisbursementDetail disbursement = data.getDisbursementDetails().getFirst();
+        assertNull(disbursement.getActualDisbursementDate(), "Expected actualDisbursementDate to be null after undo");
+        assertNull(disbursement.getActualAmount(), "Expected actualAmount to be null after undo");
+        assertNotNull(data.getTimeline(), "GET loan after undo should include timeline");
+        assertNull(data.getTimeline().getActualMaturityDate(), "Expected actualMaturityDate to be null after undo");
 
-        assertTrue(data.has("transactions") && data.get("transactions").isJsonArray(), "Expected transactions array in response");
-        assertEquals(1, data.getAsJsonArray("transactions").size(), "Undo disburse should keep transaction history");
-        final JsonObject txn = data.getAsJsonArray("transactions").get(0).getAsJsonObject();
-        assertTrue(txn.has("reversed") && txn.get("reversed").getAsBoolean(), "Expected transaction to be reversed");
+        assertNotNull(data.getTransactions(), "Expected transactions array in response");
+        assertEquals(1, data.getTransactions().size(), "Undo disburse should keep transaction history");
+        assertEquals(Boolean.TRUE, data.getTransactions().getFirst().getReversed(), "Expected transaction to be reversed");
     }
 
     @Test
@@ -415,9 +385,12 @@ public class WorkingCapitalLoanDisbursementTest {
             applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                     .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000)));
 
-            final String loanJson = applicationHelper.retrieveById(loanId);
-            final long transactionId = JsonParser.parseString(loanJson).getAsJsonObject().getAsJsonArray("transactions").get(0)
-                    .getAsJsonObject().get("id").getAsLong();
+            final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+            assertNotNull(data);
+            final List<GetWorkingCapitalLoanTransactionIdResponse> transactions = data.getTransactions();
+            assertNotNull(transactions);
+            assertFalse(transactions.isEmpty());
+            final long transactionId = transactions.getFirst().getId();
 
             final List<ExternalEventResponse> events = externalEventHelper.getExternalEventsByType(WC_DISBURSAL_TXN_EVENT);
             final ExternalEventResponse event = events.stream().filter(e -> loanId.equals(e.getAggregateRootId())).findFirst().orElse(null);
@@ -450,9 +423,12 @@ public class WorkingCapitalLoanDisbursementTest {
             applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                     .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000)));
 
-            final String loanAfterDisburse = applicationHelper.retrieveById(loanId);
-            final long transactionId = JsonParser.parseString(loanAfterDisburse).getAsJsonObject().getAsJsonArray("transactions").get(0)
-                    .getAsJsonObject().get("id").getAsLong();
+            final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+            assertNotNull(data);
+            final List<GetWorkingCapitalLoanTransactionIdResponse> transactions = data.getTransactions();
+            assertNotNull(transactions);
+            assertFalse(transactions.isEmpty());
+            final long transactionId = transactions.getFirst().getId();
 
             externalEventHelper.deleteAllExternalEvents();
             applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson());
@@ -489,9 +465,8 @@ public class WorkingCapitalLoanDisbursementTest {
 
         applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson("Undo disbursal note"));
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
         assertStatus(data, "loanStatusType.approved");
     }
 
@@ -874,25 +849,20 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                 .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000)));
 
-        final String json = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
-        assertNotNull(json);
-        final JsonObject page = JsonParser.parseString(json).getAsJsonObject();
-        assertTrue(page.has("content"), "Response should have content array");
-        assertTrue(page.has("totalElements"));
-        final JsonArray content = page.getAsJsonArray("content");
-        assertEquals(1, content.size(), "After one disburse there should be one transaction");
-        assertEquals(1L, page.get("totalElements").getAsLong());
-        final JsonObject txn = content.get(0).getAsJsonObject();
-        assertTrue(txn.has("id") && txn.has("type") && txn.has("transactionAmount"));
-        assertEquals("loanTransactionType.disbursement", txn.getAsJsonObject("type").get("code").getAsString());
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("transactionAmount"));
-        assertTrue(txn.has("principalPortion"));
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("principalPortion"));
-        assertTrue(txn.has("feeChargesPortion"));
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("feeChargesPortion"));
-        assertTrue(txn.has("penaltyChargesPortion"));
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("penaltyChargesPortion"));
-        assertFalse(txn.get("reversed").getAsBoolean());
+        final GetWorkingCapitalLoanTransactionsResponse page = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
+        assertNotNull(page);
+        assertNotNull(page.getContent(), "Response should have content array");
+        assertEquals(1, page.getContent().size(), "After one disburse there should be one transaction");
+        assertEquals(1L, page.getTotalElements());
+        final GetWorkingCapitalLoanTransactionIdResponse txn = page.getContent().getFirst();
+        assertNotNull(txn.getId());
+        assertNotNull(txn.getType());
+        assertEquals("loanTransactionType.disbursement", txn.getType().getCode());
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getTransactionAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getPrincipalPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getFeeChargesPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getPenaltyChargesPortion());
+        assertFalse(Boolean.TRUE.equals(txn.getReversed()));
     }
 
     @Test
@@ -911,25 +881,23 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                 .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(6000)));
 
-        final String listJson = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
-        final JsonArray content = JsonParser.parseString(listJson).getAsJsonObject().getAsJsonArray("content");
-        assertEquals(1, content.size());
-        final long transactionId = content.get(0).getAsJsonObject().get("id").getAsLong();
+        final GetWorkingCapitalLoanTransactionsResponse list = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
+        assert list.getContent() != null;
+        assertEquals(1, list.getContent().size());
+        final long transactionId = list.getContent().getFirst().getId();
 
-        final String txnJson = applicationHelper.retrieveTransactionByLoanIdAndTransactionIdRaw(loanId, transactionId);
-        final JsonObject txn = JsonParser.parseString(txnJson).getAsJsonObject();
-        assertEquals(transactionId, txn.get("id").getAsLong());
-        assertEqualBigDecimal(BigDecimal.valueOf(6000), txn.get("transactionAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(6000), txn.get("principalPortion"));
-        assertTrue(txn.has("transactionDate") && txn.has("reversed"));
-        assertTrue(txn.has("type"), "GET transaction should include type");
-        assertEquals("loanTransactionType.disbursement", txn.getAsJsonObject("type").get("code").getAsString());
-        assertTrue(txn.has("submittedOnDate"), "GET transaction should include submittedOnDate");
-        assertFalse(txn.has("interestPortion"), "WCL has no interest");
-        assertTrue(txn.has("feeChargesPortion"), "GET transaction should include allocation feeChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("feeChargesPortion"));
-        assertTrue(txn.has("penaltyChargesPortion"), "GET transaction should include allocation penaltyChargesPortion");
-        assertEqualBigDecimal(BigDecimal.ZERO, txn.get("penaltyChargesPortion"));
+        final GetWorkingCapitalLoanTransactionIdResponse txn = applicationHelper.retrieveTransactionByLoanIdAndTransactionIdRaw(loanId,
+                transactionId);
+        assertEquals(transactionId, txn.getId());
+        assertEqualBigDecimal(BigDecimal.valueOf(6000), txn.getTransactionAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(6000), txn.getPrincipalPortion());
+        assertNotNull(txn.getTransactionDate());
+        assertNotNull(txn.getReversed());
+        assertNotNull(txn.getType(), "GET transaction should include type");
+        assertEquals("loanTransactionType.disbursement", txn.getType().getCode());
+        assertNotNull(txn.getSubmittedOnDate(), "GET transaction should include submittedOnDate");
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getFeeChargesPortion());
+        assertEqualBigDecimal(BigDecimal.ZERO, txn.getPenaltyChargesPortion());
 
     }
 
@@ -947,10 +915,9 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder
                 .buildApproveJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000), null));
 
-        final String json = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
-        final JsonObject page = JsonParser.parseString(json).getAsJsonObject();
-        assertTrue(page.has("content"));
-        assertTrue(page.getAsJsonArray("content").isEmpty(), "Before disburse transactions list should be empty");
+        final GetWorkingCapitalLoanTransactionsResponse page = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
+        assertNotNull(page.getContent());
+        assertTrue(page.getContent().isEmpty(), "Before disburse transactions list should be empty");
 
     }
 
@@ -993,15 +960,13 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                 .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000)));
 
-        final String json = applicationHelper.retrieveTransactionsByLoanExternalIdRaw(loanExternalId);
-        assertNotNull(json);
-        final JsonObject page = JsonParser.parseString(json).getAsJsonObject();
-        assertTrue(page.has("content") && page.has("totalElements"));
-        final JsonArray content = page.getAsJsonArray("content");
-        assertEquals(1, content.size());
-        final JsonObject txn = content.get(0).getAsJsonObject();
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("transactionAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.get("principalPortion"));
+        final GetWorkingCapitalLoanTransactionsResponse page = applicationHelper.retrieveTransactionsByLoanExternalIdRaw(loanExternalId);
+        assertNotNull(page);
+        assertNotNull(page.getContent());
+        assertEquals(1, page.getContent().size());
+        final GetWorkingCapitalLoanTransactionIdResponse txn = page.getContent().getFirst();
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getTransactionAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), txn.getPrincipalPortion());
     }
 
     @Test
@@ -1022,11 +987,11 @@ public class WorkingCapitalLoanDisbursementTest {
                 WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(7000),
                         null, null, null, null, null, null, null, null, txnExternalId));
 
-        final String txnJson = applicationHelper.retrieveTransactionByLoanIdAndTransactionExternalIdRaw(loanId, txnExternalId);
-        final JsonObject txn = JsonParser.parseString(txnJson).getAsJsonObject();
-        assertEqualBigDecimal(BigDecimal.valueOf(7000), txn.get("transactionAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(7000), txn.get("principalPortion"));
-        assertTrue(txn.has("externalId") && txnExternalId.equals(txn.get("externalId").getAsString()));
+        final GetWorkingCapitalLoanTransactionIdResponse txn = applicationHelper
+                .retrieveTransactionByLoanIdAndTransactionExternalIdRaw(loanId, txnExternalId);
+        assertEqualBigDecimal(BigDecimal.valueOf(7000), txn.getTransactionAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(7000), txn.getPrincipalPortion());
+        assertEquals(txnExternalId, txn.getExternalId());
     }
 
     @Test
@@ -1050,11 +1015,10 @@ public class WorkingCapitalLoanDisbursementTest {
                 BigDecimal.valueOf(5000));
         applicationHelper.disburseByExternalId(loanExternalId, disburseJson);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        final JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
         assertStatus(data, "loanStatusType.active");
-        assertTrue(data.has("balance") && !data.get("balance").isJsonNull(), "GET loan after disburse should include balance");
-        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getAsJsonObject("balance").get("principalOutstanding"));
+        assertNotNull(data.getBalance(), "GET loan after disburse should include balance");
+        assertEqualBigDecimal(BigDecimal.valueOf(5000), data.getBalance().getPrincipalOutstanding());
     }
 
     @Test
@@ -1075,14 +1039,12 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder
                 .buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(8000)));
 
-        final String listJson = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId);
-        final long transactionId = JsonParser.parseString(listJson).getAsJsonObject().getAsJsonArray("content").get(0).getAsJsonObject()
-                .get("id").getAsLong();
+        final long transactionId = applicationHelper.retrieveTransactionsByLoanIdRaw(loanId).getContent().getFirst().getId();
 
-        final String txnJson = applicationHelper.retrieveTransactionByExternalLoanIdAndTransactionIdRaw(loanExternalId, transactionId);
-        final JsonObject txn = JsonParser.parseString(txnJson).getAsJsonObject();
-        assertEquals(transactionId, txn.get("id").getAsLong());
-        assertEqualBigDecimal(BigDecimal.valueOf(8000), txn.get("transactionAmount"));
+        final GetWorkingCapitalLoanTransactionIdResponse txn = applicationHelper
+                .retrieveTransactionByExternalLoanIdAndTransactionIdRaw(loanExternalId, transactionId);
+        assertEquals(transactionId, txn.getId());
+        assertEqualBigDecimal(BigDecimal.valueOf(8000), txn.getTransactionAmount());
     }
 
     @Test
@@ -1105,11 +1067,10 @@ public class WorkingCapitalLoanDisbursementTest {
                 WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(9000),
                         null, null, null, null, null, null, null, null, txnExternalId));
 
-        final String txnJson = applicationHelper.retrieveTransactionByExternalLoanIdAndTransactionExternalIdRaw(loanExternalId,
-                txnExternalId);
-        final JsonObject txn = JsonParser.parseString(txnJson).getAsJsonObject();
-        assertEqualBigDecimal(BigDecimal.valueOf(9000), txn.get("transactionAmount"));
-        assertEquals(txnExternalId, txn.get("externalId").getAsString());
+        final GetWorkingCapitalLoanTransactionIdResponse txn = applicationHelper
+                .retrieveTransactionByExternalLoanIdAndTransactionExternalIdRaw(loanExternalId, txnExternalId);
+        assertEqualBigDecimal(BigDecimal.valueOf(9000), txn.getTransactionAmount());
+        assertEquals(txnExternalId, txn.getExternalId());
     }
 
     @Test
@@ -1178,12 +1139,12 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(disbursementDate,
                 disbursementAmount, discountAmount, null, null, null, null, null, null, null));
 
-        final JsonObject schedule = retrieveAmortizationScheduleByLoanId(loanId);
-        assertDateEquals(disbursementDate, schedule.get("expectedDisbursementDate"));
-        assertEqualBigDecimal(disbursementAmount, schedule.get("netDisbursementAmount"));
-        assertEqualBigDecimal(discountAmount, schedule.get("discountFeeAmount"));
-        assertTrue(schedule.has("payments") && schedule.get("payments").isJsonArray(), "Schedule should contain payments");
-        assertFalse(schedule.getAsJsonArray("payments").isEmpty(), "Schedule payments should not be empty after disburse");
+        final ProjectedAmortizationScheduleData schedule = retrieveAmortizationScheduleByLoanId(loanId);
+        assertDateEquals(disbursementDate, schedule.getExpectedDisbursementDate());
+        assertEqualBigDecimal(disbursementAmount, schedule.getNetDisbursementAmount());
+        assertEqualBigDecimal(discountAmount, schedule.getDiscountFeeAmount());
+        assertNotNull(schedule.getPayments(), "Schedule should contain payments");
+        assertFalse(schedule.getPayments().isEmpty(), "Schedule payments should not be empty after disburse");
     }
 
     @Test
@@ -1199,51 +1160,38 @@ public class WorkingCapitalLoanDisbursementTest {
         applicationHelper.approveById(loanId, WorkingCapitalLoanApplicationTestBuilder
                 .buildApproveJson(LocalDate.now(ZoneId.systemDefault()), BigDecimal.valueOf(5000), null));
 
-        final JsonObject afterApprove = JsonParser.parseString(applicationHelper.retrieveById(loanId)).getAsJsonObject();
-        final JsonObject firstDetailAfterApprove = afterApprove.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject();
-        final LocalDate expectedDateAfterApprove = parseDate(firstDetailAfterApprove.get("expectedDisbursementDate"));
+        final GetDisbursementDetail firstDetailAfterApprove = applicationHelper.retrieveById(loanId).getDisbursementDetails().getFirst();
+        final LocalDate expectedDateAfterApprove = firstDetailAfterApprove.getExpectedDisbursementDate();
 
-        final JsonObject scheduleAfterApprove = retrieveAmortizationScheduleByLoanId(loanId);
-        assertDateEquals(expectedDateAfterApprove, scheduleAfterApprove.get("expectedDisbursementDate"));
+        final ProjectedAmortizationScheduleData scheduleAfterApprove = retrieveAmortizationScheduleByLoanId(loanId);
+        assertDateEquals(expectedDateAfterApprove, scheduleAfterApprove.getExpectedDisbursementDate());
 
         final LocalDate actualDisbursementDate = LocalDate.now(ZoneId.systemDefault());
         applicationHelper.disburseById(loanId,
                 WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(actualDisbursementDate, BigDecimal.valueOf(5000)));
-        final JsonObject scheduleAfterDisburse = retrieveAmortizationScheduleByLoanId(loanId);
-        assertDateEquals(actualDisbursementDate, scheduleAfterDisburse.get("expectedDisbursementDate"));
+        final ProjectedAmortizationScheduleData scheduleAfterDisburse = retrieveAmortizationScheduleByLoanId(loanId);
+        assertDateEquals(actualDisbursementDate, scheduleAfterDisburse.getExpectedDisbursementDate());
 
         applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson());
 
-        final JsonObject scheduleAfterUndo = retrieveAmortizationScheduleByLoanId(loanId);
-        assertDateEquals(expectedDateAfterApprove, scheduleAfterUndo.get("expectedDisbursementDate"));
-        assertTrue(scheduleAfterUndo.has("payments") && scheduleAfterUndo.get("payments").isJsonArray(),
-                "Schedule should still exist after undo");
-        assertFalse(scheduleAfterUndo.getAsJsonArray("payments").isEmpty(), "Schedule payments should not be empty after undo");
+        final ProjectedAmortizationScheduleData scheduleAfterUndo = retrieveAmortizationScheduleByLoanId(loanId);
+        assertDateEquals(expectedDateAfterApprove, scheduleAfterUndo.getExpectedDisbursementDate());
+        assertNotNull(scheduleAfterUndo.getPayments(), "Schedule should still exist after undo");
+        assertFalse(scheduleAfterUndo.getPayments().isEmpty(), "Schedule payments should not be empty after undo");
     }
 
-    private static void assertStatus(final JsonObject data, final String expectedStatusCode) {
-        assertTrue(data.has("status") && !data.get("status").isJsonNull());
-        assertEquals(expectedStatusCode, data.getAsJsonObject("status").get("code").getAsString());
+    private static void assertStatus(final GetWorkingCapitalLoansLoanIdResponse data, final String expectedStatusCode) {
+        assertNotNull(data.getStatus());
+        assertEquals(expectedStatusCode, data.getStatus().getCode());
     }
 
-    private static void assertEqualBigDecimal(final BigDecimal expected, final JsonElement actual) {
+    private static void assertEqualBigDecimal(final BigDecimal expected, final BigDecimal actual) {
         assertNotNull(actual, "Expected value for field");
-        assertFalse(actual.isJsonNull(), "Expected non-null value");
-        assertEquals(0, expected.compareTo(actual.getAsJsonPrimitive().getAsBigDecimal()),
-                "Expected " + expected + " but got " + actual.getAsString());
+        assertEquals(0, expected.compareTo(actual), "Expected " + expected + " but got " + actual);
     }
 
-    private static void assertDateEquals(final LocalDate expected, final JsonElement actual) {
-        assertNotNull(actual, "Expected date value");
-        assertFalse(actual.isJsonNull(), "Expected non-null date");
-        if (actual.isJsonArray()) {
-            final JsonArray arr = actual.getAsJsonArray();
-            assertEquals(expected.getYear(), arr.get(0).getAsInt());
-            assertEquals(expected.getMonthValue(), arr.get(1).getAsInt());
-            assertEquals(expected.getDayOfMonth(), arr.get(2).getAsInt());
-        } else {
-            assertEquals(expected.format(DateTimeFormatter.ISO_LOCAL_DATE), actual.getAsString());
-        }
+    private static void assertDateEquals(final LocalDate expected, final LocalDate actual) {
+        assertEquals(expected, actual);
     }
 
     private Long createProduct() {
@@ -1274,20 +1222,8 @@ public class WorkingCapitalLoanDisbursementTest {
         return ClientHelper.createClient(ClientHelper.defaultClientCreationRequest()).getClientId();
     }
 
-    private JsonObject retrieveAmortizationScheduleByLoanId(final Long loanId) {
-        final String json = applicationHelper.retrieveAmortizationScheduleByLoanIdRaw(loanId);
-        return JsonParser.parseString(json).getAsJsonObject();
-    }
-
-    private static LocalDate parseDate(final JsonElement dateElement) {
-        if (dateElement == null || dateElement.isJsonNull()) {
-            return null;
-        }
-        if (dateElement.isJsonArray()) {
-            final JsonArray arr = dateElement.getAsJsonArray();
-            return LocalDate.of(arr.get(0).getAsInt(), arr.get(1).getAsInt(), arr.get(2).getAsInt());
-        }
-        return LocalDate.parse(dateElement.getAsString());
+    private ProjectedAmortizationScheduleData retrieveAmortizationScheduleByLoanId(final Long loanId) {
+        return applicationHelper.retrieveAmortizationScheduleByLoanIdRaw(loanId);
     }
 
     private Long submitAndTrack(final String submitJson) {

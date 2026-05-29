@@ -25,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.WorkingCapitalBreachRequest;
+import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.workingcapitalloanbreach.WorkingCapitalBreachHelper;
 import org.junit.jupiter.api.Test;
 
@@ -155,7 +157,9 @@ public class WorkingCapitalBreachValidationTest {
 
     @Test
     public void testUpdateFailsWhenBreachFrequencyTypeIsInvalid() {
-        final Long breachId = breachHelper.create(validBreachJson());
+        final WorkingCapitalBreachRequest createBody = breachHelper.createBreachRequest(Utils.randomStringGenerator("Breach", 20), 20,
+                "DAYS", "PERCENTAGE", BigDecimal.valueOf(7.5));
+        final Long breachId = breachHelper.create(createBody);
         final JsonObject invalidUpdate = validBreachJson();
         invalidUpdate.addProperty("breachFrequencyType", "INVALID");
 

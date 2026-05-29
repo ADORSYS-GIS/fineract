@@ -20,25 +20,24 @@ package org.apache.fineract.integrationtests.common.workingcapitalloan;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import java.time.LocalDate;
 import java.util.Map;
 import org.apache.fineract.client.feign.ObjectMapperFactory;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoanTransactionsApi;
 import org.apache.fineract.client.feign.services.WorkingCapitalLoansApi;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.feign.util.FeignCalls;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansPagedResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansTemplateResponse;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanTransactionsRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansResponse;
+import org.apache.fineract.client.models.ProjectedAmortizationScheduleData;
 import org.apache.fineract.client.models.PutWorkingCapitalLoansLoanIdRequest;
 import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 
@@ -48,8 +47,6 @@ import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 public class WorkingCapitalLoanHelper {
 
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getShared();
-    private static final ObjectMapper RESPONSE_OBJECT_MAPPER = ObjectMapperFactory.getShared().copy()
-            .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     public WorkingCapitalLoanHelper() {}
 
@@ -85,77 +82,71 @@ public class WorkingCapitalLoanHelper {
         return FeignCalls.ok(() -> api().deleteWorkingCapitalLoanApplicationByExternalId(externalId)).getResourceId();
     }
 
-    public String retrieveById(final Long loanId) {
-        GetWorkingCapitalLoansLoanIdResponse response = FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanById(loanId));
-        return toJson(response);
+    public GetWorkingCapitalLoansLoanIdResponse retrieveById(final Long loanId) {
+        return FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanById(loanId));
     }
 
-    public String retrieveByExternalId(final String externalId) {
-        GetWorkingCapitalLoansLoanIdResponse response = FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanByExternalId(externalId));
-        return toJson(response);
+    public GetWorkingCapitalLoansLoanIdResponse retrieveByExternalId(final String externalId) {
+        return FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanByExternalId(externalId));
     }
 
-    public String retrieveAmortizationScheduleByLoanIdRaw(final Long loanId) {
-        Object response = FeignCalls.ok(() -> api().retrieveAmortizationSchedule(loanId));
-        return toJson(response);
+    public ProjectedAmortizationScheduleData retrieveAmortizationScheduleByLoanIdRaw(final Long loanId) {
+        return FeignCalls.ok(() -> api().retrieveAmortizationSchedule(loanId));
     }
 
-    public String retrieveAllPagedRaw(final Map<String, Object> queryParams) {
+    public GetWorkingCapitalLoansPagedResponse retrieveAllPagedRaw(final Map<String, Object> queryParams) {
         Map<String, Object> params = queryParams != null ? queryParams : Map.of();
-        Object response = FeignCalls.ok(() -> api().retrieveAllWorkingCapitalLoans(params));
-        return toJson(response);
+        return FeignCalls.ok(() -> api().retrieveAllWorkingCapitalLoans(params));
     }
 
-    public String retrieveTemplateRaw(final Map<String, Object> queryParams) {
+    public GetWorkingCapitalLoansTemplateResponse retrieveTemplateRaw(final Map<String, Object> queryParams) {
         Map<String, Object> params = queryParams != null ? queryParams : Map.of();
-        Object response = FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanTemplate(params));
-        return toJson(response);
+        return FeignCalls.ok(() -> api().retrieveWorkingCapitalLoanTemplate(params));
     }
 
-    public Long approveById(final Long loanId, final String jsonBody) {
+    public void approveById(final Long loanId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "approve", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "approve", request));
     }
 
-    public Long rejectById(final Long loanId, final String jsonBody) {
+    public void rejectById(final Long loanId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "reject", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "reject", request));
     }
 
-    public Long undoApprovalById(final Long loanId, final String jsonBody) {
+    public void undoApprovalById(final Long loanId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "undoapproval", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "undoapproval", request));
     }
 
-    public Long approveByExternalId(final String externalId, final String jsonBody) {
+    public void approveByExternalId(final String externalId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "approve", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "approve", request));
     }
 
-    public Long rejectByExternalId(final String externalId, final String jsonBody) {
+    public void rejectByExternalId(final String externalId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "reject", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "reject", request));
     }
 
-    public Long undoApprovalByExternalId(final String externalId, final String jsonBody) {
+    public void undoApprovalByExternalId(final String externalId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "undoapproval", request))
-                .getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "undoapproval", request));
     }
 
-    public Long disburseById(final Long loanId, final String jsonBody) {
+    public void disburseById(final Long loanId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "disburse", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "disburse", request));
     }
 
-    public Long disburseByExternalId(final String externalId, final String jsonBody) {
+    public void disburseByExternalId(final String externalId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "disburse", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanByExternalId(externalId, "disburse", request));
     }
 
-    public Long undoDisbursalById(final Long loanId, final String jsonBody) {
+    public void undoDisbursalById(final Long loanId, final String jsonBody) {
         PostWorkingCapitalLoansLoanIdRequest request = fromJson(jsonBody, PostWorkingCapitalLoansLoanIdRequest.class);
-        return FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "undodisbursal", request)).getResourceId();
+        FeignCalls.ok(() -> api().stateTransitionWorkingCapitalLoanById(loanId, "undodisbursal", request));
     }
 
     public void makeRepaymentByLoanId(final Long loanId, final String jsonBody) {
@@ -179,19 +170,17 @@ public class WorkingCapitalLoanHelper {
         return FeignCalls.fail(() -> transactionsApi().executeWorkingCapitalLoanTransactionById(loanId, "creditBalanceRefund", request));
     }
 
-    public String retrieveTransactionsByLoanIdRaw(final Long loanId) {
-        Object response = FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionsById(loanId));
-        return toJson(response);
+    public GetWorkingCapitalLoanTransactionsResponse retrieveTransactionsByLoanIdRaw(final Long loanId) {
+        return FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionsById(loanId));
     }
 
-    public String retrieveTransactionsByLoanExternalIdRaw(final String loanExternalId) {
-        Object response = FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionsByExternalId(loanExternalId));
-        return toJson(response);
+    public GetWorkingCapitalLoanTransactionsResponse retrieveTransactionsByLoanExternalIdRaw(final String loanExternalId) {
+        return FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionsByExternalId(loanExternalId));
     }
 
-    public String retrieveTransactionByLoanIdAndTransactionIdRaw(final Long loanId, final Long transactionId) {
-        Object response = FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionById(loanId, transactionId));
-        return toJson(response);
+    public GetWorkingCapitalLoanTransactionIdResponse retrieveTransactionByLoanIdAndTransactionIdRaw(final Long loanId,
+            final Long transactionId) {
+        return FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionById(loanId, transactionId));
     }
 
     public CallFailedRuntimeException runRetrieveTransactionByLoanIdAndTransactionIdExpectingFailure(final Long loanId,
@@ -199,23 +188,22 @@ public class WorkingCapitalLoanHelper {
         return FeignCalls.fail(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionById(loanId, transactionId));
     }
 
-    public String retrieveTransactionByLoanIdAndTransactionExternalIdRaw(final Long loanId, final String externalTransactionId) {
-        Object response = FeignCalls
-                .ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionByExternalTransactionId(loanId, externalTransactionId));
-        return toJson(response);
-    }
-
-    public String retrieveTransactionByExternalLoanIdAndTransactionIdRaw(final String loanExternalId, final Long transactionId) {
-        Object response = FeignCalls.ok(() -> transactionsApi()
-                .retrieveWorkingCapitalLoanTransactionByExternalLoanIdAndTransactionId(loanExternalId, transactionId));
-        return toJson(response);
-    }
-
-    public String retrieveTransactionByExternalLoanIdAndTransactionExternalIdRaw(final String loanExternalId,
+    public GetWorkingCapitalLoanTransactionIdResponse retrieveTransactionByLoanIdAndTransactionExternalIdRaw(final Long loanId,
             final String externalTransactionId) {
-        Object response = FeignCalls.ok(() -> transactionsApi()
+        return FeignCalls
+                .ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionByExternalTransactionId(loanId, externalTransactionId));
+    }
+
+    public GetWorkingCapitalLoanTransactionIdResponse retrieveTransactionByExternalLoanIdAndTransactionIdRaw(final String loanExternalId,
+            final Long transactionId) {
+        return FeignCalls.ok(() -> transactionsApi().retrieveWorkingCapitalLoanTransactionByExternalLoanIdAndTransactionId(loanExternalId,
+                transactionId));
+    }
+
+    public GetWorkingCapitalLoanTransactionIdResponse retrieveTransactionByExternalLoanIdAndTransactionExternalIdRaw(
+            final String loanExternalId, final String externalTransactionId) {
+        return FeignCalls.ok(() -> transactionsApi()
                 .retrieveWorkingCapitalLoanTransactionByExternalLoanIdAndExternalTransactionId(loanExternalId, externalTransactionId));
-        return toJson(response);
     }
 
     public CallFailedRuntimeException runApproveExpectingFailure(final Long loanId, final String jsonBody) {
@@ -272,32 +260,10 @@ public class WorkingCapitalLoanHelper {
         }
     }
 
-    private static String toJson(Object value) {
-        try {
-            return RESPONSE_OBJECT_MAPPER.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Failed to serialize response", e);
-        }
-    }
-
-    public JsonObject retrieveLoan(final Long loanId) {
-        final String response = retrieveById(loanId);
+    public GetWorkingCapitalLoansLoanIdResponse retrieveLoan(final Long loanId) {
+        final GetWorkingCapitalLoansLoanIdResponse response = retrieveById(loanId);
         assertNotNull(response);
-        return new Gson().fromJson(response, JsonObject.class);
-    }
-
-    public LocalDate getSubmittedOnDate(final Long loanId) {
-        final JsonObject data = retrieveLoan(loanId);
-        return extractDate(data.get("submittedOnDate"));
-    }
-
-    public LocalDate extractDate(final JsonElement element) {
-        assertNotNull(element, "Expected date element");
-        if (element.isJsonArray()) {
-            final JsonArray arr = element.getAsJsonArray();
-            return LocalDate.of(arr.get(0).getAsInt(), arr.get(1).getAsInt(), arr.get(2).getAsInt());
-        }
-        return LocalDate.parse(element.getAsString());
+        return response;
     }
 
 }

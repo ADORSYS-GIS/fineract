@@ -45,6 +45,7 @@ import org.apache.fineract.client.models.PutWorkingCapitalLoanProductsProductIdR
 import org.apache.fineract.client.models.PutWorkingCapitalLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.StringEnumOptionData;
 import org.apache.fineract.client.models.WorkingCapitalBreachData;
+import org.apache.fineract.client.models.WorkingCapitalBreachRequest;
 import org.apache.fineract.client.models.WorkingCapitalNearBreachData;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.workingcapitalloanbreach.WorkingCapitalBreachHelper;
@@ -526,11 +527,12 @@ public class WorkingCapitalLoanProductCRUDTest {
 
     @Test
     public void testNegativeCreateWorkingCapitalLoanProductWithNearBreach() {
-        final JsonObject createBody = breachHelper.breachJson(Utils.randomStringGenerator("Breach", 20), 15, "DAYS", "PERCENTAGE",
-                BigDecimal.valueOf(7.5));
+        final WorkingCapitalBreachRequest createBody = breachHelper.createBreachRequest(Utils.randomStringGenerator("Breach", 20), 15,
+                "DAYS", "PERCENTAGE", BigDecimal.valueOf(7.5));
         Long breachId = breachHelper.create(createBody);
         WorkingCapitalBreachData expectedBreach = breachHelper.retrieveWorkingCapitalBreach(breachId);
 
+        assert expectedBreach.getBreachFrequencyType() != null;
         Long nearBreachId = nearBreachHelper.create(nearBreachHelper.nearBreachJson(Utils.randomStringGenerator("NearBreach", 20),
                 expectedBreach.getBreachFrequency(), expectedBreach.getBreachFrequencyType().getCode(), BigDecimal.valueOf(30.0)));
 
@@ -587,8 +589,8 @@ public class WorkingCapitalLoanProductCRUDTest {
         }
         if (breach == null) {
             // Create a breach if not present in template
-            final JsonObject createBody = breachHelper.breachJson(Utils.randomStringGenerator("Breach", 20), 20, "DAYS", "PERCENTAGE",
-                    BigDecimal.valueOf(7.5));
+            final WorkingCapitalBreachRequest createBody = breachHelper.createBreachRequest(Utils.randomStringGenerator("Breach", 20), 20,
+                    "DAYS", "PERCENTAGE", BigDecimal.valueOf(7.5));
             final Long breachId = breachHelper.create(createBody);
             breach = breachHelper.retrieveWorkingCapitalBreach(breachId);
         }

@@ -477,7 +477,8 @@ public class WorkingCapitalLoanApplicationValidationTest {
         final Long productId = createProduct();
         final Long clientId = createClient();
 
-        final Long breachId = createBreach(30, "DAYS", "PERCENTAGE", BigDecimal.valueOf(10));
+        final Long breachId = breachHelper
+                .create(breachHelper.createBreachRequest("Validation WCL Breach", 30, "DAYS", "PERCENTAGE", BigDecimal.valueOf(10)));
 
         final String json = new WorkingCapitalLoanApplicationTestBuilder() //
                 .withClientId(clientId) //
@@ -1007,17 +1008,6 @@ public class WorkingCapitalLoanApplicationValidationTest {
         final JsonObject json = JsonParser.parseString(fullJson).getAsJsonObject();
         json.remove(fieldToOmit);
         return json.toString();
-    }
-
-    private Long createBreach(final Integer breachFrequency, final String breachFrequencyType, final String breachAmountCalculationType,
-            final BigDecimal breachAmount) {
-        final JsonObject payload = new JsonObject();
-        payload.addProperty("name", "Validation WCL Breach");
-        payload.addProperty("breachFrequency", breachFrequency);
-        payload.addProperty("breachFrequencyType", breachFrequencyType);
-        payload.addProperty("breachAmountCalculationType", breachAmountCalculationType);
-        payload.addProperty("breachAmount", breachAmount);
-        return breachHelper.create(payload);
     }
 
     private Long createProduct() {

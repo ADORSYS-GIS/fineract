@@ -21,7 +21,9 @@ package org.apache.fineract.integrationtests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,13 +39,21 @@ import io.restassured.specification.ResponseSpecification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.GetConfigurableAttributes;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanBreach;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanNearBreach;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanProductsResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdTimeline;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansPagedResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansTemplateResponse;
+import org.apache.fineract.client.models.WorkingCapitalBreachRequest;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.funds.FundsResourceHandler;
@@ -132,17 +142,15 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         assertNotNull(loanId);
         assertTrue(loanId > 0);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
 
-        assertEquals(productRepaymentEvery.intValue(), data.get("repaymentEvery").getAsInt(), "repaymentEvery should come from product");
-        assertRepaymentFrequencyTypeEquals(productRepaymentFrequencyType, data.get("repaymentFrequencyType"));
-        assertTrue(data.has("discountProposed") && data.get("discountProposed").isJsonNull());
-        assertTrue(data.has("delinquencyBucket") && !data.get("delinquencyBucket").isJsonNull(),
-                "delinquencyBucket should come from product");
-        assertEquals(delinquencyBucketId.longValue(), data.getAsJsonObject("delinquencyBucket").get("id").getAsLong(),
-                "delinquencyBucket.id should come from product");
+        assertEquals(productRepaymentEvery.intValue(), data.getRepaymentEvery(), "repaymentEvery should come from product");
+        assertNotNull(data.getRepaymentFrequencyType());
+        assertEquals(productRepaymentFrequencyType, data.getRepaymentFrequencyType().getValue());
+        assertNull(data.getDiscountProposed());
+        assertNotNull(data.getDelinquencyBucket(), "delinquencyBucket should come from product");
+        assertEquals(delinquencyBucketId.longValue(), data.getDelinquencyBucket().getId(), "delinquencyBucket.id should come from product");
 
         applicationHelper.deleteById(loanId);
         productHelper.deleteWorkingCapitalLoanProductById(productId);
@@ -171,16 +179,20 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .buildSubmitJson();
 
         final Long loanId = applicationHelper.submit(json);
-        final JsonObject data = new Gson().fromJson(applicationHelper.retrieveById(loanId), JsonObject.class);
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
 
-        final JsonObject breach = data.getAsJsonObject("breach");
-        assertEquals(breachName, breach.get("name").getAsString());
-        assertEquals(breachFrequency.intValue(), breach.get("breachFrequency").getAsInt());
-        assertRepaymentFrequencyTypeEquals(breachFrequencyType, breach.get("breachFrequencyType"));
-        assertRepaymentFrequencyTypeEquals(breachAmountCalculationType, breach.get("breachAmountCalculationType"));
-        assertEqualBigDecimal(breachAmount, breach.get("breachAmount"));
-        final JsonObject nearBreach = data.getAsJsonObject("nearBreach");
-        assertEquals(nearBreachName, nearBreach.get("name").getAsString());
+        final GetWorkingCapitalLoanBreach breach = data.getBreach();
+        assertNotNull(breach);
+        assertEquals(breachName, breach.getName());
+        assertEquals(breachFrequency.intValue(), breach.getBreachFrequency());
+        assertNotNull(breach.getBreachFrequencyType());
+        assertEquals(breachFrequencyType, breach.getBreachFrequencyType().getValue());
+        assertNotNull(breach.getBreachAmountCalculationType());
+        assertEquals(breachAmountCalculationType, breach.getBreachAmountCalculationType().getCode());
+        assertEquals(0, breachAmount.compareTo(breach.getBreachAmount()));
+        final GetWorkingCapitalLoanNearBreach nearBreach = data.getNearBreach();
+        assertNotNull(nearBreach);
+        assertEquals(nearBreachName, nearBreach.getName());
 
         applicationHelper.deleteById(loanId);
         productHelper.deleteWorkingCapitalLoanProductById(productId);
@@ -274,9 +286,8 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withDelinquencyStartType(delinquencyStartType) //
                 .buildSubmitJson());
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
 
         assertAllLoanFieldsInResponse(data, loanId, clientId, productId, accountNo, externalId, fundId, principal, periodPaymentRate,
                 totalPayment, discount, submittedOnDate, expectedDisbursementDate, repaymentEvery, repaymentFrequencyType,
@@ -428,12 +439,11 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withDelinquencyStartType(delinquencyStartType) //
                 .buildSubmitJson());
 
-        final String response = applicationHelper.retrieveByExternalId(externalId);
+        final GetWorkingCapitalLoansLoanIdResponse response = applicationHelper.retrieveByExternalId(externalId);
         assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
-        final Long loanId = data.get("id").getAsLong();
+        final Long loanId = response.getId();
 
-        assertAllLoanFieldsInResponse(data, loanId, clientId, productId, accountNo, externalId, fundId, principal, periodPaymentRate,
+        assertAllLoanFieldsInResponse(response, loanId, clientId, productId, accountNo, externalId, fundId, principal, periodPaymentRate,
                 totalPayment, discount, submittedOnDate, expectedDisbursementDate, repaymentEvery, repaymentFrequencyType,
                 delinquencyGraceDays, delinquencyStartType);
 
@@ -446,32 +456,26 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         // Ensure at least one product exists so productOptions is not empty
         final Long productId = createProduct();
         try {
-            final String response = applicationHelper.retrieveTemplateRaw(Map.of());
+            final GetWorkingCapitalLoansTemplateResponse template = applicationHelper.retrieveTemplateRaw(Map.of());
 
-            assertNotNull(response);
-            final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+            assertNotNull(template);
+            assertNotNull(template.getProductOptions());
+            assertFalse(template.getProductOptions().isEmpty());
+            final GetWorkingCapitalLoanProductsResponse firstProduct = template.getProductOptions().getFirst();
+            assertNotNull(firstProduct.getId());
+            assertTrue(firstProduct.getId() > 0);
+            assertNotNull(firstProduct.getName());
+            assertFalse(firstProduct.getName().isBlank());
+            assertNotNull(firstProduct.getShortName());
+            assertFalse(firstProduct.getShortName().isBlank());
 
-            final JsonArray productOptions = data.has("productOptions") && !data.get("productOptions").isJsonNull()
-                    ? data.getAsJsonArray("productOptions")
-                    : new JsonArray();
-            assertNotNull(productOptions);
-            final JsonObject firstProduct = productOptions.get(0).getAsJsonObject();
-            assertTrue(firstProduct.has("id"));
-            assertTrue(firstProduct.get("id").getAsLong() > 0);
-            assertTrue(firstProduct.has("name"));
-            assertFalse(firstProduct.get("name").getAsString().isBlank());
-            assertTrue(firstProduct.has("shortName"));
-            assertFalse(firstProduct.get("shortName").getAsString().isBlank());
-
-            final JsonArray fundOptions = data.has("fundOptions") && !data.get("fundOptions").isJsonNull()
-                    ? data.getAsJsonArray("fundOptions")
-                    : new JsonArray();
-            assertNotNull(fundOptions);
-            final JsonObject firstFund = fundOptions.get(0).getAsJsonObject();
-            assertTrue(firstFund.has("id"));
-            assertTrue(firstFund.get("id").getAsLong() > 0);
-            assertTrue(firstFund.has("name"));
-            assertFalse(firstFund.get("name").getAsString().isBlank());
+            assertNotNull(template.getFundOptions());
+            assertFalse(template.getFundOptions().isEmpty());
+            final var firstFund = template.getFundOptions().getFirst();
+            assertNotNull(firstFund.getId());
+            assertTrue(firstFund.getId() > 0);
+            assertNotNull(firstFund.getName());
+            assertFalse(firstFund.getName().isBlank());
         } finally {
             productHelper.deleteWorkingCapitalLoanProductById(productId);
         }
@@ -485,50 +489,40 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 new WorkingCapitalLoanProductTestBuilder().withName(productName).withShortName(shortName).build()).getResourceId();
         assertNotNull(productId);
 
-        final String response = applicationHelper.retrieveTemplateRaw(Map.of("productId", productId));
+        final GetWorkingCapitalLoansTemplateResponse template = applicationHelper.retrieveTemplateRaw(Map.of("productId", productId));
 
-        assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+        assertNotNull(template);
+        assertNotNull(template.getProductOptions());
+        assertFalse(template.getProductOptions().isEmpty());
 
-        final JsonArray productOptions = data.has("productOptions") && !data.get("productOptions").isJsonNull()
-                ? data.getAsJsonArray("productOptions")
-                : new JsonArray();
-        assertNotNull(productOptions);
-        assertFalse(productOptions.isEmpty());
-
-        final JsonObject loanData = data.has("loanData") && !data.get("loanData").isJsonNull() ? data.getAsJsonObject("loanData") : null;
-        if (loanData != null && loanData.has("product") && !loanData.get("product").isJsonNull()) {
-            assertEquals(productId, loanData.getAsJsonObject("product").get("id").getAsLong());
-            assertEquals(productName, loanData.getAsJsonObject("product").get("name").getAsString());
+        final GetWorkingCapitalLoansLoanIdResponse loanData = template.getLoanData();
+        if (loanData != null && loanData.getProduct() != null) {
+            assertEquals(productId, loanData.getProduct().getId());
+            assertEquals(productName, loanData.getProduct().getName());
         }
         if (loanData != null) {
-            if (loanData.has("periodPaymentRate") && !loanData.get("periodPaymentRate").isJsonNull()) {
-                assertEqualBigDecimal(BigDecimal.valueOf(1.0), loanData.get("periodPaymentRate"));
+            if (loanData.getPeriodPaymentRate() != null) {
+                assertEquals(0, BigDecimal.valueOf(1.0).compareTo(loanData.getPeriodPaymentRate()));
             }
-            if (loanData.has("repaymentEvery") && !loanData.get("repaymentEvery").isJsonNull()) {
-                assertEquals(30, loanData.get("repaymentEvery").getAsInt());
+            if (loanData.getRepaymentEvery() != null) {
+                assertEquals(30, loanData.getRepaymentEvery());
             }
-            if (loanData.has("repaymentFrequencyType") && !loanData.get("repaymentFrequencyType").isJsonNull()) {
-                assertRepaymentFrequencyTypeEquals("DAYS", loanData.get("repaymentFrequencyType"));
+            if (loanData.getRepaymentFrequencyType() != null) {
+                assertEquals("Days", loanData.getRepaymentFrequencyType().getValue());
             }
-            if (loanData.has("currency") && !loanData.get("currency").isJsonNull()) {
-                assertEquals("USD", loanData.get("currency").getAsJsonObject().get("code").getAsString());
+            if (loanData.getCurrency() != null) {
+                assertEquals("USD", loanData.getCurrency().getCode());
             }
-            if (loanData.has("paymentAllocation") && !loanData.get("paymentAllocation").isJsonNull()) {
-                assertFalse(loanData.getAsJsonArray("paymentAllocation").isEmpty());
+            if (loanData.getPaymentAllocation() != null) {
+                assertFalse(loanData.getPaymentAllocation().isEmpty());
             }
         }
 
-        final JsonArray fundOptions = data.has("fundOptions") && !data.get("fundOptions").isJsonNull() ? data.getAsJsonArray("fundOptions")
-                : new JsonArray();
-        assertNotNull(fundOptions);
-        assertFalse(fundOptions.isEmpty());
+        assertNotNull(template.getFundOptions());
+        assertFalse(template.getFundOptions().isEmpty());
 
-        final JsonArray periodFrequencyTypeOptions = data.has("periodFrequencyTypeOptions")
-                && !data.get("periodFrequencyTypeOptions").isJsonNull() ? data.getAsJsonArray("periodFrequencyTypeOptions")
-                        : new JsonArray();
-        assertNotNull(periodFrequencyTypeOptions);
-        assertFalse(periodFrequencyTypeOptions.isEmpty());
+        assertNotNull(template.getPeriodFrequencyTypeOptions());
+        assertFalse(template.getPeriodFrequencyTypeOptions().isEmpty());
 
         productHelper.deleteWorkingCapitalLoanProductById(productId);
     }
@@ -550,35 +544,19 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         assertNotNull(productId);
 
         try {
-            final String response = applicationHelper.retrieveTemplateRaw(Map.of("productId", productId));
-            assertNotNull(response);
+            final GetWorkingCapitalLoansTemplateResponse template = applicationHelper.retrieveTemplateRaw(Map.of("productId", productId));
+            assertNotNull(template);
+            assertNotNull(template.getProductOptions());
+            assertFalse(template.getProductOptions().isEmpty());
 
-            final JsonObject data = new Gson().fromJson(response, JsonObject.class);
-            final JsonArray productOptions = data.has("productOptions") && !data.get("productOptions").isJsonNull()
-                    ? data.getAsJsonArray("productOptions")
-                    : new JsonArray();
-            assertNotNull(productOptions);
-            assertFalse(productOptions.isEmpty());
-
-            JsonObject matchedProduct = null;
-            for (int i = 0; i < productOptions.size(); i++) {
-                final JsonObject option = productOptions.get(i).getAsJsonObject();
-                if (option.has("id") && !option.get("id").isJsonNull() && option.get("id").getAsLong() == productId) {
-                    matchedProduct = option;
-                    break;
-                }
-            }
+            final GetWorkingCapitalLoanProductsResponse matchedProduct = template.getProductOptions().stream()
+                    .filter(option -> productId.equals(option.getId())).findFirst().orElse(null);
 
             assertNotNull(matchedProduct);
-            assertTrue(matchedProduct.has("allowAttributeOverrides"));
-            assertFalse(matchedProduct.get("allowAttributeOverrides").isJsonNull());
-
-            final JsonObject allowAttributeOverrides = matchedProduct.getAsJsonObject("allowAttributeOverrides");
-            assertTrue(allowAttributeOverrides.has("periodPaymentFrequency"));
-            assertTrue(allowAttributeOverrides.get("periodPaymentFrequency").getAsBoolean());
-
-            assertTrue(allowAttributeOverrides.has("discountDefault"));
-            assertFalse(allowAttributeOverrides.get("discountDefault").getAsBoolean());
+            final GetConfigurableAttributes allowAttributeOverrides = matchedProduct.getAllowAttributeOverrides();
+            assertNotNull(allowAttributeOverrides);
+            assertEquals(Boolean.TRUE, allowAttributeOverrides.getPeriodPaymentFrequency());
+            assertNotEquals(Boolean.TRUE, allowAttributeOverrides.getDiscountDefault());
         } finally {
             productHelper.deleteWorkingCapitalLoanProductById(productId);
         }
@@ -656,9 +634,8 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final Long modifiedId = applicationHelper.modifyById(loanId, modifyJson);
         assertEquals(loanId, modifiedId);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
 
         assertAllLoanFieldsInResponse(data, loanId, clientId, productId, newAccountNo, newExternalId, fundId, principal, periodPaymentRate,
                 totalPayment, discount, submittedOnDate, expectedDisbursementDate, repaymentEvery, repaymentFrequencyType,
@@ -730,9 +707,8 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         assertNotNull(loanId);
         assertTrue(loanId > 0);
 
-        final String response = applicationHelper.retrieveById(loanId);
-        assertNotNull(response);
-        final JsonObject data = new Gson().fromJson(response, JsonObject.class);
+        final GetWorkingCapitalLoansLoanIdResponse data = applicationHelper.retrieveById(loanId);
+        assertNotNull(data);
 
         assertAllLoanFieldsInResponse(data, loanId, clientId, productId, accountNo, externalId, fundId, principal, periodPaymentRate,
                 totalPayment, discount, submittedOnDate, expectedDisbursementDate, repaymentEvery, repaymentFrequencyType,
@@ -778,21 +754,13 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withDelinquencyStartType(delinquencyStartType) //
                 .buildSubmitJson());
 
-        final String response = applicationHelper.retrieveAllPagedRaw(Map.of("clientId", clientId));
-        assertNotNull(response);
-        final JsonObject page = new Gson().fromJson(response, JsonObject.class);
-        assertTrue(page.has("content"));
-        final JsonArray content = page.getAsJsonArray("content");
-        assertTrue(page.has("totalElements"));
-        assertTrue(page.get("totalElements").getAsLong() >= 1);
+        final GetWorkingCapitalLoansPagedResponse page = applicationHelper.retrieveAllPagedRaw(Map.of("clientId", clientId));
+        assertNotNull(page);
+        assertNotNull(page.getContent());
+        assertTrue(page.getTotalElements() >= 1);
 
-        JsonObject foundLoan = null;
-        for (JsonElement el : content) {
-            if (el.getAsJsonObject().get("id").getAsLong() == loanId) {
-                foundLoan = el.getAsJsonObject();
-                break;
-            }
-        }
+        final GetWorkingCapitalLoansLoanIdResponse foundLoan = page.getContent().stream().filter(loan -> loanId.equals(loan.getId()))
+                .findFirst().orElse(null);
         assertNotNull(foundLoan, "Submitted loan should appear in paged list");
 
         assertAllLoanFieldsInResponse(foundLoan, loanId, clientId, productId, accountNo, externalId, fundId, principal, periodPaymentRate,
@@ -824,10 +792,9 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final Long modifiedId = applicationHelper.modifyByExternalId(externalId, modifyJson);
 
         assertEquals(loanId, modifiedId);
-        final String retrieved = applicationHelper.retrieveByExternalId(externalId);
+        final GetWorkingCapitalLoansLoanIdResponse retrieved = applicationHelper.retrieveByExternalId(externalId);
         assertNotNull(retrieved);
-        final JsonObject data = new Gson().fromJson(retrieved, JsonObject.class);
-        assertEquals(loanId, data.get("id").getAsLong());
+        assertEquals(loanId, retrieved.getId());
 
         applicationHelper.deleteById(loanId);
         productHelper.deleteWorkingCapitalLoanProductById(productId);
@@ -867,9 +834,9 @@ public class WorkingCapitalLoanApplicationCRUDTest {
                 .withDiscount(discountProposed) //
                 .buildSubmitJson());
 
-        JsonObject loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        final LocalDate operationDate = applicationHelper.extractDate(loanData.get("submittedOnDate"));
+        GetWorkingCapitalLoansLoanIdResponse loanData = applicationHelper.retrieveLoan(loanId);
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        final LocalDate operationDate = loanData.getSubmittedOnDate();
 
         discountProposed = BigDecimal.valueOf(99);
         final String modifyJson = new WorkingCapitalLoanApplicationTestBuilder().withDiscount(discountProposed) //
@@ -878,54 +845,54 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         final Long modifiedId = applicationHelper.modifyById(loanId, modifyJson);
         assertEquals(loanId, modifiedId);
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
 
         // Approve the WC Loan with specific discount
         BigDecimal discountApproved = BigDecimal.valueOf(97);
         applicationHelper.approveById(loanId,
                 WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(operationDate, null, discountApproved));
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        assertEqualBigDecimal(discountApproved, loanData.get("discountApproved"));
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        assertEquals(0, discountApproved.compareTo(loanData.getDiscountApproved()));
 
         // Undo WC Loan Approval
         applicationHelper.undoApprovalById(loanId, WorkingCapitalLoanApplicationTestBuilder.buildUndoApproveJson());
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
         // Null as reset of Approval amount
-        assertTrue(loanData.get("discountApproved").isJsonNull());
+        assertNull(loanData.getDiscountApproved());
 
         // ReApprove the WC Loan with specific discount
         discountApproved = BigDecimal.valueOf(95);
         applicationHelper.approveById(loanId,
                 WorkingCapitalLoanApplicationTestBuilder.buildApproveJson(operationDate, null, discountApproved));
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        assertEqualBigDecimal(discountApproved, loanData.get("discountApproved"));
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        assertEquals(0, discountApproved.compareTo(loanData.getDiscountApproved()));
 
         // Disburse the WC Loan without specific discount then It will use discountApproved
         applicationHelper.disburseById(loanId,
                 WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(operationDate, BigDecimal.valueOf(5000)));
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        assertEqualBigDecimal(discountApproved, loanData.get("discountApproved"));
-        assertTrue(loanData.get("discount").isJsonNull());
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        assertEquals(0, discountApproved.compareTo(loanData.getDiscountApproved()));
+        assertNull(loanData.getDiscount());
 
         // Undo Disburse the WC Loan
         applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson("Undo disbursal note"));
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        assertEqualBigDecimal(discountApproved, loanData.get("discountApproved"));
-        assertTrue(loanData.get("discount").isJsonNull());
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        assertEquals(0, discountApproved.compareTo(loanData.getDiscountApproved()));
+        assertNull(loanData.getDiscount());
 
         // ReDisburse the WC Loan with specific discount
         BigDecimal discountDisbursement = BigDecimal.valueOf(80);
         applicationHelper.disburseById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildDisburseJson(operationDate,
                 BigDecimal.valueOf(5000), discountDisbursement, null, null, null, null, null, null, null));
         loanData = applicationHelper.retrieveLoan(loanId);
-        assertEqualBigDecimal(discountProposed, loanData.get("discountProposed"));
-        assertEqualBigDecimal(discountApproved, loanData.get("discountApproved"));
-        assertEqualBigDecimal(discountDisbursement, loanData.get("discount"));
+        assertEquals(0, discountProposed.compareTo(loanData.getDiscountProposed()));
+        assertEquals(0, discountApproved.compareTo(loanData.getDiscountApproved()));
+        assertEquals(0, discountDisbursement.compareTo(loanData.getDiscount()));
 
         // Undo Disbursement for delete it
         applicationHelper.undoDisbursalById(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildUndoDisburseJson("Undo disbursal note"));
@@ -934,115 +901,55 @@ public class WorkingCapitalLoanApplicationCRUDTest {
         productHelper.deleteWorkingCapitalLoanProductById(productId);
     }
 
-    private static void assertAllLoanFieldsInResponse(final JsonObject data, final long loanId, final long clientId, final long productId,
-            final String accountNo, final String externalId, final Long fundId, final BigDecimal principal,
-            final BigDecimal periodPaymentRate, final BigDecimal totalPayment, final BigDecimal discountProposed,
-            final LocalDate submittedOnDate, final LocalDate expectedDisbursementDate, final Integer repaymentEvery,
-            final String repaymentFrequencyType, final Integer delinquencyGraceDays, final String delinquencyStartType) {
-        assertEquals(loanId, data.get("id").getAsLong());
-        assertTrue(data.has("client") && !data.get("client").isJsonNull());
-        assertEquals(clientId, data.getAsJsonObject("client").get("id").getAsLong());
-        assertTrue(data.has("product") && !data.get("product").isJsonNull());
-        assertEquals(productId, data.getAsJsonObject("product").get("id").getAsLong());
-        assertEquals(accountNo, data.get("accountNo").getAsString());
-        assertEquals(externalId, getExternalIdString(data));
+    private static void assertAllLoanFieldsInResponse(final GetWorkingCapitalLoansLoanIdResponse data, final long loanId,
+            final long clientId, final long productId, final String accountNo, final String externalId, final Long fundId,
+            final BigDecimal principal, final BigDecimal periodPaymentRate, final BigDecimal totalPayment,
+            final BigDecimal discountProposed, final LocalDate submittedOnDate, final LocalDate expectedDisbursementDate,
+            final Integer repaymentEvery, final String repaymentFrequencyType, final Integer delinquencyGraceDays,
+            final String delinquencyStartType) {
+        assertEquals(loanId, data.getId());
+        assertNotNull(data.getClient());
+        assertEquals(clientId, data.getClient().getId());
+        assertNotNull(data.getProduct());
+        assertEquals(productId, data.getProduct().getId());
+        assertEquals(accountNo, data.getAccountNo());
+        assertEquals(externalId, data.getExternalId());
         if (fundId != null) {
-            assertEquals(fundId.longValue(), data.get("fundId").getAsLong());
+            assertEquals(fundId.longValue(), data.getFundId());
         }
-        assertTrue(data.has("balance") && !data.get("balance").isJsonNull(), "balance should be present");
-        assertEqualBigDecimal(principal, data.getAsJsonObject("balance").get("principalOutstanding"));
-        assertEqualBigDecimal(totalPayment, data.getAsJsonObject("balance").get("totalPayment"));
-        assertEqualBigDecimal(periodPaymentRate, data.get("periodPaymentRate"));
-        assertEqualBigDecimal(discountProposed, data.get("discountProposed"));
-        assertDateEquals(submittedOnDate, data.get("submittedOnDate"));
-        assertTrue(data.has("disbursementDetails") && !data.get("disbursementDetails").isJsonNull(),
-                "disbursementDetails should be present");
-        assertFalse(data.getAsJsonArray("disbursementDetails").isEmpty(), "disbursementDetails should not be empty");
-        assertDateEquals(expectedDisbursementDate,
-                data.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject().get("expectedDisbursementDate"));
-        assertTrue(data.has("timeline") && !data.get("timeline").isJsonNull(), "timeline should be present in response");
-        final JsonObject timeline = data.getAsJsonObject("timeline");
-        assertDateEquals(submittedOnDate, timeline.get("submittedOnDate"));
-        assertDateEquals(expectedDisbursementDate, timeline.get("expectedDisbursementDate"));
-        assertTrue(timeline.has("disbursementDetails") && !timeline.get("disbursementDetails").isJsonNull(),
-                "timeline.disbursementDetails should be present");
-        assertFalse(timeline.getAsJsonArray("disbursementDetails").isEmpty(), "timeline.disbursementDetails should not be empty");
-        assertDateEquals(expectedDisbursementDate,
-                timeline.getAsJsonArray("disbursementDetails").get(0).getAsJsonObject().get("expectedDisbursementDate"));
-        assertEquals(repaymentEvery.intValue(), data.get("repaymentEvery").getAsInt());
-        assertRepaymentFrequencyTypeEquals(repaymentFrequencyType, data.get("repaymentFrequencyType"));
-        assertTrue(data.has("status") && !data.get("status").isJsonNull());
-        assertEquals("loanStatusType.submitted.and.pending.approval", data.getAsJsonObject("status").get("code").getAsString());
-        assertNotNull(data.getAsJsonObject("product").get("name"));
-        assertFalse(data.getAsJsonObject("product").get("name").getAsString().isBlank());
-        assertNotNull(data.getAsJsonObject("client").get("displayName"));
-        assertFalse(data.getAsJsonObject("client").get("displayName").getAsString().isBlank());
-        if (data.has("paymentAllocation") && !data.get("paymentAllocation").isJsonNull()) {
-            assertFalse(data.getAsJsonArray("paymentAllocation").isEmpty());
+        assertNotNull(data.getBalance());
+        assertEqualBigDecimal(principal, data.getBalance().getPrincipalOutstanding());
+        assertEqualBigDecimal(totalPayment, data.getBalance().getTotalPayment());
+        assertEqualBigDecimal(periodPaymentRate, data.getPeriodPaymentRate());
+        assertEqualBigDecimal(discountProposed, data.getDiscountProposed());
+        assertEquals(submittedOnDate, data.getSubmittedOnDate());
+        assertNotNull(data.getDisbursementDetails());
+        assertFalse(data.getDisbursementDetails().isEmpty(), "disbursementDetails should not be empty");
+        assertEquals(expectedDisbursementDate, data.getDisbursementDetails().getFirst().getExpectedDisbursementDate());
+        assertNotNull(data.getTimeline());
+        final GetWorkingCapitalLoansLoanIdTimeline timeline = data.getTimeline();
+        assertEquals(submittedOnDate, timeline.getSubmittedOnDate());
+        assertEquals(expectedDisbursementDate, timeline.getExpectedDisbursementDate());
+        assertNotNull(timeline.getDisbursementDetails());
+        assertFalse(timeline.getDisbursementDetails().isEmpty(), "timeline.disbursementDetails should not be empty");
+        assertEquals(expectedDisbursementDate, timeline.getDisbursementDetails().getFirst().getExpectedDisbursementDate());
+        assertEquals(repaymentEvery.intValue(), data.getRepaymentEvery());
+        assert data.getRepaymentFrequencyType() != null;
+        assertEquals(repaymentFrequencyType, data.getRepaymentFrequencyType().getCode());
+        assertNotNull(data.getStatus());
+        assertEquals("loanStatusType.submitted.and.pending.approval", data.getStatus().getCode());
+        assertNotNull(data.getProduct().getName());
+        assertFalse(data.getProduct().getName().isBlank());
+        assertNotNull(data.getClient().getDisplayName());
+        assertFalse(data.getClient().getDisplayName().isBlank());
+        if (data.getPaymentAllocation() != null) {
+            assertFalse(data.getPaymentAllocation().isEmpty());
         }
-        if (data.has("delinquencyGraceDays") && !data.get("delinquencyGraceDays").isJsonNull()) {
-            assertEquals(delinquencyGraceDays.intValue(), data.get("delinquencyGraceDays").getAsInt());
+        if (data.getDelinquencyGraceDays() != null) {
+            assertEquals(delinquencyGraceDays.intValue(), data.getDelinquencyGraceDays());
         }
-        if (data.has("delinquencyStartType") && !data.get("delinquencyStartType").isJsonNull()) {
-            assertDelinquencyStartTypeEquals(delinquencyStartType, data.get("delinquencyStartType"));
-        }
-    }
-
-    private static String getExternalIdString(final JsonObject data) {
-        if (!data.has("externalId") || data.get("externalId").isJsonNull()) {
-            return null;
-        }
-        if (data.get("externalId").isJsonObject()) {
-            return data.getAsJsonObject("externalId").has("value") ? data.getAsJsonObject("externalId").get("value").getAsString() : null;
-        }
-        return data.get("externalId").getAsString();
-    }
-
-    private static void assertEqualBigDecimal(final BigDecimal expected, final JsonElement actual) {
-        assertNotNull(actual, "Expected value for field");
-        assertFalse(actual.isJsonNull(), "Expected non-null value");
-        assertEquals(0, expected.compareTo(actual.getAsJsonPrimitive().getAsBigDecimal()),
-                "Expected " + expected + " but got " + actual.getAsString());
-    }
-
-    private static void assertDateEquals(final LocalDate expected, final JsonElement actual) {
-        assertNotNull(actual, "Expected date value");
-        assertFalse(actual.isJsonNull(), "Expected non-null date");
-        if (actual.isJsonArray()) {
-            final JsonArray arr = actual.getAsJsonArray();
-            assertEquals(expected.getYear(), arr.get(0).getAsInt());
-            assertEquals(expected.getMonthValue(), arr.get(1).getAsInt());
-            assertEquals(expected.getDayOfMonth(), arr.get(2).getAsInt());
-        } else {
-            assertEquals(expected.format(DateTimeFormatter.ISO_LOCAL_DATE), actual.getAsString());
-        }
-    }
-
-    private static void assertRepaymentFrequencyTypeEquals(final String expectedCode, final JsonElement actual) {
-        assertNotNull(actual);
-        if (actual.isJsonObject()) {
-            final JsonObject obj = actual.getAsJsonObject();
-            String code = obj.has("code") ? obj.get("code").getAsString() : null;
-            if (code == null && obj.has("value")) {
-                code = obj.get("value").getAsString();
-            }
-            assertNotNull(code);
-            assertTrue(expectedCode.equalsIgnoreCase(code) || obj.toString().contains(expectedCode),
-                    "Expected repaymentFrequencyType " + expectedCode + " but got " + obj);
-        }
-    }
-
-    private static void assertDelinquencyStartTypeEquals(final String expectedCode, final JsonElement actual) {
-        assertNotNull(actual);
-        if (actual.isJsonObject()) {
-            final JsonObject obj = actual.getAsJsonObject();
-            String code = obj.has("code") ? obj.get("code").getAsString() : null;
-            if (code == null && obj.has("value")) {
-                code = obj.get("value").getAsString();
-            }
-            assertNotNull(code);
-            assertTrue(expectedCode.equalsIgnoreCase(code) || obj.toString().contains(expectedCode),
-                    "Expected delinquencyStartType " + expectedCode + " but got " + obj);
+        if (data.getDelinquencyStartType() != null) {
+            assertEquals(delinquencyStartType, data.getDelinquencyStartType().getCode());
         }
     }
 
@@ -1126,13 +1033,14 @@ public class WorkingCapitalLoanApplicationCRUDTest {
 
     private Long createBreach(final String name, final Integer breachFrequency, final String breachFrequencyType,
             final String breachAmountCalculationType, final BigDecimal breachAmount) {
-        final JsonObject payload = new JsonObject();
-        payload.addProperty("name", name);
-        payload.addProperty("breachFrequency", breachFrequency);
-        payload.addProperty("breachFrequencyType", breachFrequencyType);
-        payload.addProperty("breachAmountCalculationType", breachAmountCalculationType);
-        payload.addProperty("breachAmount", breachAmount);
-        return breachHelper.create(payload);
+        return breachHelper.create(
+                new WorkingCapitalBreachRequest().name(name).breachFrequency(breachFrequency).breachFrequencyType(breachFrequencyType)
+                        .breachAmountCalculationType(breachAmountCalculationType).breachAmount(breachAmount));
+    }
+
+    private static void assertEqualBigDecimal(final BigDecimal expected, final BigDecimal actual) {
+        assertNotNull(actual, "Expected non-null BigDecimal");
+        assertEquals(0, expected.compareTo(actual), "Expected " + expected + " but got " + actual);
     }
 
     private Long createClient() {

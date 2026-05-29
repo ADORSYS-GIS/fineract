@@ -21,12 +21,9 @@ package org.apache.fineract.integrationtests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -35,8 +32,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.ProjectedAmortizationScheduleData;
+import org.apache.fineract.client.models.ProjectedAmortizationSchedulePaymentData;
 import org.apache.fineract.infrastructure.event.external.data.ExternalEventResponse;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignExternalEventHelper;
 import org.apache.fineract.integrationtests.common.BusinessDateHelper;
@@ -117,14 +119,13 @@ public class WorkingCapitalLoanRepaymentTest {
                 () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
                         BigDecimal.valueOf(5200), null, "repayment", 1, "repayment-account")));
 
-        final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
         assertStatus(loanData, "loanStatusType.overpaid");
-        assertEqualBigDecimal(BigDecimal.ZERO, loanData.getAsJsonObject("balance").get("principalOutstanding"));
-        assertEqualBigDecimal(BigDecimal.valueOf(100), loanData.getAsJsonObject("balance").get("overpaymentAmount"));
-        final JsonArray content = JsonParser.parseString(loanHelper.retrieveTransactionsByLoanIdRaw(loanId)).getAsJsonObject()
-                .getAsJsonArray("content");
+        assert loanData.getBalance() != null;
+        assertEqualBigDecimal(BigDecimal.ZERO, loanData.getBalance().getPrincipalOutstanding());
+        assertEqualBigDecimal(BigDecimal.valueOf(100), loanData.getBalance().getOverpaymentAmount());
         // expected transactions: disburse, discount fee, repayment
-        assertEquals(3, content.size());
+        assertEquals(3, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanIdRaw(loanId).getContent()).size());
     }
 
     @Test
@@ -252,9 +253,7 @@ public class WorkingCapitalLoanRepaymentTest {
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> loanHelper.makeRepaymentByLoanExternalId(loanExternalId, WorkingCapitalLoanDisbursementTestBuilder
                         .buildRepaymentJson(repaymentDate, BigDecimal.valueOf(100), null, "repayment", 1, "repayment-account")));
-        final JsonArray content = JsonParser.parseString(loanHelper.retrieveTransactionsByLoanIdRaw(loanId)).getAsJsonObject()
-                .getAsJsonArray("content");
-        assertEquals(2, content.size());
+        assertEquals(2, Objects.requireNonNull(loanHelper.retrieveTransactionsByLoanIdRaw(loanId).getContent()).size());
     }
 
     @Test
@@ -285,9 +284,10 @@ public class WorkingCapitalLoanRepaymentTest {
         BusinessDateHelper.runAt(repaymentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")),
                 () -> loanHelper.makeRepaymentByLoanId(loanId, WorkingCapitalLoanDisbursementTestBuilder.buildRepaymentJson(repaymentDate,
                         BigDecimal.valueOf(5000), null, "full payoff", 1, "repayment-account")));
-        final JsonObject loanData = JsonParser.parseString(loanHelper.retrieveById(loanId)).getAsJsonObject();
+        final GetWorkingCapitalLoansLoanIdResponse loanData = loanHelper.retrieveById(loanId);
         assertStatus(loanData, "loanStatusType.closed.obligations.met");
-        assertEqualBigDecimal(BigDecimal.ZERO, loanData.getAsJsonObject("balance").get("principalOutstanding"));
+        assert loanData.getBalance() != null;
+        assertEqualBigDecimal(BigDecimal.ZERO, loanData.getBalance().getPrincipalOutstanding());
     }
 
     @Test
@@ -312,20 +312,19 @@ public class WorkingCapitalLoanRepaymentTest {
                                     "reference-schedule-day-" + repaymentDay, 1, "repayment-account")));
         }
 
-        final JsonObject schedule = JsonParser.parseString(loanHelper.retrieveAmortizationScheduleByLoanIdRaw(loanId)).getAsJsonObject();
-        assertEqualBigDecimal(BigDecimal.valueOf(1000), schedule.get("discountFeeAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(9000), schedule.get("netDisbursementAmount"));
-        assertEqualBigDecimal(BigDecimal.valueOf(100000), schedule.get("totalPaymentValue"));
-        assertEqualBigDecimal(new BigDecimal("0.18"), schedule.get("periodPaymentRate"));
-        assertEquals(360, schedule.get("npvDayCount").getAsInt());
-        assertTrue(schedule.get("expectedPaymentAmount").getAsBigDecimal().compareTo(BigDecimal.ZERO) > 0,
-                "expectedPaymentAmount should be positive");
+        final ProjectedAmortizationScheduleData schedule = loanHelper.retrieveAmortizationScheduleByLoanIdRaw(loanId);
+        assertEqualBigDecimal(BigDecimal.valueOf(1000), schedule.getDiscountFeeAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(9000), schedule.getNetDisbursementAmount());
+        assertEqualBigDecimal(BigDecimal.valueOf(100000), schedule.getTotalPaymentValue());
+        assertEqualBigDecimal(BigDecimal.valueOf(0.18), schedule.getPeriodPaymentRate());
+        assertEquals(360, schedule.getNpvDayCount());
+        assert schedule.getExpectedPaymentAmount() != null;
+        assertTrue(schedule.getExpectedPaymentAmount().compareTo(BigDecimal.ZERO) > 0, "expectedPaymentAmount should be positive");
 
-        final JsonArray payments = schedule.getAsJsonArray("payments");
-        final Map<LocalDate, JsonObject> paymentByDate = new HashMap<>();
-        for (final JsonElement paymentElement : payments) {
-            final JsonObject payment = paymentElement.getAsJsonObject();
-            paymentByDate.put(parseDate(payment.get("paymentDate")), payment);
+        final Map<LocalDate, ProjectedAmortizationSchedulePaymentData> paymentByDate = new HashMap<>();
+        assert schedule.getPayments() != null;
+        for (final ProjectedAmortizationSchedulePaymentData payment : schedule.getPayments()) {
+            paymentByDate.put(payment.getPaymentDate(), payment);
         }
         final List<ExpectedScheduleRow> expectedRows = buildExpectedScheduleRows();
         assertEquals(expectedRows.size(), paymentByDate.size(), "Fixture and API schedule row count differ");
@@ -349,70 +348,73 @@ public class WorkingCapitalLoanRepaymentTest {
         return loanId;
     }
 
-    private static void assertStatus(final JsonObject data, final String expectedStatusCode) {
-        assertTrue(data.has("status") && !data.get("status").isJsonNull());
-        assertEquals(expectedStatusCode, data.getAsJsonObject("status").get("code").getAsString());
+    private static void assertStatus(final GetWorkingCapitalLoansLoanIdResponse data, final String expectedStatusCode) {
+        assertNotNull(data.getStatus());
+        assertEquals(expectedStatusCode, data.getStatus().getCode());
     }
 
-    private static void assertEqualBigDecimal(final BigDecimal expected, final JsonElement actual) {
+    private static void assertEqualBigDecimal(final BigDecimal expected, final BigDecimal actual) {
         assertNotNull(actual);
-        assertFalse(actual.isJsonNull());
-        assertEquals(0, expected.compareTo(actual.getAsJsonPrimitive().getAsBigDecimal()));
+        assertEquals(0, expected.compareTo(actual));
     }
 
-    private static void assertScheduleRow(final JsonObject payment, final String expectedPaymentAmount,
+    private static void assertScheduleRow(final ProjectedAmortizationSchedulePaymentData payment, final String expectedPaymentAmount,
             final String expectedActualPaymentAmount, final String expectedDiscountFactor, final String expectedNpvValue,
             final String expectedBalance, final String expectedExpectedAmortization, final String expectedActualAmortization,
             final String expectedIncomeModification, final String expectedDeferredBalance, final String rowDateLabel) {
         assertNotNull(payment, "Expected payment row to exist for date " + rowDateLabel);
-        assertAmount(payment, "expectedPaymentAmount", expectedPaymentAmount, rowDateLabel);
-        assertAmountOrNull(payment, "actualPaymentAmount", expectedActualPaymentAmount, rowDateLabel);
+        assertAmount(payment, ProjectedAmortizationSchedulePaymentData::getExpectedPaymentAmount, "expectedPaymentAmount",
+                expectedPaymentAmount, rowDateLabel);
+        assertAmountOrNull(payment, ProjectedAmortizationSchedulePaymentData::getActualPaymentAmount, "actualPaymentAmount",
+                expectedActualPaymentAmount, rowDateLabel);
         assertDiscountFactor(payment, expectedDiscountFactor, rowDateLabel);
-        assertAmount(payment, "npvValue", expectedNpvValue, rowDateLabel);
-        assertAmount(payment, "balance", expectedBalance, rowDateLabel);
-        assertAmount(payment, "expectedAmortizationAmount", expectedExpectedAmortization, rowDateLabel);
-        assertAmountOrNull(payment, "actualAmortizationAmount", expectedActualAmortization, rowDateLabel);
-        assertAmountOrNull(payment, "incomeModification", expectedIncomeModification, rowDateLabel);
-        assertAmount(payment, "deferredBalance", expectedDeferredBalance, rowDateLabel);
+        assertAmount(payment, ProjectedAmortizationSchedulePaymentData::getNpvValue, "npvValue", expectedNpvValue, rowDateLabel);
+        assertAmount(payment, ProjectedAmortizationSchedulePaymentData::getBalance, "balance", expectedBalance, rowDateLabel);
+        assertAmount(payment, ProjectedAmortizationSchedulePaymentData::getExpectedAmortizationAmount, "expectedAmortizationAmount",
+                expectedExpectedAmortization, rowDateLabel);
+        assertAmountOrNull(payment, ProjectedAmortizationSchedulePaymentData::getActualAmortizationAmount, "actualAmortizationAmount",
+                expectedActualAmortization, rowDateLabel);
+        assertAmountOrNull(payment, ProjectedAmortizationSchedulePaymentData::getIncomeModification, "incomeModification",
+                expectedIncomeModification, rowDateLabel);
+        assertAmount(payment, ProjectedAmortizationSchedulePaymentData::getDeferredBalance, "deferredBalance", expectedDeferredBalance,
+                rowDateLabel);
     }
 
-    private static void assertDiscountFactor(final JsonObject payment, final String expectedDiscountFactor, final String rowDateLabel) {
-        final BigDecimal actual = payment.get("discountFactor").getAsBigDecimal();
+    private static void assertDiscountFactor(final ProjectedAmortizationSchedulePaymentData payment, final String expectedDiscountFactor,
+            final String rowDateLabel) {
+        final BigDecimal actual = payment.getDiscountFactor();
         final BigDecimal expected = new BigDecimal(expectedDiscountFactor);
         assertTrue(actual.subtract(expected).abs().compareTo(new BigDecimal("0.00000002")) <= 0,
                 "Unexpected discountFactor at " + rowDateLabel + ". expected=" + expected + ", actual=" + actual);
     }
 
-    private static void assertAmount(final JsonObject payment, final String field, final String expectedValue, final String rowDateLabel) {
+    private static void assertAmount(final ProjectedAmortizationSchedulePaymentData payment,
+            final java.util.function.Function<ProjectedAmortizationSchedulePaymentData, BigDecimal> fieldGetter, final String field,
+            final String expectedValue, final String rowDateLabel) {
         if (expectedValue == null) {
-            assertTrue(!payment.has(field) || payment.get(field).isJsonNull(), "Expected null for " + field + " at " + rowDateLabel);
+            assertNull(fieldGetter.apply(payment), "Expected null for " + field + " at " + rowDateLabel);
             return;
         }
-        assertTrue(payment.has(field) && !payment.get(field).isJsonNull(), "Expected non-null for " + field + " at " + rowDateLabel);
-        final BigDecimal actual = payment.get(field).getAsBigDecimal().setScale(2, RoundingMode.HALF_UP);
-        final BigDecimal expected = new BigDecimal(expectedValue).setScale(2, RoundingMode.HALF_UP);
+        final BigDecimal actual = fieldGetter.apply(payment);
+        assertNotNull(actual, "Expected non-null for " + field + " at " + rowDateLabel);
+        assertAmountValue(actual.setScale(2, RoundingMode.HALF_UP), new BigDecimal(expectedValue).setScale(2, RoundingMode.HALF_UP), field,
+                rowDateLabel);
+    }
+
+    private static void assertAmountValue(final BigDecimal actual, final BigDecimal expected, final String field,
+            final String rowDateLabel) {
         assertEquals(0, expected.compareTo(actual),
                 "Mismatch for " + field + " at " + rowDateLabel + ": expected=" + expected + ", actual=" + actual);
     }
 
-    private static void assertAmountOrNull(final JsonObject payment, final String field, final String expectedValue,
-            final String rowDateLabel) {
+    private static void assertAmountOrNull(final ProjectedAmortizationSchedulePaymentData payment,
+            final Function<ProjectedAmortizationSchedulePaymentData, BigDecimal> fieldGetter, final String field,
+            final String expectedValue, final String rowDateLabel) {
         if (expectedValue == null) {
-            assertTrue(!payment.has(field) || payment.get(field).isJsonNull(), "Expected null for " + field + " at " + rowDateLabel);
+            assertNull(fieldGetter.apply(payment), "Expected null for " + field + " at " + rowDateLabel);
             return;
         }
-        assertAmount(payment, field, expectedValue, rowDateLabel);
-    }
-
-    private static LocalDate parseDate(final JsonElement dateElement) {
-        if (dateElement == null || dateElement.isJsonNull()) {
-            return null;
-        }
-        if (dateElement.isJsonArray()) {
-            final JsonArray arr = dateElement.getAsJsonArray();
-            return LocalDate.of(arr.get(0).getAsInt(), arr.get(1).getAsInt(), arr.get(2).getAsInt());
-        }
-        return LocalDate.parse(dateElement.getAsString());
+        assertAmount(payment, fieldGetter, field, expectedValue, rowDateLabel);
     }
 
     private static List<ExpectedScheduleRow> buildExpectedScheduleRows() {
