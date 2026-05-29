@@ -40,7 +40,7 @@ jobs:
           validate-wrappers: true
 
       - name: Generate Javadocs
-        run: ./gradlew --no-daemon javadoc -x test -x cucumber -x doc -x buildJavaSdk
+        run: ./gradlew javadoc
 
       - name: Archive Javadoc reports
         if: failure()
@@ -82,7 +82,7 @@ jobs:
           validate-wrappers: true
 
       - name: Run Checkstyle
-        run: ./gradlew --no-daemon checkstyleMain checkstyleTest checkstyleJmh -x test -x cucumber -x doc -x javadoc -x javadocJar -x buildJavaSdk
+        run: ./gradlew checkstyleMain checkstyleTest checkstyleJmh
 
       - name: Archive Checkstyle reports
         if: failure()
@@ -124,7 +124,7 @@ jobs:
           validate-wrappers: true
 
       - name: Run RAT
-        run: ./gradlew --no-daemon rat -x test -x cucumber -x doc -x javadoc -x javadocJar -x buildJavaSdk
+        run: ./gradlew rat
 
       - name: Archive RAT reports
         if: failure()
@@ -166,7 +166,7 @@ jobs:
           validate-wrappers: true
 
       - name: Run SpotBugs
-        run: ./gradlew --no-daemon spotbugsMain spotbugsTest -x test -x cucumber -x doc -x javadoc -x javadocJar -x buildJavaSdk
+        run: ./gradlew spotbugsMain spotbugsTest
 
       - name: Archive SpotBugs reports
         if: failure()
@@ -208,4 +208,4 @@ jobs:
           validate-wrappers: true
 
       - name: Run Spotless
-        run: ./gradlew --no-daemon spotlessCheck -x test -x cucumber -x doc -x javadoc -x javadocJar -x buildJavaSdk
+        run: ./gradlew spotlessCheck
