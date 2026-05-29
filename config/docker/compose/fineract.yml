@@ -18,7 +18,7 @@
 
 services:
   fineract:
-    image: ghcr.io/adorsys-gis/fineract:e7799d161c0e4544c6710575c424efb1341677df
+    image: latest
     user: "${FINERACT_USER}:${FINERACT_GROUP}"
     volumes:
       - ${PWD}/config/docker/logback/logback-override.xml:/app/logback-override.xml
