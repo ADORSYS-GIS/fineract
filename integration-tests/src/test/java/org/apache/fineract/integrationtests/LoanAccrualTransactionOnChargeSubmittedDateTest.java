@@ -104,7 +104,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -152,7 +152,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             LocalDate futureDate = LocalDate.of(2023, 3, 4);
             final String nextAccrualRunDate = dateFormatter.format(futureDate);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate);
 
             // make repayment
             final PostLoansLoanIdTransactionsResponse repaymentTransaction_1 = loanTransactionHelper.makeLoanRepayment(loanExternalIdStr,
@@ -202,7 +202,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -251,7 +251,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             LocalDate futureDate = LocalDate.of(2023, 3, 4);
             final String nextAccrualRunDate = dateFormatter.format(futureDate);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate);
 
             // make repayment
             final PostLoansLoanIdTransactionsResponse repaymentTransaction_1 = loanTransactionHelper.makeLoanRepayment(loanExternalIdStr,
@@ -300,7 +300,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -339,7 +339,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(feeLoanChargeId);
 
             // Run cob job for business date + 1
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
 
             final String jobName = "Loan COB";
             schedulerJobHelper.executeAndAwaitJob(jobName);
@@ -351,7 +351,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             LocalDate futureDate = LocalDate.of(2023, 3, 4);
             final String nextAccrualRunDate = dateFormatter.format(futureDate);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate);
 
             // make repayment
             final PostLoansLoanIdTransactionsResponse repaymentTransaction_1 = loanTransactionHelper.makeLoanRepayment(loanExternalIdStr,
@@ -370,7 +370,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(feeLoanChargeId_1);
 
             // Run cob job for business date + 1
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate.plusDays(1));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate.plusDays(1));
             schedulerJobHelper.executeAndAwaitJob(jobName);
 
             // verify accrual transaction created for charges create date
@@ -401,7 +401,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -450,7 +450,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             LocalDate futureDate = LocalDate.of(2023, 3, 4);
             final String nextAccrualRunDate = dateFormatter.format(futureDate);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate);
 
             // make repayment
             final PostLoansLoanIdTransactionsResponse repaymentTransaction_1 = loanTransactionHelper.makeLoanRepayment(loanExternalIdStr,
@@ -499,7 +499,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -571,7 +571,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
             // Loan ExternalId
@@ -602,7 +602,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(penalty1LoanChargeId);
 
             // Run cob job for business date + 1
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
 
             final String jobName = "Loan COB";
             schedulerJobHelper.executeAndAwaitJob(jobName);
@@ -613,7 +613,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             // Set business date
             LocalDate futureDate = LocalDate.of(2023, 3, 4);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, futureDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, futureDate);
 
             loanTransactionHelper.disburseLoanWithTransactionAmount("04 March 2023", loanId, "300");
 
@@ -644,7 +644,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE,
                     new PutGlobalConfigurationsRequest().stringValue("submitted-date"));
 
@@ -664,7 +664,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             LocalDate chargeSubmittedDate = LocalDate.of(2023, 06, 12);
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, chargeSubmittedDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, chargeSubmittedDate);
 
             LocalDate chargeDueDate = LocalDate.of(2023, 07, 18);
             final String feeChargeDueDate = dateFormatter.format(chargeDueDate);
@@ -692,8 +692,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             this.loanRescheduleRequestHelper.approveLoanRescheduleRequest(loanRescheduleRequestId, aproveRequestJSON);
 
             // run cob
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE,
-                    chargeSubmittedDate.plusDays(1));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, chargeSubmittedDate.plusDays(1));
 
             // run inline cob for loan
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
@@ -703,7 +702,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             // update business date
             currentDate = LocalDate.of(2023, 07, 18);
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
 
             // make repayment
             final PostLoansLoanIdTransactionsResponse repaymentTransaction_1 = loanTransactionHelper.makeLoanRepayment(loanExternalIdStr,
@@ -712,7 +711,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
 
             // update business date
             currentDate = LocalDate.of(2023, 07, 19);
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
 
             // reverse repayment
             loanTransactionHelper.reverseRepayment(loanId, repaymentTransaction_1.getResourceId().intValue(), "19 July 2023");
@@ -730,7 +729,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(penalty1LoanChargeId);
 
             // update business date
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate.plusDays(1));
 
             // run inline cob for loan
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
