@@ -23,14 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
-import org.apache.fineract.client.feign.ObjectMapperFactory;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
+import org.apache.fineract.client.models.PaymentAllocationOrder;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest;
 import org.apache.fineract.client.models.PutWorkingCapitalLoanProductsProductIdRequest;
 import org.apache.fineract.integrationtests.common.Utils;
@@ -513,25 +511,11 @@ public class WorkingCapitalLoanProductValidationTest {
         // Given
         final PostWorkingCapitalLoanProductsRequest baseRequest = new WorkingCapitalLoanProductTestBuilder().build();
         // Set paymentAllocation with empty paymentAllocationOrder
-        final PostWorkingCapitalLoanProductsRequest request;
-        try {
-            final ObjectMapper objectMapper = ObjectMapperFactory.getShared();
-            final String requestJson = objectMapper.writeValueAsString(baseRequest);
-            final ObjectNode requestNode = (ObjectNode) objectMapper.readTree(requestJson);
-            final ArrayNode paymentAllocationArray = objectMapper.createArrayNode();
-            final ObjectNode paymentAllocationNode = objectMapper.createObjectNode();
-            paymentAllocationNode.put("transactionType", "DEFAULT");
-            paymentAllocationNode.set("paymentAllocationOrder", objectMapper.createArrayNode()); // Empty array
-            paymentAllocationArray.add(paymentAllocationNode);
-            requestNode.set("paymentAllocation", paymentAllocationArray);
-            request = objectMapper.treeToValue(requestNode, PostWorkingCapitalLoanProductsRequest.class);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Failed to set paymentAllocation with empty paymentAllocationOrder", e);
-        }
+        baseRequest.getPaymentAllocation().get(0).setPaymentAllocationOrder(List.of());
 
         // When & Then - Should throw CallFailedRuntimeException with status 400
         final CallFailedRuntimeException exception = assertThrows(CallFailedRuntimeException.class,
-                () -> wclProductHelper.createWorkingCapitalLoanProduct(request));
+                () -> wclProductHelper.createWorkingCapitalLoanProduct(baseRequest));
         assertEquals(400, exception.getStatus());
         assertNotNull(exception.getDeveloperMessage());
         assertEquals("Validation errors: [id] Payment allocation order cannot be empty", exception.getDeveloperMessage());
@@ -542,30 +526,12 @@ public class WorkingCapitalLoanProductValidationTest {
         // Given
         final PostWorkingCapitalLoanProductsRequest baseRequest = new WorkingCapitalLoanProductTestBuilder().build();
         // Set paymentAllocation with invalid allocation type
-        final PostWorkingCapitalLoanProductsRequest request;
-        try {
-            final ObjectMapper objectMapper = ObjectMapperFactory.getShared();
-            final String requestJson = objectMapper.writeValueAsString(baseRequest);
-            final ObjectNode requestNode = (ObjectNode) objectMapper.readTree(requestJson);
-            final ArrayNode paymentAllocationArray = objectMapper.createArrayNode();
-            final ObjectNode paymentAllocationNode = objectMapper.createObjectNode();
-            paymentAllocationNode.put("transactionType", "DEFAULT");
-            final ArrayNode paymentAllocationOrderArray = objectMapper.createArrayNode();
-            final ObjectNode orderItem = objectMapper.createObjectNode();
-            orderItem.put("paymentAllocationRule", "INVALID_TYPE");
-            orderItem.put("order", 1);
-            paymentAllocationOrderArray.add(orderItem);
-            paymentAllocationNode.set("paymentAllocationOrder", paymentAllocationOrderArray);
-            paymentAllocationArray.add(paymentAllocationNode);
-            requestNode.set("paymentAllocation", paymentAllocationArray);
-            request = objectMapper.treeToValue(requestNode, PostWorkingCapitalLoanProductsRequest.class);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Failed to set paymentAllocation with invalid type", e);
-        }
+        PaymentAllocationOrder paymentAllocationOrder = new PaymentAllocationOrder().order(1).paymentAllocationRule("DUE_PRINCIPAL");
+        baseRequest.getPaymentAllocation().get(0).setPaymentAllocationOrder(List.of(paymentAllocationOrder));
 
         // When & Then - Should throw CallFailedRuntimeException with status 400
         final CallFailedRuntimeException exception = assertThrows(CallFailedRuntimeException.class,
-                () -> wclProductHelper.createWorkingCapitalLoanProduct(request));
+                () -> wclProductHelper.createWorkingCapitalLoanProduct(baseRequest));
         assertEquals(400, exception.getStatus());
         assertNotNull(exception.getDeveloperMessage());
         assertEquals(

@@ -35,10 +35,10 @@ public final class DefaultProjectedAmortizationScheduleCalculator implements Pro
     @Override
     @NonNull
     public ProjectedAmortizationScheduleModel generateModel(@NonNull final BigDecimal discountFeeAmount,
-            @NonNull final BigDecimal netDisbursementAmount, @NonNull final BigDecimal totalPaymentValue,
+            @NonNull final BigDecimal netDisbursementAmount, @NonNull final BigDecimal totalPaymentVolume,
             @NonNull final BigDecimal periodPaymentRate, final int npvDayCount, @NonNull final LocalDate expectedDisbursementDate,
             @NonNull final MathContext mc, @NonNull final CurrencyData currency) {
-        return ProjectedAmortizationScheduleModel.generate(discountFeeAmount, netDisbursementAmount, totalPaymentValue, periodPaymentRate,
+        return ProjectedAmortizationScheduleModel.generate(discountFeeAmount, netDisbursementAmount, totalPaymentVolume, periodPaymentRate,
                 npvDayCount, expectedDisbursementDate, mc, currency);
     }
 

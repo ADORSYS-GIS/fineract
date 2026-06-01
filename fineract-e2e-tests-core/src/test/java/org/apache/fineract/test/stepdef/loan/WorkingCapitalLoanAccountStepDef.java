@@ -59,6 +59,7 @@ import org.apache.fineract.client.models.GetDisbursementDetail;
 import org.apache.fineract.client.models.GetJournalEntriesTransactionIdResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
 import org.apache.fineract.client.models.JournalEntryTransactionItem;
 import org.apache.fineract.client.models.LoanTransactionEnumData;
@@ -144,13 +145,13 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = rawData.get(0);
         final String expectedDisbursementDate = rawData.get(1);
         final String principal = rawData.get(2);
-        final String totalPayment = rawData.get(3);
+        final String totalPaymentVolume = rawData.get(3);
         final String periodPaymentRate = rawData.get(4);
         final String discount = rawData.get(5);
 
         final PostWorkingCapitalLoansRequest loansRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId)
                 .productId(loanProductId).submittedOnDate(submittedOnDate).expectedDisbursementDate(expectedDisbursementDate)
-                .principalAmount(new BigDecimal(principal)).totalPayment(new BigDecimal(totalPayment))
+                .principalAmount(new BigDecimal(principal)).totalPaymentVolume(new BigDecimal(totalPaymentVolume))
                 .periodPaymentRate(new BigDecimal(periodPaymentRate))
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);
         testContext().set(TestContextKey.LOAN_CREATE_REQUEST, loansRequest);
@@ -199,7 +200,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = loanData.get(1);
         final String expectedDisbursementDate = loanData.get(2);
         final String principal = loanData.get(3);
-        final String totalPayment = loanData.get(4);
+        final String totalPaymentVolume = loanData.get(4);
         final String periodPaymentRate = loanData.get(5);
         final String discount = loanData.get(6);
         final String delinquencyBucketId = loanData.get(7);
@@ -211,7 +212,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
         final PostWorkingCapitalLoansRequest loansRequest = workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansRequest(clientId)
                 .productId(loanProductId).submittedOnDate(submittedOnDate).expectedDisbursementDate(expectedDisbursementDate)
-                .principalAmount(new BigDecimal(principal)).totalPayment(new BigDecimal(totalPayment))
+                .principalAmount(new BigDecimal(principal)).totalPaymentVolume(new BigDecimal(totalPaymentVolume))
                 .periodPaymentRate(new BigDecimal(periodPaymentRate))
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null)
                 .delinquencyBucketId(
@@ -285,7 +286,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = loanData.get(1);
         final String expectedDisbursementDate = loanData.get(2);
         final String principal = loanData.get(3);
-        final String totalPayment = loanData.get(4);
+        final String totalPaymentVolume = loanData.get(4);
         final String periodPaymentRate = loanData.get(5);
         final String discount = loanData.get(6);
 
@@ -297,7 +298,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .expectedDisbursementDate(
                         expectedDisbursementDate != null && !expectedDisbursementDate.isEmpty() ? expectedDisbursementDate : null)
                 .principalAmount(principal != null && !principal.isEmpty() ? new BigDecimal(principal) : null)
-                .totalPayment(totalPayment != null && !totalPayment.isEmpty() ? new BigDecimal(totalPayment) : null)
+                .totalPaymentVolume(totalPaymentVolume != null && !totalPaymentVolume.isEmpty() ? new BigDecimal(totalPaymentVolume) : null)
                 .periodPaymentRate(periodPaymentRate != null && !periodPaymentRate.isEmpty() ? new BigDecimal(periodPaymentRate) : null)
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);
 
@@ -314,10 +315,10 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                     .contains("The parameter `principalAmount` is mandatory.");
         }
 
-        if (totalPayment == null || totalPayment.isEmpty()) {
-            log.info("Checking for totalPayment error: The parameter `totalPayment` is mandatory.");
-            assertThat(exception.getMessage()).as("Should contain totalPayment mandatory error")
-                    .contains("The parameter `totalPayment` is mandatory.");
+        if (totalPaymentVolume == null || totalPaymentVolume.isEmpty()) {
+            log.info("Checking for totalPaymentVolume error: The parameter `totalPaymentVolume` is mandatory.");
+            assertThat(exception.getMessage()).as("Should contain totalPaymentVolume mandatory error")
+                    .contains("The parameter `totalPaymentVolume` is mandatory.");
         }
 
         if (periodPaymentRate == null || periodPaymentRate.isEmpty()) {
@@ -1160,9 +1161,9 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final PostWorkingCapitalLoansResponse loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         final Long loanId = loanResponse.getLoanId();
 
-        final GetWorkingCapitalLoansLoanIdResponse loanDetailsResponse = ok(
-                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
-        final GetWorkingCapitalLoanTransactionIdResponse disbursementTransaction = loanDetailsResponse.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionsResponse loanTransactionsResponse = ok(
+                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTransactionsById(loanId));
+        final GetWorkingCapitalLoanTransactionIdResponse disbursementTransaction = loanTransactionsResponse.getContent().stream()
                 .filter(t -> t.getType() != null && "loanTransactionType.disbursement".equals(t.getType().getCode())
                         && !Boolean.TRUE.equals(t.getReversed()))
                 .reduce((first, second) -> second).orElseThrow(() -> new IllegalStateException("Disbursement transaction not found"));
@@ -1298,8 +1299,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     @And("Working Capital Loan has transactions:")
     public void workingCapitalLoanHasTransactions(final DataTable dataTable) throws InvocationTargetException, IllegalAccessException {
-        GetWorkingCapitalLoansLoanIdResponse getWorkingCapitalLoansLoanIdResponse = retrieveLoanDetails(getCreatedLoanId());
-        List<GetWorkingCapitalLoanTransactionIdResponse> actualTransactions = getWorkingCapitalLoansLoanIdResponse.getTransactions();
+        GetWorkingCapitalLoanTransactionsResponse getWorkingCapitalLoansLoanIdResponse = retrieveLoanTransactions(getCreatedLoanId());
+        List<GetWorkingCapitalLoanTransactionIdResponse> actualTransactions = getWorkingCapitalLoansLoanIdResponse.getContent();
         assertTable(GetWorkingCapitalLoanTransactionIdResponse.class, dataTable, actualTransactions);
     }
 
@@ -1545,14 +1546,14 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                     actualValues.add(response.getDisbursementDetails() == null || response.getDisbursementDetails().isEmpty() ? null
                             : response.getDisbursementDetails().getFirst().getExpectedDisbursementDate().toString());
                 case "status" -> actualValues.add(response.getStatus() == null ? null : response.getStatus().getValue());
-                case "principal" ->
-                    actualValues.add(response.getBalance() == null || response.getBalance().getPrincipalOutstanding() == null ? null
-                            : new Utils.DoubleFormatter(response.getBalance().getPrincipalOutstanding().doubleValue()).format());
+                case "proposedPrincipal" -> actualValues.add(response.getProposedPrincipal() == null ? null
+                        : new Utils.DoubleFormatter(response.getProposedPrincipal().doubleValue()).format());
+                case "principal" -> actualValues.add(response.getBalance() == null || response.getBalance().getPrincipal() == null ? null
+                        : new Utils.DoubleFormatter(response.getBalance().getPrincipal().doubleValue()).format());
                 case "approvedPrincipal" -> actualValues.add(response.getApprovedPrincipal() == null ? "0"
                         : new Utils.DoubleFormatter(response.getApprovedPrincipal().doubleValue()).format());
-                case "totalPayment" ->
-                    actualValues.add(response.getBalance() == null || response.getBalance().getTotalPayment() == null ? null
-                            : new Utils.DoubleFormatter(response.getBalance().getTotalPayment().doubleValue()).format());
+                case "totalPaymentVolume" -> actualValues.add(response.getTotalPaymentVolume() == null ? null
+                        : new Utils.DoubleFormatter(response.getTotalPaymentVolume().doubleValue()).format());
                 case "periodPaymentRate" -> actualValues.add(response.getPeriodPaymentRate() == null ? null
                         : new Utils.DoubleFormatter(response.getPeriodPaymentRate().doubleValue()).format());
                 case "discount" -> actualValues.add(
@@ -1562,17 +1563,19 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 case "discountApproved" -> actualValues.add(response.getDiscountApproved() == null ? "null"
                         : new Utils.DoubleFormatter(response.getDiscountApproved().doubleValue()).format());
                 case "totalPaidPrincipal" ->
-                    actualValues.add(response.getBalance() == null || response.getBalance().getTotalPaidPrincipal() == null ? null
-                            : new Utils.DoubleFormatter(response.getBalance().getTotalPaidPrincipal().doubleValue()).format());
+                    actualValues.add(response.getBalance() == null || response.getBalance().getPrincipalPaid() == null ? null
+                            : new Utils.DoubleFormatter(response.getBalance().getPrincipalPaid().doubleValue()).format());
                 case "overpaymentAmount" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getOverpaymentAmount() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getOverpaymentAmount().doubleValue()).format());
                 case "realizedIncome" ->
-                    actualValues.add(response.getBalance() == null || response.getBalance().getRealizedIncome() == null ? null
-                            : new Utils.DoubleFormatter(response.getBalance().getRealizedIncome().doubleValue()).format());
+                    actualValues.add(response.getBalance() == null || response.getBalance().getRealizedIncomeFromDiscountFee() == null
+                            ? null
+                            : new Utils.DoubleFormatter(response.getBalance().getRealizedIncomeFromDiscountFee().doubleValue()).format());
                 case "unrealizedIncome" ->
-                    actualValues.add(response.getBalance() == null || response.getBalance().getUnrealizedIncome() == null ? null
-                            : new Utils.DoubleFormatter(response.getBalance().getUnrealizedIncome().doubleValue()).format());
+                    actualValues.add(response.getBalance() == null || response.getBalance().getUnrealizedIncomeFromDiscountFee() == null
+                            ? null
+                            : new Utils.DoubleFormatter(response.getBalance().getUnrealizedIncomeFromDiscountFee().doubleValue()).format());
                 default -> throw new IllegalStateException(String.format("Header name %s cannot be found", headerName));
             }
         }
@@ -1584,7 +1587,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = loanData.get(1);
         final String expectedDisbursementDate = loanData.get(2);
         final String principal = loanData.get(3);
-        final String totalPayment = loanData.get(4);
+        final String totalPaymentVolume = loanData.get(4);
         final String periodPaymentRate = loanData.get(5);
         final String discount = loanData.get(6);
 
@@ -1593,7 +1596,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate)//
                 .expectedDisbursementDate(expectedDisbursementDate)//
                 .principalAmount(new BigDecimal(principal))//
-                .totalPayment(new BigDecimal(totalPayment))//
+                .totalPaymentVolume(new BigDecimal(totalPaymentVolume))//
                 .periodPaymentRate(new BigDecimal(periodPaymentRate))//
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);//
     }
@@ -1603,7 +1606,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = loanData.get(1);
         final String expectedDisbursementDate = loanData.get(2);
         final String principal = loanData.get(3);
-        final String totalPayment = loanData.get(4);
+        final String totalPaymentVolume = loanData.get(4);
         final String periodPaymentRate = loanData.get(5);
         // final String discount = loanData.get(6);
 
@@ -1612,7 +1615,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate)//
                 .expectedDisbursementDate(expectedDisbursementDate)//
                 .principalAmount(new BigDecimal(principal))//
-                .totalPayment(new BigDecimal(totalPayment))//
+                .totalPaymentVolume(new BigDecimal(totalPaymentVolume))//
                 .periodPaymentRate(new BigDecimal(periodPaymentRate));//
         // .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);//
     }
@@ -1621,7 +1624,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final String submittedOnDate = loanData.get(0);
         final String expectedDisbursementDate = loanData.get(1);
         final String principal = loanData.get(2);
-        final String totalPayment = loanData.get(3);
+        final String totalPaymentVolume = loanData.get(3);
         final String periodPaymentRate = loanData.get(4);
         final String discount = loanData.get(5);
 
@@ -1630,7 +1633,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .expectedDisbursementDate(
                         expectedDisbursementDate != null && !expectedDisbursementDate.isEmpty() ? expectedDisbursementDate : null)
                 .principalAmount(principal != null && !principal.isEmpty() ? new BigDecimal(principal) : null)
-                .totalPayment(totalPayment != null && !totalPayment.isEmpty() ? new BigDecimal(totalPayment) : null)
+                .totalPaymentVolume(totalPaymentVolume != null && !totalPaymentVolume.isEmpty() ? new BigDecimal(totalPaymentVolume) : null)
                 .periodPaymentRate(periodPaymentRate != null && !periodPaymentRate.isEmpty() ? new BigDecimal(periodPaymentRate) : null)
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);
     }
@@ -1757,7 +1760,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(row.get("submittedOnDate")) //
                 .expectedDisbursementDate(row.get("expectedDisbursementDate")) //
                 .principalAmount(new BigDecimal(row.get("principalAmount"))) //
-                .totalPayment(new BigDecimal(row.get("totalPayment"))) //
+                .totalPaymentVolume(new BigDecimal(row.get("totalPaymentVolume"))) //
                 .periodPaymentRate(new BigDecimal(row.get("periodPaymentRate"))) //
                 .discount(Optional.ofNullable(row.get("discount")).filter(s -> !s.isEmpty()).map(BigDecimal::new).orElse(null));
     }
@@ -1852,7 +1855,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate) //
                 .expectedDisbursementDate(submittedOnDate) //
                 .principalAmount(new BigDecimal("100")) //
-                .totalPayment(new BigDecimal("100")) //
+                .totalPaymentVolume(new BigDecimal("100")) //
                 .periodPaymentRate(new BigDecimal("1")) //
                 .discount(BigDecimal.ZERO) //
                 .breachId(breachId);
@@ -1877,7 +1880,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate) //
                 .expectedDisbursementDate(submittedOnDate) //
                 .principalAmount(new BigDecimal("100")) //
-                .totalPayment(new BigDecimal("100")) //
+                .totalPaymentVolume(new BigDecimal("100")) //
                 .periodPaymentRate(new BigDecimal("1")) //
                 .discount(null) //
                 .breachId(overrideBreachId);
@@ -1933,7 +1936,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate) //
                 .expectedDisbursementDate(submittedOnDate) //
                 .principalAmount(new BigDecimal("100")) //
-                .totalPayment(new BigDecimal("100")) //
+                .totalPaymentVolume(new BigDecimal("100")) //
                 .periodPaymentRate(new BigDecimal("1")) //
                 .discount(BigDecimal.ZERO);
     }
@@ -1946,7 +1949,7 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .submittedOnDate(submittedOnDate) //
                 .expectedDisbursementDate(submittedOnDate) //
                 .principalAmount(new BigDecimal("100")) //
-                .totalPayment(new BigDecimal("100")) //
+                .totalPaymentVolume(new BigDecimal("100")) //
                 .periodPaymentRate(new BigDecimal("1")) //
                 .discount(BigDecimal.ZERO);
     }
@@ -2510,10 +2513,9 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         final BigDecimal actual = switch (field) {
             case "overpaymentAmount" -> balance.getOverpaymentAmount();
             case "principalOutstanding" -> balance.getPrincipalOutstanding();
-            case "totalPaidPrincipal" -> balance.getTotalPaidPrincipal();
-            case "totalPayment" -> balance.getTotalPayment();
-            case "realizedIncome" -> balance.getRealizedIncome();
-            case "unrealizedIncome" -> balance.getUnrealizedIncome();
+            case "totalPaidPrincipal" -> balance.getPrincipalPaid();
+            case "realizedIncome" -> balance.getRealizedIncomeFromDiscountFee();
+            case "unrealizedIncome" -> balance.getUnrealizedIncomeFromDiscountFee();
             default -> throw new IllegalArgumentException("Unknown balance field: " + field);
         };
         assertNotNull(actual, "Balance field " + field + " should not be null");
@@ -2531,8 +2533,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     @Then("Verify Working Capital loan credit balance refund transaction has type {string} and externalId {string}")
     public void verifyCreditBalanceRefundTransactionHasTypeAndExternalId(final String expectedType, final String expectedExternalId) {
         final String resolvedExternalId = resolveExternalIdSlot(expectedExternalId);
-        final GetWorkingCapitalLoansLoanIdResponse loan = retrieveLoanDetails(getCreatedLoanId());
-        final GetWorkingCapitalLoanTransactionIdResponse cbr = loan.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionsResponse loan = retrieveLoanTransactions(getCreatedLoanId());
+        final GetWorkingCapitalLoanTransactionIdResponse cbr = loan.getContent().stream()
                 .filter(t -> resolvedExternalId.equals(t.getExternalId())).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No WC loan transaction with externalId " + resolvedExternalId));
         final String typeCode = cbr.getType() == null ? null : cbr.getType().getCode();
@@ -2632,8 +2634,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
     }
 
     private GetWorkingCapitalLoanTransactionIdResponse latestCreditBalanceRefundTransaction() {
-        final GetWorkingCapitalLoansLoanIdResponse loan = retrieveLoanDetails(getCreatedLoanId());
-        return loan.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionsResponse loanTransactionsResponse = retrieveLoanTransactions(getCreatedLoanId());
+        return loanTransactionsResponse.getContent().stream()
                 .filter(t -> t.getType() != null && "loanTransactionType.creditBalanceRefund".equals(t.getType().getCode())
                         && !Boolean.TRUE.equals(t.getReversed()))
                 .reduce((first, second) -> second).orElseThrow(() -> new IllegalStateException("No CBR transaction on loan"));
@@ -2744,11 +2746,10 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     private List<GetWorkingCapitalLoanTransactionIdResponse> findMatchingTransactions(Long loanId, TransactionType transactionType,
             String transactionDate, boolean reversed) {
-        GetWorkingCapitalLoansLoanIdResponse loanDetailsResponse = ok(
-                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
+        GetWorkingCapitalLoanTransactionsResponse loanTransactionsResponse = retrieveLoanTransactions(loanId);
 
         String expectedCode = "loanTransactionType." + transactionType.getValue();
-        return loanDetailsResponse.getTransactions().stream()
+        return loanTransactionsResponse.getContent().stream()
                 .filter(t -> t.getType() != null && transactionDate.equals(DATE_FORMATTER.format(t.getTransactionDate()))
                         && expectedCode.equals(t.getType().getCode())
                         && (reversed ? Boolean.TRUE.equals(t.getReversed()) : !Boolean.TRUE.equals(t.getReversed())))
@@ -2848,6 +2849,10 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
             }
         }
         return actualValues;
+    }
+
+    private GetWorkingCapitalLoanTransactionsResponse retrieveLoanTransactions(Long loanId) {
+        return fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTransactionsById(loanId);
     }
 
 }

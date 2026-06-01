@@ -45,7 +45,7 @@ import org.apache.fineract.client.models.GetLoansLoanIdDelinquencyPausePeriod;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdTransactions;
 import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
-import org.apache.fineract.client.models.GetWorkingCapitalLoansLoanIdResponse;
+import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionsResponse;
 import org.apache.fineract.client.models.GlobalConfigurationPropertyData;
 import org.apache.fineract.client.models.PageExternalTransferData;
 import org.apache.fineract.client.models.PostClientsResponse;
@@ -307,13 +307,13 @@ public class EventCheckHelper {
 
     public void workingCapitalLoanDisbursalTransactionEventCheck(final Long loanId, final BigDecimal expectedAmount) {
         waitForTransactionCommit();
-        final GetWorkingCapitalLoansLoanIdResponse body = ok(
-                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
-        if (body.getTransactions() == null || body.getTransactions().isEmpty()) {
+        final GetWorkingCapitalLoanTransactionsResponse body = ok(
+                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTransactionsById(loanId));
+        if (body.getContent() == null || body.getContent().isEmpty()) {
             throw new IllegalStateException("No Working Capital Loan transactions found");
         }
 
-        final GetWorkingCapitalLoanTransactionIdResponse disbursementTransaction = body.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionIdResponse disbursementTransaction = body.getContent().stream()
                 .filter(t -> t.getType() != null && "loanTransactionType.disbursement".equals(t.getType().getCode())
                         && !Boolean.TRUE.equals(t.getReversed()))
                 .reduce((first, second) -> second).orElseThrow(() -> new IllegalStateException("Disbursement transaction not found"));
@@ -327,13 +327,13 @@ public class EventCheckHelper {
 
     public void workingCapitalLoanCreditBalanceRefundTransactionEventCheck(final Long loanId, final BigDecimal expectedAmount) {
         waitForTransactionCommit();
-        final GetWorkingCapitalLoansLoanIdResponse body = ok(
-                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
-        if (body.getTransactions() == null || body.getTransactions().isEmpty()) {
+        final GetWorkingCapitalLoanTransactionsResponse body = ok(
+                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTransactionsById(loanId));
+        if (body.getContent() == null || body.getContent().isEmpty()) {
             throw new IllegalStateException("No Working Capital Loan transactions found");
         }
 
-        final GetWorkingCapitalLoanTransactionIdResponse cbrTransaction = body.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionIdResponse cbrTransaction = body.getContent().stream()
                 .filter(t -> t.getType() != null && "loanTransactionType.creditBalanceRefund".equals(t.getType().getCode())
                         && !Boolean.TRUE.equals(t.getReversed()))
                 .reduce((first, second) -> second)
@@ -352,13 +352,13 @@ public class EventCheckHelper {
 
     public void workingCapitalLoanUndoDisbursalTransactionEventCheck(final Long loanId, final BigDecimal expectedAmount) {
         waitForTransactionCommit();
-        final GetWorkingCapitalLoansLoanIdResponse body = ok(
-                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
-        if (body.getTransactions() == null || body.getTransactions().isEmpty()) {
+        final GetWorkingCapitalLoanTransactionsResponse body = ok(
+                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTransactionsById(loanId));
+        if (body.getContent() == null || body.getContent().isEmpty()) {
             throw new IllegalStateException("No Working Capital Loan transactions found");
         }
 
-        final GetWorkingCapitalLoanTransactionIdResponse reversedDisbursementTransaction = body.getTransactions().stream()
+        final GetWorkingCapitalLoanTransactionIdResponse reversedDisbursementTransaction = body.getContent().stream()
                 .filter(t -> t.getType() != null && "loanTransactionType.disbursement".equals(t.getType().getCode())
                         && Boolean.TRUE.equals(t.getReversed()))
                 .reduce((first, second) -> second)
