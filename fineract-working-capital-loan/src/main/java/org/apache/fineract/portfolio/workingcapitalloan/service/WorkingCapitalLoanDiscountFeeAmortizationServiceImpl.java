@@ -30,6 +30,7 @@ import org.apache.fineract.portfolio.workingcapitalloan.accounting.WorkingCapita
 import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleModel;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
+import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanBalanceRepository;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanTransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements WorkingCapitalLoanDiscountFeeAmortizationService {
 
     private final WorkingCapitalLoanTransactionRepository transactionRepository;
+    private final WorkingCapitalLoanBalanceRepository balanceRepository;
     private final WorkingCapitalLoanAccountingProcessor accountingProcessor;
     private final ExternalIdFactory externalIdFactory;
     private final ProjectedAmortizationScheduleRepositoryWrapper scheduleRepositoryWrapper;
@@ -76,5 +78,4 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
         return scheduleRepositoryWrapper.readModel(loan.getId(), mc, WorkingCapitalLoanCurrencyResolver.resolveCurrency(loan))
                 .map(ProjectedAmortizationScheduleModel::totalActualAmortization).orElse(BigDecimal.ZERO);
     }
-
 }

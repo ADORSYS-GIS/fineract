@@ -16,9 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.data;
+package org.apache.fineract.test.messaging.event.workingcapitalloan.transaction;
 
-import org.apache.fineract.organisation.monetary.domain.Money;
+public class WorkingCapitalLoanDiscountFeeTransactionBusinessEvent extends AbstractWorkingCapitalLoanTransactionEvent {
 
-public record RepaymentAmortizationData(Money currentDayAmortizedAmount, Money totalAmortizedAmount) {
+    @Override
+    public String getEventName() {
+        return "WorkingCapitalLoanDiscountFeeTransactionBusinessEvent";
+    }
 }

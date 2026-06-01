@@ -36,6 +36,7 @@ Feature: Working Capital Discount
       | transactionDate | type         | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement | 100.0             | 100.0            | 0.0               | 0.0                   | false    |
       | 01 January 2026 | Discount Fee | 12.0              | 12.0             | 0.0               | 0.0                   | false    |
+    And WorkingCapitalLoanDiscountFeeTransactionBusinessEvent is raised with amount "12" on "01 January 2026" date
 
   @TestRailId:C72394
   Scenario: Discount update on WCL account on diff from disbursement date outcomes with an error - UC2
@@ -113,6 +114,7 @@ Feature: Working Capital Discount
       | transactionDate | type         | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement | 100.0             | 100.0            | 0.0               | 0.0                   | false    |
       | 01 January 2026 | Discount Fee | 13.0              | 13.0             | 0.0               | 0.0                   | false    |
+    And WorkingCapitalLoanDiscountFeeTransactionBusinessEvent is raised with amount "13" on "01 January 2026" date
 
   @TestRailId:C72396
   Scenario: Discount update on WCL account on the same as disburse date failed as already added discount before while modify loan - UC4
@@ -892,8 +894,8 @@ Feature: Working Capital Discount
     And Working capital loan account has the correct data:
       | product.name | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP         | 2026-01-01      | 2026-01-01               | Active | 100.0     | 100.0             | 100.0              | 1.0               | null             | null             | null     |
-# --- update discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "12" amount on Working Capital loan account
+# --- add discount after disbursement on the same disbursement date --- #
+    Then Admin successfully add discount with "12" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP         | 2026-01-01      | 2026-01-01               | Active | 112.0     | 100.0             | 100.0              | 1.0               | null             | null             | 12.0     |
@@ -1013,7 +1015,7 @@ Feature: Working Capital Discount
       | HTTP response code | Error message                         |
       | 400                | amount.cannot.exceed.product.discount |
 # --- add discount after disbursement on the same disbursement date --- #
-    Then Admin successfully update discount with "12" amount on Working Capital loan account
+    Then Admin successfully add discount with "12" amount on Working Capital loan account
     And Working capital loan account has the correct data:
       | product.name  | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountProposed | discountApproved | discount |
       | WCLP_DISCOUNT | 2026-01-01      | 2026-01-01               | Active | 112.0     | 100.0             | 100.0              | 1.0               | null             | null             | 12.0     |
