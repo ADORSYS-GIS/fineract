@@ -58,7 +58,7 @@ public class WorkingCapitalLoanRequestFactory {
                 .submittedOnDate(DATE_SUBMIT_STRING)//
                 .expectedDisbursementDate(DATE_SUBMIT_STRING)//
                 .principalAmount(DEFAULT_PRINCIPAL)//
-                .totalPayment(DEFAULT_TOTAL_PAYMENT)//
+                .totalPaymentVolume(DEFAULT_TOTAL_PAYMENT)//
                 .periodPaymentRate(DEFAULT_PERIOD_PAYMENT_RATE)//
                 .discount(DEFAULT_DISCOUNT_ZERO)//
                 .locale(DEFAULT_LOCALE)//

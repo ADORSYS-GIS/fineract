@@ -18,7 +18,7 @@
  */
 package org.apache.fineract.portfolio.workingcapitalloan.data;
 
-import java.math.BigDecimal;
+import org.apache.fineract.organisation.monetary.domain.Money;
 
-public record RepaymentAmortizationData(BigDecimal currentDayAmortizedAmount, BigDecimal totalAmortizedAmount) {
+public record RepaymentAmortizationData(Money currentDayAmortizedAmount, Money totalAmortizedAmount) {
 }

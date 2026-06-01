@@ -25,7 +25,9 @@ import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Validate;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
+import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleCalculator;
 import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleModel;
@@ -62,7 +64,7 @@ public class WorkingCapitalLoanAmortizationScheduleWriteServiceImpl implements W
         final ProjectedAmortizationScheduleModel model = ProjectedAmortizationScheduleModel.generate(//
                 request.getDiscountFeeAmount(), //
                 request.getNetDisbursementAmount(), //
-                request.getTotalPaymentValue(), //
+                request.getTotalPaymentVolume(), //
                 request.getPeriodPaymentRate(), //
                 request.getNpvDayCount(), //
                 request.getExpectedDisbursementDate(), //
@@ -80,21 +82,19 @@ public class WorkingCapitalLoanAmortizationScheduleWriteServiceImpl implements W
 
         final MathContext mc = MoneyHelper.getMathContext();
         final BigDecimal discount = getWorkingCapitalLoanDiscountAmount(loan);
-        final BigDecimal totalPayment = loan.getBalance() != null && loan.getBalance().getTotalPayment() != null
-                ? loan.getBalance().getTotalPayment()
-                : BigDecimal.ZERO;
+        final BigDecimal totalPaymentVolume = loan.getTotalPaymentVolume() != null ? loan.getTotalPaymentVolume() : BigDecimal.ZERO;
         final BigDecimal periodPaymentRate = loan.getLoanProductRelatedDetails() != null
                 ? loan.getLoanProductRelatedDetails().getPeriodPaymentRate()
                 : null;
         final Integer npvDayCount = loan.getLoanProductRelatedDetails() != null ? loan.getLoanProductRelatedDetails().getNpvDayCount()
                 : null;
 
-        Validate.isTrue(totalPayment.signum() > 0, "totalPayment must be positive");
+        Validate.isTrue(totalPaymentVolume.signum() > 0, "totalPaymentVolume must be positive");
         Validate.notNull(periodPaymentRate, "periodPaymentRate must not be null");
         Validate.notNull(npvDayCount, "npvDayCount must not be null");
 
         final ProjectedAmortizationScheduleModel model = ProjectedAmortizationScheduleModel.generate(discount, disbursedAmount,
-                totalPayment, periodPaymentRate, npvDayCount, disbursementDate, mc,
+                totalPaymentVolume, periodPaymentRate, npvDayCount, disbursementDate, mc,
                 WorkingCapitalLoanCurrencyResolver.resolveCurrency(loan));
         scheduleRepositoryWrapper.writeModel(loan, model);
     }
@@ -129,8 +129,8 @@ public class WorkingCapitalLoanAmortizationScheduleWriteServiceImpl implements W
 
         final MathContext mc = MoneyHelper.getMathContext();
         final BigDecimal discount = getWorkingCapitalLoanDiscountAmount(loan);
-        final BigDecimal totalPayment = loan.getBalance() != null && loan.getBalance().getTotalPayment() != null
-                ? loan.getBalance().getTotalPayment()
+        final BigDecimal totalPaymentVolume = loan.getBalance() != null && loan.getTotalPaymentVolume() != null
+                ? loan.getTotalPaymentVolume()
                 : BigDecimal.ZERO;
         final BigDecimal periodPaymentRate = loan.getLoanProductRelatedDetails() != null
                 ? loan.getLoanProductRelatedDetails().getPeriodPaymentRate()
@@ -149,14 +149,14 @@ public class WorkingCapitalLoanAmortizationScheduleWriteServiceImpl implements W
             netDisbursementAmount = detail != null && detail.getExpectedAmount() != null ? detail.getExpectedAmount() : BigDecimal.ZERO;
         }
 
-        Validate.isTrue(totalPayment.signum() > 0, "totalPayment must be positive");
+        Validate.isTrue(totalPaymentVolume.signum() > 0, "totalPaymentVolume must be positive");
         Validate.notNull(periodPaymentRate, "periodPaymentRate must not be null");
         Validate.notNull(npvDayCount, "npvDayCount must not be null");
         Validate.notNull(expectedDisbursementDate, "expectedDisbursementDate must not be null");
         Validate.isTrue(netDisbursementAmount.signum() > 0, "net disbursement amount for schedule must be positive");
 
         final ProjectedAmortizationScheduleModel model = ProjectedAmortizationScheduleModel.generate(discount, netDisbursementAmount,
-                totalPayment, periodPaymentRate, npvDayCount, expectedDisbursementDate, mc,
+                totalPaymentVolume, periodPaymentRate, npvDayCount, expectedDisbursementDate, mc,
                 WorkingCapitalLoanCurrencyResolver.resolveCurrency(loan));
         scheduleRepositoryWrapper.writeModel(loan, model);
     }
@@ -173,22 +173,21 @@ public class WorkingCapitalLoanAmortizationScheduleWriteServiceImpl implements W
                 .readModel(loan.getId(), mc, WorkingCapitalLoanCurrencyResolver.resolveCurrency(loan))
                 .orElseThrow(() -> new IllegalStateException("Projected amortization schedule is not found for loan " + loan.getId()));
 
-        final BigDecimal previousTotalAmortized = sumRunningNpv(model);
+        final Money previousTotalAmortized = sumTotalActualAmortization(model, loan.getLoanProduct().getCurrency().toData());
         final LocalDate scheduleRepaymentDate = model.normalizePaymentDateForSchedule(transactionDate);
         model.applyPayment(transactionDate, repaymentAmount);
         model.recalculateNetAmortizationAndDeferredBalanceFrom(scheduleRepaymentDate);
-        final BigDecimal totalAmortized = sumRunningNpv(model);
+        final Money totalAmortized = sumTotalActualAmortization(model, loan.getLoanProduct().getCurrency().toData());
 
         scheduleRepositoryWrapper.writeModel(loan, model);
-        return new RepaymentAmortizationData(totalAmortized.subtract(previousTotalAmortized, mc), totalAmortized);
+        return new RepaymentAmortizationData(totalAmortized.minus(previousTotalAmortized, mc), totalAmortized);
     }
 
-    private BigDecimal sumRunningNpv(final ProjectedAmortizationScheduleModel model) {
-        final MathContext mc = MoneyHelper.getMathContext();
-        BigDecimal result = BigDecimal.ZERO;
+    private Money sumTotalActualAmortization(final ProjectedAmortizationScheduleModel model, CurrencyData data) {
+        Money result = Money.zero(data);
         for (ProjectedPayment payment : model.projectedPayments()) {
-            if (payment.paymentNo() > 0 && payment.npvValue() != null && payment.npvValue().getAmount() != null) {
-                result = result.add(payment.npvValue().getAmount(), mc);
+            if (payment.actualPaymentAmount() != null) {
+                result = MathUtil.plus(payment.actualAmortizationAmount());
             }
         }
         return result;

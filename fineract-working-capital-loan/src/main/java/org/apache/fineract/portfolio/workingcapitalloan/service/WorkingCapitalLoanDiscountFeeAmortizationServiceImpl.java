@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
 import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.workingcapitalloan.accounting.WorkingCapitalLoanAccountingProcessor;
 import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleModel;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
@@ -54,7 +53,7 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
             return;
         }
 
-        final BigDecimal alreadyPosted = calculateAlreadyPostedAmount(loan);
+        final BigDecimal alreadyPosted = loan.getBalance().getRealizedIncomeFromDiscountFee();
         final BigDecimal amortizationAmount = scheduleAmortization.subtract(alreadyPosted);
 
         if (!MathUtil.isGreaterThanZero(amortizationAmount)) {
@@ -66,8 +65,7 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
         final WorkingCapitalLoanTransaction amortizationTxn = WorkingCapitalLoanTransaction.discountFeeAmortization(loan,
                 amortizationAmount, transactionDate, externalIdFactory.create());
         transactionRepository.saveAndFlush(amortizationTxn);
-        loan.getTransactions().add(amortizationTxn);
-
+        loan.getBalance().setRealizedIncomeFromDiscountFee(loan.getBalance().getRealizedIncomeFromDiscountFee().add(amortizationAmount));
         accountingProcessor.postJournalEntriesForDiscountFeeAmortization(loan, amortizationTxn, false);
 
         log.debug("Posted discount fee amortization of {} for WC loan [{}]", amortizationAmount, loan.getId());
@@ -79,9 +77,4 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
                 .map(ProjectedAmortizationScheduleModel::totalActualAmortization).orElse(BigDecimal.ZERO);
     }
 
-    private BigDecimal calculateAlreadyPostedAmount(final WorkingCapitalLoan loan) {
-        return loan.getTransactions().stream()
-                .filter(txn -> txn.getTypeOf() == LoanTransactionType.DISCOUNT_FEE_AMORTIZATION && !txn.isReversed())
-                .map(WorkingCapitalLoanTransaction::getTransactionAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 }

@@ -18,16 +18,14 @@
  */
 package org.apache.fineract.integrationtests.common.workingcapitalloanproduct;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.fineract.client.feign.ObjectMapperFactory;
+import org.apache.fineract.client.models.PaymentAllocationOrder;
+import org.apache.fineract.client.models.PostAllowAttributeOverrides;
+import org.apache.fineract.client.models.PostPaymentAllocation;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest;
 import org.apache.fineract.client.models.PostWorkingCapitalLoanProductsRequest.AccountingRuleEnum;
 import org.apache.fineract.client.models.PutWorkingCapitalLoanProductsProductIdRequest;
@@ -389,85 +387,60 @@ public class WorkingCapitalLoanProductTestBuilder {
     }
 
     private void setPaymentAllocation(final PostWorkingCapitalLoanProductsRequest request) {
-        setPaymentAllocation(request, PostWorkingCapitalLoanProductsRequest.class);
+        if (this.paymentAllocationTypes != null && !this.paymentAllocationTypes.isEmpty()) {
+            PostPaymentAllocation defaultPaymentAllocation = new PostPaymentAllocation();
+            defaultPaymentAllocation.setTransactionType(PostPaymentAllocation.TransactionTypeEnum.DEFAULT);
+            defaultPaymentAllocation.setPaymentAllocationOrder(IntStream.range(0, this.paymentAllocationTypes.size()).mapToObj(index -> {
+                PaymentAllocationOrder paymentAllocationOrder = new PaymentAllocationOrder();
+                paymentAllocationOrder.setOrder(index + 1);
+                paymentAllocationOrder.setPaymentAllocationRule(this.paymentAllocationTypes.get(index));
+                return paymentAllocationOrder;
+            }).toList());
+            request.setPaymentAllocation(List.of(defaultPaymentAllocation));
+        }
     }
 
     private void setPaymentAllocation(final PutWorkingCapitalLoanProductsProductIdRequest request) {
-        setPaymentAllocation(request, PutWorkingCapitalLoanProductsProductIdRequest.class);
-    }
-
-    private <T> void setPaymentAllocation(final T request, final Class<T> requestClass) {
         if (this.paymentAllocationTypes != null && !this.paymentAllocationTypes.isEmpty()) {
-            try {
-                final ObjectMapper objectMapper = ObjectMapperFactory.getShared();
-                final String requestJson = objectMapper.writeValueAsString(request);
-                final ObjectNode requestNode = (ObjectNode) objectMapper.readTree(requestJson);
-                final ArrayNode paymentAllocationArray = objectMapper.createArrayNode();
-                final ObjectNode paymentAllocationNode = objectMapper.createObjectNode();
-                paymentAllocationNode.put("transactionType", "DEFAULT");
-                final ArrayNode paymentAllocationOrderArray = objectMapper.createArrayNode();
-                int order = 1;
-                for (final String allocationType : this.paymentAllocationTypes) {
-                    final ObjectNode orderItem = objectMapper.createObjectNode();
-                    orderItem.put("paymentAllocationRule", allocationType);
-                    orderItem.put("order", order++);
-                    paymentAllocationOrderArray.add(orderItem);
-                }
-                paymentAllocationNode.set("paymentAllocationOrder", paymentAllocationOrderArray);
-                paymentAllocationArray.add(paymentAllocationNode);
-                requestNode.set("paymentAllocation", paymentAllocationArray);
-                final T updatedRequest = objectMapper.treeToValue(requestNode, requestClass);
-                copyAllFields(updatedRequest, request, requestClass);
-            } catch (final Exception e) {
-                throw new IllegalStateException("Failed to set paymentAllocation", e);
-            }
+            PostPaymentAllocation defaultPaymentAllocation = new PostPaymentAllocation();
+            defaultPaymentAllocation.setTransactionType(PostPaymentAllocation.TransactionTypeEnum.DEFAULT);
+            defaultPaymentAllocation.setPaymentAllocationOrder(IntStream.range(0, this.paymentAllocationTypes.size()).mapToObj(index -> {
+                PaymentAllocationOrder paymentAllocationOrder = new PaymentAllocationOrder();
+                paymentAllocationOrder.setOrder(index + 1);
+                paymentAllocationOrder.setPaymentAllocationRule(this.paymentAllocationTypes.get(index));
+                return paymentAllocationOrder;
+            }).toList());
+            request.setPaymentAllocation(List.of(defaultPaymentAllocation));
         }
     }
 
     private void setAllowAttributeOverrides(final PostWorkingCapitalLoanProductsRequest request) {
-        setAllowAttributeOverrides(request, PostWorkingCapitalLoanProductsRequest.class);
+        PostAllowAttributeOverrides defaultAllowAttributeOverrides = buildPostAllowAttributeOverrides();
+        request.setAllowAttributeOverrides(defaultAllowAttributeOverrides);
     }
 
     private void setAllowAttributeOverrides(final PutWorkingCapitalLoanProductsProductIdRequest request) {
-        setAllowAttributeOverrides(request, PutWorkingCapitalLoanProductsProductIdRequest.class);
+        PostAllowAttributeOverrides defaultAllowAttributeOverrides = buildPostAllowAttributeOverrides();
+        request.setAllowAttributeOverrides(defaultAllowAttributeOverrides);
     }
 
-    private <T> void setAllowAttributeOverrides(final T request, final Class<T> requestClass) {
-        if (this.allowAttributeOverrides == null || this.allowAttributeOverrides.isEmpty()) {
-            return;
-        }
-
-        try {
-            final ObjectMapper objectMapper = ObjectMapperFactory.getShared();
-            final String requestJson = objectMapper.writeValueAsString(request);
-            final ObjectNode requestNode = (ObjectNode) objectMapper.readTree(requestJson);
-            final ObjectNode allowOverridesNode = objectMapper.createObjectNode();
+    private PostAllowAttributeOverrides buildPostAllowAttributeOverrides() {
+        if (allowAttributeOverrides != null) {
+            PostAllowAttributeOverrides defaultAllowAttributeOverrides = new PostAllowAttributeOverrides();
             for (final Map.Entry<String, Boolean> entry : this.allowAttributeOverrides.entrySet()) {
-                allowOverridesNode.put(entry.getKey(), entry.getValue());
-            }
-            requestNode.set("allowAttributeOverrides", allowOverridesNode);
-            final T updatedRequest = objectMapper.treeToValue(requestNode, requestClass);
-            copyAllFields(updatedRequest, request, requestClass);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Failed to set allowAttributeOverrides", e);
-        }
-    }
-
-    private <T> void copyAllFields(final T source, final T target, final Class<T> clazz) {
-        final Field[] fields = clazz.getDeclaredFields();
-        for (final Field field : fields) {
-            try {
-                if (Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers())) {
-                    continue;
+                switch (entry.getKey()) {
+                    case "breach" -> defaultAllowAttributeOverrides.breach(entry.getValue());
+                    case "delinquencyBucketClassification" ->
+                        defaultAllowAttributeOverrides.delinquencyBucketClassification(entry.getValue());
+                    case "periodPaymentFrequency" -> defaultAllowAttributeOverrides.periodPaymentFrequency(entry.getValue());
+                    case "periodPaymentFrequencyType" -> defaultAllowAttributeOverrides.periodPaymentFrequencyType(entry.getValue());
+                    case "discountDefault" -> defaultAllowAttributeOverrides.discountDefault(entry.getValue());
+                    default -> throw new IllegalArgumentException("Unknown allow attribute override " + entry.getKey());
                 }
-                field.setAccessible(true);
-                final Object value = field.get(source);
-                if (value != null) {
-                    field.set(target, value);
-                }
-            } catch (final IllegalAccessException e) {
-                log.warn("Failed to copy field {}: {}", field.getName(), e.getMessage());
             }
+            return defaultAllowAttributeOverrides;
+        } else {
+            return null;
         }
     }
 }
