@@ -543,6 +543,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Long classificationId;
         @Schema(example = "ext-disburse-001", description = "External ID; optional for disburse")
         public String externalId;
+        @Schema(example = "ext-discount-001", description = "External ID for the discount fee transaction created during disburse; optional. Only accepted when discountAmount is greater than 0. When omitted and auto-generation is enabled, a UUID is generated.")
+        public String discountExternalId;
         @Schema(description = "Payment details (Account No, Cheque No, Routing Code, Receipt No, Bank code)")
         public PostWorkingCapitalLoansLoanIdDisbursementPaymentDetails paymentDetails;
         @Schema(description = "Related resource ID for transaction, e.g., related transaction ID")

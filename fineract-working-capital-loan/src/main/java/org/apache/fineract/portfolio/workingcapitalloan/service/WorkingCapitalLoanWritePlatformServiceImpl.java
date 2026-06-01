@@ -318,11 +318,12 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         ExternalId discountTxnExternalId = null;
 
         if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
-            WorkingCapitalLoanTransaction discountTransaction = createAndPersistDiscountFeeTransaction(loan, disbursementTransaction, null,
-                    discount, actualDisbursementDate, null, null);
+            final ExternalId discountExternalId = externalIdFactory.createFromCommand(command,
+                    WorkingCapitalLoanConstants.discountExternalIdParameterName);
+            final WorkingCapitalLoanTransaction discountTransaction = createAndPersistDiscountFeeTransaction(loan, disbursementTransaction,
+                    discountExternalId, discount, actualDisbursementDate, null, null);
             discountTransactionId = discountTransaction.getId();
             discountTxnExternalId = discountTransaction.getExternalId();
-            changes.put(WorkingCapitalLoanConstants.discountAmountParamName, discount);
         }
         updateBalanceOnDisburse(loan, transactionAmount);
         amortizationScheduleWriteService.generateAndSaveAmortizationScheduleOnDisbursement(loan, transactionAmount, actualDisbursementDate);

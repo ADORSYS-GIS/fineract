@@ -56,6 +56,7 @@ public final class WorkingCapitalLoanConstants {
     public static final String approvedLoanAmountParamName = "approvedLoanAmount";
     public static final String expectedDisbursementDateParamName = "expectedDisbursementDate";
     public static final String discountAmountParamName = "discountAmount";
+    public static final String discountExternalIdParameterName = "discountExternalId";
     public static final String noteParamName = "note";
     public static final String rejectedOnDateParamName = "rejectedOnDate";
 

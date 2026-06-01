@@ -1102,32 +1102,8 @@ public final class ErrorMessageHelper {
         return String.format("Transition LOAN_DISBURSAL_UNDO is not allowed from status %s", status);
     }
 
-    public static String discountAmountExceedFailure() {
-        return "Failed data validation due to: amount.cannot.exceed.created.discount.";
-    }
-
-    public static String discountAmountExceedApprovedFailure() {
-        return "Failed data validation due to: amount.cannot.exceed.approved.discount.";
-    }
-
-    public static String discountAlreadySetBeforeDisburseFailure() {
-        return "Discount was already set before disbursement and cannot be added again";
-    }
-
-    public static String discountDiffDateFromDisburseFailure() {
-        return "Failed data validation due to: transaction.date.must.be.equal.disbursement.date.";
-    }
-
     public static String overrideDisallowedByProductFailure() {
         return "Failed data validation due to: override.not.allowed.by.product.";
-    }
-
-    public static String discountExceedCreatedDiscountFailure() {
-        return "Failed data validation due to: amount.cannot.exceed.created.discount.";
-    }
-
-    public static String discountExceedProductDiscountFailure() {
-        return "Failed data validation due to: amount.cannot.exceed.product.discount.";
     }
 
     public static String nearBreachCannotEnableWithoutBreachFailure() {
