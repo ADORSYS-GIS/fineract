@@ -82,7 +82,7 @@ public class OtpService {
         otpStore.put(requestId, new OtpRecord(hashOtp(otp), phoneNumber, safe(request.userId()), safe(request.sessionId()), purpose, expiresAt, false));
         principalIndex.put(principal, requestId);
 
-        String body = issuer + " verification code: " + otp + ". It expires in " + ttlSeconds / 60 + " minutes.";
+        String body = "Your " + issuer + " verification code is " + otp;
         SmsSendResult result = smsService.send(new SmsMessage(phoneNumber, body, MessageType.OTP, request.provider(), Map.of("purpose", purpose)));
         if (!result.success()) {
             otpStore.remove(requestId);

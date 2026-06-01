@@ -5,6 +5,30 @@ twilio:
     token: ${TWILIO_AUTH_TOKEN:}
   sender:
     number: ${TWILIO_SENDER_NUMBER:}
+
+orange:
+  client:
+    id: ${ORANGE_CLIENT_ID:}
+    secret: ${ORANGE_CLIENT_SECRET:}
+  token:
+    url: ${ORANGE_TOKEN_URL:}
+  sms:
+    base:
+      url: ${ORANGE_SMS_BASE_URL:}
+  sender:
+    address: ${ORANGE_SENDER_ADDRESS:}
+    name: ${ORANGE_SENDER_NAME:}
+  country:
+    code: ${ORANGE_COUNTRY_CODE:237}
+
+avlytext:
+  api:
+    key: ${AVLYTEXT_API_KEY:}
+  base:
+    url: ${AVLYTEXT_BASE_URL:}
+  sender:
+    id: ${AVLYTEXT_SENDER_ID:}
+
 fineract:
   api:
     url: ${FINERACT_API_URL:https://fineract:8443/fineract-provider/api/v1}
@@ -18,3 +42,7 @@ keycloak:
   grant-type: ${KEYCLOAK_GRANT_TYPE:password}
   client-id: ${KEYCLOAK_CLIENT_ID:setup-app-client}
   client-secret: ${KEYCLOAK_CLIENT_SECRET:**********}
+
+logging:
+  level:
+    com.example.smsgateway.provider.OrangeSmsProvider: DEBUG

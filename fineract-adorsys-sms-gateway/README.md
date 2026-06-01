@@ -16,6 +16,16 @@ Before running the application, you need to set the following environment variab
 | `TWILIO_ACCOUNT_SID` | Twilio account SID. |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token. |
 | `TWILIO_SENDER_NUMBER` | Twilio sender phone number. |
+| `ORANGE_CLIENT_ID` | Orange OAuth2 client ID. |
+| `ORANGE_CLIENT_SECRET` | Orange OAuth2 client secret. |
+| `ORANGE_TOKEN_URL` | Orange OAuth2 token endpoint URL. |
+| `ORANGE_SMS_BASE_URL` | Orange SMS API base URL. |
+| `ORANGE_SENDER_ADDRESS` | Orange sender address in tel: format. |
+| `ORANGE_SENDER_NAME` | Orange sender name displayed to recipients. |
+| `ORANGE_COUNTRY_CODE` | Default country code for MSISDN normalization (default: 237). |
+| `AVLYTEXT_API_KEY` | Avlytext API key. |
+| `AVLYTEXT_BASE_URL` | Avlytext API base URL. |
+| `AVLYTEXT_SENDER_ID` | Avlytext sender ID. |
 | `SMS_CUSTOM_HTTP_URL` | HTTPS endpoint for a custom HTTP provider. |
 | `SMS_CUSTOM_HTTP_API_KEY` | API key for the custom HTTP provider. |
 | `SMS_CUSTOM_HTTP_SENDER` | Sender identifier for the custom HTTP provider. Defaults to `Webank`. |
@@ -131,11 +141,67 @@ Failed validation returns a generic response:
 
 Supported provider names:
 
-- `twilio`
-- `custom-http`
-- `mock`
+- `twilio` - Twilio SMS API
+- `orange` - Orange SMS API with OAuth2 authentication
+- `avlytext` - Avlytext SMS API with API key authentication
+- `custom-http` - Generic HTTP SMS provider
+- `console` - Logs SMS to console (for local development/testing)
+- `mock` - Mock provider for testing
 
 Provider credentials are configured externally through environment variables. OTP values and sensitive payloads are not logged. Custom HTTP providers must use HTTPS.
+
+### Provider Features
+
+**Orange SMS:**
+- OAuth2 client credentials flow with token caching
+- MSISDN normalization to international format
+- Rate limiting (5 SMS/sec max)
+- Automatic retry with exponential backoff
+- Comprehensive error handling
+
+**Avlytext SMS:**
+- Simple API key authentication
+- JSON payload support
+- Automatic retry with exponential backoff
+- Error response handling
+
+**Console Provider (Local Testing):**
+- Logs all SMS messages to container logs
+- Displays OTP codes and message content for easy debugging
+- No external SMS service required
+- Perfect for local development and registration testing
+
+For detailed configuration and usage instructions, see:
+- [Orange SMS Provider Documentation](docs/orange-sms-provider.md)
+- [Avlytext SMS Provider Documentation](docs/avlytext-sms-provider.md)
+- [Provider Configuration Guide](docs/provider-configuration.md)
+
+### Local Development with Console Provider
+
+For local development, use the `console` provider to log SMS messages instead of sending real SMS:
+
+```bash
+# Set console as primary provider
+export SMS_PROVIDER_PRIMARY=console
+export SMS_PROVIDER_FALLBACK=console
+export SMS_MOCK_ENABLED=false
+
+# Run the application
+mvn spring-boot:run
+```
+
+View SMS logs (including OTP codes):
+```bash
+# Docker logs
+docker logs <sms-gateway-container>
+
+# Or if running locally, check console output
+```
+
+Example log output:
+```
+CONSOLE_SMS type=OTP to=+237698765432 body=Your Webank verification code is 123456
+```
 
 ## Metrics and API Docs
 
