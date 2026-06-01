@@ -1,3 +1,4 @@
+@WorkingCapital
 @WorkingCapitalBreachManagementFeature
 Feature: Working Capital Breach Configuration
 

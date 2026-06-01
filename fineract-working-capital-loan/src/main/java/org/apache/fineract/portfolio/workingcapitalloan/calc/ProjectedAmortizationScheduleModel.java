@@ -61,7 +61,7 @@ public final class ProjectedAmortizationScheduleModel {
     @SerializedName(value = "discountFeeAmount", alternate = "originationFeeAmount")
     private final Money discountFeeAmount;
     private final Money netDisbursementAmount;
-    private final Money totalPaymentValue;
+    private final Money totalPaymentVolume;
     private final BigDecimal periodPaymentRate;
     private final int npvDayCount;
     private final LocalDate expectedDisbursementDate;
@@ -97,12 +97,12 @@ public final class ProjectedAmortizationScheduleModel {
     private List<ProjectedPayment> originalProjectedPayments;
 
     private ProjectedAmortizationScheduleModel(final Money discountFeeAmount, final Money netDisbursementAmount,
-            final Money totalPaymentValue, final BigDecimal periodPaymentRate, final int npvDayCount,
+            final Money totalPaymentVolume, final BigDecimal periodPaymentRate, final int npvDayCount,
             final LocalDate expectedDisbursementDate, final Money expectedPaymentAmount, final int originalPaymentNumber,
             final BigDecimal effectiveInterestRate, final MathContext mc, final CurrencyData currency) {
         this.discountFeeAmount = discountFeeAmount;
         this.netDisbursementAmount = netDisbursementAmount;
-        this.totalPaymentValue = totalPaymentValue;
+        this.totalPaymentVolume = totalPaymentVolume;
         this.periodPaymentRate = periodPaymentRate;
         this.npvDayCount = npvDayCount;
         this.expectedDisbursementDate = expectedDisbursementDate;
@@ -127,7 +127,7 @@ public final class ProjectedAmortizationScheduleModel {
     private ProjectedAmortizationScheduleModel(final MathContext mc, final CurrencyData currency) {
         this.discountFeeAmount = null;
         this.netDisbursementAmount = null;
-        this.totalPaymentValue = null;
+        this.totalPaymentVolume = null;
         this.periodPaymentRate = null;
         this.npvDayCount = 0;
         this.expectedDisbursementDate = null;
@@ -175,12 +175,12 @@ public final class ProjectedAmortizationScheduleModel {
     }
 
     public static ProjectedAmortizationScheduleModel generate(final BigDecimal discountFeeAmount, final BigDecimal netDisbursementAmount,
-            final BigDecimal totalPaymentValue, final BigDecimal periodPaymentRate, final int npvDayCount,
+            final BigDecimal totalPaymentVolume, final BigDecimal periodPaymentRate, final int npvDayCount,
             final LocalDate expectedDisbursementDate, final MathContext mc, final CurrencyData currency) {
 
         Objects.requireNonNull(discountFeeAmount, "discountFeeAmount");
         Objects.requireNonNull(netDisbursementAmount, "netDisbursementAmount");
-        Objects.requireNonNull(totalPaymentValue, "totalPaymentValue");
+        Objects.requireNonNull(totalPaymentVolume, "totalPaymentVolume");
         Objects.requireNonNull(periodPaymentRate, "periodPaymentRate");
         Objects.requireNonNull(expectedDisbursementDate, "expectedDisbursementDate");
         Objects.requireNonNull(currency, "currency");
@@ -191,9 +191,9 @@ public final class ProjectedAmortizationScheduleModel {
             throw new IllegalArgumentException("npvDayCount must be positive");
         }
 
-        final BigDecimal expectedPayment = totalPaymentValue.multiply(periodPaymentRate, mc).divide(BigDecimal.valueOf(npvDayCount), mc);
+        final BigDecimal expectedPayment = totalPaymentVolume.multiply(periodPaymentRate, mc).divide(BigDecimal.valueOf(npvDayCount), mc);
         if (expectedPayment.signum() <= 0) {
-            throw new IllegalArgumentException("expectedPaymentAmount must be positive (check totalPaymentValue and periodPaymentRate)");
+            throw new IllegalArgumentException("expectedPaymentAmount must be positive (check totalPaymentVolume and periodPaymentRate)");
         }
 
         final int originalPaymentNumber = netDisbursementAmount.add(discountFeeAmount, mc).divide(expectedPayment, mc)
@@ -205,7 +205,7 @@ public final class ProjectedAmortizationScheduleModel {
         final BigDecimal eir = TvmFunctions.rate(originalPaymentNumber, expectedPayment.negate(), netDisbursementAmount, mc);
 
         return new ProjectedAmortizationScheduleModel(Money.of(currency, discountFeeAmount, mc),
-                Money.of(currency, netDisbursementAmount, mc), Money.of(currency, totalPaymentValue, mc), periodPaymentRate, npvDayCount,
+                Money.of(currency, netDisbursementAmount, mc), Money.of(currency, totalPaymentVolume, mc), periodPaymentRate, npvDayCount,
                 expectedDisbursementDate, Money.of(currency, expectedPayment, mc), originalPaymentNumber, eir, mc, currency);
     }
 
@@ -253,7 +253,7 @@ public final class ProjectedAmortizationScheduleModel {
     /** Creates a new model with updated parameters, preserving applied payments. */
     public ProjectedAmortizationScheduleModel regenerate(final BigDecimal newDiscountAmount, final BigDecimal newNetAmount,
             final LocalDate newStartDate) {
-        final ProjectedAmortizationScheduleModel newModel = generate(newDiscountAmount, newNetAmount, totalPaymentValue.getAmount(),
+        final ProjectedAmortizationScheduleModel newModel = generate(newDiscountAmount, newNetAmount, totalPaymentVolume.getAmount(),
                 periodPaymentRate, npvDayCount, newStartDate, mc, currency);
         newModel.actualPayments.addAll(actualPayments);
         newModel.rebuildPayments();
@@ -351,7 +351,7 @@ public final class ProjectedAmortizationScheduleModel {
 
         final BigDecimal origNet = netDisbursementAmount.getAmount();
         final BigDecimal origDiscount = discountFeeAmount.getAmount();
-        final BigDecimal tpv = totalPaymentValue.getAmount();
+        final BigDecimal tpv = totalPaymentVolume.getAmount();
 
         final BigDecimal newNetDisb = balanceAtSplit;
         final BigDecimal newDiscount;

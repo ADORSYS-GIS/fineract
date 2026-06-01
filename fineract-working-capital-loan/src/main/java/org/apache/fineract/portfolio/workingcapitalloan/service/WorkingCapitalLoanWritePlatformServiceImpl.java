@@ -768,7 +768,8 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         final BigDecimal discount = loan.getLoanProductRelatedDetails() != null && loan.getLoanProductRelatedDetails().getDiscount() != null
                 ? loan.getLoanProductRelatedDetails().getDiscount()
                 : BigDecimal.ZERO;
-        balance.setPrincipalOutstanding(disbursedAmount.add(discount));
+        balance.setTotalDiscountFee(discount);
+        balance.setPrincipal(disbursedAmount.add(discount));
         balance.setOverpaymentAmount(BigDecimal.ZERO);
         this.balanceRepository.saveAndFlush(balance);
     }
@@ -779,11 +780,9 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         final BigDecimal discount = loan.getLoanProductRelatedDetails() != null && loan.getLoanProductRelatedDetails().getDiscount() != null
                 ? loan.getLoanProductRelatedDetails().getDiscount()
                 : BigDecimal.ZERO;
-        final BigDecimal disbursedAmount = loan.getDisbursementDetails() != null && !loan.getDisbursementDetails().isEmpty()
-                && loan.getDisbursementDetails().getFirst().getActualAmount() != null
-                        ? loan.getDisbursementDetails().getFirst().getActualAmount()
-                        : BigDecimal.ZERO;
-        balance.setPrincipalOutstanding(disbursedAmount.add(discount));
+
+        balance.setTotalDiscountFee(discount);
+        balance.setPrincipal(balance.getPrincipal().add(discount));
         balance.setOverpaymentAmount(BigDecimal.ZERO);
         this.balanceRepository.saveAndFlush(balance);
     }
@@ -794,27 +793,15 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                 .orElseGet(() -> WorkingCapitalLoanBalance.createFor(loan));
         final BigDecimal principalOutstanding = balance.getPrincipalOutstanding() != null ? balance.getPrincipalOutstanding()
                 : BigDecimal.ZERO;
-        final BigDecimal currentRealizedIncome = balance.getRealizedIncome() != null ? balance.getRealizedIncome() : BigDecimal.ZERO;
-        final BigDecimal currentTotalPaidPrincipal = balance.getTotalPaidPrincipal() != null ? balance.getTotalPaidPrincipal()
-                : BigDecimal.ZERO;
+        final BigDecimal currentTotalPaidPrincipal = balance.getPrincipalPaid() != null ? balance.getPrincipalPaid() : BigDecimal.ZERO;
         final BigDecimal currentOverpayment = balance.getOverpaymentAmount() != null ? balance.getOverpaymentAmount() : BigDecimal.ZERO;
         final BigDecimal amountAppliedToOutstanding = repaymentAmount.min(principalOutstanding);
         final BigDecimal overpaymentIncrement = repaymentAmount.subtract(amountAppliedToOutstanding).max(BigDecimal.ZERO);
-        final BigDecimal discount = loan.getLoanProductRelatedDetails() != null && loan.getLoanProductRelatedDetails().getDiscount() != null
-                ? loan.getLoanProductRelatedDetails().getDiscount()
-                : BigDecimal.ZERO;
 
-        final BigDecimal newPrincipalOutstanding = principalOutstanding.subtract(amountAppliedToOutstanding).max(BigDecimal.ZERO);
-        balance.setPrincipalOutstanding(newPrincipalOutstanding);
         balance.setOverpaymentAmount(currentOverpayment.add(overpaymentIncrement));
-        final BigDecimal newRealizedIncome = amortizationData.totalAmortizedAmount().max(BigDecimal.ZERO).min(discount);
-        balance.setRealizedIncome(newRealizedIncome);
-        final BigDecimal unrealizedIncome = discount.subtract(newRealizedIncome);
-        balance.setUnrealizedIncome(unrealizedIncome.max(BigDecimal.ZERO));
-        final BigDecimal incomePaidInThisRepayment = newRealizedIncome.subtract(currentRealizedIncome).max(BigDecimal.ZERO)
-                .min(amountAppliedToOutstanding);
-        final BigDecimal principalPaidInThisRepayment = amountAppliedToOutstanding.subtract(incomePaidInThisRepayment).max(BigDecimal.ZERO);
-        balance.setTotalPaidPrincipal(currentTotalPaidPrincipal.add(principalPaidInThisRepayment));
+
+        final BigDecimal principalPaidInThisRepayment = amountAppliedToOutstanding.max(BigDecimal.ZERO);
+        balance.setPrincipalPaid(currentTotalPaidPrincipal.add(principalPaidInThisRepayment));
 
         this.balanceRepository.saveAndFlush(balance);
     }
@@ -849,20 +836,15 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                     "Multiple active disbursement transactions found while only single disbursement is supported", "loanId");
         }
         final WorkingCapitalLoanTransaction txn = activeDisbursements.getFirst();
-        reverseTransaction(txn);
-        loan.getTransactions().stream()
-                .filter(t -> t.getTransactionType() == LoanTransactionType.DISCOUNT_FEE && !t.isReversed()
-                        && t.getLoanTransactionRelations().stream().anyMatch(r -> r.getToTransaction() != null
-                                && r.getToTransaction().getId() != null && r.getToTransaction().getId().equals(txn.getId())))
-                .forEach(this::reverseTransaction);
+
+        transactions.forEach(this::reverseTransaction);
 
         final Optional<WorkingCapitalLoanBalance> balanceOpt = this.balanceRepository.findByWcLoan_Id(loan.getId());
         balanceOpt.ifPresent(b -> {
             // Restore balance to pre-disbursement state.
-            b.setPrincipalOutstanding(loan.getApprovedPrincipal() != null ? loan.getApprovedPrincipal() : loan.getProposedPrincipal());
-            b.setTotalPaidPrincipal(BigDecimal.ZERO);
-            b.setRealizedIncome(BigDecimal.ZERO);
-            b.setUnrealizedIncome(BigDecimal.ZERO);
+            b.setPrincipal(loan.getApprovedPrincipal() != null ? loan.getApprovedPrincipal() : loan.getProposedPrincipal());
+            b.setPrincipalPaid(BigDecimal.ZERO);
+            b.setRealizedIncomeFromDiscountFee(BigDecimal.ZERO);
             b.setOverpaymentAmount(BigDecimal.ZERO);
             this.balanceRepository.saveAndFlush(b);
         });

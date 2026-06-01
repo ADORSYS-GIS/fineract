@@ -19,9 +19,7 @@
 package org.apache.fineract.portfolio.workingcapitalloan.mapper;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.fineract.infrastructure.core.config.MapstructMapperConfig;
 import org.apache.fineract.infrastructure.core.data.StringEnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
@@ -35,12 +33,9 @@ import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanData;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanDisbursementDetails;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPaymentAllocationRule;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.mapper.WorkingCapitalBreachMapper;
 import org.apache.fineract.portfolio.workingcapitalloannearbreach.mapper.WorkingCapitalNearBreachMapper;
-import org.apache.fineract.portfolio.workingcapitalloanproduct.data.WorkingCapitalPaymentAllocationData;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductRelatedDetails;
-import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalPaymentAllocationType;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.mapper.WorkingCapitalLoanProductMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -49,12 +44,14 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(config = MapstructMapperConfig.class, uses = { DelinquencyBucketMapper.class, WorkingCapitalLoanProductMapper.class,
         WorkingCapitalLoanBalanceMapper.class, WorkingCapitalLoanDisbursementDetailMapper.class, WorkingCapitalLoanTransactionMapper.class,
-        WorkingCapitalBreachMapper.class, WorkingCapitalNearBreachMapper.class })
+        WorkingCapitalBreachMapper.class, WorkingCapitalNearBreachMapper.class, WorkingCapitalLoanSummaryDataMapper.class,
+        WorkingCapitalLoanPaymentAllocationMapper.class })
 public interface WorkingCapitalLoanMapper {
 
     @Mapping(target = "accountNo", source = "accountNumber")
     @Mapping(target = "client", source = "client", qualifiedByName = "clientToData")
     @Mapping(target = "officeId", source = "client.office.id")
+    @Mapping(target = "officeName", source = "client.office.name")
     @Mapping(target = "fundId", source = "fund.id")
     @Mapping(target = "fundName", source = "fund.name")
     @Mapping(target = "product", source = "loanProduct")
@@ -73,10 +70,15 @@ public interface WorkingCapitalLoanMapper {
     @Mapping(target = "paymentAllocation", source = "paymentAllocationRules", qualifiedByName = "paymentAllocationRulesToData")
     @Mapping(target = "timeline", source = "loan", qualifiedByName = "timelineData")
     @Mapping(target = "disbursementDetails", source = "disbursementDetails")
-    @Mapping(target = "transactions", source = "transactions")
     @Mapping(target = "delinquencyGraceDays", source = "loanProductRelatedDetails.delinquencyGraceDays")
     @Mapping(target = "delinquencyStartType", source = "loanProductRelatedDetails", qualifiedByName = "delinquencyStartTypeData")
     @Mapping(target = "collectionData", ignore = true)
+    @Mapping(target = "totalNoPayments", ignore = true)
+    @Mapping(target = "periodPaymentAmount", ignore = true)
+    @Mapping(target = "dailyEir", ignore = true)
+    @Mapping(target = "calculatedAnnualEir", ignore = true)
+    @Mapping(target = "summary", source = ".", qualifiedByName = "toSummaryData")
+    @Mapping(target = "totalPaymentVolume", source = "totalPaymentVolume")
     WorkingCapitalLoanData toData(WorkingCapitalLoan loan);
 
     List<WorkingCapitalLoanData> toDataList(List<WorkingCapitalLoan> loans);
@@ -108,26 +110,6 @@ public interface WorkingCapitalLoanMapper {
     default StringEnumOptionData delinquencyStartTypeData(final WorkingCapitalLoanProductRelatedDetails detail) {
         return (detail != null && detail.getDelinquencyStartType() != null) ? detail.getDelinquencyStartType().toStringEnumOptionData()
                 : null;
-    }
-
-    @Named("paymentAllocationRulesToData")
-    default List<WorkingCapitalPaymentAllocationData> paymentAllocationRulesToData(
-            final List<WorkingCapitalLoanPaymentAllocationRule> rules) {
-        if (rules == null || rules.isEmpty()) {
-            return null;
-        }
-        final List<WorkingCapitalPaymentAllocationData> result = new ArrayList<>();
-        for (WorkingCapitalLoanPaymentAllocationRule rule : rules) {
-            final AtomicInteger counter = new AtomicInteger(1);
-            final List<WorkingCapitalPaymentAllocationData.PaymentAllocationOrder> orders = new ArrayList<>();
-            if (rule.getAllocationTypes() != null) {
-                for (WorkingCapitalPaymentAllocationType type : rule.getAllocationTypes()) {
-                    orders.add(new WorkingCapitalPaymentAllocationData.PaymentAllocationOrder(type.name(), counter.getAndIncrement()));
-                }
-            }
-            result.add(new WorkingCapitalPaymentAllocationData(rule.getTransactionType(), orders));
-        }
-        return result;
     }
 
     @Named("timelineData")
