@@ -86,10 +86,10 @@ private SmsService smsService;
 
 // Send SMS using Orange provider
 SmsMessage message = new SmsMessage(
-    "+237698765432", 
-    "Your verification code is 123456", 
-    MessageType.OTP, 
-    "orange", 
+    "+237698765432",
+    "Your verification code is 123456",
+    MessageType.OTP,
+    "orange",
     Map.of()
 );
 

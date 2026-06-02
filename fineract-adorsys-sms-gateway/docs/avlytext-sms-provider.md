@@ -66,10 +66,10 @@ private SmsService smsService;
 
 // Send SMS using Avlytext provider
 SmsMessage message = new SmsMessage(
-    "+237698765432", 
-    "Your verification code is 123456", 
-    MessageType.OTP, 
-    "avlytext", 
+    "+237698765432",
+    "Your verification code is 123456",
+    MessageType.OTP,
+    "avlytext",
     Map.of()
 );
 
