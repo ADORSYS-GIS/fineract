@@ -3374,3 +3374,28 @@ Feature: Working Capital Loan Repayment
       | 198       | 18 July 2019     | 50.00                 |                     | 99.84           | 0.16                       |                          | 0.17                       |
       | 199       | 19 July 2019     | 50.00                 |                     | 49.95           | 0.11                       |                          | 0.06                       |
       | 200       | 20 July 2019     | 50.00                 |                     | 0.00            | 0.05                       |                          | 0.01                       |
+
+  @TestRailId:C83023
+  Scenario: Verify working capital loan repayment - UC19: actualBalance and actualDiscountFeeBalance progression across multiple on-time repayments
+    When Admin sets the business date to "01 January 2019"
+    And Admin creates a client with random data
+    And Admin creates a working capital loan with the following data:
+      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPayment | periodPaymentRate | discount |
+      | WCLP        | 01 January 2019 | 01 January 2019          | 9000            | 100000       | 18                | 1000     |
+    And Admin successfully approves the working capital loan on "01 January 2019" with "9000" amount and "1000" discount amount and expected disbursement date on "01 January 2019"
+    And Admin successfully disburse the Working Capital loan on "01 January 2019" with "9000" EUR transaction amount and "1000" discount amount
+    When Admin sets the business date to "02 January 2019"
+    And Customer makes repayment on "02 January 2019" with 50 transaction amount on Working Capital loan
+    When Admin sets the business date to "03 January 2019"
+    And Customer makes repayment on "03 January 2019" with 50 transaction amount on Working Capital loan
+    When Admin sets the business date to "04 January 2019"
+    And Customer makes repayment on "04 January 2019" with 50 transaction amount on Working Capital loan
+    Then Working Capital loan amortization schedule has 201 periods, with the following data for periods:
+      | paymentNo | paymentDate     | expectedPaymentAmount | actualPaymentAmount | expectedBalance | actualBalance | expectedAmortizationAmount | actualAmortizationAmount | expectedDiscountFeeBalance | actualDiscountFeeBalance |
+      | 0         | 01 January 2019 | -9000.00              |                     | 9000.00         | 9000.00       |                            |                          | 1000.00                    | 1000.00                  |
+      | 1         | 02 January 2019 | 50.00                 | 50.00               | 8959.61         | 8950.00       | 9.61                       | 9.61                     | 990.39                     | 990.39                   |
+      | 2         | 03 January 2019 | 50.00                 | 50.00               | 8919.18         | 8900.00       | 9.57                       | 9.57                     | 980.82                     | 980.82                   |
+      | 3         | 04 January 2019 | 50.00                 | 50.00               | 8878.70         | 8850.00       | 9.52                       | 9.52                     | 971.30                     | 971.30                   |
+      | 4         | 05 January 2019 | 50.00                 |                     | 8838.18         |               | 9.48                       |                          | 961.82                     |                          |
+      | 5         | 06 January 2019 | 50.00                 |                     | 8797.62         |               | 9.44                       |                          | 952.38                     |                          |
+      | 200       | 20 July 2019    | 50.00                 |                     | 0.00            |               | 0.05                       |                          | 0.01                       |                          |
