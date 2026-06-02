@@ -145,7 +145,7 @@ class OrangeSmsProviderTest {
     @Test
     void testSendNotConfigured() {
         OrangeSmsProvider unconfiguredProvider = new OrangeSmsProvider(
-                restTemplate, objectMapper, "", "", "", "", "", "", "", ""
+                restTemplate, objectMapper, "", "", "", "", "", "", ""
         );
 
         SmsMessage message = new SmsMessage("+237698765432", "Test message", MessageType.OTP, "orange", Map.of());
