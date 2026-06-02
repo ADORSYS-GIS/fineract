@@ -105,20 +105,20 @@ public class AvlytextSmsProvider implements SmsProvider {
         }
     }
 
-    // DTOs for Avlytext API
-    private record AvlytextSmsRequest(
+    // DTOs for Avlytext API - public for test access
+    public record AvlytextSmsRequest(
             String sender,
             String recipient,
             @JsonProperty("text") String message
     ) {}
 
-    private record AvlytextSmsResponse(
+    public record AvlytextSmsResponse(
             boolean success,
             String messageId,
             AvlytextError error
     ) {}
 
-    private record AvlytextError(
+    public record AvlytextError(
             String code,
             String message
     ) {}
