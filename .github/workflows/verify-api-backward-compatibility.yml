@@ -211,7 +211,7 @@ jobs:
         with:
           name: api-compatibility-report
           path: current/fineract-provider/build/swagger-brake/
-          retention-days: 30
+          retention-days: 1
 
       - name: Fail if breaking changes detected
         if: steps.breaking-check.outcome == 'failure'

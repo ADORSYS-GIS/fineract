@@ -92,7 +92,7 @@ jobs:
           name: docker-logs-${{ matrix.db_type }}-attempt-${{ github.run_attempt }}
           path: ci-logs/
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Clean up
         if: always()

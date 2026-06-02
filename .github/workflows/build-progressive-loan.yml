@@ -64,7 +64,7 @@ jobs:
             **/build/reports/
             **/fineract-progressive-loan-embeddable-schedule-generator/build/reports/
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Archive Progressive Loan JAR
         if: always()
@@ -72,7 +72,7 @@ jobs:
         with:
           name: progressive-loan-jar
           path: ${{ env.EMBEDDABLE_JAR_FILE }}
-          retention-days: 5
+          retention-days: 1
           if-no-files-found: ignore
 
       - name: Archive server logs
@@ -81,4 +81,4 @@ jobs:
         with:
           name: server-logs-build-progressive-loan
           path: '**/build/cargo/'
-          retention-days: 5
+          retention-days: 1

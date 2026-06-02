@@ -80,7 +80,7 @@ jobs:
           name: test-results-build-core
           path: '**/build/reports/'
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Archive server logs
         if: always()
@@ -88,4 +88,4 @@ jobs:
         with:
           name: server-logs-build-core
           path: '**/build/cargo/'
-          retention-days: 5
+          retention-days: 1

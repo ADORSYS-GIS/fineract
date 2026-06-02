@@ -184,7 +184,7 @@ jobs:
             **/build/reports/tests/test
             **/build/test-results/test
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Upload Allure Report
         if: always()
@@ -193,7 +193,7 @@ jobs:
           name: allure-report-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
           path: allure-report-shard-${{ matrix.shard_index }}
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Upload logs
         if: always()
@@ -206,7 +206,7 @@ jobs:
             **/logs/
             **/out/
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
       - name: Clean up
         if: always()

@@ -54,7 +54,7 @@ jobs:
         with:
           name: fineract-config-cli-jar
           path: fineract-adorsys-data-collection/fineract-config-cli/target/fineract-config-cli.jar
-          retention-days: 7
+          retention-days: 1
 
   docker-build:
     name: Build Docker Image
