@@ -338,14 +338,19 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
         }
 
         final LocalDate lastDueDate = loan.getLastLoanRepaymentScheduleInstallment().getDueDate();
-        // Only clean up ACCRUAL transactions (not ACCRUAL_ADJUSTMENT — those are corrections that should persist)
-        reverseTransactionsAfter(loan, Set.of(ACCRUAL), lastDueDate, addJournal);
+        final boolean progressiveAccrual = isProgressiveAccrual(loan);
+        if (progressiveAccrual) {
+            // Progressive: use ACCRUAL_ADJUSTMENT — the recalculation uses DB-level sums that account for adjustments
+            adjustAccrualsAfter(loan, lastDueDate, addJournal);
+        } else {
+            // Cumulative: use reversal — the recalculation uses cached installment fields, then recreates the accrual
+            reverseTransactionsAfter(loan, ACCRUAL_TYPES, lastDueDate, addJournal);
+        }
         ensureAccrualTransactionMappings(loan, chargeOnDueDate);
         if (DateUtils.isAfter(tillDate, lastDueDate)) {
             tillDate = lastDueDate;
         }
 
-        final boolean progressiveAccrual = isProgressiveAccrual(loan);
         final LocalDate accruedTill = loan.getAccruedTill();
         final LocalDate businessDate = DateUtils.getBusinessLocalDate();
         final LocalDate accrualDate = isFinal
@@ -354,7 +359,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
                 : tillDate;
         if (progressiveAccrual && accruedTill != null && !DateUtils.isAfter(tillDate, accruedTill)) {
             if (isFinal) {
-                reverseTransactionsAfter(loan, ACCRUAL_TYPES, accrualDate, addJournal);
+                adjustAccrualsAfter(loan, accrualDate, addJournal);
             } else if (loanTransactionRepository.existsNonReversedByLoanAndTypesAndOnOrAfterDate(loan, ACCRUAL_TYPES, accrualDate)
                     && hasNoActiveChargeOnDate(loan, accrualDate)) {
                 return;
@@ -814,8 +819,9 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
                         addEvent);
             }
         }
-        // Only clean up ACCRUAL transactions (not ACCRUAL_ADJUSTMENT — those are corrections that should persist)
-        reverseTransactionsAfter(loan, Set.of(ACCRUAL), lastDueDate, addEvent);
+        // For post-due-date accruals: create ACCRUAL_ADJUSTMENT instead of reversing. This path does NOT recreate
+        // the accrual, so reversal would permanently de-recognize income. ACCRUAL_ADJUSTMENT preserves the audit trail.
+        adjustAccrualsAfter(loan, lastDueDate, addEvent);
     }
 
     private void reprocessNonPeriodicAccruals(Loan loan, final List<LoanTransaction> accrualTransactions, final boolean addEvent) {
@@ -829,7 +835,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
         for (LoanTransaction accrualTransaction : accrualTransactions) {
             if (accrualTransaction.getInterestPortion(loan.getCurrency()).isGreaterThanZero()) {
                 if (accrualTransaction.getInterestPortion(loan.getCurrency()).isNotEqualTo(interestApplied)) {
-                    reverseOrAdjustAccrual(loan, accrualTransaction, addEvent);
+                    reverseTransaction(accrualTransaction, addEvent);
                     if (isExternalIdAutoGenerationEnabled) {
                         externalId = ExternalId.generate();
                     }
@@ -850,7 +856,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
                     LoanCharge loanCharge = chargePaidBy.getLoanCharge();
                     Money chargeAmount = loanCharge.getAmount(loan.getCurrency());
                     if (chargeAmount.isNotEqualTo(accrualTransaction.getAmount(loan.getCurrency()))) {
-                        reverseOrAdjustAccrual(loan, accrualTransaction, addEvent);
+                        reverseTransaction(accrualTransaction, addEvent);
                         final LoanTransaction applyLoanChargeTransaction = loanChargeService.handleChargeAppliedTransaction(loan,
                                 loanCharge, accrualTransaction.getTransactionDate());
                         if (applyLoanChargeTransaction != null) {
@@ -887,7 +893,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
                     interest = interest.minus(accrualTransaction.getInterestPortion(currency));
                     fee = fee.minus(accrualTransaction.getFeeChargesPortion(currency));
                     penalty = penalty.minus(accrualTransaction.getPenaltyChargesPortion(currency));
-                    reverseOrAdjustAccrual(loan, accrualTransaction, addEvent);
+                    reverseTransaction(accrualTransaction, addEvent);
                 }
             }
         }
@@ -993,7 +999,7 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
                     Set.of(LoanTransactionType.ACCRUAL, LoanTransactionType.ACCRUAL_ADJUSTMENT), compoundingDetail.getEffectiveDate());
 
             if (accrualTransaction.isEmpty() || !MathUtil.isEqualTo(accrualTransaction.get().getAmount(), compoundingDetail.getAmount())) {
-                accrualTransaction.ifPresent(accrualTrans -> reverseOrAdjustAccrual(loan, accrualTrans, addEvent));
+                accrualTransaction.ifPresent(accrualTrans -> reverseTransaction(accrualTrans, addEvent));
                 LoanTransaction accrual = LoanTransaction.accrueTransaction(loan, loan.getOffice(), compoundingDetail.getEffectiveDate(),
                         compoundingDetail.getAmount(), interest, fee, penalties, externalId);
                 updateLoanChargesPaidBy(loan, accrual, feeDetails, null);
@@ -1249,24 +1255,23 @@ public class LoanAccrualsProcessingServiceImpl implements LoanAccrualsProcessing
     private void reverseTransactionsAfter(final Loan loan, final Set<LoanTransactionType> types, final LocalDate effectiveDate,
             final boolean addEvent) {
         loanTransactionRepository.findNonReversedByLoanAndTypesAndAfterDate(loan, types, effectiveDate)
-                .forEach(transaction -> reverseOrAdjustAccrual(loan, transaction, addEvent));
+                .forEach(transaction -> reverseTransaction(transaction, addEvent));
     }
 
     private void reverseTransactionsOnOrAfter(final Loan loan, final Set<LoanTransactionType> types, final LocalDate date) {
         loanTransactionRepository.findNonReversedByLoanAndTypesAndOnOrAfterDate(loan, types, date)
-                .forEach(transaction -> reverseOrAdjustAccrual(loan, transaction, true));
+                .forEach(transaction -> reverseTransaction(transaction, true));
     }
 
     /**
-     *
-     * Non-ACCRUAL transactions (ACCRUAL_ADJUSTMENT, INCOME_POSTING) can still be reversed normally.
+     * For post-due-date accruals that are reversed WITHOUT recreation (reprocessPeriodicAccruals line 817): create
+     * ACCRUAL_ADJUSTMENT instead of reversing. This preserves the audit trail and allows downstream reconciliation.
      */
-    private void reverseOrAdjustAccrual(final Loan loan, final LoanTransaction transaction, final boolean addEvent) {
-        if (transaction.isAccrual()) {
+    private void adjustAccrualsAfter(final Loan loan, final LocalDate lastDueDate, final boolean addEvent) {
+        // Only query for ACCRUAL — ACCRUAL_ADJUSTMENT transactions are corrections that must persist
+        loanTransactionRepository.findNonReversedByLoanAndTypesAndAfterDate(loan, Set.of(ACCRUAL), lastDueDate).forEach(transaction -> {
             createAccrualAdjustment(loan, transaction, addEvent);
-        } else {
-            reverseTransaction(transaction, addEvent);
-        }
+        });
     }
 
     private void createAccrualAdjustment(final Loan loan, final LoanTransaction accrualTransaction, final boolean addEvent) {

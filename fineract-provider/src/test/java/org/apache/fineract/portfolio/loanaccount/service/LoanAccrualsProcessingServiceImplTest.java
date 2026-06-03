@@ -239,7 +239,7 @@ public class LoanAccrualsProcessingServiceImplTest {
 
         // retrieveListOfAccrualTransactions uses both types
         when(loanTransactionRepository.findNonReversedByLoanAndTypes(loan, accrualTypes)).thenReturn(List.of(postDueDateAccrual));
-        // reverseTransactionsAfter now only queries for ACCRUAL type
+        // adjustAccrualsAfter only queries for ACCRUAL (not ACCRUAL_ADJUSTMENT — those must persist)
         when(loanTransactionRepository.findNonReversedByLoanAndTypesAndAfterDate(loan, accrualOnly, lastDueDate))
                 .thenReturn(List.of(postDueDateAccrual));
         // Idempotency check queries the loan's in-memory transaction list

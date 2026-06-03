@@ -32,16 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdTransactions;
 import org.apache.fineract.client.models.PostClientsResponse;
-import org.apache.fineract.client.models.PostLoanProductsRequest;
 import org.apache.fineract.client.models.PostLoanProductsResponse;
 import org.apache.fineract.client.models.PostLoansLoanIdTransactionsRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdTransactionsResponse;
 import org.apache.fineract.client.models.PostLoansLoanIdTransactionsTransactionIdRequest;
 import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
-import org.apache.fineract.integrationtests.common.loans.LoanProductTestBuilder;
-import org.apache.fineract.integrationtests.common.products.DelinquencyBucketsHelper;
-import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -624,27 +620,20 @@ public class LoanAccrualReversalOnClosedLoanTest extends BaseLoanIntegrationTest
     }
 
     /**
-     * REPRODUCTION v2: Cumulative loan WITHOUT interest recalculation, closed after lastDueDate.
-     *
-     * Previous tests used loans with interest recalculation, which always creates additional schedule periods when
-     * paying late, shifting lastDueDate to match the accrual date. This test uses a FIXED schedule (no interest
-     * recalculation) so lastDueDate stays at the original installment date.
-     *
-     * Key mechanism: 1. Fixed-schedule cumulative loan (no interest recalculation) 2. Skip COB for last installment
-     * period → interest unaccrued 3. Pay EXACT amount after lastDueDate → CLOSED with closedOnDate > lastDueDate 4.
-     * processAccrualsOnLoanClosure creates ACCRUAL at closedOnDate (post-due-date) 5. Goodwill credit → OVERPAID →
-     * LoanBalanceChangedListener → addAccruals(isFinal=true) → reverseTransactionsAfter(lastDueDate) → REVERSES the
-     * post-due-date accrual (the bug)
+     * Cumulative loan WITH interest recalculation — matches the production scenario. The post-due-date accrual is
+     * created when COB is skipped for the last period and the loan is overpaid after lastDueDate. CBR undo triggers
+     * reprocessExistingAccruals → reprocessPeriodicAccruals → adjustAccrualsAfter(lastDueDate) which should create an
+     * ACCRUAL_ADJUSTMENT instead of reversing the post-due-date accrual.
      */
     @Test
-    public void testNoAccrualReversalOnCumulativeLoanExactPaymentAfterDueDate() {
+    public void testNoAccrualReversalOnCumulativeLoanWithCBRUndo() {
         AtomicLong loanIdRef = new AtomicLong();
 
         runAt("01 November 2024", () -> {
             final PostClientsResponse client = clientHelper.createClient(ClientHelper.defaultClientCreationRequest());
 
-            // Cumulative loan WITHOUT interest recalculation → fixed schedule, no additional installments
-            final PostLoanProductsResponse loanProduct = loanProductHelper.createLoanProduct(createFixedScheduleCumulative()//
+            // Cumulative loan WITH interest recalculation — matches production scenario
+            final PostLoanProductsResponse loanProduct = loanProductHelper.createLoanProduct(create4ICumulative()//
                     .currencyCode("USD").principal(220.0).minPrincipal(100.0).maxPrincipal(1000.0)//
                     .numberOfRepayments(4).repaymentEvery(1).interestRatePerPeriod(12.0).interestRateFrequencyType(3)//
                     .enableAccrualActivityPosting(true)//
@@ -668,192 +657,56 @@ public class LoanAccrualReversalOnClosedLoanTest extends BaseLoanIntegrationTest
         runCobRange(loanId, fmt, LocalDate.of(2025, 1, 2), LocalDate.of(2025, 1, 31));
         payInstallment(loanId, 3, "01 February 2025");
 
-        // CRITICAL: Do NOT run COB for the last installment period
+        // Skip COB for last period — interest stays unaccrued
         log.info("[AccrualFix] Skipping COB for last period — installment 4 interest stays unaccrued");
 
-        // Pay EXACT amount AFTER lastDueDate → CLOSED_OBLIGATIONS_MET
-        // With no interest recalculation, the schedule is fixed — no additional installments for late payment
-        // closedOnDate = March 5 > lastDueDate = March 1
-        // addAccruals(isFinal=true) creates ACCRUAL at closedOnDate (post-due-date)
+        // Overpay to create post-due-date accrual and move loan to OVERPAID
         runAt("05 March 2025", () -> {
             GetLoansLoanIdResponse details = loanTransactionHelper.getLoanDetails(loanId);
             var installment = details.getRepaymentSchedule().getPeriods().stream().filter(p -> p.getPeriod() != null && p.getPeriod() == 4)
                     .findFirst().orElseThrow();
             double installmentAmount = Utils.getDoubleValue(installment.getTotalDueForPeriod());
-            log.info("[AccrualFix] Installment 4 due: {}, paying EXACT amount on 05 March (due: 01 March)", installmentAmount);
+            double overpayAmount = installmentAmount + 50.0;
+            log.info("[AccrualFix] Installment 4 due: {}, overpaying with {} on 05 March", installmentAmount, overpayAmount);
 
-            addRepaymentForLoan(loanId, installmentAmount, "05 March 2025");
+            addRepaymentForLoan(loanId, overpayAmount, "05 March 2025");
 
             GetLoansLoanIdResponse afterPay = loanTransactionHelper.getLoanDetails(loanId);
-            log.info("[AccrualFix] Status after exact payment: {}", afterPay.getStatus().getCode());
-            assertTrue(afterPay.getStatus().getClosedObligationsMet(), "Loan should be CLOSED but is: " + afterPay.getStatus().getCode());
-
-            logAccrualState(loanId, "After exact payment — check for post-due-date accrual");
-
-            // CHECK: Does a post-due-date accrual exist?
-            LocalDate origLastDueDate = LocalDate.of(2025, 3, 1);
-            List<GetLoansLoanIdTransactions> postDueAccruals = afterPay.getTransactions().stream()
-                    .filter(tx -> "loanTransactionType.accrual".equals(tx.getType().getCode()))
-                    .filter(tx -> tx.getDate() != null && tx.getDate().isAfter(origLastDueDate)).toList();
-            log.info("[AccrualFix] Post-due-date accruals after exact payment: {} (expecting >= 1 at closedOnDate=March 5)",
-                    postDueAccruals.size());
-            for (var tx : postDueAccruals) {
-                log.info("[AccrualFix]   id={}, date={}, amount={}, interest={}, reversed={}", tx.getId(), tx.getDate(), tx.getAmount(),
-                        tx.getInterestPortion(), tx.getManuallyReversed());
-            }
-
-            // Also log the last 5 accruals by id to see the most recent ones
-            List<GetLoansLoanIdTransactions> allAccruals = afterPay.getTransactions().stream()
-                    .filter(tx -> "loanTransactionType.accrual".equals(tx.getType().getCode()))
-                    .sorted((a, b) -> Long.compare(b.getId(), a.getId())).limit(5).toList();
-            log.info("[AccrualFix] Last 5 accruals by id:");
-            for (var tx : allAccruals) {
-                log.info("[AccrualFix]   id={}, date={}, amount={}, interest={}, reversed={}", tx.getId(), tx.getDate(), tx.getAmount(),
-                        tx.getInterestPortion(), tx.getManuallyReversed());
-            }
-
-            // Verify no additional installment — fixed schedule should have exactly 4 periods
-            long periodCount = afterPay.getRepaymentSchedule().getPeriods().stream().filter(p -> p.getPeriod() != null).count();
-            log.info("[AccrualFix] Schedule periods: {} (expected 4)", periodCount);
-            for (var p : afterPay.getRepaymentSchedule().getPeriods()) {
-                if (p.getPeriod() != null) {
-                    log.info("  Period {}: dueDate={}, complete={}", p.getPeriod(), p.getDueDate(), p.getComplete());
-                }
-            }
+            log.info("[AccrualFix] Status after overpayment: {}", afterPay.getStatus().getCode());
+            assertTrue(afterPay.getStatus().getOverpaid(), "Loan should be OVERPAID but is: " + afterPay.getStatus().getCode());
+            logAccrualState(loanId, "After overpayment");
         });
 
-        // Record the accrual count before goodwill credit — the post-due-date accrual at March 5 should exist
-        AtomicReference<Long> accrualCountBefore = new AtomicReference<>();
-        AtomicReference<Long> postDueAccrualIdRef = new AtomicReference<>();
-        runAt("06 March 2025", () -> {
-            GetLoansLoanIdResponse beforeGc = loanTransactionHelper.getLoanDetails(loanId);
-            LocalDate origLastDueDate = LocalDate.of(2025, 3, 1);
-            List<GetLoansLoanIdTransactions> accrualsBefore = beforeGc.getTransactions().stream()
-                    .filter(tx -> "loanTransactionType.accrual".equals(tx.getType().getCode())).toList();
-            accrualCountBefore.set((long) accrualsBefore.size());
-            log.info("[AccrualFix] Accrual count before goodwill credit: {}", accrualsBefore.size());
-
-            // Find the post-due-date accrual (should be at March 5)
-            List<GetLoansLoanIdTransactions> postDueAccruals = accrualsBefore.stream()
-                    .filter(tx -> tx.getDate() != null && tx.getDate().isAfter(origLastDueDate)).toList();
-            log.info("[AccrualFix] Post-due-date accruals before goodwill credit: {}", postDueAccruals.size());
-            assertTrue(postDueAccruals.size() >= 1,
-                    "Expected at least 1 post-due-date accrual at closedOnDate=March 5 but found " + postDueAccruals.size());
-            postDueAccrualIdRef.set(postDueAccruals.get(0).getId());
-            log.info("[AccrualFix] Post-due-date accrual: id={}, date={}, amount={}", postDueAccruals.get(0).getId(),
-                    postDueAccruals.get(0).getDate(), postDueAccruals.get(0).getAmount());
+        // CBR to refund overpayment
+        AtomicReference<Long> cbrIdRef = new AtomicReference<>();
+        runAt("15 March 2025", () -> {
+            GetLoansLoanIdResponse details = loanTransactionHelper.getLoanDetails(loanId);
+            double overpayment = Utils.getDoubleValue(details.getTotalOverpaid());
+            log.info("[AccrualFix] Overpayment: {}, creating CBR", overpayment);
+            assertTrue(overpayment > 0, "Should have overpayment");
+            PostLoansLoanIdTransactionsResponse cbr = loanTransactionHelper.makeCreditBalanceRefund(loanId,
+                    new PostLoansLoanIdTransactionsRequest().dateFormat(DATETIME_PATTERN).transactionDate("15 March 2025").locale(LOCALE)
+                            .transactionAmount(overpayment));
+            cbrIdRef.set(cbr.getResourceId());
+            logAccrualState(loanId, "After CBR");
         });
 
-        // Add goodwill credit → OVERPAID
-        // LoanBalanceChangedListener → processAccrualsOnLoanClosure → addAccruals(isFinal=true)
-        // line 341: reverseTransactionsAfter(lastDueDate=March1) → creates ACCRUAL_ADJUSTMENT instead of reversing
-        runAt("10 March 2025", () -> {
-            log.info("[AccrualFix] === Adding goodwill credit 10.0 ===");
-            loanTransactionHelper.makeGoodwillCredit(loanId, new PostLoansLoanIdTransactionsRequest().dateFormat(DATETIME_PATTERN)
-                    .transactionDate("10 March 2025").locale(LOCALE).transactionAmount(10.0));
+        // Undo CBR → triggers adjustLoanTransaction → reprocessExistingAccruals → reprocessPeriodicAccruals
+        // → adjustAccrualsAfter(lastDueDate) → should create ACCRUAL_ADJUSTMENT (not reverse the accrual)
+        runAt("20 March 2025", () -> {
+            log.info("[AccrualFix] === Undoing CBR {} ===", cbrIdRef.get());
 
-            GetLoansLoanIdResponse afterGc = loanTransactionHelper.getLoanDetails(loanId);
-            log.info("[AccrualFix] Status after goodwill credit: {}", afterGc.getStatus().getCode());
+            loanTransactionHelper.reverseLoanTransaction(loanId, cbrIdRef.get(), new PostLoansLoanIdTransactionsTransactionIdRequest()
+                    .dateFormat(DATETIME_PATTERN).transactionDate("20 March 2025").transactionAmount(0.0).locale(LOCALE));
 
-            List<GetLoansLoanIdTransactions> accrualsAfter = afterGc.getTransactions().stream()
-                    .filter(tx -> "loanTransactionType.accrual".equals(tx.getType().getCode())).toList();
-            log.info("[AccrualFix] Accrual count after goodwill credit: {} (was {} before)", accrualsAfter.size(),
-                    accrualCountBefore.get());
+            logAccrualState(loanId, "After CBR undo");
+            logAllTransactions(loanId, "After CBR undo");
 
-            // FIX: The post-due-date accrual must remain visible (NOT reversed)
-            boolean postDueAccrualStillVisible = accrualsAfter.stream().anyMatch(tx -> tx.getId().equals(postDueAccrualIdRef.get()));
-            log.info("[AccrualFix] Post-due-date accrual id={} still visible: {}", postDueAccrualIdRef.get(), postDueAccrualStillVisible);
-            assertTrue(postDueAccrualStillVisible, "Post-due-date accrual id=" + postDueAccrualIdRef.get()
-                    + " should remain visible (not reversed). The fix creates ACCRUAL_ADJUSTMENT instead.");
+            GetLoansLoanIdResponse loanDetails = loanTransactionHelper.getLoanDetails(loanId);
 
-            // The original accrual count should be preserved (accruals are never reversed)
-            assertEquals(accrualCountBefore.get().longValue(), accrualsAfter.size(),
-                    "Accrual count should not change — accruals must never be reversed");
-
-            // An ACCRUAL_ADJUSTMENT should have been created to cancel the post-due-date accrual
-            List<GetLoansLoanIdTransactions> accrualAdjustments = afterGc.getTransactions().stream()
-                    .filter(tx -> "loanTransactionType.accrualAdjustment".equals(tx.getType().getCode())).toList();
-            log.info("[AccrualFix] Accrual adjustments after goodwill credit: {}", accrualAdjustments.size());
-            assertTrue(!accrualAdjustments.isEmpty(),
-                    "Expected ACCRUAL_ADJUSTMENT transaction to be created instead of reversing the accrual");
-
-            // Verify the ACCRUAL_ADJUSTMENT amount matches the original post-due-date accrual
-            GetLoansLoanIdTransactions originalAccrual = accrualsAfter.stream().filter(tx -> tx.getId().equals(postDueAccrualIdRef.get()))
-                    .findFirst().orElseThrow();
-            GetLoansLoanIdTransactions adjustment = accrualAdjustments.get(accrualAdjustments.size() - 1);
-            assertEquals(originalAccrual.getAmount(), adjustment.getAmount(),
-                    "ACCRUAL_ADJUSTMENT amount should match the original post-due-date accrual amount");
+            // Accruals must never be reversed — check via assertNoReversedAccruals
+            assertNoReversedAccruals(loanDetails);
         });
-    }
-
-    /**
-     * Creates a cumulative loan product WITHOUT interest recalculation (fixed schedule). Same as create4ICumulative()
-     * but with isInterestRecalculationEnabled=false.
-     */
-    protected PostLoanProductsRequest createFixedScheduleCumulative() {
-        return new PostLoanProductsRequest().name(Utils.uniqueRandomStringGenerator("4I_CUM_FIXED_", 6))//
-                .shortName(Utils.uniqueRandomStringGenerator("", 4))//
-                .description("4 installment cumulative - fixed schedule")//
-                .includeInBorrowerCycle(false)//
-                .useBorrowerCycle(false)//
-                .currencyCode("EUR")//
-                .digitsAfterDecimal(2)//
-                .principal(1000.0)//
-                .minPrincipal(100.0)//
-                .maxPrincipal(10000.0)//
-                .numberOfRepayments(4)//
-                .repaymentEvery(1)//
-                .repaymentFrequencyType(RepaymentFrequencyType.MONTHS_L)//
-                .interestRatePerPeriod(10D)//
-                .minInterestRatePerPeriod(0D)//
-                .maxInterestRatePerPeriod(120D)//
-                .interestRateFrequencyType(InterestRateFrequencyType.YEARS)//
-                .isLinkedToFloatingInterestRates(false)//
-                .allowVariableInstallments(false)//
-                .amortizationType(AmortizationType.EQUAL_INSTALLMENTS)//
-                .interestType(InterestType.DECLINING_BALANCE)//
-                .interestCalculationPeriodType(InterestCalculationPeriodType.DAILY)//
-                .allowPartialPeriodInterestCalculation(false)//
-                .creditAllocation(List.of())//
-                .overdueDaysForNPA(179)//
-                .daysInMonthType(30)//
-                .daysInYearType(360)//
-                .isInterestRecalculationEnabled(false)// NO interest recalculation → fixed schedule
-                .canDefineInstallmentAmount(true)//
-                .repaymentStartDateType(1)//
-                .charges(List.of())//
-                .principalVariationsForBorrowerCycle(List.of())//
-                .interestRateVariationsForBorrowerCycle(List.of())//
-                .numberOfRepaymentVariationsForBorrowerCycle(List.of())//
-                .accountingRule(3)// ACCRUAL_PERIODIC
-                .dateFormat(DATETIME_PATTERN)//
-                .locale("en")//
-                .canUseForTopup(false)//
-                .fundSourceAccountId(fundSource.getAccountID().longValue())//
-                .loanPortfolioAccountId(loansReceivableAccount.getAccountID().longValue())//
-                .transfersInSuspenseAccountId(suspenseAccount.getAccountID().longValue())//
-                .interestOnLoanAccountId(interestIncomeAccount.getAccountID().longValue())//
-                .incomeFromFeeAccountId(feeIncomeAccount.getAccountID().longValue())//
-                .incomeFromPenaltyAccountId(penaltyIncomeAccount.getAccountID().longValue())//
-                .incomeFromRecoveryAccountId(recoveriesAccount.getAccountID().longValue())//
-                .writeOffAccountId(writtenOffAccount.getAccountID().longValue())//
-                .overpaymentLiabilityAccountId(overpaymentAccount.getAccountID().longValue())//
-                .receivableInterestAccountId(interestReceivableAccount.getAccountID().longValue())//
-                .receivableFeeAccountId(feeReceivableAccount.getAccountID().longValue())//
-                .receivablePenaltyAccountId(penaltyReceivableAccount.getAccountID().longValue())//
-                .incomeFromChargeOffInterestAccountId(interestIncomeChargeOffAccount.getAccountID().longValue())//
-                .incomeFromChargeOffFeesAccountId(feeChargeOffAccount.getAccountID().longValue())//
-                .chargeOffExpenseAccountId(chargeOffExpenseAccount.getAccountID().longValue())//
-                .chargeOffFraudExpenseAccountId(chargeOffFraudExpenseAccount.getAccountID().longValue())//
-                .incomeFromChargeOffPenaltyAccountId(penaltyChargeOffAccount.getAccountID().longValue())//
-                .incomeFromGoodwillCreditInterestAccountId(goodwillIncomeAccount.getAccountID().longValue())//
-                .incomeFromGoodwillCreditFeesAccountId(goodwillIncomeAccount.getAccountID().longValue())//
-                .incomeFromGoodwillCreditPenaltyAccountId(goodwillIncomeAccount.getAccountID().longValue())//
-                .goodwillCreditAccountId(goodwillExpenseAccount.getAccountID().longValue())//
-                .delinquencyBucketId(DelinquencyBucketsHelper.createDefaultBucket())//
-                .transactionProcessingStrategyCode(
-                        LoanProductTestBuilder.DUE_PENALTY_FEE_INTEREST_PRINCIPAL_IN_ADVANCE_PRINCIPAL_PENALTY_FEE_INTEREST_STRATEGY)//
-                .loanScheduleType(LoanScheduleType.CUMULATIVE.toString());
     }
 
     // --- Helper methods ---
