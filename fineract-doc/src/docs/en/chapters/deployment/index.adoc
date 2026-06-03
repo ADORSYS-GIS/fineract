@@ -1,5 +1,12 @@
 = Deployment
 
+Recommended:
+
+[source,bash,subs="attributes+,+macros"]
+----
+java -jar fineract-provider-{revnumber}.jar
+----
+
 include::plugins.adoc[leveloffset=+1]
 
 include::https.adoc[leveloffset=+1]
