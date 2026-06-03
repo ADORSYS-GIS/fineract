@@ -46,7 +46,7 @@ jobs:
           name: javadoc-reports-quality-checks
           path: '**/build/docs/javadoc/'
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
   checkstyle:
     runs-on: ubuntu-24.04
@@ -87,7 +87,7 @@ jobs:
           name: checkstyle-reports-quality-checks
           path: '**/build/reports/checkstyle/'
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
   rat:
     runs-on: ubuntu-24.04
@@ -128,7 +128,7 @@ jobs:
           name: rat-reports-quality-checks
           path: '**/build/reports/rat/'
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
   spotbugs:
     runs-on: ubuntu-24.04
@@ -169,7 +169,7 @@ jobs:
           name: spotbugs-reports-quality-checks
           path: '**/build/reports/spotbugs/'
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 1
 
   spotless:
     runs-on: ubuntu-24.04

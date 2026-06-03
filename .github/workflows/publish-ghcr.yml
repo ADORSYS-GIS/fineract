@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - develop
+concurrency:
+  group: publish-ghcr-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
   packages: write

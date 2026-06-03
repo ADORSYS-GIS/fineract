@@ -132,7 +132,7 @@ jobs:
         with:
           name: test-results-postgresql-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
           path: '**/build/reports/'
-          retention-days: 5
+          retention-days: 1
 
       - name: Archive server logs
         if: always()
@@ -140,4 +140,4 @@ jobs:
         with:
           name: server-logs-postgresql-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
           path: '**/build/cargo/'
-          retention-days: 5
+          retention-days: 1
