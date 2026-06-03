@@ -1134,6 +1134,26 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: adjustment.only.allowed.for.active.loan.";
     }
 
+    public static String discountAdjustmentUndoAlreadyReversedFailure() {
+        return "Failed data validation due to: discount.adjustment.already.reversed.";
+    }
+
+    public static String discountAdjustmentUndoInvalidTypeFailure() {
+        return "Failed data validation due to: discount.adjustment.transaction.invalid.";
+    }
+
+    public static String discountAdjustmentUndoTransactionIdRequiredFailure() {
+        return "Discount fee adjustment transaction ID is required to undo the adjustment";
+    }
+
+    public static String discountAdjustmentUndoTransactionNotFoundFailure() {
+        return "Discount fee adjustment transaction not found";
+    }
+
+    public static String discountAdjustmentUndoNotActiveLoanFailure() {
+        return "Failed data validation due to: undo.discount.adjustment.only.allowed.for.active.loan.";
+    }
+
     public static String nearBreachCannotEnableWithoutBreachFailure() {
         return "Failed data validation due to: cannot.enable.near.breach.without.breach.";
     }

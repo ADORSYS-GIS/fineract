@@ -264,6 +264,10 @@ public class WorkingCapitalLoanDataValidator {
             baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.loanProductRelatedDetailsParamName)
                     .failWithCode("discount.not.available");
         }
+        if (loan.getLoanStatus() == null || !loan.getLoanStatus().isActive()) {
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.loanStatusParamName)
+                    .failWithCode("undo.discount.adjustment.only.allowed.for.active.loan");
+        }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
