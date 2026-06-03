@@ -258,31 +258,31 @@ public class OrangeSmsProvider implements SmsProvider {
         }
     }
 
-    // DTOs for Orange API - matching expected structure exactly
+    // DTOs for Orange API - public for test access
     // The Orange API expects: {"outboundSMSMessageRequest": {"address": "...", "senderAddress": "...", "outboundSMSTextMessage": {"message": "..."}}}
 
-    private record OrangeSmsRequest(
+    public record OrangeSmsRequest(
             @JsonProperty("outboundSMSMessageRequest") OutboundSMSMessageRequest outboundSMSMessageRequest
     ) {}
 
-    private record OutboundSMSMessageRequest(
+    public record OutboundSMSMessageRequest(
             @JsonProperty("address") String address,
             @JsonProperty("senderAddress") String senderAddress,
             @JsonProperty("outboundSMSTextMessage") OutboundSMSTextMessage outboundSMSTextMessage,
             @JsonProperty("senderName") @JsonInclude(JsonInclude.Include.NON_NULL) String senderName
     ) {}
 
-    private record OutboundSMSTextMessage(
+    public record OutboundSMSTextMessage(
             @JsonProperty("message") String message
     ) {}
 
-    private record OrangeTokenResponse(
+    public record OrangeTokenResponse(
             @JsonProperty("access_token") String accessToken,
             @JsonProperty("token_type") String tokenType,
             @JsonProperty("expires_in") long expiresIn
     ) {}
 
-    private record OrangeSmsResponse(
+    public record OrangeSmsResponse(
             @JsonProperty("transactionId") String transactionId
     ) {}
 }
