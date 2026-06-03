@@ -1118,10 +1118,6 @@ public final class ErrorMessageHelper {
         return "Failed data validation due to: cannot.be.more.than.discount.fee.";
     }
 
-    public static String discountAdjustmentBackdatedFailure() {
-        return "Failed data validation due to: backdated.not.allowed.";
-    }
-
     public static String discountAdjustmentBeforeDiscountDateFailure() {
         return "Failed data validation due to: cannot.be.before.discount.fee.date.";
     }

@@ -105,7 +105,6 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
     private final WorkingCapitalLoanTransactionRelationRepository relationRepository;
     private final WorkingCapitalLoanPeriodPaymentRateChangeRepository rateChangeRepository;
     private final WorkingCapitalLoanDiscountFeeAmortizationService discountFeeAmortizationService;
-    private final ProjectedAmortizationScheduleRepositoryWrapper scheduleRepositoryWrapper;
 
     @Override
     public CommandProcessingResult approveApplication(final Long loanId, final JsonCommand command) {
@@ -519,7 +518,8 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                     "Related discount transaction ID is required for discount fee adjustment",
                     WorkingCapitalLoanConstants.relatedResourceIdParamName);
         }
-        final WorkingCapitalLoanTransaction relatedDiscountTransaction = transactionRepository.findById(relatedDiscountTransactionId)
+        final WorkingCapitalLoanTransaction relatedDiscountTransaction = transactionRepository
+                .findByIdAndWcLoan_Id(relatedDiscountTransactionId, loanId)
                 .orElseThrow(() -> new PlatformApiDataValidationException("validation.msg.wc.loan.discount.transaction.not.found",
                         "Discount transaction not found", WorkingCapitalLoanConstants.relatedResourceIdParamName));
         if (!relatedDiscountTransaction.getTypeOf().isDiscountFee() || relatedDiscountTransaction.isReversed()) {
@@ -565,7 +565,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         loan.getLoanProductRelatedDetails()
                 .setDiscount((currentDiscount != null ? currentDiscount : BigDecimal.ZERO).subtract(amount).max(BigDecimal.ZERO));
 
-        amortizationScheduleWriteService.applyDiscountFeeAdjustment(loan, transactionDate);
+        amortizationScheduleWriteService.applyDiscountFeeAdjustment(loan);
         updateBalanceForDiscountChange(loan, amount, true);
 
         handleStateChanges(loan, transactionDate);
@@ -589,6 +589,46 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(adjustmentTransaction.getId())
                 .withEntityExternalId(adjustmentTransaction.getExternalId()).withSubEntityId(relatedDiscountTransaction.getId())
                 .withSubEntityExternalId(relatedDiscountTransaction.getExternalId()).withOfficeId(loan.getOfficeId())
+                .withClientId(loan.getClientId()).withLoanId(loanId).with(changes).build();
+    }
+
+    @Override
+    public CommandProcessingResult undoDiscountFeeAdjustment(final Long loanId, final JsonCommand command) {
+        final WorkingCapitalLoan loan = loanRepository.findById(loanId).orElseThrow(() -> new WorkingCapitalLoanNotFoundException(loanId));
+        final Long adjustmentTransactionId = fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanConstants.relatedResourceIdParamName,
+                command.parsedJson());
+        if (adjustmentTransactionId == null) {
+            throw new PlatformApiDataValidationException("validation.msg.wc.loan.related.resource.id.required",
+                    "Discount fee adjustment transaction ID is required to undo the adjustment",
+                    WorkingCapitalLoanConstants.relatedResourceIdParamName);
+        }
+        final WorkingCapitalLoanTransaction adjustmentTransaction = transactionRepository
+                .findByIdAndWcLoan_Id(adjustmentTransactionId, loanId).orElseThrow(
+                        () -> new PlatformApiDataValidationException("validation.msg.wc.loan.discount.adjustment.transaction.not.found",
+                                "Discount fee adjustment transaction not found", WorkingCapitalLoanConstants.relatedResourceIdParamName));
+        validator.validateUndoDiscountAdjustmentTransaction(loan, adjustmentTransaction);
+
+        reverseTransaction(adjustmentTransaction);
+        reverseDiscountFeeAmortizationAdjustments(loan, adjustmentTransaction);
+
+        final BigDecimal currentDiscount = loan.getLoanProductRelatedDetails().getDiscount();
+        loan.getLoanProductRelatedDetails().setDiscount(
+                (currentDiscount != null ? currentDiscount : BigDecimal.ZERO).add(adjustmentTransaction.getTransactionAmount()));
+
+        amortizationScheduleWriteService.applyDiscountFeeAdjustment(loan);
+        updateBalanceForDiscountChange(loan, adjustmentTransaction.getTransactionAmount().negate(), true);
+        loanRepository.saveAndFlush(loan);
+
+        final String noteText = command.stringValueOfParameterNamed(WorkingCapitalLoanConstants.noteParamName);
+        createNote(noteText, loan);
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        changes.put(WorkingCapitalLoanConstants.relatedResourceIdParamName, adjustmentTransactionId);
+        if (StringUtils.isNotBlank(noteText)) {
+            changes.put(WorkingCapitalLoanConstants.noteParamName, noteText);
+        }
+        return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(adjustmentTransaction.getId())
+                .withEntityExternalId(adjustmentTransaction.getExternalId()).withOfficeId(loan.getOfficeId())
                 .withClientId(loan.getClientId()).withLoanId(loanId).with(changes).build();
     }
 
@@ -980,6 +1020,19 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
             final WorkingCapitalLoanNote note = WorkingCapitalLoanNote.create(loan, noteText);
             this.noteRepository.save(note);
         }
+    }
+
+    private void reverseDiscountFeeAmortizationAdjustments(final WorkingCapitalLoan loan,
+            final WorkingCapitalLoanTransaction discountAdjustment) {
+        final WorkingCapitalLoanBalance balance = loan.getBalance();
+        relationRepository.findAllByToTransactionAndFromTransactionReversedAndFromTransactionTransactionType(discountAdjustment, false,
+                LoanTransactionType.DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT).forEach(relation -> {
+                    final WorkingCapitalLoanTransaction txn = relation.getFromTransaction();
+                    reverseTransaction(txn);
+                    accountingProcessor.postReversalJournalEntries(loan, txn);
+                    balance.setRealizedIncomeFromDiscountFee(
+                            MathUtil.nullToZero(balance.getRealizedIncomeFromDiscountFee()).add(txn.getTransactionAmount()));
+                });
     }
 
 }
