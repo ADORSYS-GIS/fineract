@@ -139,3 +139,58 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  cleanup-workspace-artifact:
+    needs:
+      - build-core
+      - build-embeddable-progressive-loan-jar
+      - build-docker-image
+      - build-documentation
+      - run-quality-checks
+      - run-cucumber-tests
+      - run-integrations-tests-on-postgresql
+      - run-integrations-tests-on-mysql
+      - run-integrations-tests-on-mariadb
+      - run-e2e-tests
+      - run-liquibase-only-on-postgresql
+      - run-messaging-smoke-tests
+      - run-api-backward-compatibility
+      - run-liquibase-backward-compatibility
+      - run-liquibase-ddl-safety
+      - run-regression-safety-db-changes
+      - run-sonarqube
+      - run-integration-tests-sequentially-on-postgresql
+      - publish-dockerhub
+    if: ${{ !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Delete workspace artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          ARTIFACT_NAME: fineract-workspace-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          artifact_ids="$(gh api --method GET --paginate "repos/${REPOSITORY}/actions/artifacts" \
+            -f name="$ARTIFACT_NAME" \
+            --jq '.artifacts[].id')"
+
+          if [ -z "$artifact_ids" ]; then
+            echo "No workspace artifact found for ${ARTIFACT_NAME}."
+            exit 0
+          fi
+
+          deleted=0
+          while IFS= read -r artifact_id; do
+            [ -n "$artifact_id" ] || continue
+            gh api --method DELETE "repos/${REPOSITORY}/actions/artifacts/${artifact_id}"
+            deleted=$((deleted + 1))
+            echo "Deleted workspace artifact ${ARTIFACT_NAME} (${artifact_id})."
+          done <<< "$artifact_ids"
+
+          echo "Deleted ${deleted} workspace artifact(s)."
