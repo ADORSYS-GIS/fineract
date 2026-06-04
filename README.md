@@ -72,19 +72,14 @@ cd fineract
 ./gradlew createPGDB -PdbName=fineract_tenants
 ./gradlew createPGDB -PdbName=fineract_default
 
-# local dev/test env settings
-export FINERACT_DEFAULT_TENANTDB_PORT=5432
-export FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME=org.postgresql.Driver
-export FINERACT_HIKARI_JDBC_URL=jdbc:postgresql://localhost:$FINERACT_DEFAULT_TENANTDB_PORT/fineract_tenants
-export POSTGRES_PASSWORD=postgres
-export FINERACT_HIKARI_PASSWORD=$POSTGRES_PASSWORD
-export FINERACT_DEFAULT_TENANTDB_PWD=$POSTGRES_PASSWORD
-
 # start backend
 ./gradlew devRun
 ```
 
-After a minute or two, Fineract will be listening for API requests on port 8443 (by default).
+After a minute or two, Fineract will be listening for API requests on port 8443.
+
+> [!TIP]
+> Java properties or environment variables can be used to override default settings. See `fineract-provider/src/main/resources/application.properties`.
 
 ### Verify the application is running
 
@@ -119,32 +114,37 @@ Expected response for fresh instance:
 
 How to run for production
 ---
+
 Running Fineract _just to try it out_ is relatively easy. If you intend to use it _in a production environment_, be aware that a proper deployment can be complex, costly, and time-consuming. Considerations include: Security, privacy, compliance, performance, service availability, backups, and more. **The Fineract project does not provide a comprehensive guide for deploying Fineract in production.** You might need skills in enterprise Java applications and more. Alternatively, you could pay a vendor for Fineract deployment and maintenance. You will find tips and tricks for [deploying](https://fineract.apache.org/docs/current/#_deployment) and [securing](https://fineract.apache.org/docs/current/#_securing_fineract) Fineract in our official documentation.
 
 
 How to build the JAR file
 ---
+
 Build a modern, cloud native, fully self contained JAR file:
+
 ```bash
 ./gradlew clean bootJar
 ```
+
 The JAR will be created in the `fineract-provider/build/libs` directory.
-If you use a MariaDB or MySQL (note: both are deprecated), you must download the appropriate JDBC driver since drivers for those databases use incompatible licenses. For example:
+If you intend to use MariaDB or MySQL (warning: [both are deprecated](https://cwiki.apache.org/confluence/display/FINERACT/FSIP-9%3A+Standardize+on+PostgreSQL)), you must download the appropriate JDBC driver yourself and override default database settings. When you start the JAR, specify the directory containing the JDBC driver.
+
+MariaDB example:
+
 ```bash
-wget https://dlm.mariadb.com/4174416/Connectors/java/connector-java-3.5.2/mariadb-java-client-3.5.2.jar
-```
-Start the JAR and specify the directory containing the JDBC driver using the loader.path option, for example:
-```bash
+# Assumes mariadb-java-client.jar exists in current dir.
+# For MariaDB or MySQL, override default settings such as these:
+export FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME=org.mariadb.jdbc.Driver
+export FINERACT_DEFAULT_TENANTDB_PORT=3306
+export FINERACT_HIKARI_JDBC_URL=jdbc:mariadb://localhost:3306/fineract_tenants
 java -Dloader.path=. -jar fineract-provider/build/libs/fineract-provider.jar
 ```
+
 This does not require an external Tomcat.
 
-The tenants database connection details are configured [via environment variables (as with Docker container)](#instructions-to-run-using-docker-or-podman), e.g. like this:
-```bash
-export FINERACT_HIKARI_PASSWORD=verysecret
-...
-java -jar fineract-provider.jar
-```
+> [!NOTE]
+> Versions of mariadb driver and Fineract JARs are omitted from filenames above for brevity.
 
 How to build the WAR file
 ---
