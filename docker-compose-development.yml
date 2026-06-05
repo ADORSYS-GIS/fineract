@@ -16,6 +16,7 @@
 # under the License.
 #
 
+# FOR TESTING PURPOSES ONLY! NOT SUITABLE FOR PRODUCTION USAGE!
 x-logging: &default-logging
   driver: loki
   options:
@@ -90,3 +91,4 @@ services:
      default:
        aliases:
          - fineract-server
+# FOR TESTING PURPOSES ONLY! NOT SUITABLE FOR PRODUCTION USAGE!
