@@ -27,6 +27,7 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.lang.NonNull;
 
 /**
@@ -63,12 +64,19 @@ public class CobWorkerStepListener implements StepExecutionListener {
     }
 
     private void runTasklet(final Tasklet tasklet, final StepExecution stepExecution) {
-        final StepContribution contribution = new StepContribution(stepExecution);
-        final ChunkContext chunkContext = new ChunkContext(new StepContext(stepExecution));
-        try {
-            tasklet.execute(contribution, chunkContext);
-        } catch (Exception exception) {
-            throw new IllegalStateException("COB worker step listener failed for step " + stepExecution.getStepName(), exception);
+        RepeatStatus status = RepeatStatus.CONTINUABLE;
+        while (RepeatStatus.CONTINUABLE.equals(status)) {
+            final StepContribution contribution = new StepContribution(stepExecution);
+            final ChunkContext chunkContext = new ChunkContext(new StepContext(stepExecution));
+            try {
+                status = tasklet.execute(contribution, chunkContext);
+                if (status == null) {
+                    status = RepeatStatus.FINISHED;
+                }
+                stepExecution.incrementCommitCount();
+            } catch (Exception exception) {
+                throw new IllegalStateException("COB worker step listener failed for step " + stepExecution.getStepName(), exception);
+            }
         }
     }
 }
