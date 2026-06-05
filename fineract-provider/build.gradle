@@ -271,11 +271,6 @@ bootRun {
     jvmArgs = [
             "-Dspring.output.ansi.enabled=ALWAYS"
     ]
-
-    dependencies {
-        implementation 'org.mariadb.jdbc:mariadb-java-client'
-        implementation 'org.postgresql:postgresql'
-    }
 }
 
 springBoot {
@@ -328,7 +323,6 @@ jib {
     allowInsecureRegistries = true
 
     dependencies {
-        implementation 'org.mariadb.jdbc:mariadb-java-client'
         implementation 'org.postgresql:postgresql'
     }
 }

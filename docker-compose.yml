@@ -22,8 +22,8 @@ services:
 
   db:
     extends:
-      file: ./config/docker/compose/mariadb.yml
-      service: mariadb
+      file: ./config/docker/compose/postgresql.yml
+      service: postgresql
 
   fineract:
     extends:
@@ -38,5 +38,5 @@ services:
     env_file:
       - ./config/docker/env/fineract.env
       - ./config/docker/env/fineract-common.env
-      - ./config/docker/env/fineract-mariadb.env
 # FOR TESTING PURPOSES ONLY! NOT SUITABLE FOR PRODUCTION USAGE!
+      - ./config/docker/env/fineract-postgresql.env

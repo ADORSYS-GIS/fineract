@@ -35,6 +35,7 @@ configurations {
 }
 dependencies {
     driver 'com.mysql:mysql-connector-j'
+    driver 'org.mariadb.jdbc:mariadb-java-client'
 }
 
 cargo {
