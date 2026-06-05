@@ -60,6 +60,9 @@ jobs:
       - name: Build the image
         run: ./gradlew --no-daemon --console=plain :fineract-provider:jibDockerBuild -Djib.to.image=$IMAGE_NAME -x test -x cucumber -x buildJavaSdk
 
+      - name: Prepare database driver plugins
+        run: ./gradlew --no-daemon --console=plain :fineract-provider:copyDatabaseDriverPlugins
+
       - name: Start dependencies
         run: docker compose -f "$COMPOSE_FILE" up -d db localstack mock-oauth2-server
 

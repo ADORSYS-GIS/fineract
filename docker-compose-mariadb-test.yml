@@ -44,6 +44,7 @@ services:
     volumes:
       - ${PWD}/config/docker/logback/logback-override.xml:/app/logback-override.xml
       - ${PWD}/config/docker/aws/etc/credentials:/etc/aws/credentials:ro
+      - ${PWD}/build/fineract/plugins:/app/plugins:ro
       - ${PWD}/build/fineract/logs:/var/logs/fineract:rw
     tmpfs:
       - /tmp:rw,nosuid,size=256m
