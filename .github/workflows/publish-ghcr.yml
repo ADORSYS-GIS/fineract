@@ -51,7 +51,8 @@ jobs:
             cp pentaho-temp/MifosSecurityPlugin-1.12.1/lib/*.jar pentaho-dist/plugins/
           else
             echo "Copying JARs from root..."
-            cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"          fi
+            cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"
+          fi
 
           # Copy Reports (From the repo folder using Postgresql)
           echo "Copying Reports..."
