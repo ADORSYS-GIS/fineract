@@ -139,7 +139,7 @@ public class LoanAccrualTransactionReversalTest extends BaseLoanIntegrationTest 
 
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, currentDate);
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, currentDate);
 
             // Accounts oof periodic accrual
             final Account assetAccount = this.accountHelper.createAssetAccount();

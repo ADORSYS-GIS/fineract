@@ -725,7 +725,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
         try {
             globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.ENABLE_BUSINESS_DATE,
                     new PutGlobalConfigurationsRequest().enabled(true));
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 5));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 5));
             // Loan ExternalId
             String loanExternalIdStr = UUID.randomUUID().toString();
 
@@ -753,7 +753,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
             Integer penalty1LoanChargeId = this.loanTransactionHelper.addChargesForLoan(loanId,
                     LoanTransactionHelper.getSpecifiedDueDateChargesForLoanAsJSON(String.valueOf(penalty), penaltyCharge1AddedDate, "10"));
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 6));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 6));
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
             GetLoansLoanIdResponse loanDetails = loanTransactionHelper.getLoanDetails(loanId.longValue());
             assertTrue(loanDetails.getTransactions().get(0).getType().getDisbursement());
@@ -773,7 +773,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
             assertTrue(loanDetails.getChargedOff());
 
             // no accrual
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 7));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 7));
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
             loanDetails = loanTransactionHelper.getLoanDetails(loanId.longValue());
             assertTrue(loanDetails.getTransactions().get(0).getType().getDisbursement());
@@ -782,7 +782,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
             assertTrue(loanDetails.getTransactions().get(3).getType().getChargeoff());
             assertEquals(4, loanDetails.getTransactions().size());
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 8));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 8));
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
             PeriodicAccrualAccountingHelper.runPeriodicAccrualAccounting(dateFormatter.format(LocalDate.of(2020, 9, 8)));
             loanDetails = loanTransactionHelper.getLoanDetails(loanId.longValue());
@@ -794,7 +794,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
 
             loanTransactionHelper.undoChargeOffLoan((long) loanId, new PostLoansLoanIdTransactionsRequest());
             // generate accrual again
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 9));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 9));
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
             loanDetails = loanTransactionHelper.getLoanDetails(loanId.longValue());
             assertTrue(loanDetails.getTransactions().get(0).getType().getDisbursement());
@@ -804,7 +804,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
             assertTrue(loanDetails.getTransactions().get(4).getType().getAccrual());
             assertEquals(5, loanDetails.getTransactions().size());
 
-            BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 10));
+            BusinessDateHelper.updateBusinessDate(BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 10));
 
             this.loanTransactionHelper.chargeOffLoan((long) loanId,
                     new PostLoansLoanIdTransactionsRequest().transactionDate("10 September 2020").locale("en").dateFormat("dd MMMM yyyy")
