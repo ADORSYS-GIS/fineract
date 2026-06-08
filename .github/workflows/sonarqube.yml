@@ -1,13 +1,32 @@
 name: Fineract Sonarqube
 on:
   workflow_call:
+    secrets:
+      SONAR_ORGANIZATION:
+        required: false
+      SONAR_PROJECT_KEY:
+        required: false
+      SONAR_HOST_URL:
+        required: false
+      SONARCLOUD_TOKEN:
+        required: false
+      DEVELOCITY_ACCESS_KEY:
+        required: false
 permissions:
   contents: read
 jobs:
   build:
-    if: ${{ github.event_name == 'push' && github.ref_name == 'develop' }}
+    if: >-
+      ${{
+        github.event_name == 'push' &&
+        (
+          github.ref_name == 'develop' ||
+          startsWith(github.ref_name, 'release/') ||
+          startsWith(github.ref_name, '1.')
+        )
+      }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
         TZ: Asia/Kolkata
         SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}

@@ -2,6 +2,9 @@ name: Fineract E2E Tests
 
 on:
   workflow_call:
+    secrets:
+      DEVELOCITY_ACCESS_KEY:
+        required: false
 
 permissions:
   contents: read
@@ -10,7 +13,7 @@ jobs:
   test:
     name: E2E Tests (Shard ${{ matrix.shard_index }} of ${{ matrix.total_shards }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     strategy:
       fail-fast: false
@@ -156,7 +159,7 @@ jobs:
           fi
 
       - name: Collect Docker logs
-        if: always()
+        if: failure()
         run: |
           mkdir -p "$DOCKER_LOG_DIR"
           docker ps -a > "$DOCKER_LOG_DIR/docker-ps.txt" 2>&1 || true
@@ -173,7 +176,7 @@ jobs:
           done
 
       - name: Upload test results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: allure-results-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
@@ -184,19 +187,21 @@ jobs:
             **/build/reports/tests/test
             **/build/test-results/test
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 5
+          compression-level: 9
 
       - name: Upload Allure Report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: allure-report-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
           path: allure-report-shard-${{ matrix.shard_index }}
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 5
+          compression-level: 9
 
       - name: Upload logs
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: logs-shard-${{ matrix.shard_index }}-attempt-${{ github.run_attempt }}
@@ -206,7 +211,8 @@ jobs:
             **/logs/
             **/out/
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 5
+          compression-level: 9
 
       - name: Clean up
         if: always()

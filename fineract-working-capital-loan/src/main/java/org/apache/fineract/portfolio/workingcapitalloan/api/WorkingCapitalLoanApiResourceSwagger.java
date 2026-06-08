@@ -273,6 +273,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public BigDecimal totalDisbursement;
         @Schema(example = "10000.00")
         public BigDecimal totalDiscountFee;
+        @Schema(example = "500.00")
+        public BigDecimal totalDiscountFeeAdjustment;
     }
 
     @Schema(description = "Single disbursement detail (expected and actual)")
@@ -543,10 +545,10 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Long classificationId;
         @Schema(example = "ext-disburse-001", description = "External ID; optional for disburse")
         public String externalId;
+        @Schema(example = "ext-discount-001", description = "External ID for the discount fee transaction created during disburse; optional. Only accepted when discountAmount is greater than 0. When omitted and auto-generation is enabled, a UUID is generated.")
+        public String discountExternalId;
         @Schema(description = "Payment details (Account No, Cheque No, Routing Code, Receipt No, Bank code)")
         public PostWorkingCapitalLoansLoanIdDisbursementPaymentDetails paymentDetails;
-        @Schema(description = "Related resource ID for transaction, e.g., related transaction ID")
-        public Long relatedResourceId;
     }
 
     @Schema(description = "Request for updating discount on a disbursed Working Capital Loan")

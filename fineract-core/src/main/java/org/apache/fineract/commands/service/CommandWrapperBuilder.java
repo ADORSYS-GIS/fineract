@@ -75,6 +75,7 @@ import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_DISBURSETOSAVINGS;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_DISBURSEWITHOUTAUTODOWNPAYMENT;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_DISCOUNTFEE;
+import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_DISCOUNTFEEADJUSTMENT;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_DOWNPAYMENT;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_ENABLE;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_EXECUTE;
@@ -240,6 +241,7 @@ import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_USER;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WAIVECHARGE;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOAN;
+import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOANCHARGE;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOANPRODUCT;
 import static org.apache.fineract.useradministration.service.AppUserConstants.PASSWORD;
 import static org.apache.fineract.useradministration.service.AppUserConstants.REPEAT_PASSWORD;
@@ -845,11 +847,19 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder discountWorkingCapitalLoanApplicationDisbursal(final Long loanId) {
+    public CommandWrapperBuilder discountFeeWorkingCapitalLoanTransaction(final Long loanId) {
         this.actionName = ACTION_DISCOUNTFEE;
         this.entityName = ENTITY_WORKINGCAPITALLOAN;
         this.entityId = loanId;
-        this.href = "/workingcapitalloans/" + loanId;
+        this.href = "/working-capital-loans/" + loanId + "/transactions?command=discountFee";
+        return this;
+    }
+
+    public CommandWrapperBuilder discountFeeAdjustmentWorkingCapitalLoanTransaction(final Long loanId) {
+        this.actionName = ACTION_DISCOUNTFEEADJUSTMENT;
+        this.entityName = ENTITY_WORKINGCAPITALLOAN;
+        this.entityId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/transactions?command=discountFeeAdjustment";
         return this;
     }
 
@@ -1115,6 +1125,14 @@ public class CommandWrapperBuilder {
     public CommandWrapperBuilder createLoanCharge(final Long loanId) {
         this.actionName = ACTION_CREATE;
         this.entityName = ENTITY_LOANCHARGE;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/charges";
+        return this;
+    }
+
+    public CommandWrapperBuilder createWorkingCapitalLoanCharge(final Long loanId) {
+        this.actionName = ACTION_CREATE;
+        this.entityName = ENTITY_WORKINGCAPITALLOANCHARGE;
         this.loanId = loanId;
         this.href = "/loans/" + loanId + "/charges";
         return this;
