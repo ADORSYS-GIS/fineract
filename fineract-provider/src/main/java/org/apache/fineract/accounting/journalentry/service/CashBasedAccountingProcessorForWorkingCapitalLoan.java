@@ -253,6 +253,41 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
         }
     }
 
+    @Override
+    public void postJournalEntriesForDiscountFee(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn) {
+        postDiscountFeeDeferralEntries(loan, txn, CashAccountsForLoan.LOAN_PORTFOLIO, CashAccountsForLoan.DEFERRED_INCOME_LIABILITY);
+    }
+
+    @Override
+    public void postJournalEntriesForDiscountFeeAdjustment(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn) {
+        postDiscountFeeDeferralEntries(loan, txn, CashAccountsForLoan.DEFERRED_INCOME_LIABILITY, CashAccountsForLoan.LOAN_PORTFOLIO);
+    }
+
+    private void postDiscountFeeDeferralEntries(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn,
+            final CashAccountsForLoan debitAccountType, final CashAccountsForLoan creditAccountType) {
+        final Office office = loan.getClient().getOffice();
+        final Long productId = loan.getLoanProduct().getId();
+        final String currencyCode = loan.getLoanProductRelatedDetails().getCurrency().getCode();
+        final LocalDate transactionDate = txn.getTransactionDate();
+        final Long loanId = loan.getId();
+        final Long txnId = txn.getId();
+        final BigDecimal amount = txn.getTransactionAmount();
+
+        helper.checkForBranchClosures(helper.getLatestClosureByBranch(office.getId()), transactionDate);
+
+        if (MathUtil.isGreaterThanZero(amount)) {
+            final GLAccount debitAccount = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId, debitAccountType.getValue(),
+                    null);
+            helper.createDebitJournalEntryForWorkingCapitalLoan(office, currencyCode, debitAccount, loanId, txnId, transactionDate, amount,
+                    null);
+
+            final GLAccount creditAccount = helper.getLinkedGLAccountForWorkingCapitalLoanProduct(productId, creditAccountType.getValue(),
+                    null);
+            helper.createCreditJournalEntryForWorkingCapitalLoan(office, currencyCode, creditAccount, loanId, txnId, transactionDate,
+                    amount, null);
+        }
+    }
+
     private Long extractPaymentTypeId(final WorkingCapitalLoanTransaction txn) {
         if (txn.getPaymentDetail() != null && txn.getPaymentDetail().getPaymentType() != null) {
             return txn.getPaymentDetail().getPaymentType().getId();
