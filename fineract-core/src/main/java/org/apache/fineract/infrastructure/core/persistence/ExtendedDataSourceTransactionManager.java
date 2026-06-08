@@ -18,81 +18,55 @@
  */
 package org.apache.fineract.infrastructure.core.persistence;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.FlushModeType;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import lombok.Getter;
-import org.springframework.jdbc.datasource.JdbcTransactionObjectSupport;
-import org.springframework.orm.jpa.EntityManagerHolder;
-import org.springframework.orm.jpa.JpaTransactionManager;
+import org.jspecify.annotations.NonNull;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionStatus;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-public class ExtendedJpaTransactionManager extends JpaTransactionManager {
+public class ExtendedDataSourceTransactionManager extends DataSourceTransactionManager {
 
     private final List<TransactionLifecycleCallback> lifecycleCallbacks = new CopyOnWriteArrayList<>();
 
     @Getter
     private final boolean readOnly;
 
-    public ExtendedJpaTransactionManager(boolean readOnly) {
+    public ExtendedDataSourceTransactionManager(boolean readOnly) {
         this.readOnly = readOnly;
     }
 
     @Override
-    protected void doBegin(Object transaction, TransactionDefinition definition) {
+    protected void doBegin(@NonNull Object transaction, @NonNull TransactionDefinition definition) {
         super.doBegin(transaction, definition);
 
-        if (definition.isReadOnly() || isReadOnlyTx(transaction) || isReadOnly()) {
-            EntityManager entityManager = getCurrentEntityManager();
-            if (entityManager != null) {
-                entityManager.setFlushMode(FlushModeType.COMMIT);
-            }
+        if (isReadOnly()) {
+            setEnforceReadOnly(true);
         }
 
         invokeLifecycleCallbacks(TransactionLifecycleCallback::afterBegin);
     }
 
     @Override
-    protected void doCommit(DefaultTransactionStatus status) {
-        if (isReadOnlyTx(status.getTransaction()) || isReadOnly()) {
-            EntityManager entityManager = getCurrentEntityManager();
-            if (entityManager != null) {
-                entityManager.clear();
-            }
-        }
-
+    protected void doCommit(@NonNull DefaultTransactionStatus status) {
         super.doCommit(status);
         invokeLifecycleCallbacks(TransactionLifecycleCallback::afterCommit);
     }
 
     @Override
-    protected void doCleanupAfterCompletion(Object transaction) {
+    protected void doCleanupAfterCompletion(@NonNull Object transaction) {
         super.doCleanupAfterCompletion(transaction);
         invokeLifecycleCallbacks(TransactionLifecycleCallback::afterCompletion);
     }
 
-    private boolean isReadOnlyTx(Object transaction) {
-        JdbcTransactionObjectSupport txObject = (JdbcTransactionObjectSupport) transaction;
-        return txObject.isReadOnly();
-    }
-
-    private EntityManager getCurrentEntityManager() {
-        EntityManagerHolder holder = (EntityManagerHolder) TransactionSynchronizationManager.getResource(obtainEntityManagerFactory());
-        if (holder != null) {
-            return holder.getEntityManager();
-        }
-        return null;
-    }
-
     private void invokeLifecycleCallbacks(Consumer<TransactionLifecycleCallback> f) {
-        lifecycleCallbacks.forEach(f::accept);
+        lifecycleCallbacks.forEach(f);
     }
 
     public void setLifecycleCallbacks(List<TransactionLifecycleCallback> lifecycleCallbacks) {
         this.lifecycleCallbacks.addAll(lifecycleCallbacks);
     }
+
 }
