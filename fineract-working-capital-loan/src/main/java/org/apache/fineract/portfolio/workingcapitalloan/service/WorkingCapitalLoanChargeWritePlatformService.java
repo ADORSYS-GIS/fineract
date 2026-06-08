@@ -16,14 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.account.service;
 
-import org.apache.fineract.infrastructure.core.service.Page;
-import org.apache.fineract.portfolio.account.data.StandingInstructionDTO;
-import org.apache.fineract.portfolio.account.data.StandingInstructionHistoryData;
+package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-public interface StandingInstructionHistoryReadPlatformService {
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
-    Page<StandingInstructionHistoryData> retrieveAll(StandingInstructionDTO standingInstructionDTO);
+public interface WorkingCapitalLoanChargeWritePlatformService {
 
+    CommandProcessingResult createLoanCharge(Long loanId, JsonCommand command);
 }

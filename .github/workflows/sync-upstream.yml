@@ -38,6 +38,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Add upstream remote
         run: |
@@ -64,15 +65,17 @@ jobs:
       - name: Create sync branch and merge
         if: steps.check.outputs.behind != '0'
         id: merge
+        env:
+          BRANCH_NAME: ${{ steps.branch.outputs.name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "${{ steps.branch.outputs.name }}" develop
+          git checkout -b "$BRANCH_NAME" develop
 
           if git merge upstream/develop --no-edit; then
             echo "status=success" >> "$GITHUB_OUTPUT"
-            git push -u origin "${{ steps.branch.outputs.name }}"
+            git push -u origin "$BRANCH_NAME"
           else
             echo "status=conflicts" >> "$GITHUB_OUTPUT"
             # Capture conflicting files for the issue
@@ -87,20 +90,22 @@ jobs:
         if: steps.check.outputs.behind != '0' && steps.merge.outputs.status == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEHIND: ${{ steps.check.outputs.behind }}
+          BRANCH_NAME: ${{ steps.branch.outputs.name }}
         run: |
           gh pr create \
-            --title "chore: sync upstream Apache Fineract (${{ steps.check.outputs.behind }} commits)" \
-            --body "$(cat <<'BODY'
+            --title "chore: sync upstream Apache Fineract ($BEHIND commits)" \
+            --body "$(cat <<BODY
           ## Upstream Sync
 
-          This PR merges the latest changes from [apache/fineract](https://github.com/apache/fineract) `develop` branch.
+          This PR merges the latest changes from [apache/fineract](https://github.com/apache/fineract) \`develop\` branch.
 
-          - **Commits behind:** ${{ steps.check.outputs.behind }}
-          - **Branch:** `${{ steps.branch.outputs.name }}`
+          - **Commits behind:** $BEHIND
+          - **Branch:** \`$BRANCH_NAME\`
           - **Auto-merged:** Yes (no conflicts detected)
 
           ### Review checklist
-          - [ ] Custom plugins compile (`custom/adorsys/`)
+          - [ ] Custom plugins compile (\`custom/adorsys/\`)
           - [ ] Docker images build correctly
           - [ ] Config CLI still works
           - [ ] Database migrations apply cleanly
@@ -111,13 +116,16 @@ jobs:
           BODY
           )" \
             --base develop \
-            --head "${{ steps.branch.outputs.name }}" \
+            --head "$BRANCH_NAME" \
             --label "upstream-sync"
 
       - name: Create issue on merge conflicts
         if: steps.check.outputs.behind != '0' && steps.merge.outputs.status == 'conflicts'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEHIND: ${{ steps.check.outputs.behind }}
+          BRANCH_NAME: ${{ steps.branch.outputs.name }}
+          CONFLICTS: ${{ steps.merge.outputs.conflicts }}
         run: |
           gh issue create \
             --title "Upstream sync failed: merge conflicts detected ($(date +%Y-%m))" \
@@ -126,23 +134,23 @@ jobs:
 
           The automated monthly sync with [apache/fineract](https://github.com/apache/fineract) \`develop\` encountered merge conflicts.
 
-          - **Commits behind:** ${{ steps.check.outputs.behind }}
-          - **Target branch:** \`${{ steps.branch.outputs.name }}\`
+          - **Commits behind:** $BEHIND
+          - **Target branch:** \`$BRANCH_NAME\`
 
           ### Conflicting files
           \`\`\`
-          ${{ steps.merge.outputs.conflicts }}
+          $CONFLICTS
           \`\`\`
 
           ### Manual resolution required
           \`\`\`bash
           git fetch upstream develop
-          git checkout -b ${{ steps.branch.outputs.name }} develop
+          git checkout -b $BRANCH_NAME develop
           git merge upstream/develop
           # Resolve conflicts, then:
           git add .
           git commit
-          git push -u origin ${{ steps.branch.outputs.name }}
+          git push -u origin $BRANCH_NAME
           \`\`\`
 
           ---

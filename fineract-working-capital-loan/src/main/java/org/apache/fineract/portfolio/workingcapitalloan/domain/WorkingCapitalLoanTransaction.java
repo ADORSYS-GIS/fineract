@@ -146,11 +146,35 @@ public class WorkingCapitalLoanTransaction extends AbstractAuditableWithUTCDateT
         return txn;
     }
 
+    public static WorkingCapitalLoanTransaction discountFeeAmortizationAdjustment(final WorkingCapitalLoan loan, final BigDecimal amount,
+            final LocalDate transactionDate, final ExternalId externalId) {
+        final WorkingCapitalLoanTransaction txn = new WorkingCapitalLoanTransaction();
+        txn.initialize(loan, LoanTransactionType.DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT, transactionDate, amount, null, null, externalId);
+        return txn;
+    }
+
     public static WorkingCapitalLoanTransaction discountFee(final WorkingCapitalLoan loan, final ExternalId externalId,
             final BigDecimal amount, final LocalDate transactionDate, final CodeValue classification, final PaymentDetail paymentDetail) {
         WorkingCapitalLoanTransaction transaction = new WorkingCapitalLoanTransaction();
         transaction.wcLoan = loan;
         transaction.transactionType = LoanTransactionType.DISCOUNT_FEE;
+        transaction.transactionAmount = amount;
+        transaction.transactionDate = transactionDate;
+        transaction.submittedOnDate = transactionDate;
+        transaction.externalId = externalId != null ? externalId : ExternalId.empty();
+        transaction.paymentDetail = paymentDetail;
+        transaction.classification = classification;
+        transaction.reversed = false;
+        transaction.reversalExternalId = null;
+        transaction.reversedOnDate = null;
+        return transaction;
+    }
+
+    public static WorkingCapitalLoanTransaction discountFeeAdjustment(final WorkingCapitalLoan loan, final ExternalId externalId,
+            final BigDecimal amount, final LocalDate transactionDate, final CodeValue classification, final PaymentDetail paymentDetail) {
+        WorkingCapitalLoanTransaction transaction = new WorkingCapitalLoanTransaction();
+        transaction.wcLoan = loan;
+        transaction.transactionType = LoanTransactionType.DISCOUNT_FEE_ADJUSTMENT;
         transaction.transactionAmount = amount;
         transaction.transactionDate = transactionDate;
         transaction.submittedOnDate = transactionDate;

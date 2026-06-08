@@ -16,9 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.data;
 
-import org.apache.fineract.organisation.monetary.domain.Money;
+package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-public record RepaymentAmortizationData(Money currentDayAmortizedAmount, Money totalAmortizedAmount) {
+import java.util.List;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanChargeData;
+
+public interface WorkingCapitalLoanChargeReadPlatformService {
+
+    WorkingCapitalLoanChargeData retrieveLoanChargeDetails(Long id, Long loanId);
+
+    List<WorkingCapitalLoanChargeData> retrieveLoanCharges(Long loanId);
 }

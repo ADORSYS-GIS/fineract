@@ -24,16 +24,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: "0"
+          persist-credentials: false
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
 
       - name: Build with Maven
         run: |
@@ -41,20 +41,20 @@ jobs:
           mvn clean package -DskipTests
 
       - name: Set up QEMU (for cross‑architecture emulation)
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3
 
       - name: Set up Docker Buildx (multi‑arch builder)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f7ce87e1d625ad5d6d06e080c3a1d3efc3e9b036 # v3
 
       - name: Lowercase the repository name
         id: string
-        uses: AsZc/change-string-case-action@v6
+        uses: AsZc/change-string-case-action@d0603cd0a7dd490be678164909f65c7737470a7f # v6
         with:
           string: ${{ env.IMAGE_NAME }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
@@ -73,14 +73,14 @@ jobs:
           images: "${{ env.REGISTRY }}/${{ steps.string.outputs.lowercase }}"
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@5b3c1af5b71da728e1d7a6ca7b51ce3c54701064 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push multi‑arch image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@ca877a92465040a4c2d5ae34e308df08e4538434 # v6
         with:
           context: fineract-adorsys-sms-gateway
           file: fineract-adorsys-sms-gateway/Dockerfile

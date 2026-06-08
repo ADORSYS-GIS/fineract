@@ -86,6 +86,10 @@ public class WorkingCapitalLoanBalance extends AbstractAuditableWithUTCDateTimeC
     @Setter
     private BigDecimal totalDiscountFee = BigDecimal.ZERO;
 
+    @Column(name = "total_discount_fee_adjustment", scale = 6, precision = 19, nullable = false)
+    @Setter
+    private BigDecimal totalDiscountFeeAdjustment = BigDecimal.ZERO;
+
     @Version
     @Column(name = "version")
     private Integer version;
@@ -99,15 +103,15 @@ public class WorkingCapitalLoanBalance extends AbstractAuditableWithUTCDateTimeC
     }
 
     public BigDecimal getPrincipalOutstanding() {
-        return MathUtil.subtract(getPrincipal(), getPrincipalPaid());
+        return MathUtil.subtract(getPrincipal(), getPrincipalPaid()).max(BigDecimal.ZERO);
     }
 
     public BigDecimal getFeeOutstanding() {
-        return MathUtil.subtract(getFee(), getFeePaid());
+        return MathUtil.subtract(getFee(), getFeePaid()).max(BigDecimal.ZERO);
     }
 
     public BigDecimal getPenaltyOutstanding() {
-        return MathUtil.subtract(getPenalty(), getPenaltyPaid());
+        return MathUtil.subtract(getPenalty(), getPenaltyPaid()).max(BigDecimal.ZERO);
     }
 
     public BigDecimal getTotalOutstanding() {
@@ -123,6 +127,8 @@ public class WorkingCapitalLoanBalance extends AbstractAuditableWithUTCDateTimeC
     }
 
     public BigDecimal getUnrealizedIncomeFromDiscountFee() {
-        return MathUtil.subtract(getTotalDiscountFee(), getRealizedIncomeFromDiscountFee());
+        return MathUtil
+                .subtract(MathUtil.subtract(getTotalDiscountFee(), getTotalDiscountFeeAdjustment()), getRealizedIncomeFromDiscountFee())
+                .max(BigDecimal.ZERO);
     }
 }

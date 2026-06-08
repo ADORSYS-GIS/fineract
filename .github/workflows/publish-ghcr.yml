@@ -15,9 +15,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up JDK 21
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
@@ -29,11 +30,11 @@ jobs:
         uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
 
       - name: Get Git Hashes
-        run: |
-          echo "short_hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "long_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-          echo "owner_lowercase=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
         id: git_hashes
+        run: |
+          echo "short_hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "long_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "owner_lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Prepare Pentaho Plugin
         run: |
@@ -50,8 +51,7 @@ jobs:
             cp pentaho-temp/MifosSecurityPlugin-1.12.1/lib/*.jar pentaho-dist/plugins/
           else
             echo "Copying JARs from root..."
-            cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"
-          fi
+            cp pentaho-temp/MifosSecurityPlugin-1.12.1/*.jar pentaho-dist/plugins/ || echo "No JARs found in root either!"          fi
 
           # Copy Reports (From the repo folder using Postgresql)
           echo "Copying Reports..."
@@ -61,16 +61,22 @@ jobs:
           ls -R pentaho-dist
 
       - name: Build the Apache Fineract image
-        run:  |
-          TAGS="${{ steps.git_hashes.outputs.short_hash }},${{ steps.git_hashes.outputs.long_hash }}"
-          if [ "${{ github.ref_name }}" == "develop" ]; then
+        env:
+          SHORT_HASH: ${{ steps.git_hashes.outputs.short_hash }}
+          LONG_HASH: ${{ steps.git_hashes.outputs.long_hash }}
+          OWNER_LOWER: ${{ steps.git_hashes.outputs.owner_lowercase }}
+          REF_NAME: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          TAGS="$SHORT_HASH,$LONG_HASH"
+          if [ "$REF_NAME" == "develop" ]; then
             TAGS="$TAGS,latest"
           fi
           ./gradlew --no-daemon --console=plain :custom:docker:jib -x test -x cucumber \
             -Djib.from.platforms=linux/amd64,linux/arm64 \
-            -Djib.to.auth.username=${{ github.actor }} \
-            -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-            -Djib.to.image=ghcr.io/${{ steps.git_hashes.outputs.owner_lowercase }}/fineract \
-            -Djib.to.tags=$TAGS \
+            -Djib.to.auth.username="$ACTOR" \
+            -Djib.to.auth.password="${{ secrets.GITHUB_TOKEN }}" \
+            -Djib.to.image=ghcr.io/$OWNER_LOWER/fineract \
+            -Djib.to.tags="$TAGS" \
             -Djib.sendTimeout=300000 \
             -Djib.readTimeout=300000
