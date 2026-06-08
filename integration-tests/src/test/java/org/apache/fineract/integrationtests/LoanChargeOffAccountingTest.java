@@ -82,7 +82,6 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
     private Account overpaymentAccount;
     private DateTimeFormatter dateFormatter = new DateTimeFormatterBuilder().appendPattern("dd MMMM yyyy").toFormatter();
     private InlineLoanCOBHelper inlineLoanCOBHelper;
-    private PeriodicAccrualAccountingHelper periodicAccrualAccountingHelper;
 
     @BeforeEach
     public void setup() {
@@ -100,7 +99,6 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
         this.journalEntryHelper = new JournalEntryHelper(this.requestSpec, this.responseSpec);
         this.clientHelper = new ClientHelper(this.requestSpec, this.responseSpec);
         this.inlineLoanCOBHelper = new InlineLoanCOBHelper(this.requestSpec, this.responseSpec);
-        this.periodicAccrualAccountingHelper = new PeriodicAccrualAccountingHelper(this.requestSpec, this.responseSpec);
     }
 
     @Test
@@ -786,7 +784,7 @@ public class LoanChargeOffAccountingTest extends BaseLoanIntegrationTest {
 
             BusinessDateHelper.updateBusinessDate(requestSpec, responseSpec, BusinessDateType.BUSINESS_DATE, LocalDate.of(2020, 9, 8));
             inlineLoanCOBHelper.executeInlineCOB(List.of(loanId.longValue()));
-            this.periodicAccrualAccountingHelper.runPeriodicAccrualAccounting(dateFormatter.format(LocalDate.of(2020, 9, 8)));
+            PeriodicAccrualAccountingHelper.runPeriodicAccrualAccounting(dateFormatter.format(LocalDate.of(2020, 9, 8)));
             loanDetails = loanTransactionHelper.getLoanDetails(loanId.longValue());
             assertTrue(loanDetails.getTransactions().get(0).getType().getDisbursement());
             assertTrue(loanDetails.getTransactions().get(1).getType().getAccrual());

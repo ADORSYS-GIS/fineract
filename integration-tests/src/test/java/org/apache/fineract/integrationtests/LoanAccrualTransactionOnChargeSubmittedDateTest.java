@@ -68,7 +68,6 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
     private LoanTransactionHelper loanTransactionHelper;
     private ClientHelper clientHelper;
     private DateTimeFormatter dateFormatter = new DateTimeFormatterBuilder().appendPattern("dd MMMM yyyy").toFormatter();
-    private PeriodicAccrualAccountingHelper periodicAccrualAccountingHelper;
     private AccountHelper accountHelper;
     private LoanRescheduleRequestHelper loanRescheduleRequestHelper;
     private InlineLoanCOBHelper inlineLoanCOBHelper;
@@ -82,7 +81,6 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
         this.loanTransactionHelper = new LoanTransactionHelper(this.requestSpec, this.responseSpec);
         this.clientHelper = new ClientHelper(this.requestSpec, this.responseSpec);
-        this.periodicAccrualAccountingHelper = new PeriodicAccrualAccountingHelper(this.requestSpec, this.responseSpec);
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         this.loanRescheduleRequestHelper = new LoanRescheduleRequestHelper(this.requestSpec, this.responseSpec);
         this.inlineLoanCOBHelper = new InlineLoanCOBHelper(this.requestSpec, this.responseSpec);
@@ -143,7 +141,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(feeLoanChargeId);
 
             // Run accrual for charge created date
-            this.periodicAccrualAccountingHelper.runPeriodicAccrualAccounting(accrualRunTillDate);
+            PeriodicAccrualAccountingHelper.runPeriodicAccrualAccounting(accrualRunTillDate);
 
             // verify accrual transaction created for charges create date
             checkAccrualTransaction(currentDate, 0.0f, 10.0f, 10.0f, loanId);
@@ -171,7 +169,7 @@ public class LoanAccrualTransactionOnChargeSubmittedDateTest extends BaseLoanInt
             assertNotNull(feeLoanChargeId_1);
 
             // Run accrual for charge created date
-            this.periodicAccrualAccountingHelper.runPeriodicAccrualAccounting(nextAccrualRunDate);
+            PeriodicAccrualAccountingHelper.runPeriodicAccrualAccounting(nextAccrualRunDate);
 
             // verify accrual transaction created for charges create date
             checkAccrualTransaction(futureDate, 0.0f, 10.0f, 0.0f, loanId);
