@@ -75,11 +75,11 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
 
     @Override
     public Optional<ProgressiveLoanModel> findOneByLoanId(Long loanId) {
-        final Optional[] progressiveLoanModel = new Optional[1];
+        AtomicReference<Optional<ProgressiveLoanModel>> progressiveLoanModel = new AtomicReference<>();
         flushModeHandler.withFlushMode(FlushModeType.COMMIT, () -> {
-            progressiveLoanModel[0] = loanModelRepository.findOneByLoanId(loanId);
+            progressiveLoanModel.set(loanModelRepository.findOneByLoanId(loanId));
         });
-        return progressiveLoanModel[0];
+        return progressiveLoanModel.get();
     }
 
     @Override

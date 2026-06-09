@@ -2409,7 +2409,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     public void fallbackRecalculateInterest(Throwable t) {
         // NOTE: allow caller to catch the exceptions
         // NOTE: wrap throwable only if really necessary
-        throw errorHandler.getMappable(t, null, null, "loan.recalculateinterest");
+        throw ErrorHandler.getMappable(t, null, null, "loan.recalculateinterest");
     }
 
     @Override

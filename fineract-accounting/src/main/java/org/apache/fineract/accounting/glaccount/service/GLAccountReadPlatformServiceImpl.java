@@ -187,7 +187,7 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
         sql += " ORDER BY gl_code ASC";
 
         final Object[] finalObjectArray = Arrays.copyOf(parameterArray, arrayPos);
-        return this.jdbcTemplate.query(sql, rm, (Object[]) finalObjectArray);// NOSONAR
+        return this.jdbcTemplate.query(sql, rm, finalObjectArray);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
     public List<GLAccountDataForLookup> retrieveAccountsByTagId(final Long ruleId, final Integer transactionType) {
         final GLAccountDataLookUpMapper mapper = new GLAccountDataLookUpMapper();
         final String sql = "Select " + GLAccountDataLookUpMapper.LOOKUP_SCHEMA + " where rule.id=? and tags.acc_type_enum=?";
-        return this.jdbcTemplate.query(sql, mapper, (Object[]) new Object[] { ruleId, transactionType });// NOSONAR
+        return this.jdbcTemplate.query(sql, mapper, ruleId, transactionType);
     }
 
     private static final class GLAccountDataLookUpMapper implements RowMapper<GLAccountDataForLookup> {
