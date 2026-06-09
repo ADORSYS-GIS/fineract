@@ -58,6 +58,7 @@ public class WorkingCapitalLoanApplicationTestBuilder {
     private List<String> paymentAllocationTypes;
     private Integer delinquencyGraceDays;
     private String delinquencyStartType;
+    private Integer breachGraceDays;
 
     public WorkingCapitalLoanApplicationTestBuilder withClientId(final Long clientId) {
         this.clientId = clientId;
@@ -154,6 +155,11 @@ public class WorkingCapitalLoanApplicationTestBuilder {
         return this;
     }
 
+    public WorkingCapitalLoanApplicationTestBuilder withBreachGraceDays(final Integer breachGraceDays) {
+        this.breachGraceDays = breachGraceDays;
+        return this;
+    }
+
     public WorkingCapitalLoanApplicationTestBuilder withPaymentAllocationTypes(final List<String> paymentAllocationTypes) {
         this.paymentAllocationTypes = paymentAllocationTypes;
         return this;
@@ -205,6 +211,9 @@ public class WorkingCapitalLoanApplicationTestBuilder {
         }
         if (delinquencyStartType != null) {
             request.delinquencyStartType(delinquencyStartType);
+        }
+        if (breachGraceDays != null) {
+            request.breachGraceDays(breachGraceDays);
         }
         if (breachId != null) {
             request.breachId(breachId);
@@ -268,6 +277,7 @@ public class WorkingCapitalLoanApplicationTestBuilder {
         }
         request.delinquencyGraceDays(delinquencyGraceDays);
         request.delinquencyStartType(delinquencyStartType);
+        request.breachGraceDays(breachGraceDays);
         if (breachId != null) {
             request.breachId(breachId);
         }

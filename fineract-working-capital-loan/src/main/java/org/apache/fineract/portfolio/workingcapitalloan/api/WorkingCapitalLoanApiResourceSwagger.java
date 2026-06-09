@@ -217,6 +217,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Integer delinquencyGraceDays;
         @Schema(description = "Delinquency start type: LOAN_CREATION or DISBURSEMENT")
         public StringEnumOptionData delinquencyStartType;
+        @Schema(example = "0", description = "Number of days to shift the start of the first breach schedule period after disbursement")
+        public Integer breachGraceDays;
         @Schema(example = "[2024, 1, 14]", description = "Last closed business date (COB)")
         public LocalDate lastClosedBusinessDate;
         public List<GetPaymentAllocation> paymentAllocation;
@@ -358,6 +360,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Integer delinquencyGraceDays;
         @Schema(example = "LOAN_CREATION", description = "Delinquency start type: LOAN_CREATION or DISBURSEMENT")
         public String delinquencyStartType;
+        @Schema(example = "0", description = "Number of days to shift the start of the first breach schedule period after disbursement")
+        public Integer breachGraceDays;
         public List<PostPaymentAllocationRule> paymentAllocation;
 
         @Schema(example = "en_GB")
@@ -465,6 +469,8 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public Integer delinquencyGraceDays;
         @Schema(example = "LOAN_CREATION", description = "Delinquency start type: LOAN_CREATION or DISBURSEMENT")
         public String delinquencyStartType;
+        @Schema(example = "0", description = "Number of days to shift the start of the first breach schedule period after disbursement")
+        public Integer breachGraceDays;
         public List<PostWorkingCapitalLoansRequest.PostPaymentAllocationRule> paymentAllocation;
 
         @Schema(example = "en_GB")

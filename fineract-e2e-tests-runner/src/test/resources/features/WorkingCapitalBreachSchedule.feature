@@ -118,8 +118,8 @@ Feature: Working Capital Breach Schedule
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a Working Capital Loan Product with custom breach config and overrides enabled:
-      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | delinquencyGraceDays |
-      | 7               | DAYS                | PERCENTAGE                  | 9            | 3                    |
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | delinquencyGraceDays | breachGraceDays |
+      | 7               | DAYS                | PERCENTAGE                  | 9            | 3                    | 3               |
     And Admin creates a working capital loan using created product with the following data:
       | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
       | 01 January 2026 | 01 January 2026          | 9000            | 100000       | 18                | 1000     |
@@ -357,8 +357,8 @@ Feature: Working Capital Breach Schedule
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a Working Capital Loan Product with custom breach config and overrides enabled:
-      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | delinquencyGraceDays |
-      | 7               | DAYS                | PERCENTAGE                  | 10           | 45                   |
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | delinquencyGraceDays | breachGraceDays |
+      | 7               | DAYS                | PERCENTAGE                  | 10           | 45                   | 45              |
     And Admin creates a working capital loan using created product with the following data:
       | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
       | 01 January 2026 | 01 January 2026          | 9000            | 100000       | 18                | 0        |
@@ -391,3 +391,20 @@ Feature: Working Capital Breach Schedule
       | periodNumber | fromDate   | toDate     | numberOfDays | minPaymentAmount | outstandingAmount | nearBreach | breach |
       | 1            | 2026-01-01 | 2026-01-31 | 31           | 0.00             | 0.00              | null       | false  |
       | 2            | 2026-02-01 | 2026-02-28 | 28           | 0.00             | 0.00              | null       | null   |
+
+  @TestRailId:C77000
+  Scenario: Verify working capital loan breach schedule - first period start shifted by breachGraceDays
+    When Admin sets the business date to "01 January 2026"
+    And Admin creates a client with random data
+    And Admin creates a Working Capital Loan Product with custom breach config and overrides enabled:
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | breachGraceDays |
+      | 1               | MONTHS              | FLAT                        | 500          | 5               |
+    And Admin creates a working capital loan using created product with the following data:
+      | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
+      | 01 January 2026 | 01 January 2026          | 9000            | 100000             | 18                | 0        |
+    And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
+    When Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
+    And Admin runs inline COB job for Working Capital Loan by loanId
+    Then Working Capital loan breach schedule has the following data:
+      | periodNumber | fromDate   | toDate     | numberOfDays | minPaymentAmount | outstandingAmount | nearBreach | breach |
+      | 1            | 2026-01-06 | 2026-02-05 | 31           | 500.00           | 500.00            | null       | null   |

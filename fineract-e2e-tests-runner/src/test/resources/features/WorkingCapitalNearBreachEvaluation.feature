@@ -197,11 +197,11 @@ Feature: Working Capital Near Breach Evaluation
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a Working Capital Loan Product with breach and near breach config and overrides enabled:
-      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | nearBreachFrequency | nearBreachFrequencyType | nearBreachThreshold | delinquencyGraceDays |
-      | 3               | MONTHS              | FLAT                        | 900          | 60                  | DAYS                    | 33.33               | 10                   |
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | breachGraceDays | nearBreachFrequency | nearBreachFrequencyType | nearBreachThreshold | delinquencyGraceDays |
+      | 3               | MONTHS              | FLAT                        | 900          | 10              | 60                  | DAYS                    | 33.33               | 10                   |
     And Admin creates a working capital loan using created product with the following data:
       | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
-      | 01 January 2026 | 01 January 2026          | 9000            | 100000       | 18                | 0        |
+      | 01 January 2026 | 01 January 2026          | 9000            | 100000             | 18                | 0        |
     And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
     When Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
     And Admin runs inline COB job for Working Capital Loan by loanId
@@ -570,8 +570,8 @@ Feature: Working Capital Near Breach Evaluation
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a Working Capital Loan Product with breach and near breach config and overrides enabled:
-      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | nearBreachFrequency | nearBreachFrequencyType | nearBreachThreshold | delinquencyGraceDays |
-      | 9               | DAYS                | PERCENTAGE                  | 50           | 3                   | DAYS                    | 33                  | 3                    |
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | nearBreachFrequency | nearBreachFrequencyType | nearBreachThreshold | delinquencyGraceDays | breachGraceDays |
+      | 9               | DAYS                | PERCENTAGE                  | 50           | 3                   | DAYS                    | 33                  | 3                    | 3               |
     And Admin creates a working capital loan using created product with the following data:
       | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
       | 01 January 2026 | 01 January 2026          | 800             | 100000       | 18                | 0        |
@@ -655,3 +655,24 @@ Feature: Working Capital Near Breach Evaluation
     Then Working Capital loan breach schedule has the following data:
       | periodNumber | fromDate   | toDate     | minPaymentAmount | outstandingAmount | nearBreach | breach |
       | 1            | 2026-01-01 | 2026-01-09 | 90.00            | 0.00              | true       | false  |
+
+  @TestRailId:C77001
+  Scenario: Verify near breach evaluation window shifts when breachGraceDays is set on the product
+    When Admin sets the business date to "01 January 2026"
+    And Admin creates a client with random data
+    And Admin creates a Working Capital Loan Product with breach and near breach config and overrides enabled:
+      | breachFrequency | breachFrequencyType | breachAmountCalculationType | breachAmount | nearBreachFrequency | nearBreachFrequencyType | nearBreachThreshold | breachGraceDays |
+      | 3               | MONTHS              | FLAT                        | 900          | 60                  | DAYS                    | 33.33               | 5               |
+    And Admin creates a working capital loan using created product with the following data:
+      | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
+      | 01 January 2026 | 01 January 2026          | 9000            | 100000             | 18                | 0        |
+    And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
+    When Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
+    And Admin runs inline COB job for Working Capital Loan by loanId
+    # breachGraceDays=5 -> Period 1: 01-06 -> 04-05; freq=60d -> 1 eval at 03-07 (cumulative required = 33.33% of 900 = 299.97)
+    # No payment by 03-07 -> cumulative paid=0 < 299.97 -> trigger Y
+    When Admin sets the business date to "08 March 2026"
+    And Admin runs inline COB job for Working Capital Loan by loanId
+    Then Working Capital loan breach schedule has the following data:
+      | periodNumber | fromDate   | toDate     | minPaymentAmount | outstandingAmount | nearBreach | breach |
+      | 1            | 2026-01-06 | 2026-04-05 | 900.00           | 900.00            | true       | null   |
