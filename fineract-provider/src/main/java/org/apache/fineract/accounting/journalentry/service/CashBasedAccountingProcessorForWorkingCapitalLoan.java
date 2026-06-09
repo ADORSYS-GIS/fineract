@@ -83,6 +83,7 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
                     throw new NotImplementedException("Charge off is not implemented yet for Goodwill Credit for Working Capital Loan");
                 }
             }
+            case LoanTransactionType.CREDIT_BALANCE_REFUND -> postCreditBalanceRefundJournalEntries(loan, txn);
             default -> {
                 throw new NotImplementedException(
                         "Post Journal Entries is not implemented yet for " + txn.getTypeOf().getCode() + " for Working Capital Loan");
@@ -103,6 +104,15 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
         accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.FEES_RECEIVABLE, feesPortion);
         accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.PENALTIES_RECEIVABLE, penaltiesPortion);
         accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.OVERPAYMENT, overpaymentPortion);
+    }
+
+    private void postCreditBalanceRefundJournalEntries(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn) {
+        final BigDecimal amount = txn.getTransactionAmount();
+        final JournalEntryPostingHelper accountPostHelper = new JournalEntryPostingHelper(loan, txn);
+        // debit
+        accountPostHelper.postDebitJournalEntry(CashAccountsForLoan.OVERPAYMENT, amount);
+        // credit
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.FUND_SOURCE, amount);
     }
 
     @Override
