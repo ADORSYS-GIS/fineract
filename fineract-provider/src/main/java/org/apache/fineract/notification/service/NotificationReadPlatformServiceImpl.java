@@ -110,6 +110,15 @@ public class NotificationReadPlatformServiceImpl implements NotificationReadPlat
     private Pageable toPageable(final SearchParameters searchParameters) {
         final int limit = searchParameters.hasLimit() ? searchParameters.getLimit() : SearchParameters.DEFAULT_MAX_LIMIT;
         final int offset = searchParameters.hasOffset() ? searchParameters.getOffset() : 0;
+
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit must be greater than zero");
+        }
+
+        if (offset < 0) {
+            throw new IllegalArgumentException("Offset must not be negative");
+        }
+
         final int page = offset / limit;
 
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
