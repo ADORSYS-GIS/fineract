@@ -39,7 +39,7 @@ public interface WorkingCapitalLoanWritePlatformService {
 
     CommandProcessingResult makeDiscountFeeAdjustment(Long loanId, JsonCommand command);
 
-    CommandProcessingResult undoDiscountFeeAdjustment(Long loanId, JsonCommand command);
+    CommandProcessingResult undoTransaction(Long loanId, Long transactionId, JsonCommand command);
 
     CommandProcessingResult creditBalanceRefund(Long loanId, JsonCommand command);
 

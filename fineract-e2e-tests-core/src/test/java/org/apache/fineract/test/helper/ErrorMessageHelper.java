@@ -1139,15 +1139,11 @@ public final class ErrorMessageHelper {
     }
 
     public static String discountAdjustmentUndoInvalidTypeFailure() {
-        return "Failed data validation due to: discount.adjustment.transaction.invalid.";
-    }
-
-    public static String discountAdjustmentUndoTransactionIdRequiredFailure() {
-        return "Discount fee adjustment transaction ID is required to undo the adjustment";
+        return "Undo is not supported for transaction type";
     }
 
     public static String discountAdjustmentUndoTransactionNotFoundFailure() {
-        return "Discount fee adjustment transaction not found";
+        return "Working capital loan transaction not found";
     }
 
     public static String discountAdjustmentUndoNotActiveLoanFailure() {

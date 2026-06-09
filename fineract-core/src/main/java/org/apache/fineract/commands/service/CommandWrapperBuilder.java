@@ -130,7 +130,6 @@ import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDOAPPROVAL;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDOCHARGEOFF;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDODISBURSAL;
-import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDODISCOUNTFEEADJUSTMENT;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDOREJECT;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDOTRANSACTION;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDOWITHDRAWAL;
@@ -864,11 +863,12 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder undoDiscountFeeAdjustmentWorkingCapitalLoanTransaction(final Long loanId) {
-        this.actionName = ACTION_UNDODISCOUNTFEEADJUSTMENT;
+    public CommandWrapperBuilder undoWorkingCapitalLoanTransaction(final Long loanId, final Long transactionId) {
+        this.actionName = ACTION_UNDO;
         this.entityName = ENTITY_WORKINGCAPITALLOAN;
-        this.entityId = loanId;
-        this.href = "/working-capital-loans/" + loanId + "/transactions?command=undoDiscountFeeAdjustment";
+        this.entityId = transactionId;
+        this.loanId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/transactions/" + transactionId + "?command=undo";
         return this;
     }
 

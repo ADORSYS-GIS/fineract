@@ -18,6 +18,9 @@
  */
 package org.apache.fineract.portfolio.workingcapitalloan.handler;
 
+import static org.apache.fineract.commands.domain.CommandWrapperConstants.ACTION_UNDO;
+import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOAN;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.commands.annotation.CommandType;
 import org.apache.fineract.commands.handler.NewCommandSourceHandler;
@@ -28,13 +31,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@CommandType(entity = "WORKINGCAPITALLOAN", action = "UNDODISCOUNTFEEADJUSTMENT")
-public class UndoWorkingCapitalLoanDiscountFeeAdjustmentCommandHandler implements NewCommandSourceHandler {
+@CommandType(entity = ENTITY_WORKINGCAPITALLOAN, action = ACTION_UNDO)
+public class UndoWorkingCapitalLoanTransactionCommandHandler implements NewCommandSourceHandler {
 
     private final WorkingCapitalLoanWritePlatformService writePlatformService;
 
     @Override
     public CommandProcessingResult processCommand(final JsonCommand command) {
-        return writePlatformService.undoDiscountFeeAdjustment(command.getResourceId(), command);
+        return writePlatformService.undoTransaction(command.getLoanId(), command.entityId(), command);
     }
 }

@@ -591,19 +591,21 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
     }
 
     @Override
-    public CommandProcessingResult undoDiscountFeeAdjustment(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult undoTransaction(final Long loanId, final Long transactionId, final JsonCommand command) {
         final WorkingCapitalLoan loan = loanRepository.findById(loanId).orElseThrow(() -> new WorkingCapitalLoanNotFoundException(loanId));
-        final Long adjustmentTransactionId = fromApiJsonHelper.extractLongNamed(WorkingCapitalLoanConstants.relatedResourceIdParamName,
-                command.parsedJson());
-        if (adjustmentTransactionId == null) {
-            throw new PlatformApiDataValidationException("validation.msg.wc.loan.related.resource.id.required",
-                    "Discount fee adjustment transaction ID is required to undo the adjustment",
-                    WorkingCapitalLoanConstants.relatedResourceIdParamName);
-        }
-        final WorkingCapitalLoanTransaction adjustmentTransaction = transactionRepository
-                .findByIdAndWcLoan_Id(adjustmentTransactionId, loanId).orElseThrow(
-                        () -> new PlatformApiDataValidationException("validation.msg.wc.loan.discount.adjustment.transaction.not.found",
-                                "Discount fee adjustment transaction not found", WorkingCapitalLoanConstants.relatedResourceIdParamName));
+        final WorkingCapitalLoanTransaction transaction = transactionRepository.findByIdAndWcLoan_Id(transactionId, loanId)
+                .orElseThrow(() -> new PlatformApiDataValidationException("validation.msg.wc.loan.transaction.not.found",
+                        "Working capital loan transaction not found", WorkingCapitalLoanConstants.transactionIdParamName));
+        return switch (transaction.getTypeOf()) {
+            case DISCOUNT_FEE_ADJUSTMENT -> undoDiscountFeeAdjustment(loan, transaction, command);
+            default -> throw new PlatformApiDataValidationException("validation.msg.wc.loan.transaction.undo.not.supported",
+                    "Undo is not supported for transaction type " + transaction.getTypeOf(),
+                    WorkingCapitalLoanConstants.transactionTypeParamName);
+        };
+    }
+
+    private CommandProcessingResult undoDiscountFeeAdjustment(final WorkingCapitalLoan loan,
+            final WorkingCapitalLoanTransaction adjustmentTransaction, final JsonCommand command) {
         validator.validateUndoDiscountAdjustmentTransaction(loan, adjustmentTransaction);
 
         reverseTransaction(adjustmentTransaction);
@@ -621,13 +623,12 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         createNote(noteText, loan);
 
         final Map<String, Object> changes = new LinkedHashMap<>();
-        changes.put(WorkingCapitalLoanConstants.relatedResourceIdParamName, adjustmentTransactionId);
         if (StringUtils.isNotBlank(noteText)) {
             changes.put(WorkingCapitalLoanConstants.noteParamName, noteText);
         }
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(adjustmentTransaction.getId())
                 .withEntityExternalId(adjustmentTransaction.getExternalId()).withOfficeId(loan.getOfficeId())
-                .withClientId(loan.getClientId()).withLoanId(loanId).with(changes).build();
+                .withClientId(loan.getClientId()).withLoanId(loan.getId()).with(changes).build();
     }
 
     @Override

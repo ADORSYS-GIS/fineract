@@ -252,12 +252,8 @@ public class WorkingCapitalLoanDataValidator {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(WorkingCapitalLoanConstants.RESOURCE_NAME);
 
-        if (adjustmentTransaction.getTypeOf() != LoanTransactionType.DISCOUNT_FEE_ADJUSTMENT) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.relatedResourceIdParamName)
-                    .failWithCode("discount.adjustment.transaction.invalid");
-        }
         if (adjustmentTransaction.isReversed()) {
-            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.relatedResourceIdParamName)
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.transactionIdParamName)
                     .failWithCode("discount.adjustment.already.reversed");
         }
         if (loan.getLoanProductRelatedDetails() == null) {

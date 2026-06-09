@@ -448,18 +448,6 @@ Feature: Working Capital Discount Adjustment Backdated and Undo
     Then Working Capital loan status will be "OVERPAID"
     Then Undo the last Discount fee adjustment on Working Capital loan account failed due to non active loan with status code 400
 
-  @TestRailId:C83078
-  Scenario: Undo of a discount fee adjustment without a related resource id is rejected
-    When Admin sets the business date to "01 January 2026"
-    And Admin creates a client with random data
-    And Admin creates a working capital loan with the following data:
-      | LoanProduct | submittedOnDate | expectedDisbursementDate | principalAmount | totalPaymentVolume | periodPaymentRate | discount |
-      | WCLP        | 01 January 2026 | 01 January 2026          | 100             | 100                | 1                 |          |
-    Then Working capital loan creation was successful
-    Then Admin successfully approves the working capital loan on "01 January 2026" with "100" amount and expected disbursement date on "01 January 2026"
-    Then Admin successfully disburse the Working Capital loan on "01 January 2026" with "100" EUR transaction amount
-    Then Undo discount fee adjustment without a related resource id on Working Capital loan account failed as id is required with status code 400
-
   @TestRailId:C83079
   Scenario: Undo of a discount fee adjustment with a non-existent transaction id is rejected
     When Admin sets the business date to "01 January 2026"
