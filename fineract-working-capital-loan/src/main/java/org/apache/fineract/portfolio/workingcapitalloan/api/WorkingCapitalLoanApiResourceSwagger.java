@@ -238,6 +238,31 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public GetBalance balance;
         @Schema(description = "Working Capital Delinquency Collection Data")
         public WorkingCapitalCollection collectionData;
+        @Schema(description = "List of originators associated with this loan")
+        public List<GetWorkingCapitalLoansLoanIdOriginatorData> originators;
+
+        @Schema(description = "Originator data associated with the loan")
+        public static final class GetWorkingCapitalLoansLoanIdOriginatorData {
+
+            private GetWorkingCapitalLoansLoanIdOriginatorData() {}
+
+            @Schema(example = "1")
+            public Long id;
+            @Schema(example = "REV-SHARE-001")
+            public String externalId;
+            @Schema(example = "PP Merchant")
+            public String name;
+            @Schema(example = "ACTIVE")
+            public String status;
+            @Schema(example = "1")
+            public Long originatorTypeId;
+            @Schema(example = "MERCHANT")
+            public String originatorTypeName;
+            @Schema(example = "2")
+            public Long channelTypeId;
+            @Schema(example = "ONLINE")
+            public String channelTypeName;
+        }
     }
 
     @Schema(description = "Working capital loan running balances")
@@ -369,6 +394,12 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         @Schema(example = "0", description = "Number of days to shift the start of the first breach schedule period after disbursement")
         public Integer breachGraceDays;
         public List<PostPaymentAllocationRule> paymentAllocation;
+        @Schema(description = """
+                Optional array of originators to associate with this loan. \
+                Each entry can reference an existing originator by 'id' or 'externalId'. \
+                If the global config 'enable_originator_creation_during_loan_application' is enabled, \
+                non-existing originators will be auto-created using the provided details (name, typeId, channelTypeId).""")
+        public List<PostWorkingCapitalLoansOriginatorData> originators;
 
         @Schema(example = "en_GB")
         public String locale;
@@ -394,6 +425,27 @@ public final class WorkingCapitalLoanApiResourceSwagger {
             public String paymentAllocationRule;
             @Schema(example = "1")
             public Integer order;
+        }
+
+        @Schema(description = "Originator data for loan creation request")
+        public static final class PostWorkingCapitalLoansOriginatorData {
+
+            private PostWorkingCapitalLoansOriginatorData() {}
+
+            @Schema(description = "Originator internal ID (use this OR externalId, not both)", example = "1")
+            public Long id;
+
+            @Schema(description = "Originator external ID (use this OR id, not both)", example = "REV-SHARE-001")
+            public String externalId;
+
+            @Schema(description = "Originator name (used when creating new originator if config enabled)", example = "PP Merchant")
+            public String name;
+
+            @Schema(description = "Code value ID for originator type (from LoanOriginatorType code)", example = "1")
+            public Long typeId;
+
+            @Schema(description = "Code value ID for channel type (from LoanOriginationChannelType code)", example = "2")
+            public Long channelTypeId;
         }
     }
 

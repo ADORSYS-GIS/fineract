@@ -40,79 +40,81 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
-import org.apache.fineract.portfolio.loanaccount.exception.LoanNotFoundException;
-import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.loanorigination.data.LoanOriginatorMappingResponse;
 import org.apache.fineract.portfolio.loanorigination.data.LoanOriginatorsResponse;
-import org.apache.fineract.portfolio.loanorigination.service.LoanOriginatorReadPlatformService;
+import org.apache.fineract.portfolio.workingcapitalloan.WorkingCapitalLoanConstants;
+import org.apache.fineract.portfolio.workingcapitalloan.exception.WorkingCapitalLoanNotFoundException;
+import org.apache.fineract.portfolio.workingcapitalloan.service.WorkingCapitalLoanApplicationReadPlatformService;
+import org.apache.fineract.portfolio.workingcapitalloan.service.WorkingCapitalLoanOriginatorReadPlatformService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-@Path("/v1/loans")
+@Path("/v1/working-capital-loans")
 @Component
-@ConditionalOnProperty(value = "fineract.module.loan-origination.enabled", havingValue = "true")
-@Tag(name = "Loan Originators", description = "Fetch loan originator details for a specific loan")
 @RequiredArgsConstructor
-public class LoanOriginatorsApiResource {
+@ConditionalOnProperty(value = "fineract.module.loan-origination.enabled", havingValue = "true")
+@Tag(name = "Working Capital Loan Originators", description = "Fetch loan originator details for a specific working capital loan")
+public class WorkingCapitalLoanOriginatorsApiResource {
 
-    private static final String LOAN_RESOURCE_NAME = "LOAN";
+    private static final String RESOURCE_NAME_FOR_PERMISSIONS = WorkingCapitalLoanConstants.WCL_RESOURCE_NAME;
 
     private final PlatformSecurityContext context;
-    private final LoanReadPlatformService loanReadPlatformService;
-    private final LoanOriginatorReadPlatformService loanOriginatorReadPlatformService;
+    private final WorkingCapitalLoanApplicationReadPlatformService workingCapitalLoanReadPlatformService;
+    private final WorkingCapitalLoanOriginatorReadPlatformService workingCapitalLoanOriginatorReadPlatformService;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 
     @GET
     @Path("{loanId}/originators")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve originators for a loan by loan ID", description = "Retrieves all originators attached to a specific loan. Requires READ_LOAN permission.")
+    @Operation(summary = "Retrieve originators for a working capital loan by loan ID", description = "Retrieves all originators attached to a specific working capital loan. Requires READ_WORKINGCAPITALLOAN permission.")
     @ApiResponse(responseCode = "200", description = "OK - Returns wrapped list of originators (may be empty)", content = @Content(schema = @Schema(implementation = LoanOriginatorsResponse.class)))
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @ApiResponse(responseCode = "404", description = "Loan not found")
-    public LoanOriginatorsResponse retrieveOriginatorsByLoanId(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId) {
-        this.context.authenticatedUser().validateHasReadPermission(LOAN_RESOURCE_NAME);
+    public LoanOriginatorsResponse retrieveOriginatorsByWorkingCapitalLoanId(
+            @PathParam("loanId") @Parameter(description = "loanId") final Long loanId) {
+        this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
 
-        if (!this.loanReadPlatformService.existsByLoanId(loanId)) {
-            throw new LoanNotFoundException(loanId);
+        if (!workingCapitalLoanReadPlatformService.existsByLoanId(loanId)) {
+            throw new WorkingCapitalLoanNotFoundException(loanId);
         }
 
-        return LoanOriginatorsResponse.of(this.loanOriginatorReadPlatformService.retrieveByLoanId(loanId));
+        return LoanOriginatorsResponse.of(this.workingCapitalLoanOriginatorReadPlatformService.retrieveByLoanId(loanId));
     }
 
     @GET
     @Path("external-id/{loanExternalId}/originators")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve originators for a loan by loan external ID", description = "Retrieves all originators attached to a specific loan using loan external ID. Requires READ_LOAN permission.")
+    @Operation(summary = "Retrieve originators for a working capital loan by loan external ID", description = "Retrieves all originators attached to a specific working capital loan using loan external ID. Requires READ_WORKINGCAPITALLOAN permission.")
     @ApiResponse(responseCode = "200", description = "OK - Returns wrapped list of originators (may be empty)", content = @Content(schema = @Schema(implementation = LoanOriginatorsResponse.class)))
     @ApiResponse(responseCode = "403", description = "Insufficient permissions")
     @ApiResponse(responseCode = "404", description = "Loan not found")
-    public LoanOriginatorsResponse retrieveOriginatorsByLoanExternalId(
+    public LoanOriginatorsResponse retrieveOriginatorsByWorkingCapitalLoanExternalId(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId) {
-        this.context.authenticatedUser().validateHasReadPermission(LOAN_RESOURCE_NAME);
+        this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);
 
         final ExternalId externalId = ExternalIdFactory.produce(loanExternalId);
-        final Long loanId = this.loanReadPlatformService.retrieveLoanIdByExternalId(externalId);
-        if (loanId == null) {
-            throw new LoanNotFoundException(externalId);
+        Long resolvedLoanId = this.workingCapitalLoanReadPlatformService.getResolvedLoanId(externalId);
+        if (resolvedLoanId == null) {
+            throw new WorkingCapitalLoanNotFoundException(externalId);
         }
 
-        return LoanOriginatorsResponse.of(this.loanOriginatorReadPlatformService.retrieveByLoanId(loanId));
+        return LoanOriginatorsResponse.of(this.workingCapitalLoanOriginatorReadPlatformService.retrieveByLoanId(resolvedLoanId));
     }
 
     @POST
     @Path("{loanId}/originators/{originatorId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Attach originator to loan by IDs", description = "Attaches an originator to a loan. Loan must be in 'Submitted and Pending Approval' status. Requires ATTACH_LOAN_ORIGINATOR permission.")
+    @Operation(summary = "Attach originator to working capital loan by IDs", description = "Attaches an originator to a working capital loan. Loan must be in 'Submitted and Pending Approval' status. Requires ATTACH_WORKING_CAPITAL_LOAN_ORIGINATOR permission.")
     @ApiResponse(responseCode = "200", description = "OK - Originator attached", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status, originator not ACTIVE, duplicate mapping, or insufficient permissions")
     @ApiResponse(responseCode = "404", description = "Loan or originator not found")
-    public LoanOriginatorMappingResponse attachOriginatorToLoan(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
+    public LoanOriginatorMappingResponse attachOriginatorToWorkingCapitalLoan(
+            @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("originatorId") @Parameter(description = "originatorId") final Long originatorId) {
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-
         return buildMappingResponse(result);
     }
 
@@ -120,17 +122,17 @@ public class LoanOriginatorsApiResource {
     @Path("{loanId}/originators/external-id/{originatorExternalId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Attach originator to loan by loan ID and originator external ID")
+    @Operation(summary = "Attach originator to working capital loan by loan ID and originator external ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status, originator not ACTIVE, duplicate mapping")
     @ApiResponse(responseCode = "404", description = "Loan or originator not found")
-    public LoanOriginatorMappingResponse attachOriginatorToLoanByOriginatorExternalId(
+    public LoanOriginatorMappingResponse attachOriginatorToWorkingCapitalLoanByOriginatorExternalId(
             @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("originatorExternalId") @Parameter(description = "originatorExternalId") final String originatorExternalId) {
 
-        final Long originatorId = this.loanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
+        final Long originatorId = this.workingCapitalLoanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -140,21 +142,21 @@ public class LoanOriginatorsApiResource {
     @Path("external-id/{loanExternalId}/originators/{originatorId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Attach originator to loan by loan external ID and originator ID")
+    @Operation(summary = "Attach originator to working capital loan by loan external ID and originator ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status, originator not ACTIVE, duplicate mapping")
     @ApiResponse(responseCode = "404", description = "Loan or originator not found")
-    public LoanOriginatorMappingResponse attachOriginatorToLoanByLoanExternalId(
+    public LoanOriginatorMappingResponse attachOriginatorToWorkingCapitalLoanByLoanExternalId(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("originatorId") @Parameter(description = "originatorId") final Long originatorId) {
 
         final ExternalId externalId = ExternalIdFactory.produce(loanExternalId);
-        final Long loanId = this.loanReadPlatformService.retrieveLoanIdByExternalId(externalId);
+        final Long loanId = this.workingCapitalLoanReadPlatformService.getResolvedLoanId(externalId);
         if (loanId == null) {
-            throw new LoanNotFoundException(externalId);
+            throw new WorkingCapitalLoanNotFoundException(externalId);
         }
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -164,23 +166,23 @@ public class LoanOriginatorsApiResource {
     @Path("external-id/{loanExternalId}/originators/external-id/{originatorExternalId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Attach originator to loan by external IDs")
+    @Operation(summary = "Attach originator to working capital loan by loan external ID and originator external ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status, originator not ACTIVE, duplicate mapping")
     @ApiResponse(responseCode = "404", description = "Loan or originator not found")
-    public LoanOriginatorMappingResponse attachOriginatorToLoanByExternalIds(
+    public LoanOriginatorMappingResponse attachOriginatorToWorkingCapitalLoanByBothExternalIds(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("originatorExternalId") @Parameter(description = "originatorExternalId") final String originatorExternalId) {
 
         final ExternalId loanExtId = ExternalIdFactory.produce(loanExternalId);
-        final Long loanId = this.loanReadPlatformService.retrieveLoanIdByExternalId(loanExtId);
+        final Long loanId = this.workingCapitalLoanReadPlatformService.getResolvedLoanId(loanExtId);
         if (loanId == null) {
-            throw new LoanNotFoundException(loanExtId);
+            throw new WorkingCapitalLoanNotFoundException(loanExtId);
         }
 
-        final Long originatorId = this.loanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
+        final Long originatorId = this.workingCapitalLoanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().attachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -189,14 +191,15 @@ public class LoanOriginatorsApiResource {
     @DELETE
     @Path("{loanId}/originators/{originatorId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Detach originator from loan by IDs", description = "Detaches an originator from a loan. Loan must be in 'Submitted and Pending Approval' status. Requires DETACH_LOAN_ORIGINATOR permission.")
+    @Operation(summary = "Detach originator from working capital loan by IDs", description = "Detaches an originator from a working capital loan. Loan must be in 'Submitted and Pending Approval' status. Requires DETACH_WORKING_CAPITAL_LOAN_ORIGINATOR permission.")
     @ApiResponse(responseCode = "200", description = "OK - Originator detached", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status or insufficient permissions")
-    @ApiResponse(responseCode = "404", description = "Loan, originator, or mapping not found")
-    public LoanOriginatorMappingResponse detachOriginatorFromLoan(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
+    @ApiResponse(responseCode = "404", description = "Loan or originator mapping not found")
+    public LoanOriginatorMappingResponse detachOriginatorFromWorkingCapitalLoan(
+            @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("originatorId") @Parameter(description = "originatorId") final Long originatorId) {
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -205,17 +208,17 @@ public class LoanOriginatorsApiResource {
     @DELETE
     @Path("{loanId}/originators/external-id/{originatorExternalId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Detach originator from loan by loan ID and originator external ID")
+    @Operation(summary = "Detach originator from working capital loan by loan ID and originator external ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status")
-    @ApiResponse(responseCode = "404", description = "Loan, originator, or mapping not found")
-    public LoanOriginatorMappingResponse detachOriginatorFromLoanByOriginatorExternalId(
+    @ApiResponse(responseCode = "404", description = "Loan or originator mapping not found")
+    public LoanOriginatorMappingResponse detachOriginatorFromWorkingCapitalLoanByOriginatorExternalId(
             @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("originatorExternalId") @Parameter(description = "originatorExternalId") final String originatorExternalId) {
 
-        final Long originatorId = this.loanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
+        final Long originatorId = this.workingCapitalLoanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -224,21 +227,21 @@ public class LoanOriginatorsApiResource {
     @DELETE
     @Path("external-id/{loanExternalId}/originators/{originatorId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Detach originator from loan by loan external ID and originator ID")
+    @Operation(summary = "Detach originator from working capital loan by loan external ID and originator ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status")
-    @ApiResponse(responseCode = "404", description = "Loan, originator, or mapping not found")
-    public LoanOriginatorMappingResponse detachOriginatorFromLoanByLoanExternalId(
+    @ApiResponse(responseCode = "404", description = "Loan or originator mapping not found")
+    public LoanOriginatorMappingResponse detachOriginatorFromWorkingCapitalLoanByLoanExternalId(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("originatorId") @Parameter(description = "originatorId") final Long originatorId) {
 
         final ExternalId externalId = ExternalIdFactory.produce(loanExternalId);
-        final Long loanId = this.loanReadPlatformService.retrieveLoanIdByExternalId(externalId);
+        final Long loanId = this.workingCapitalLoanReadPlatformService.getResolvedLoanId(externalId);
         if (loanId == null) {
-            throw new LoanNotFoundException(externalId);
+            throw new WorkingCapitalLoanNotFoundException(externalId);
         }
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);
@@ -247,23 +250,23 @@ public class LoanOriginatorsApiResource {
     @DELETE
     @Path("external-id/{loanExternalId}/originators/external-id/{originatorExternalId}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Detach originator from loan by external IDs")
+    @Operation(summary = "Detach originator from working capital loan by loan external ID and originator external ID")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanOriginatorMappingResponse.class)))
     @ApiResponse(responseCode = "403", description = "Loan not in correct status")
-    @ApiResponse(responseCode = "404", description = "Loan, originator, or mapping not found")
-    public LoanOriginatorMappingResponse detachOriginatorFromLoanByExternalIds(
+    @ApiResponse(responseCode = "404", description = "Loan or originator mapping not found")
+    public LoanOriginatorMappingResponse detachOriginatorFromWorkingCapitalLoanByBothExternalIds(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("originatorExternalId") @Parameter(description = "originatorExternalId") final String originatorExternalId) {
 
         final ExternalId loanExtId = ExternalIdFactory.produce(loanExternalId);
-        final Long loanId = this.loanReadPlatformService.retrieveLoanIdByExternalId(loanExtId);
+        final Long loanId = this.workingCapitalLoanReadPlatformService.getResolvedLoanId(loanExtId);
         if (loanId == null) {
-            throw new LoanNotFoundException(loanExtId);
+            throw new WorkingCapitalLoanNotFoundException(loanExtId);
         }
 
-        final Long originatorId = this.loanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
+        final Long originatorId = this.workingCapitalLoanOriginatorReadPlatformService.resolveIdByExternalId(originatorExternalId);
 
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachLoanOriginator(loanId, originatorId).build();
+        final CommandWrapper commandRequest = new CommandWrapperBuilder().detachWorkingCapitalLoanOriginator(loanId, originatorId).build();
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return buildMappingResponse(result);

@@ -100,4 +100,7 @@ public final class WorkingCapitalLoanConstants {
     public static final String nearBreachThresholdParamName = "nearBreachThreshold";
     public static final String nearBreachFrequencyParamName = "nearBreachFrequency";
     public static final String nearBreachFrequencyTypeParamName = "nearBreachFrequencyType";
+
+    // Loan origination parameters
+    public static final String originatorsParameterName = "originators";
 }
