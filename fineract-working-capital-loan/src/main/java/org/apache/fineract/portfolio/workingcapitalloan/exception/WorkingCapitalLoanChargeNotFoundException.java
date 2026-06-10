@@ -16,15 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.fineract.portfolio.workingcapitalloan.exception;
 
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+public class WorkingCapitalLoanChargeNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-public interface WorkingCapitalLoanChargeWritePlatformService {
-
-    CommandProcessingResult createLoanCharge(Long loanId, JsonCommand command);
-
-    CommandProcessingResult adjustmentForLoanCharge(Long loanId, Long wcLoanChargeId, JsonCommand command);
+    public WorkingCapitalLoanChargeNotFoundException(final Long id) {
+        super("error.msg.wc.loan.charge.id.invalid", "Working Capital Loan Charge with identifier " + id + " does not exist", id);
+    }
 }

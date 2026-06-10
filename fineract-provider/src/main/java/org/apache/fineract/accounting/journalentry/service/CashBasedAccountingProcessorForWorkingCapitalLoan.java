@@ -84,11 +84,30 @@ public class CashBasedAccountingProcessorForWorkingCapitalLoan implements Workin
                 }
             }
             case LoanTransactionType.CREDIT_BALANCE_REFUND -> postCreditBalanceRefundJournalEntries(loan, txn);
+            case LoanTransactionType.CHARGE_ADJUSTMENT ->
+                postChargeAdjustmentJournalEntries(loan, txn, feesPortion, penaltiesPortion, isChargedOff);
             default -> {
                 throw new NotImplementedException(
                         "Post Journal Entries is not implemented yet for " + txn.getTypeOf().getCode() + " for Working Capital Loan");
             }
         }
+    }
+
+    private void postChargeAdjustmentJournalEntries(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction txn,
+            final BigDecimal feesPortion, final BigDecimal penaltiesPortion, final boolean isChargedOff) {
+        final JournalEntryPostingHelper accountPostHelper = new JournalEntryPostingHelper(loan, txn);
+        final CashAccountsForLoan feeIncomeAccountType = isChargedOff ? CashAccountsForLoan.INCOME_FROM_RECOVERY
+                : CashAccountsForLoan.INCOME_FROM_FEES;
+        final CashAccountsForLoan penaltyIncomeAccountType = isChargedOff ? CashAccountsForLoan.INCOME_FROM_RECOVERY
+                : CashAccountsForLoan.INCOME_FROM_PENALTIES;
+
+        // Debit income (reverse income recognized at accrual time)
+        accountPostHelper.postDebitJournalEntry(feeIncomeAccountType, feesPortion);
+        accountPostHelper.postDebitJournalEntry(penaltyIncomeAccountType, penaltiesPortion);
+
+        // Credit receivable (reduce the outstanding charge)
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.FEES_RECEIVABLE, feesPortion);
+        accountPostHelper.postCreditJournalEntry(CashAccountsForLoan.PENALTIES_RECEIVABLE, penaltiesPortion);
     }
 
     private void postGoodwillCreditJournalEntries(WorkingCapitalLoan loan, WorkingCapitalLoanTransaction txn, BigDecimal principalPortion,

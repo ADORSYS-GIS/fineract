@@ -1147,6 +1147,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder adjustmentForWorkingCapitalLoanCharge(final Long loanId, final Long loanChargeId) {
+        this.actionName = ACTION_ADJUSTMENT;
+        this.entityName = ENTITY_WORKINGCAPITALLOANCHARGE;
+        this.entityId = loanChargeId;
+        this.loanId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/charges/" + loanChargeId;
+        return this;
+    }
+
     public CommandWrapperBuilder updateLoanCharge(final Long loanId, final Long loanChargeId) {
         this.actionName = ACTION_UPDATE;
         this.entityName = ENTITY_LOANCHARGE;
