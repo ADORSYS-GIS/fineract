@@ -18,7 +18,7 @@
 
 **Draft confidence:** 18 documented / 0 maintainer / 42 inferred
 
-**Project purpose:** Apache Fineract is an open-source core banking platform designed for microfinance institutions, fintechs, and digital lenders. It provides a REST API layer for back-office operations (loan origination, client onboarding, savings management, accounting) and, via plugins, self-service customer-facing banking. It is a Spring Boot application with a multi-tenant database model (PostgreSQL or MariaDB), optional message brokers (Kafka/ActiveMQ) for events and batch partitioning, and supports multiple authentication schemes (HTTP Basic, OAuth2, 2FA). _(documented)_
+**Project purpose:** Apache Fineract is an open-source core banking platform designed for microfinance institutions, fintechs, and digital lenders. It provides a REST API layer for back-office operations (loan origination, client onboarding, savings management, accounting). It is a Spring Boot application with a multi-tenant database model (PostgreSQL or MariaDB), optional message brokers (Kafka/ActiveMQ) for events and batch partitioning, and supports multiple authentication schemes (HTTP Basic, OAuth2, 2FA). _(documented)_
 
 ---
 
@@ -29,7 +29,6 @@
 - **Back-office core banking:** Loan officers, tellers, and administrators manage clients, loans, savings, deposits, and accounting via REST APIs.
 - **Batch end-of-day processing:** Close-of-Business (COB) jobs run via Spring Batch, optionally partitioned across worker nodes.
 - **External business events:** Publishing events (e.g., ClientCreated) to downstream systems via Kafka or ActiveMQ.
-- **Self-service banking (via plugin):** Customer-facing mobile/web backends for account viewing, transfers, and loan applications. _(documented: openMF/selfservice-plugin README)_
 
 ### Deployment contexts
 
@@ -45,7 +44,6 @@ For a network service, the "caller" splits into distinct roles:
 | Role | Trust level | Description |
 |------|-------------|-------------|
 | Back-office user | Authenticated, authorized | Loan officers, branch managers, system admins. Hold tenant-scoped credentials. |
-| Self-service customer | Authenticated, limited | End customers using `/v1/self/...` APIs. Lower privilege than back-office. _(documented: selfservice-plugin)_ |
 | Operator / deployer | Trusted for the instance | Sysadmin who configures application.properties, SSL, DB credentials, OAuth issuer. |
 | Peer / message broker | Authenticated but adversarial | Kafka/ActiveMQ nodes or other Fineract instances in a partitioned batch topology. |
 | External event consumer | Authenticated | Downstream systems reading business events from Kafka/ActiveMQ topics. |
@@ -55,7 +53,6 @@ For a network service, the "caller" splits into distinct roles:
 | Family | Representative API / Entry Point | Touches outside process? | In model? |
 |--------|-------------------------------|------------------------|-----------|
 | Core REST | `/api/v1/clients`, `/api/v1/loans` | Network (HTTP/S), Database | Yes |
-| Self-Service API | `/v1/self/...` (plugin) | Network (HTTP/S), Database | Yes |
 | Batch Engine (COB) | Spring Batch job launcher, partitioned workers | Database, Message broker (optional) | Yes |
 | Event Publisher | ClientCreated, LoanDisbursed to Kafka/ActiveMQ | Message broker | Yes |
 | Actuator / Health | `/actuator/health`, `/actuator/info` | Network (HTTP/S) | Yes |
@@ -74,6 +71,7 @@ For a network service, the "caller" splits into distinct roles:
 - **Cryptocurrency or blockchain ledger integration:** Fineract is a traditional double-entry accounting system; it does not provide blockchain primitives.
 - **Real-time payment rails (RTGS, SWIFT):** Fineract manages internal accounts; integration with external payment networks is a downstream responsibility.
 - **Customer-facing UI:** The "Community App" is a separate repository (openMF/community-app) and is not part of this model.
+- **Self-Service Plugin:** The "Self-Service Plugin" is a separate repository (openMF/selfservice-plugin) and is not part of this model.
 
 ### Threats the project does not attempt to defend against
 
@@ -89,7 +87,6 @@ For a network service, the "caller" splits into distinct roles:
 | `kubernetes/` | Out of scope | Deployment orchestration; separately authored; threat-model separately as infrastructure. |
 | `docker-compose*.yml` | Out of scope | Deployment orchestration; not runtime code. |
 | `fineract-e2e/`, `oauth2-tests/` | Out of scope | Test-only code; not shipped in production artifacts. |
-| `selfservice-plugin` (external repo) | Out of scope | Separate repository (openMF/selfservice-plugin); maintained independently; threat-model separately. |
 | `examples/`, `contrib/` | Out of scope | Not present in current repo, but if added, default to out-of-scope. |
 
 ---
@@ -130,7 +127,6 @@ The **message broker (Kafka/ActiveMQ)** is a tertiary trust boundary when used f
 | Component family | Reachability precondition |
 |------------------|--------------------------|
 | Core REST API | Finding is in-model only if reachable from an authenticated HTTP request to `/api/v1/...` or `/api/v2/...` with a valid `Fineract-Platform-TenantId` header |
-| Self-Service API | Finding is in-model only if reachable from an authenticated HTTP request to `/v1/self/...` via the self-service plugin. (Note: plugin is out of model per §3, but if the vulnerability is in Fineract core code invoked by the plugin, it is in-model.) |
 | Batch Engine | Finding is in-model only if reachable from a batch job launch (manager) or partitioned step execution (worker). Batch jobs are reachable only from authenticated back-office users or scheduled triggers. |
 | Event Publisher | Finding is in-model only if reachable from an internal business event (e.g., ClientCreated) that flows to the broker. The broker itself is out of model per §3, but the producer-side serialization is in-model. |
 | Actuator | Finding is in-model only if reachable from `/actuator/health` or `/actuator/info`. These are unauthenticated by default in Spring Boot; Fineract's posture on actuator security is _(inferred)_ — see §14. |
@@ -246,15 +242,6 @@ Fineract accepts inputs via:
 | All endpoints | `Fineract-Platform-TenantId` (header) | Yes — but must resolve to a known tenant | Tenant resolution enforced by TenantDetailsService |
 | All endpoints | `Authorization` (Basic/OAuth token) | Yes | Authentication enforced by Spring Security |
 
-### Per-parameter trust table (Self-Service API — via plugin)
-
-| Endpoint family | Parameter | Attacker-controllable? | Caller must enforce |
-|-----------------|-----------|------------------------|---------------------|
-| `/v1/self/registration` | `mobileNo`, `email` | Yes | Format validation; uniqueness check |
-| `/v1/self/authentication` | `username`, `password` | Yes | Auth enforced by core; rate limiting is downstream responsibility _(inferred)_ |
-| `/v1/self/accounttransfers` | `fromAccountId`, `toAccountId`, `transferAmount` | Yes | Account ownership + balance validation enforced by core |
-| `/v1/self/loans` | `productId`, `principal` | Yes | Product eligibility + limit checks enforced |
-
 ### Size, shape, and rate assumptions
 
 - **HTTP POST body size:** Bounded by Tomcat `max-http-form-post-size` (default 2MB). _(documented: application.properties)_
@@ -273,7 +260,6 @@ Fineract accepts inputs via:
 | Network-based attacker (unauthenticated) | Can send HTTP requests to the API; can observe TLS-encrypted traffic but not decrypt it without cert compromise. | Gain authentication, extract data via injection, cause DoS via resource exhaustion. | High (automated scanning) |
 | Authenticated back-office user (low-privilege) | Has valid tenant credentials with limited permissions (e.g., loan officer). | Escalate privileges, access other tenants' data, modify loans/disbursements they do not own. | Medium |
 | Authenticated back-office user (high-privilege) | Has admin / super-user role. | Arbitrary data modification, user management, configuration changes. | Low (but high impact) |
-| Self-service customer | Has valid customer credentials via self-service plugin. | Access other customers' accounts, escalate to back-office privileges, manipulate transfers. | Medium |
 | Compromised message broker peer | Can read/write to Kafka/ActiveMQ topics used for batch partitioning or external events. | Inject malicious batch partitions, intercept business events, cause COB corruption. | Low (when broker is enabled) |
 
 ### Who is explicitly out of scope
@@ -362,7 +348,6 @@ For each property: what it is, conditions, violation symptom, severity tier, and
 |---------|-------------------|---------------------|----------------|
 | Tenant database password encryption (AES/CBC/PKCS5Padding) | Looks like the tenant DB password is securely encrypted. | It is symmetrically encrypted with a master password stored in the same database (`fineract_tenants` — `fineract.tenant.master-password`). If the `fineract_tenants` DB is compromised, the master password reveals all tenant credentials. | Do not treat this as a security boundary against a DBA or DB server attacker. It is obfuscation, not cryptographic protection. _(documented: application.properties)_ |
 | SQL Validator | Looks like a guarantee against all SQL injection. | It is a configurable series of checks against SQL queries. It protects against nearly all potential SQLi attacks, but the word "nearly" is intentional. Novel injection patterns may bypass it. | Do not expose the `sqlSearch` parameter directly to untrusted network peers without additional WAF rules. _(documented: CVE-2024-32838 description)_ |
-| Self-Service API (`/v1/self/...`) | Looks like a customer-facing secure banking API. | It is a plugin (separate repo) that extends Fineract. It runs in the same JVM and database context as the back-office API. A vulnerability in the self-service plugin can compromise the entire tenant. | Do not assume the self-service surface is "sandboxed" from back-office data. _(documented: selfservice-plugin README)_ |
 | Embedded SSL keystore | Looks like Fineract "supports SSL out of the box." | The embedded `keystore.jks` is self-signed, untrusted by browsers, and intended for localhost development only. | Do not use the embedded keystore in production. _(documented: fineract.apache.org/docs)_ |
 | Basic Auth default | Looks like a simple, secure default. | HTTP Basic Auth transmits credentials on every request. Without TLS, it is plaintext. With TLS, it is still vulnerable to brute-force if no rate limiting is deployed downstream. | Do not expose Basic Auth endpoints directly to the internet without a WAF or rate limiter. Consider OAuth2 for production. _(documented: docs)_ |
 
@@ -388,8 +373,7 @@ What the operator / deployer must do for the assumptions in §5–§7 to hold:
 7. **Segregate instance types** in large deployments: run batch managers and workers on separate nodes from API-serving nodes; use read-only instances for reporting. _(documented: docs)_
 8. **Encrypt database backups** at the storage layer. Fineract does not manage backups. _(inferred)_
 9. **Monitor and rotate** the `FINERACT_HIKARI_PASSWORD` and all tenant DB credentials on a schedule appropriate to the data lifetime. _(inferred)_
-10. **Do not expose the Self-Service API directly to the internet** without an additional API gateway that enforces customer-specific rate limits and fraud rules. _(inferred)_
-11. **Validate that the `Fineract-Platform-TenantId` header is not spoofed** at the reverse proxy layer if multi-tenant endpoints are exposed to customers. _(inferred)_
+10. **Validate that the `Fineract-Platform-TenantId` header is not spoofed** at the reverse proxy layer if multi-tenant endpoints are exposed to customers. _(inferred)_
 
 ---
 
@@ -403,11 +387,9 @@ What the operator / deployer must do for the assumptions in §5–§7 to hold:
 
 4. **Running batch jobs on the same instance as API requests in large deployments.** The COB batch can consume all CPU/memory, causing API unavailability. The model supports segregated instance types, but operators often ignore this. _(documented: docs)_
 
-5. **Using the `sqlSearch` parameter to build "custom reports" via the API.** While `sqlSearch` is a powerful query tool, exposing it to low-trust users (or the self-service plugin) creates a recurring SQL injection risk even with the SQL Validator. The validator is a defense-in-depth layer, not a guarantee. _(documented: CVE history, SQL Validator description)_
+5. **Using the `sqlSearch` parameter to build "custom reports" via the API.** While `sqlSearch` is a powerful query tool, exposing it to low-trust users (or a 3rd party plugin such as openMF/selfservice-plugin) creates a recurring SQL injection risk even with the SQL Validator. The validator is a defense-in-depth layer, not a guarantee. _(documented: CVE history, SQL Validator description)_
 
 6. **Storing the `fineract.tenant.master-password` in plaintext in environment variables or config maps.** In containerized deployments, it is common to inject this via Kubernetes secrets or Docker env vars. If the orchestration layer is compromised, all tenant DB passwords are recoverable. _(inferred)_
-
-7. **Treating the self-service plugin as a security boundary.** The self-service plugin runs in the same JVM and database as the back-office API. A vulnerability in `/v1/self/registration` or `/v1/self/accounttransfers` can lead to back-office data compromise because there is no process-level isolation. _(documented: selfservice-plugin README)_
 
 ---
 
@@ -438,7 +420,7 @@ The following changes should trigger a revision of this threat model:
 3. New network surface (e.g., native Kafka consumer instead of just producer, WebSocket support, gRPC).
 4. New deployment context (e.g., serverless/FaaS, edge computing, mobile SDK embedding).
 5. New authentication scheme (e.g., mTLS for clients, SAML, LDAP integration).
-6. Promotion of a shipped-but-unsupported component into core (e.g., if the self-service plugin moves from openMF/ into apache/fineract proper).
+6. Promotion of a 3rd party component into core (e.g., if the self-service plugin moves from openMF/ into apache/fineract proper).
 7. Change in default for a §5a build knob that changes the security envelope (e.g., OAuth2 becoming the default instead of Basic Auth).
 8. New CVE that cannot be cleanly routed to one of the §13 dispositions — this indicates a `MODEL-GAP` and requires model revision, not an ad-hoc call.
 
@@ -452,7 +434,7 @@ The following changes should trigger a revision of this threat model:
 | `VALID-HARDENING` | No §8 property is violated, but the API makes a §11 misuse easy enough that the project elects to harden it. Reported privately; fixed at maintainer discretion; typically no CVE. | §11 |
 | `OUT-OF-MODEL: trusted-input` | Requires attacker control of a parameter the model marks trusted (e.g., admin-defined `validation_regex`). | §6 |
 | `OUT-OF-MODEL: adversary-not-in-scope` | Requires an attacker capability the model excludes (e.g., physical datacenter access, JVM compromise). | §7 |
-| `OUT-OF-MODEL: unsupported-component` | Lands in `kubernetes/`, `docker-compose*.yml`, `selfservice-plugin` (external repo), or other code placed out of scope. | §3 |
+| `OUT-OF-MODEL: unsupported-component` | Lands in `kubernetes/`, `docker-compose*.yml`, `openMF/selfservice-plugin` (external repo), or other code placed out of scope. | §3 |
 | `OUT-OF-MODEL: non-default-build` | Only manifests under a discouraged or non-default §5a flag (e.g., `FINERACT_SERVER_SSL_ENABLED=false` in production, or embedded keystore used in production). | §5a |
 | `BY-DESIGN: property-disclaimed` | Concerns a property the project explicitly does not provide (e.g., rate limiting, constant-time comparison, backup encryption). | §9 |
 | `KNOWN-NON-FINDING` | Matches a documented recurring false positive from §11a. | §11a |
@@ -470,51 +452,47 @@ Grouped in waves. All questions route to one or more _(inferred)_ tags in the bo
    - *Proposed answer:* Only `/actuator/health` and `/actuator/info` are exposed; `/actuator/env` and sensitive endpoints are disabled or secured.
    - *Lands in:* §5, §8. *(Tags: inferred — actuator reachability)*
 
-2. **Self-service plugin canonical status.** The self-service plugin lives in openMF/selfservice-plugin, not apache/fineract. Is it an officially supported extension, or a community plugin? We treat it as out-of-model per §3, but if the PMC considers it a de-facto part of the Fineract ecosystem, we should reference it differently.
-   - *Proposed answer:* It is a community plugin maintained by the Mifos Initiative, not an Apache Fineract release artifact.
-   - *Lands in:* §3. *(Tags: inferred — plugin status)*
-
-3. **Liquibase in production.** The default `spring.liquibase.enabled=true` means the app server runs migrations on startup. Is this the recommended production posture, or should operators run migrations separately?
+2. **Liquibase in production.** The default `spring.liquibase.enabled=true` means the app server runs migrations on startup. Is this the recommended production posture, or should operators run migrations separately?
    - *Proposed answer:* It is supported for convenience, but operators should run migrations separately in production.
    - *Lands in:* §5a, §10. *(Tags: inferred — liquibase production posture)*
 
-4. **Kafka authentication defaults.** The Kafka docker-compose examples show PLAINTEXT (no auth) and AWS MSK (IAM auth). Is PLAINTEXT a dev-only default, or is unauthenticated Kafka considered a supported production configuration?
+3. **Kafka authentication defaults.** The Kafka docker-compose examples show PLAINTEXT (no auth) and AWS MSK (IAM auth). Is PLAINTEXT a dev-only default, or is unauthenticated Kafka considered a supported production configuration?
    - *Proposed answer:* PLAINTEXT is dev-only; production must use SASL/SSL or mTLS.
    - *Lands in:* §5a, §7. *(Tags: inferred — kafka auth)*
 
-5. **ActiveMQ authentication defaults.** Similarly, the ActiveMQ docker-compose uses `tcp://activemq:61616` without credentials. Is this dev-only?
+4. **ActiveMQ authentication defaults.** Similarly, the ActiveMQ docker-compose uses `tcp://activemq:61616` without credentials. Is this dev-only?
    - *Proposed answer:* Dev-only; production ActiveMQ must use authenticated connections.
    - *Lands in:* §5a, §7. *(Tags: inferred — activemq auth)*
 
 ### Wave 2 — Input Trust and Resource Bounds
 
-6. **JSON depth / recursion limits.** Does Fineract configure Jackson `StreamReadConstraints` to limit JSON depth, string length, or number length? We do not see explicit configuration in `application.properties`.
+5. **JSON depth / recursion limits.** Does Fineract configure Jackson `StreamReadConstraints` to limit JSON depth, string length, or number length? We do not see explicit configuration in `application.properties`.
    - *Proposed answer:* No explicit limits beyond Spring Boot defaults; large nested JSON may cause `StackOverflowError`.
    - *Lands in:* §6, §8. *(Tags: inferred — json bounds)*
 
-7. **File upload size limits.** Beyond the 2MB form post limit, are there separate limits for multipart file uploads (e.g., client images, document uploads)?
+6. **File upload size limits.** Beyond the 2MB form post limit, are there separate limits for multipart file uploads (e.g., client images, document uploads)?
    - *Proposed answer:* The same 2MB Tomcat limit applies; larger uploads require streaming configuration.
    - *Lands in:* §6. *(Tags: inferred — upload limits)*
 
-8. **Rate limiting on batch job submission.** Can an authenticated user flood the system with batch job launch requests? Is there any throttling?
+7. **Rate limiting on batch job submission.** Can an authenticated user flood the system with batch job launch requests? Is there any throttling?
    - *Proposed answer:* No built-in throttling; relies on downstream reverse proxy.
    - *Lands in:* §8, §9. *(Tags: inferred — batch rate limits)*
 
-9. **Custom report SQL validation.** Administrators can write custom SQL reports. Is this SQL subject to the same SQL Validator as the `sqlSearch` parameter?
+8. **Custom report SQL validation.** Administrators can write custom SQL reports. Is this SQL subject to the same SQL Validator as the `sqlSearch` parameter?
    - *Proposed answer:* Custom report SQL is executed with elevated privileges and is not validated by the SQL Validator; it is an admin-only feature.
    - *Lands in:* §6, §9. *(Tags: inferred — custom report sql)*
 
 ### Wave 3 — Meta and Document Ownership
 
-10. **Document coexistence with SECURITY.md and security.html.** The project has `fineract.apache.org/security.html` (CVE list) and a `SECURITY.md` (disclosure process). This threat model is a new document. Should it (a) replace sections of `SECURITY.md`, (b) become canonical and be linked from `SECURITY.md`, or (c) sit alongside?
+9. **Document coexistence with SECURITY.md and security.html.** The project has `fineract.apache.org/security.html` (CVE list) and a `SECURITY.md` (disclosure process). This threat model is a new document. Should it (a) replace sections of `SECURITY.md`, (b) become canonical and be linked from `SECURITY.md`, or (c) sit alongside?
     - *Proposed answer:* It becomes canonical and is linked from `SECURITY.md` and `security.html`.
     - *Lands in:* §1. *(No body tag — meta question)*
 
-11. **Revision policy.** Who owns this document? Should it be reviewed per-release, per-major-change, or on a schedule?
+10. **Revision policy.** Who owns this document? Should it be reviewed per-release, per-major-change, or on a schedule?
     - *Proposed answer:* The PMC owns it; reviewed per-major-release or when §12 conditions are met.
     - *Lands in:* §1. *(No body tag — meta question)*
 
-12. **OpenFAIR / ArchiMate integration acceptance.** This model uses OMG OpenFAIR taxonomy and ArchiMate RSO notation in §4, §7, and §8. Does the PMC accept these notations, or prefer plain prose only?
+11. **OpenFAIR / ArchiMate integration acceptance.** This model uses OMG OpenFAIR taxonomy and ArchiMate RSO notation in §4, §7, and §8. Does the PMC accept these notations, or prefer plain prose only?
     - *Proposed answer:* Accept as supplementary notation; keep plain prose canonical.
     - *Lands in:* Header. *(No body tag — meta question)*
 
@@ -662,4 +640,4 @@ dispositions:
 
 ---
 
-> This document follows the ASF Security Team Threat-Model Producer Skill, with OMG OpenFAIR taxonomy used for adversary capability/frequency annotation in §7 and ArchiMate 3.2 Risk and Security Overlay (RSO) notation used for trust-boundary and data-flow visualization in §4.
+> This document was originally generated with Kimi.ai based on a template from the ASF ("Security Team Threat-Model Producer Skill"), with guidance to use FAIR taxonomy and ArchiMate notation. FAIR shows up under adversary capability/frequency annotation in §7. ArchiMate 3.2 Risk and Security Overlay (RSO) notation was used for trust-boundary and data-flow visualization in §4.
