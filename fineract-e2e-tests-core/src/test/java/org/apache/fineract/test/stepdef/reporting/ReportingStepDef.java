@@ -44,7 +44,6 @@ public class ReportingStepDef extends AbstractStepDef {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH);
     private static final String TRIAL_BALANCE_REPORT = "Trial Balance Summary Report with Asset Owner";
-    private static final String HEAD_OFFICE_ID = "1";
     private final FineractFeignClient fineractClient;
 
     @Then("Transaction Summary Report for date {string} has the following data:")
@@ -81,7 +80,7 @@ public class ReportingStepDef extends AbstractStepDef {
 
     @Then("Trial Balance Summary Report with Asset Owner for date {string} has a row for GL account {string} with non-zero ending balance")
     public void trialBalanceHasNonZeroEndingBalanceForGlAccount(final String dateStr, final String glCode) {
-        final BigDecimal ending = sumColumnForGlAccount(runTrialBalanceForHeadOffice(dateStr), glCode, "endingbalance");
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
         assertThat(ending).as("Trial Balance for %s: expected GL account '%s' to be present", dateStr, glCode).isNotNull();
         assertThat(ending.signum())
                 .as("Trial Balance for %s: expected GL account '%s' ending balance to be non-zero but was %s", dateStr, glCode, ending)
@@ -90,7 +89,7 @@ public class ReportingStepDef extends AbstractStepDef {
 
     @Then("Trial Balance Summary Report with Asset Owner for date {string} shows GL account {string} closed out")
     public void trialBalanceShowsGlAccountClosedOut(final String dateStr, final String glCode) {
-        final BigDecimal ending = sumColumnForGlAccount(runTrialBalanceForHeadOffice(dateStr), glCode, "endingbalance");
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
         if (ending != null) {
             assertThat(ending.signum()).as(
                     "Trial Balance for %s: expected GL account '%s' to be closed out (absent or zero ending balance) but it has ending balance %s",
@@ -301,14 +300,6 @@ public class ReportingStepDef extends AbstractStepDef {
         final RunReportsResponse response = fineractClient.runReports().runReportGetData(reportName, Map.of("R_endDate", date, "R_officeId",
                 String.valueOf(officeResponse.getOfficeId()), "locale", "en", "dateFormat", "yyyy-MM-dd"));
         assertThat(response.getData()).as("Report '%s' returned no data", reportName).isNotNull();
-        return response;
-    }
-
-    private RunReportsResponse runTrialBalanceForHeadOffice(final String dateStr) {
-        final String date = LocalDate.parse(dateStr, FORMATTER).toString();
-        final RunReportsResponse response = fineractClient.runReports().runReportGetData(TRIAL_BALANCE_REPORT,
-                Map.of("R_endDate", date, "R_officeId", HEAD_OFFICE_ID, "locale", "en", "dateFormat", "yyyy-MM-dd"));
-        assertThat(response.getData()).as("Report '%s' returned no data", TRIAL_BALANCE_REPORT).isNotNull();
         return response;
     }
 
