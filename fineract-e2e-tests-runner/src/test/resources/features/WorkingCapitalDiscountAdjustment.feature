@@ -300,6 +300,7 @@ Feature: Working Capital Discount Adjustment
     And WorkingCapitalLoanDiscountFeeTransactionBusinessEvent is raised with amount "12" on "01 January 2026" date
     And WorkingCapitalLoanDiscountFeeAdjustmentTransactionBusinessEvent is raised with amount "10" on "02 January 2026" date
 
+  @TestRailId:C85207
   Scenario: Verify Discount fee and multiple Discount fee adjustments on the same day post correct journal entries
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
