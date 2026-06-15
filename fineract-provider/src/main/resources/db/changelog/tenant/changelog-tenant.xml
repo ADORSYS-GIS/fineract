@@ -257,4 +257,6 @@
     <include file="parts/0236_transaction_summary_reports_fix_for_cap_income_amortization_duplicates.xml" relativeToChangelogFile="true" />
     <include file="parts/0237_trial_balance_summary_report_update_originator_inline_join.xml" relativeToChangelogFile="true" />
     <include file="parts/0238_transaction_summary_report_update_originator_inline_join.xml" relativeToChangelogFile="true" />
+    <include file="parts/0239_add_retained_earning_job.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0240_add_retained_earning_global_configuration.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
