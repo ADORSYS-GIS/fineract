@@ -129,6 +129,29 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
                 endDate, response);
     }
 
+    @When("Admin initiate a Working Capital loan breach resume with startDate {string}")
+    public void initiateBreachResume(final String startDate) {
+        final Long loanId = extractLoanId();
+        final PostWorkingCapitalLoansBreachActionRequest request = buildResumeRequest(startDate);
+        final PostWorkingCapitalLoansBreachActionResponse response = createBreachActionById(loanId, request);
+
+        log.debug("Breach resume initiated for loan {} with startDate: {}, response: {}", loanId, startDate, response);
+    }
+
+    @Then("Initiating a Working Capital loan breach resume with startDate {string} results an error with the following data:")
+    public void initiateBreachResumeResultsAnError(final String startDate, final DataTable table) {
+        final Long loanId = extractLoanId();
+
+        final PostWorkingCapitalLoansBreachActionRequest request = buildResumeRequest(startDate);
+
+        final CallFailedRuntimeException exception = fail(
+                () -> fineractClient.workingCapitalLoanBreachActions().createBreachAction(loanId, request));
+
+        verifyBreachActionErrorWithTable(exception, table);
+
+        log.info("Verified breach resume initiation failed with expected error for loan {}", loanId);
+    }
+
     @Then("Initiating a Working Capital loan breach pause with startDate {string} and endDate {string} results an error with the following data:")
     public void initiateBreachPauseResultsAnError(final String startDate, final String endDate, final DataTable table) {
         initiateBreachActionResultsAnError("pause", startDate, endDate, table);
@@ -225,8 +248,13 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
             case "action" -> assertThat(actual.getAction().name()).as("Action for row %d", rowNumber).isEqualTo(expectedValue);
             case "startDate" ->
                 assertThat(actual.getStartDate()).as("Start date for row %d", rowNumber).isEqualTo(LocalDate.parse(expectedValue));
-            case "endDate" ->
-                assertThat(actual.getEndDate()).as("End date for row %d", rowNumber).isEqualTo(LocalDate.parse(expectedValue));
+            case "endDate" -> {
+                if (expectedValue == null || expectedValue.isBlank()) {
+                    assertThat(actual.getEndDate()).as("End date for row %d", rowNumber).isNull();
+                } else {
+                    assertThat(actual.getEndDate()).as("End date for row %d", rowNumber).isEqualTo(LocalDate.parse(expectedValue));
+                }
+            }
             default -> throw new IllegalArgumentException("Unknown field name: " + fieldName);
         }
     }
@@ -286,6 +314,10 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
         Optional.ofNullable(params.get("frequency")).ifPresent(v -> request.setFrequency(Integer.parseInt(v)));
         Optional.ofNullable(params.get("frequencyType")).ifPresent(request::setFrequencyType);
         return request;
+    }
+
+    private PostWorkingCapitalLoansBreachActionRequest buildResumeRequest(final String startDate) {
+        return workingCapitalLoanRequestFactory.defaultWorkingCapitalLoansBreachActionRequest("resume").startDate(startDate).endDate(null);
     }
 
     private PostWorkingCapitalLoansBreachActionResponse createBreachActionById(final Long loanId,

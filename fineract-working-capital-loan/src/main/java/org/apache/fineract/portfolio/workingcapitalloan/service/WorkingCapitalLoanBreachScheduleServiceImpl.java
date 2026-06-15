@@ -79,7 +79,7 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
         final BigDecimal minPaymentAmount = calculateMinPaymentAmount(loan, breach, latestReschedule.orElse(null));
 
         final WorkingCapitalLoanBreachSchedule period = createPeriod(loan, 1, fromDate, toDate, minPaymentAmount);
-        applyRecordedPauses(period, findRecordedPauses(loan.getId()));
+        applyRecordedPauses(period, findEffectivePauses(loan.getId()));
         repository.saveAndFlush(period);
         log.debug("Generated initial breach schedule period for WC loan {}", loan.getId());
     }
@@ -106,7 +106,7 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
         final Integer effectiveFrequency = resolveFrequency(latestReschedule.orElse(null), breach);
         final WorkingCapitalLoanPeriodFrequencyType effectiveFreqType = resolveFrequencyType(latestReschedule.orElse(null), breach);
         final BigDecimal minPaymentAmount = calculateMinPaymentAmount(loan, breach, latestReschedule.orElse(null));
-        final List<WorkingCapitalLoanBreachAction> recordedPauses = findRecordedPauses(loan.getId());
+        final List<EffectivePause> effectivePauses = findEffectivePauses(loan.getId());
         final List<WorkingCapitalLoanBreachSchedule> newPeriods = new ArrayList<>();
 
         WorkingCapitalLoanBreachSchedule latestPeriod = latestPeriodOpt.get();
@@ -116,7 +116,7 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
 
             final WorkingCapitalLoanBreachSchedule nextPeriod = createPeriod(loan, latestPeriod.getPeriodNumber() + 1, newFromDate,
                     newToDate, minPaymentAmount);
-            applyRecordedPauses(nextPeriod, recordedPauses);
+            applyRecordedPauses(nextPeriod, effectivePauses);
             newPeriods.add(nextPeriod);
             latestPeriod = nextPeriod;
         }
@@ -245,19 +245,19 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
         final Optional<WorkingCapitalLoanBreachAction> latestReschedule = findLatestRescheduleAction(loan.getId());
         final Integer effectiveFrequency = resolveFrequency(latestReschedule.orElse(null), breach);
         final WorkingCapitalLoanPeriodFrequencyType effectiveFreqType = resolveFrequencyType(latestReschedule.orElse(null), breach);
-        final List<WorkingCapitalLoanBreachAction> recordedPauses = findRecordedPauses(loan.getId());
+        final List<EffectivePause> effectivePauses = findEffectivePauses(loan.getId());
         final LocalDate businessDate = DateUtils.getBusinessLocalDate();
         LocalDate fromDate = periods.getFirst().getFromDate();
         for (final WorkingCapitalLoanBreachSchedule period : periods) {
             period.setFromDate(fromDate);
             period.setToDate(calculateToDate(fromDate, effectiveFrequency, effectiveFreqType));
-            applyRecordedPauses(period, recordedPauses);
+            applyRecordedPauses(period, effectivePauses);
             recomputeBreach(period, businessDate);
             fromDate = period.getToDate().plusDays(1);
         }
         repository.saveAll(periods);
-        log.debug("Recalculated breach schedule periods for WC loan {} by replaying {} recorded pauses", loan.getId(),
-                recordedPauses.size());
+        log.debug("Recalculated breach schedule periods for WC loan {} by replaying {} effective pauses", loan.getId(),
+                effectivePauses.size());
     }
 
     private void recomputeBreach(final WorkingCapitalLoanBreachSchedule period, final LocalDate businessDate) {
@@ -270,17 +270,30 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
         }
     }
 
-    private List<WorkingCapitalLoanBreachAction> findRecordedPauses(final Long loanId) {
-        return breachActionRepository.findByWorkingCapitalLoanIdOrderById(loanId).stream()
-                .filter(action -> WorkingCapitalLoanBreachActionType.PAUSE.equals(action.getAction()))
-                .sorted(Comparator.comparing(WorkingCapitalLoanBreachAction::getStartDate)).toList();
+    private List<EffectivePause> findEffectivePauses(final Long loanId) {
+        final List<WorkingCapitalLoanBreachAction> actions = breachActionRepository.findByWorkingCapitalLoanIdOrderById(loanId);
+        final List<WorkingCapitalLoanBreachAction> resumes = actions.stream()
+                .filter(action -> WorkingCapitalLoanBreachActionType.RESUME.equals(action.getAction())).toList();
+        return actions.stream().filter(action -> WorkingCapitalLoanBreachActionType.PAUSE.equals(action.getAction()))
+                .sorted(Comparator.comparing(WorkingCapitalLoanBreachAction::getStartDate))
+                .map(pause -> new EffectivePause(pause.getStartDate(), effectivePauseEnd(pause, resumes))).toList();
     }
 
-    private void applyRecordedPauses(final WorkingCapitalLoanBreachSchedule period,
-            final List<WorkingCapitalLoanBreachAction> pauseActions) {
-        for (final WorkingCapitalLoanBreachAction pause : pauseActions) {
-            final LocalDate pauseStart = pause.getStartDate();
-            final LocalDate pauseEnd = pause.getEndDate();
+    private LocalDate effectivePauseEnd(final WorkingCapitalLoanBreachAction pause, final List<WorkingCapitalLoanBreachAction> resumes) {
+        // Resume ends the pause on the resume date, which is the first active (non-paused) day. Because pause start and
+        // end dates are both inclusive, the effective inclusive end is the day before the resume date.
+        return resumes.stream()
+                .filter(resume -> !pause.getStartDate().isAfter(resume.getStartDate())
+                        && !resume.getStartDate().isAfter(pause.getEndDate()))
+                .map(WorkingCapitalLoanBreachAction::getStartDate).min(Comparator.naturalOrder()).map(resumeDate -> resumeDate.minusDays(1))
+                .orElse(pause.getEndDate());
+    }
+
+    private void applyRecordedPauses(final WorkingCapitalLoanBreachSchedule period, final List<EffectivePause> pauses) {
+        for (final EffectivePause pause : pauses) {
+            final LocalDate pauseStart = pause.startDate();
+            final LocalDate pauseEnd = pause.endDate();
+            // Apply only if the pause overlaps this period's date range
             if (!pauseEnd.isBefore(period.getFromDate()) && !pauseStart.isAfter(period.getToDate())) {
                 final long pauseDays = ChronoUnit.DAYS.between(pauseStart, pauseEnd) + 1;
                 period.setToDate(period.getToDate().plusDays(pauseDays));
@@ -290,6 +303,9 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
             }
         }
         period.setNumberOfDays((int) ChronoUnit.DAYS.between(period.getFromDate(), period.getToDate()) + 1);
+    }
+
+    private record EffectivePause(LocalDate startDate, LocalDate endDate) {
     }
 
     private WorkingCapitalLoanBreachSchedule createPeriod(final WorkingCapitalLoan loan, final int periodNumber, final LocalDate fromDate,

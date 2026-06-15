@@ -58,7 +58,8 @@ public class WorkingCapitalLoanBreachActionWriteServiceImpl implements WorkingCa
         final WorkingCapitalLoanBreachAction saved = actionRepository.saveAndFlush(action);
         log.debug("Created WC loan breach action {} for loan {}", action.getAction(), workingCapitalLoanId);
 
-        if (WorkingCapitalLoanBreachActionType.PAUSE.equals(action.getAction())) {
+        if (WorkingCapitalLoanBreachActionType.PAUSE.equals(action.getAction())
+                || WorkingCapitalLoanBreachActionType.RESUME.equals(action.getAction())) {
             breachScheduleService.recalculatePeriodsForPauses(workingCapitalLoan);
         } else if (WorkingCapitalLoanBreachActionType.RESCHEDULE.equals(action.getAction())) {
             breachScheduleService.rescheduleMinimumPayment(workingCapitalLoan, action);
