@@ -501,7 +501,3 @@ Grouped in waves. All questions route to one or more _(inferred)_ tags in the bo
 ## §15 Optional: machine-readable companion
 
 A sidecar `threat-model.yaml` is recommended for automated triage pipelines. The prose document remains canonical; this is a derived index.
-
----
-
-> This document was originally generated with Kimi.ai based on a template from the ASF ("Security Team Threat-Model Producer Skill"), with guidance to use FAIR taxonomy and ArchiMate notation. FAIR shows up under adversary capability/frequency annotation in §7. ArchiMate 3.2 Risk and Security Overlay (RSO) notation was used for trust-boundary and data-flow visualization in §4.
