@@ -182,6 +182,15 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
 
     @When("Admin creates a working capital loan using created product with the following data:")
     public void createWorkingCapitalLoanUsingCreatedProduct(final DataTable table) {
+        submitLoanUsingCreatedProduct(table, null);
+    }
+
+    @When("Admin creates a working capital loan using created product with breachGraceDays {int} and the following data:")
+    public void createWorkingCapitalLoanUsingCreatedProductWithBreachGraceDays(final int breachGraceDays, final DataTable table) {
+        submitLoanUsingCreatedProduct(table, breachGraceDays);
+    }
+
+    private void submitLoanUsingCreatedProduct(final DataTable table, final Integer breachGraceDays) {
         final List<List<String>> data = table.asLists();
         final List<String> rawData = data.get(1);
         final Long clientId = extractClientId();
@@ -201,6 +210,9 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 .principalAmount(new BigDecimal(principal)).totalPaymentVolume(new BigDecimal(totalPaymentVolume))
                 .periodPaymentRate(new BigDecimal(periodPaymentRate))
                 .discount(discount != null && !discount.isEmpty() ? new BigDecimal(discount) : null);
+        if (breachGraceDays != null) {
+            loansRequest.breachGraceDays(breachGraceDays);
+        }
         testContext().set(TestContextKey.LOAN_CREATE_REQUEST, loansRequest);
 
         final PostWorkingCapitalLoansResponse response = ok(
@@ -208,6 +220,14 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         testContext().set(TestContextKey.LOAN_CREATE_RESPONSE, response);
         testContext().set(TestContextKey.WORKING_CAPITAL_LOAN_CREATE_RESPONSE, response);
         log.info("Working Capital Loan created with dynamic product ID: {}, Loan ID: {}", loanProductId, response.getLoanId());
+    }
+
+    @Then("Working capital loan account has breachGraceDays {int}")
+    public void verifyLoanBreachGraceDays(final int expectedBreachGraceDays) {
+        final Long loanId = getCreatedLoanId();
+        final GetWorkingCapitalLoansLoanIdResponse response = ok(
+                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
+        assertThat(response.getBreachGraceDays()).as("breachGraceDays").isEqualTo(expectedBreachGraceDays);
     }
 
     @Then("Working capital loan creation was successful")

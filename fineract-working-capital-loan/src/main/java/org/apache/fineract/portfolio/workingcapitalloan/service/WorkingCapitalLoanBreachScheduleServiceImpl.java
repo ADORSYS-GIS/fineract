@@ -64,8 +64,7 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
             return;
         }
 
-        final int graceDays = getGraceDays(loan);
-        final LocalDate fromDate = disbursementDateOptional.get().plusDays(graceDays);
+        final LocalDate fromDate = disbursementDateOptional.get().plusDays(getBreachGraceDays(loan));
         final WorkingCapitalBreach breach = breachOpt.get();
         final LocalDate toDate = calculateToDate(fromDate, breach.getBreachFrequency(), breach.getBreachFrequencyType());
         final BigDecimal minPaymentAmount = calculateMinPaymentAmount(loan, breach);
@@ -196,12 +195,9 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
         return Optional.ofNullable(details.getBreach());
     }
 
-    private int getGraceDays(final WorkingCapitalLoan loan) {
+    private Integer getBreachGraceDays(final WorkingCapitalLoan loan) {
         final WorkingCapitalLoanProductRelatedDetails details = loan.getLoanProductRelatedDetails();
-        if (details == null || details.getDelinquencyGraceDays() == null) {
-            return 0;
-        }
-        return details.getDelinquencyGraceDays();
+        return (details == null || details.getBreachGraceDays() == null) ? 0 : details.getBreachGraceDays();
     }
 
     private LocalDate calculateToDate(final LocalDate fromDate, final Integer frequency,

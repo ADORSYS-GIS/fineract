@@ -107,7 +107,8 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
                         .discount(product.getDiscount()) //
                         .paymentAllocation(product.getPaymentAllocation()) //
                         .breach(product.getBreach()) //
-                        .nearBreach(product.getNearBreach()); //
+                        .nearBreach(product.getNearBreach()) //
+                        .breachGraceDays(product.getBreachGraceDays()); //
             }
         }
         if (clientId != null) {

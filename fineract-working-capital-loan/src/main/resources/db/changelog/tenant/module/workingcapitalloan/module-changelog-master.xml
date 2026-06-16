@@ -64,4 +64,5 @@
   <include relativeToChangelogFile="true" file="parts/0040_wc_loan_discount_adjustment_transaction.xml"/>
   <include relativeToChangelogFile="true" file="parts/0041_wc_loan_discount_fee_classification_code.xml"/>
   <include relativeToChangelogFile="true" file="parts/0042_wc_loan_charge.xml"/>
+  <include relativeToChangelogFile="true" file="parts/0043_wc_breach_grace_days.xml"/>
 </databaseChangeLog>
