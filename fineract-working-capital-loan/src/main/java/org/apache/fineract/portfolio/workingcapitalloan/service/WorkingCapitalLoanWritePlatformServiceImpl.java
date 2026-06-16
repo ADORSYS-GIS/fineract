@@ -822,6 +822,11 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         handleNote(loan, command, changes);
 
         this.loanRepository.saveAndFlush(loan);
+
+        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+            accountingProcessor.postJournalEntries(loan, creditBalanceRefundTransaction, allocation, false);
+        }
+
         businessEventNotifierService.notifyPostBusinessEvent(
                 new WorkingCapitalLoanCreditBalanceRefundTransactionBusinessEvent(creditBalanceRefundTransaction, loan.getId()));
 
