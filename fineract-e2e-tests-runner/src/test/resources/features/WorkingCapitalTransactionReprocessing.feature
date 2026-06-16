@@ -58,8 +58,9 @@ Feature: Working Capital Transaction Reprocessing
       | principalOutstanding | 0.0    |
       | totalPaidPrincipal   | 9000.0 |
       | overpaymentAmount    | 3000.0 |
-    # Without reprocessing, the day-10 repayment keeps its 7000 principal allocation, and the backdated day-5 repayment
-    # allocates against the 2000 that was outstanding when it was booked (its excess 3000 is overpayment, not allocation).
+    # Reprocessing is triggered (the day-5 repayment is backdated) but no-ops because the loan has no charges -
+    # principal-only allocation is order-independent. The day-10 repayment keeps its 7000 principal allocation, and the
+    # backdated day-5 repayment allocates against the 2000 outstanding when booked (its excess 3000 is overpayment).
     And Working Capital Loan has transactions:
       | transactionDate | type         | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
@@ -124,7 +125,7 @@ Feature: Working Capital Transaction Reprocessing
       | 10 January 2026 | Repayment    | 3000.0            | 3000.0           | 0.0               | 0.0                   | false    |
 
   @TestRailId:C85212
-  Scenario: Verify backdated repayment on a loan WITH an active charge leaves allocations principal-only
+  Scenario: Verify backdated repayment only settles a charge that is already due on the backdated date
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
     And Admin creates a working capital loan with the following data:
@@ -136,22 +137,23 @@ Feature: Working Capital Transaction Reprocessing
     And Admin runs inline COB job for Working Capital Loan by loanId
     And Admin adds "WORKING_CAPITAL_SPECIFIED_DUE_DATE_FEE" specified due date charge to working capital loan with "10 January 2026" due date and 35.0 transaction amount
     And Customer makes repayment on "10 January 2026" with 3000 transaction amount on Working Capital loan
-    # Backdated repayment on day 5 -> reprocessing is triggered, finds an active charge, and no-ops
+    # Backdated repayment on day 5 -> reprocessing is triggered. The fee is due on day 10, so it is NOT yet due on
+    # day 5: the backdated repayment stays principal-only, while the day-10 repayment settles the fee (fee-first order).
     When Admin sets the business date to "15 January 2026"
     And Customer makes repayment on "05 January 2026" with 2000 transaction amount on Working Capital loan
     Then Working Capital loan balance payload contains the following fields:
       | field                | value  |
-      | principalOutstanding | 4000.0 |
-      | totalPaidPrincipal   | 5000.0 |
-    # Repayments are still allocated entirely to principal - the charge was NOT covered by the re-allocation
+      | principalOutstanding | 4035.0 |
+      | totalPaidPrincipal   | 4965.0 |
+    # The day-5 repayment predates the fee due date, so it is principal-only; the day-10 repayment covers the fee
     And Working Capital Loan has transactions:
       | transactionDate | type         | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
       | 05 January 2026 | Repayment    | 2000.0            | 2000.0           | 0.0               | 0.0                   | false    |
-      | 10 January 2026 | Repayment    | 3000.0            | 3000.0           | 0.0               | 0.0                   | false    |
+      | 10 January 2026 | Repayment    | 3000.0            | 2965.0           | 35.0              | 0.0                   | false    |
     And Working Capital Loan charge balances has the following data:
       | Fee Amount | Fee Paid | Fee Outstanding |
-      | 35.0       | 0.0      | 35.0            |
+      | 35.0       | 35.0     | 0.0             |
 
   @TestRailId:C85213
   Scenario: Verify a repayment clearing more than one lapsed delinquency period distributes by remaining balance
@@ -237,8 +239,10 @@ Feature: Working Capital Transaction Reprocessing
       | 01 January 2026 | 01 January 2026          | 9000            | 100000             | 18                | 0        |
     And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
     And Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
-    When Admin sets the business date to "10 January 2026"
+    # Add the fee while the business date is on its due date - charges cannot be dated before the business date
+    When Admin sets the business date to "05 January 2026"
     And Admin adds "WORKING_CAPITAL_SPECIFIED_DUE_DATE_FEE" specified due date charge to working capital loan with "05 January 2026" due date and 5.0 transaction amount
+    When Admin sets the business date to "10 January 2026"
     And Customer makes repayment on "10 January 2026" with 30 transaction amount on Working Capital loan
     # First, Txn#1 allocates 5 fee + 25 principal
     Then Working Capital Loan has transactions:

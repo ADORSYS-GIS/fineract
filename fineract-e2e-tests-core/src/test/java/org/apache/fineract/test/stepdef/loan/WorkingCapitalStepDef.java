@@ -1878,7 +1878,10 @@ public class WorkingCapitalStepDef extends AbstractStepDef {
     public void createWorkingCapitalLoanProductWithPaymentAllocationOrder(final DataTable table) {
         final List<String> rules = table.asList();
         final String productName = DefaultWorkingCapitalLoanProduct.WCLP.getName() + Utils.randomStringGenerator("_", 10);
-        final PostWorkingCapitalLoanProductsRequest request = workingCapitalRequestFactory.defaultWorkingCapitalLoanProductRequest() //
+        // Allow attribute overrides so loans created from this product can supply their own discount (the loan
+        // creation step always sends a discount value).
+        final PostWorkingCapitalLoanProductsRequest request = workingCapitalRequestFactory
+                .defaultWorkingCapitalLoanProductAllowAttributesOverrideRequest() //
                 .name(productName) //
                 .paymentAllocation(List.of(WorkingCapitalRequestFactory
                         .createPaymentAllocation(PostPaymentAllocation.TransactionTypeEnum.DEFAULT.getValue(), rules)));
