@@ -93,6 +93,11 @@ public class SchedulerStepDef extends AbstractStepDef {
         jobService.executeAndWait(DefaultJob.WORKING_CAPITAL_LOAN_COB);
     }
 
+    @When("Admin runs the Retained Earning Job")
+    public void runRetainedEarning() {
+        jobService.executeAndWait(DefaultJob.RETAINED_EARNING);
+    }
+
     @Then("Admin verifies scheduler job {string} has display name {string}")
     public void verifyJobDisplayName(String shortName, String expectedDisplayName) {
         GetJobsResponse response = ok(() -> fineractClient.schedulerJob().retrieveByShortName(shortName, Map.of()));

@@ -43,6 +43,7 @@ import org.apache.fineract.test.support.TestContextKey;
 public class ReportingStepDef extends AbstractStepDef {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH);
+    private static final String TRIAL_BALANCE_REPORT = "Trial Balance Summary Report with Asset Owner";
     private final FineractFeignClient fineractClient;
 
     @Then("Transaction Summary Report for date {string} has the following data:")
@@ -75,6 +76,25 @@ public class ReportingStepDef extends AbstractStepDef {
     public void trialBalanceSummaryReportWithAssetOwnerHasDataWithOwnerExternalIdAndOriginatorId(final String dateStr,
             final DataTable dataTable) {
         verifyBalanceReportDataWithOwnerExternalIdAndOriginatorId("Trial Balance Summary Report with Asset Owner", dateStr, dataTable);
+    }
+
+    @Then("Trial Balance Summary Report with Asset Owner for date {string} has a row for GL account {string} with non-zero ending balance")
+    public void trialBalanceHasNonZeroEndingBalanceForGlAccount(final String dateStr, final String glCode) {
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
+        assertThat(ending).as("Trial Balance for %s: expected GL account '%s' to be present", dateStr, glCode).isNotNull();
+        assertThat(ending.signum())
+                .as("Trial Balance for %s: expected GL account '%s' ending balance to be non-zero but was %s", dateStr, glCode, ending)
+                .isNotEqualTo(0);
+    }
+
+    @Then("Trial Balance Summary Report with Asset Owner for date {string} shows GL account {string} closed out")
+    public void trialBalanceShowsGlAccountClosedOut(final String dateStr, final String glCode) {
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
+        if (ending != null) {
+            assertThat(ending.signum()).as(
+                    "Trial Balance for %s: expected GL account '%s' to be closed out (absent or zero ending balance) but it has ending balance %s",
+                    dateStr, glCode, ending).isEqualTo(0);
+        }
     }
 
     private void verifyReportData(final String reportName, final String dateStr, final DataTable dataTable) {
@@ -281,6 +301,13 @@ public class ReportingStepDef extends AbstractStepDef {
                 String.valueOf(officeResponse.getOfficeId()), "locale", "en", "dateFormat", "yyyy-MM-dd"));
         assertThat(response.getData()).as("Report '%s' returned no data", reportName).isNotNull();
         return response;
+    }
+
+    private BigDecimal sumColumnForGlAccount(final RunReportsResponse response, final String glCode, final String columnName) {
+        final int glIdx = findColumnIndex(response.getColumnHeaders(), "glacct");
+        final int colIdx = findColumnIndex(response.getColumnHeaders(), columnName);
+        return response.getData().stream().filter(r -> r.getRow() != null && glCode.equals(stringify(r.getRow().get(glIdx))))
+                .map(r -> new BigDecimal(Objects.toString(r.getRow().get(colIdx), "0"))).reduce(BigDecimal::add).orElse(null);
     }
 
     private boolean valuesMatch(final String expected, final String actual) {
