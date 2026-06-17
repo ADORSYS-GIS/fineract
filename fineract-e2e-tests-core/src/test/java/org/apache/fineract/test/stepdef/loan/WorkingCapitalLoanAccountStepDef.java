@@ -2015,6 +2015,10 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
                 case "totalDiscountFee" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getTotalDiscountFee() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getTotalDiscountFee().doubleValue()).format());
+                case "breachStartDate" ->
+                    actualValues.add(response.getBreachStartDate() == null ? "null" : response.getBreachStartDate().toString());
+                case "delinquencyStartDate" ->
+                    actualValues.add(response.getDelinquencyStartDate() == null ? "null" : response.getDelinquencyStartDate().toString());
                 case "totalDiscountFeeAdjustment" ->
                     actualValues.add(response.getBalance() == null || response.getBalance().getTotalDiscountFeeAdjustment() == null ? null
                             : new Utils.DoubleFormatter(response.getBalance().getTotalDiscountFeeAdjustment().doubleValue()).format());

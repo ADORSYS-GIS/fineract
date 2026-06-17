@@ -88,6 +88,8 @@ public class WorkingCapitalLoanData implements Serializable {
     private StringEnumOptionData delinquencyStartType;
     private Integer breachGraceDays;
     private BigDecimal totalPaymentVolume;
+    private LocalDate delinquencyStartDate;
+    private LocalDate breachStartDate;
 
     private WorkingCapitalLoanCollectionData collectionData;
     private WorkingCapitalLoanSummaryData summary;
