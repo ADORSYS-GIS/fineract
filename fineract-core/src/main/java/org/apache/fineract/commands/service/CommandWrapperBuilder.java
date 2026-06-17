@@ -923,6 +923,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createNearBreachActionWorkingCapitalLoan(final Long loanId) {
+        this.actionName = "CREATE";
+        this.entityName = "WC_NEAR_BREACH_ACTION";
+        this.entityId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/near-breach-actions";
+        return this;
+    }
+
     public CommandWrapperBuilder createClientIdentifier(final Long clientId) {
         this.actionName = ACTION_CREATE;
         this.entityName = ENTITY_CLIENTIDENTIFIER;
