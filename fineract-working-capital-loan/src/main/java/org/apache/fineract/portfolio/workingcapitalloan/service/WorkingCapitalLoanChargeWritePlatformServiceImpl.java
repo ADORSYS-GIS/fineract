@@ -234,7 +234,7 @@ public class WorkingCapitalLoanChargeWritePlatformServiceImpl implements Working
         if (newPaid.compareTo(MathUtil.nullToZero(wcCharge.getAmount())) >= 0) {
             wcCharge.setPaid(true);
         }
-        loanChargeRepository.saveAndFlush(wcCharge);
+        loanChargeRepository.save(wcCharge);
     }
 
     private void applyBalanceAdjustment(final WorkingCapitalLoan loan, final WorkingCapitalLoanCharge wcCharge, final BigDecimal amount) {
@@ -245,7 +245,7 @@ public class WorkingCapitalLoanChargeWritePlatformServiceImpl implements Working
         } else {
             balance.setFeePaid(MathUtil.nullToZero(balance.getFeePaid()).add(amount));
         }
-        balanceRepository.saveAndFlush(balance);
+        balanceRepository.save(balance);
     }
 
     private PaymentDetail createAndPersistPaymentDetailFromCommand(final JsonCommand command, final Map<String, Object> changes) {

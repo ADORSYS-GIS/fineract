@@ -163,7 +163,8 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         // Disburse loan using existing helper method
         final PostWorkingCapitalLoansLoanIdRequest disburseRequest = workingCapitalLoanRequestFactory
                 .defaultWorkingCapitalLoanDisburseRequest()//
-                .actualDisbursementDate(submittedOnDate);
+                .actualDisbursementDate(submittedOnDate)//
+                .transactionAmount(new BigDecimal(principalAmount));
         executeStateTransition("disburse", disburseRequest, TestContextKey.LOAN_DISBURSE_RESPONSE, false);
 
         // Verify loan is ACTIVE

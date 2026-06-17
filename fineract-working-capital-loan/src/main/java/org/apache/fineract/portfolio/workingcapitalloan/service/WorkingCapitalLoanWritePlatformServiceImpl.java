@@ -646,7 +646,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         } else {
             balance.setFeePaid(MathUtil.subtract(MathUtil.nullToZero(balance.getFeePaid()), amount).max(BigDecimal.ZERO));
         }
-        balanceRepository.saveAndFlush(balance);
+        balanceRepository.save(balance);
 
         final String noteText = command.stringValueOfParameterNamed(WorkingCapitalLoanConstants.noteParamName);
         createNote(noteText, loan);

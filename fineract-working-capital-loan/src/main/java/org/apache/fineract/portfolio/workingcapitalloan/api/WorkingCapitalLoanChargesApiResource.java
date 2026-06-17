@@ -125,11 +125,11 @@ public class WorkingCapitalLoanChargesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Adjust a Working Capital Loan Charge", description = "Adjusts a working capital loan charge by creating a CHARGE_ADJUSTMENT transaction. Pass command=adjustment.")
-    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdResponse.class)))
     public CommandProcessingResult adjustLoanCharge(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("loanChargeId") @Parameter(description = "loanChargeId") final Long loanChargeId,
             @QueryParam("command") @DefaultValue("") @Parameter(description = "command") final String commandParam,
-            @Parameter(hidden = true) final String apiRequestBodyAsJson) {
+            @RequestBody(required = true, content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdRequest.class))) final String apiRequestBodyAsJson) {
         return handleExecuteLoanChargeWithChargeId(loanId, null, loanChargeId, null, commandParam, apiRequestBodyAsJson);
     }
 
@@ -138,12 +138,12 @@ public class WorkingCapitalLoanChargesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Adjust a Working Capital Loan Charge by Charge External Id", description = "Adjusts a working capital loan charge by creating a CHARGE_ADJUSTMENT transaction. Pass command=adjustment.")
-    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdResponse.class)))
     public CommandProcessingResult adjustLoanChargeByChargeExternalId(
             @PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("loanChargeExternalId") @Parameter(description = "loanChargeExternalId") final String loanChargeExternalId,
             @QueryParam("command") @DefaultValue("") @Parameter(description = "command") final String commandParam,
-            @Parameter(hidden = true) final String apiRequestBodyAsJson) {
+            @RequestBody(required = true, content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdRequest.class))) final String apiRequestBodyAsJson) {
         return handleExecuteLoanChargeWithChargeId(loanId, null, null, loanChargeExternalId, commandParam, apiRequestBodyAsJson);
     }
 
@@ -152,12 +152,12 @@ public class WorkingCapitalLoanChargesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Adjust a Working Capital Loan Charge by Loan External Id", description = "Adjusts a working capital loan charge by creating a CHARGE_ADJUSTMENT transaction. Pass command=adjustment.")
-    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdResponse.class)))
     public CommandProcessingResult adjustLoanChargeByLoanExternalId(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("loanChargeId") @Parameter(description = "loanChargeId") final Long loanChargeId,
             @QueryParam("command") @DefaultValue("") @Parameter(description = "command") final String commandParam,
-            @Parameter(hidden = true) final String apiRequestBodyAsJson) {
+            @RequestBody(required = true, content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdRequest.class))) final String apiRequestBodyAsJson) {
         return handleExecuteLoanChargeWithChargeId(null, loanExternalId, loanChargeId, null, commandParam, apiRequestBodyAsJson);
     }
 
@@ -166,12 +166,12 @@ public class WorkingCapitalLoanChargesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Adjust a Working Capital Loan Charge by Loan and Charge External Ids", description = "Adjusts a working capital loan charge by creating a CHARGE_ADJUSTMENT transaction. Pass command=adjustment.")
-    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdResponse.class)))
     public CommandProcessingResult adjustLoanChargeByLoanAndChargeExternalId(
             @PathParam("loanExternalId") @Parameter(description = "loanExternalId") final String loanExternalId,
             @PathParam("loanChargeExternalId") @Parameter(description = "loanChargeExternalId") final String loanChargeExternalId,
             @QueryParam("command") @DefaultValue("") @Parameter(description = "command") final String commandParam,
-            @Parameter(hidden = true) final String apiRequestBodyAsJson) {
+            @RequestBody(required = true, content = @Content(schema = @Schema(implementation = WorkingCapitalLoanChargesApiResourceSwagger.PostWorkingCapitalLoansLoanIdChargesChargeIdRequest.class))) final String apiRequestBodyAsJson) {
         return handleExecuteLoanChargeWithChargeId(null, loanExternalId, null, loanChargeExternalId, commandParam, apiRequestBodyAsJson);
     }
 
