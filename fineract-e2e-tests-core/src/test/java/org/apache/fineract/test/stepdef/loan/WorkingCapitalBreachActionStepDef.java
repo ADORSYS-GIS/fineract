@@ -138,6 +138,15 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
         log.debug("Breach resume initiated for loan {} with startDate: {}, response: {}", loanId, startDate, response);
     }
 
+    @When("Admin initiate a Working Capital loan breach resume by external ID with startDate {string}")
+    public void initiateBreachResumeByExternalId(final String startDate) {
+        final String loanExternalId = extractLoanExternalId();
+        final PostWorkingCapitalLoansBreachActionRequest request = buildResumeRequest(startDate);
+        final PostWorkingCapitalLoansBreachActionResponse response = createBreachActionByExternalId(loanExternalId, request);
+
+        log.debug("Breach resume initiated for loan externalId {} with startDate: {}, response: {}", loanExternalId, startDate, response);
+    }
+
     @Then("Initiating a Working Capital loan breach resume with startDate {string} results an error with the following data:")
     public void initiateBreachResumeResultsAnError(final String startDate, final DataTable table) {
         final Long loanId = extractLoanId();
