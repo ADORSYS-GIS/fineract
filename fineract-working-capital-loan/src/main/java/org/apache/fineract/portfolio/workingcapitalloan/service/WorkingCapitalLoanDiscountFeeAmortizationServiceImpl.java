@@ -53,10 +53,16 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
     @Transactional
     public void processDiscountFeeAmortization(final WorkingCapitalLoan loan, final LocalDate transactionDate) {
         final BigDecimal scheduleAmortization = calculateScheduleAmortization(loan);
-        final boolean loanOverpaid = loan.getLoanStatus().isOverpaid();
-        final BigDecimal alreadyPosted = loan.getBalance() != null ? loan.getBalance().getRealizedIncomeFromDiscountFee() : BigDecimal.ZERO;
+        // Fully paid (obligations met) or overpaid: recognize the whole discount immediately. The schedule carries an
+        // NPV residual that a lump-sum payoff never fully consumes, so close must recognize the full discount, not the
+        // schedule amount. Written-off / charge-off states follow a separate write-off accounting path and are excluded
+        // here.
+        final boolean fullyPaid = loan.getLoanStatus().isOverpaid() || loan.getLoanStatus().isClosedObligationsMet();
+        // Derive the already-amortized income from the (non-reversed) amortization transactions rather than the cached
+        // balance, so the recalculation stays correct after backdated payments, reversals or schedule config changes.
+        final BigDecimal alreadyPosted = queryNetAmortized(loan.getId());
 
-        if (MathUtil.isZero(scheduleAmortization) && !loanOverpaid && MathUtil.isZero(alreadyPosted)) {
+        if (MathUtil.isZero(scheduleAmortization) && !fullyPaid && MathUtil.isZero(alreadyPosted)) {
             log.debug("Skipping discount fee amortization for WC loan [{}] - no amortization on schedule", loan.getId());
             return;
         }
@@ -64,7 +70,7 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
         final BigDecimal discount = loan.getLoanProductRelatedDetails() != null ? loan.getLoanProductRelatedDetails().getDiscount()
                 : BigDecimal.ZERO;
 
-        final BigDecimal amortizationAmount = loanOverpaid && MathUtil.isGreaterThanZero(discount) ? discount.subtract(alreadyPosted)
+        final BigDecimal amortizationAmount = fullyPaid && MathUtil.isGreaterThanZero(discount) ? discount.subtract(alreadyPosted)
                 : scheduleAmortization.subtract(alreadyPosted);
 
         if (MathUtil.isZero(amortizationAmount)) {
@@ -73,24 +79,40 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
             return;
         }
 
-        final boolean isChargedOff = false;
+        // Charge-off accounting is out of scope here (see the full-discount note above), so amortization is always
+        // posted as not-charged-off.
         if (MathUtil.isGreaterThanZero(amortizationAmount)) {
             final WorkingCapitalLoanTransaction amortizationTxn = WorkingCapitalLoanTransaction.discountFeeAmortization(loan,
                     amortizationAmount, transactionDate, externalIdFactory.create());
             transactionRepository.saveAndFlush(amortizationTxn);
-            accountingProcessor.postJournalEntriesForDiscountFeeAmortization(loan, amortizationTxn, isChargedOff);
+            accountingProcessor.postJournalEntriesForDiscountFeeAmortization(loan, amortizationTxn, false);
         } else {
             final BigDecimal adjustmentAmount = amortizationAmount.negate();
             final WorkingCapitalLoanTransaction adjustmentTxn = WorkingCapitalLoanTransaction.discountFeeAmortizationAdjustment(loan,
                     adjustmentAmount, transactionDate, externalIdFactory.create());
             linkToTriggeringDiscountAdjustment(loan, adjustmentTxn);
             transactionRepository.saveAndFlush(adjustmentTxn);
-            accountingProcessor.postJournalEntriesForDiscountFeeAmortizationAdjustment(loan, adjustmentTxn, isChargedOff);
+            accountingProcessor.postJournalEntriesForDiscountFeeAmortizationAdjustment(loan, adjustmentTxn, false);
         }
 
-        loan.getBalance().setRealizedIncomeFromDiscountFee(alreadyPosted.add(amortizationAmount));
+        recalculateRealizedIncome(loan);
 
         log.debug("Posted discount fee amortization of {} for WC loan [{}]", amortizationAmount, loan.getId());
+    }
+
+    @Override
+    @Transactional
+    public void recalculateRealizedIncome(final WorkingCapitalLoan loan) {
+        if (loan.getBalance() == null) {
+            return;
+        }
+        // Requires any amortization transaction posts/reversals to be flushed first, so the aggregate sees them.
+        loan.getBalance().setRealizedIncomeFromDiscountFee(queryNetAmortized(loan.getId()));
+    }
+
+    private BigDecimal queryNetAmortized(final Long loanId) {
+        return transactionRepository.sumNetAmortization(loanId, LoanTransactionType.DISCOUNT_FEE_AMORTIZATION,
+                LoanTransactionType.DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT);
     }
 
     private BigDecimal calculateScheduleAmortization(final WorkingCapitalLoan loan) {

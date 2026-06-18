@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.fineract.client.models.GetJournalEntriesTransactionIdResponse;
 import org.apache.fineract.client.models.GetWorkingCapitalLoanTransactionIdResponse;
@@ -63,6 +64,7 @@ import org.junit.jupiter.api.Test;
 public class FeignWorkingCapitalLoanDiscountFeeAmortizationTest extends FeignIntegrationTest {
 
     private static final String DISCOUNT_FEE_AMORTIZATION_CODE = "loanTransactionType.discountFeeAmortization";
+    private static final String DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT_CODE = "loanTransactionType.discountFeeAmortizationAdjustment";
 
     private FeignWorkingCapitalLoanHelper wcLoanHelper;
     private FeignClientHelper clientHelper;
@@ -442,9 +444,8 @@ public class FeignWorkingCapitalLoanDiscountFeeAmortizationTest extends FeignInt
                     DISCOUNT_FEE_AMORTIZATION_CODE);
             assertEquals(1, amortTxns.size(), "Amortization should be created inline on loan close without COB");
             final BigDecimal amortAmount = amortTxns.get(0).getTransactionAmount();
-            assertTrue(amortAmount.compareTo(BigDecimal.ZERO) > 0, "Amortization amount should be positive, was: " + amortAmount);
-            assertTrue(amortAmount.compareTo(discount) <= 0,
-                    "Amortization amount should not exceed discount — amort: " + amortAmount + ", discount: " + discount);
+            assertEquals(0, amortAmount.compareTo(discount),
+                    "Closing the loan must recognize the full discount — amort: " + amortAmount + ", discount: " + discount);
 
             // Verify journal entries
             final List<JournalEntryTransactionItem> entries = getJournalEntriesForWCTransaction(amortTxns.get(0).getId());
@@ -482,10 +483,76 @@ public class FeignWorkingCapitalLoanDiscountFeeAmortizationTest extends FeignInt
                     DISCOUNT_FEE_AMORTIZATION_CODE);
             assertEquals(1, amortTxns.size(), "Amortization should be created inline on loan overpay without COB");
             final BigDecimal amortAmount = amortTxns.get(0).getTransactionAmount();
-            assertTrue(amortAmount.compareTo(BigDecimal.ZERO) > 0, "Amortization amount should be positive, was: " + amortAmount);
-            assertTrue(amortAmount.compareTo(discount) <= 0,
-                    "Amortization amount should not exceed discount — amort: " + amortAmount + ", discount: " + discount);
+            assertEquals(0, amortAmount.compareTo(discount),
+                    "Overpaying the loan must recognize the full discount — amort: " + amortAmount + ", discount: " + discount);
         });
+    }
+
+    // Test 9: a backdated repayment must keep net amortization consistent (recognition is time-capped), and overpay
+    // must recognize the full discount exactly.
+    @Test
+    @Order(9)
+    void testBackdatedRepaymentKeepsAmortizationConsistent() {
+        businessDateHelper.runAt("2026-09-01", () -> {
+            final Long testClientId = clientHelper.createClient("01 September 2026");
+            final Long productId = createCashBasedProductWithDiscount();
+            final BigDecimal principal = BigDecimal.valueOf(9000);
+            final BigDecimal discount = BigDecimal.valueOf(1000);
+
+            final Long loanId = submitLoanWithDiscount(testClientId, productId, principal, discount, "01 September 2026");
+            wcLoanHelper.approve(loanId,
+                    WorkingCapitalLoanRequestBuilders.approveWithDiscount("01 September 2026", principal, "01 September 2026", discount));
+            wcLoanHelper.disburse(loanId, WorkingCapitalLoanRequestBuilders.disburseWithDiscount("01 September 2026", principal, discount));
+
+            // Repayment on Sep 5, then COB → first partial amortization
+            businessDateHelper.updateBusinessDate("BUSINESS_DATE", "2026-09-05");
+            wcLoanHelper.makeRepayment(loanId, WorkingCapitalLoanRequestBuilders.repayment(BigDecimal.valueOf(3000), "05 September 2026"));
+            wcLoanHelper.executeInlineWCCOB(loanId);
+
+            final List<GetWorkingCapitalLoanTransactionIdResponse> afterFirst = filterByType(wcLoanHelper.getTransactions(loanId),
+                    DISCOUNT_FEE_AMORTIZATION_CODE);
+            assertEquals(1, afterFirst.size(), "Expected 1 amortization transaction after the first repayment");
+            final BigDecimal totalAfterFirst = sumAmounts(afterFirst);
+            assertTrue(totalAfterFirst.compareTo(BigDecimal.ZERO) > 0, "First amortization should be positive");
+
+            // Backdated repayment on Sep 2, then COB: net amortization must stay non-decreasing and bounded by the
+            // discount.
+            wcLoanHelper.makeRepayment(loanId, WorkingCapitalLoanRequestBuilders.repayment(BigDecimal.valueOf(2000), "02 September 2026"));
+            wcLoanHelper.executeInlineWCCOB(loanId);
+
+            final BigDecimal netAfterBackdated = netAmortization(loanId);
+            assertTrue(netAfterBackdated.compareTo(totalAfterFirst) >= 0,
+                    "Net amortization must not decrease after a backdated repayment — before: " + totalAfterFirst + ", after: "
+                            + netAfterBackdated);
+            assertTrue(netAfterBackdated.compareTo(discount) <= 0,
+                    "Net amortization must never exceed the discount — net: " + netAfterBackdated + ", discount: " + discount);
+
+            // Overpay (cumulative 11000 > principal + discount = 10000) → inline full recognition.
+            businessDateHelper.updateBusinessDate("BUSINESS_DATE", "2026-09-10");
+            wcLoanHelper.makeRepayment(loanId, WorkingCapitalLoanRequestBuilders.repayment(BigDecimal.valueOf(6000), "10 September 2026"));
+
+            final GetWorkingCapitalLoansLoanIdResponse loan = wcLoanHelper.getLoanDetails(loanId);
+            assertEquals("loanStatusType.overpaid", loan.getStatus().getCode(), "Loan should be overpaid after the final repayment");
+
+            final BigDecimal netAfterOverpay = netAmortization(loanId);
+            assertEquals(0, netAfterOverpay.compareTo(discount),
+                    "After overpay, net amortization (amortization - adjustment) must equal the discount exactly — net: " + netAfterOverpay
+                            + ", discount: " + discount);
+        });
+    }
+
+    /** Net recognized discount fee income from transactions: sum(amortization) - sum(amortization adjustment). */
+    private BigDecimal netAmortization(final Long loanId) {
+        final List<GetWorkingCapitalLoanTransactionIdResponse> txns = wcLoanHelper.getTransactions(loanId);
+        return sumAmounts(filterByType(txns, DISCOUNT_FEE_AMORTIZATION_CODE))
+                .subtract(sumAmounts(filterByType(txns, DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT_CODE)));
+    }
+
+    private static BigDecimal sumAmounts(List<GetWorkingCapitalLoanTransactionIdResponse> transactions) {
+        return transactions.stream()
+                .map(txn -> Objects.requireNonNull(txn.getTransactionAmount(),
+                        () -> "transactionAmount must not be null for transaction " + txn.getId()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private void assertJournalEntry(List<JournalEntryTransactionItem> entries, String expectedType, Account expectedAccount,
