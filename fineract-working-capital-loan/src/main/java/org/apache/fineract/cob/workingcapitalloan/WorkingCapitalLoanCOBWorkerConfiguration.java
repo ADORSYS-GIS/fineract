@@ -60,10 +60,10 @@ public class WorkingCapitalLoanCOBWorkerConfiguration {
     private final MessageChannel inboundRequests;
     private final PropertyService propertyService;
     private final PlatformTransactionManager transactionManager;
-    @Qualifier("batchJdbcTransactionManager")
-    private final PlatformTransactionManager batchJdbcTransactionManager;
-    @Qualifier("batchJdbcTransactionTemplate")
-    private final TransactionTemplate batchJdbcTransactionTemplate;
+    @Qualifier("jdbcTransactionManager")
+    private final PlatformTransactionManager jdbcTransactionManager;
+    @Qualifier("requiresNewTransactionJdbcTemplate")
+    private final TransactionTemplate requiresNewTransactionJdbcTemplate;
     @Qualifier("workingCapitalLoanLockingService")
     private final LockingService wpcLoanLockingService;
     private final FineractProperties fineractProperties;
@@ -122,21 +122,12 @@ public class WorkingCapitalLoanCOBWorkerConfiguration {
 
     @Bean
     public WorkingCapitalLoanCOBWorkerItemListener workingCapitalLoanItemListener() {
-        return new WorkingCapitalLoanCOBWorkerItemListener(wpcLoanLockingService, batchJdbcTransactionTemplate);
+        return new WorkingCapitalLoanCOBWorkerItemListener(wpcLoanLockingService, requiresNewTransactionJdbcTemplate);
     }
 
     @Bean
     public ApplyWorkingCapitalLoanLockTasklet applyWorkingCapitalLoanLock() {
         return new ApplyWorkingCapitalLoanLockTasklet(fineractProperties, wpcLoanLockingService, retrieveIdService,
-                batchJdbcTransactionTemplate);
+                requiresNewTransactionJdbcTemplate);
     }
-
-    @Bean
-    @StepScope
-    public Step applyWorkingCapitalLoanLockStep(
-            @org.springframework.beans.factory.annotation.Value("#{stepExecutionContext['partition']}") String partitionName) {
-        return new org.springframework.batch.core.step.builder.StepBuilder("Apply WC lock - Step:" + partitionName, jobRepository)
-                .tasklet(applyWorkingCapitalLoanLock(), batchJdbcTransactionManager).build();
-    }
-
 }
