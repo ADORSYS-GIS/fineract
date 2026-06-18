@@ -145,7 +145,7 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
                 .findByLoanIdAndFromDateLessThanEqualAndToDateGreaterThanEqual(loanId, transactionDate, transactionDate);
         BigDecimal transactionAmount = amount;
         for (WorkingCapitalLoanDelinquencyRangeSchedule period : pastOpenPeriods) {
-            BigDecimal payAmount = MathUtil.min(amount, period.getOutstandingAmount(), true);
+            BigDecimal payAmount = MathUtil.min(transactionAmount, period.getOutstandingAmount(), true);
             transactionAmount = transactionAmount.subtract(payAmount);
             period.setPaidAmount(period.getPaidAmount().add(payAmount));
             period.setOutstandingAmount(period.getOutstandingAmount().subtract(payAmount));
