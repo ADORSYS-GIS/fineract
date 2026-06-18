@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.workingcapitalloan.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
@@ -59,6 +60,18 @@ public interface WorkingCapitalLoanTransactionRepository extends JpaRepository<W
             """)
     BigDecimal sumNetAmortization(@Param("wcLoanId") Long wcLoanId, @Param("amortizationType") LoanTransactionType amortizationType,
             @Param("adjustmentType") LoanTransactionType adjustmentType);
+
+    /**
+     * Total amount of non-reversed discount fee adjustments dated strictly after {@code date} (not yet effective then).
+     */
+    @Query("""
+            select coalesce(sum(t.transactionAmount), 0)
+            from WorkingCapitalLoanTransaction t
+            where t.wcLoan.id = :wcLoanId and t.reversed = false
+              and t.transactionType = :transactionType and t.transactionDate > :date
+            """)
+    BigDecimal sumDiscountFeeAdjustmentsAfter(@Param("wcLoanId") Long wcLoanId,
+            @Param("transactionType") LoanTransactionType transactionType, @Param("date") LocalDate date);
 
     Optional<WorkingCapitalLoanTransaction> findByWcLoan_IdAndExternalId(Long wcLoanId, ExternalId externalId);
 

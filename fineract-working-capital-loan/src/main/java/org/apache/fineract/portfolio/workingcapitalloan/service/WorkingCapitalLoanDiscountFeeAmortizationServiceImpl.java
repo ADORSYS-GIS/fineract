@@ -52,7 +52,11 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
     @Override
     @Transactional
     public void processDiscountFeeAmortization(final WorkingCapitalLoan loan, final LocalDate transactionDate) {
-        final BigDecimal scheduleAmortization = calculateScheduleAmortization(loan);
+        // Evaluate the schedule target against the discount in force on the COB date being processed. During a COB
+        // fast-forward (catch-up over skipped days) this keeps a replayed day that precedes a discount fee adjustment
+        // from reacting to that not-yet-effective adjustment, so the resulting amortization adjustment is never dated
+        // before the discount adjustment that caused it.
+        final BigDecimal scheduleAmortization = calculateScheduleAmortization(loan, transactionDate);
         // Fully paid (obligations met) or overpaid: recognize the whole discount immediately. The schedule carries an
         // NPV residual that a lump-sum payoff never fully consumes, so close must recognize the full discount, not the
         // schedule amount. Written-off / charge-off states follow a separate write-off accounting path and are excluded
@@ -115,10 +119,22 @@ public class WorkingCapitalLoanDiscountFeeAmortizationServiceImpl implements Wor
                 LoanTransactionType.DISCOUNT_FEE_AMORTIZATION_ADJUSTMENT);
     }
 
-    private BigDecimal calculateScheduleAmortization(final WorkingCapitalLoan loan) {
+    private BigDecimal calculateScheduleAmortization(final WorkingCapitalLoan loan, final LocalDate cobDate) {
         final MathContext mc = MoneyHelper.getMathContext();
         return scheduleRepositoryWrapper.readModel(loan.getId(), mc, WorkingCapitalLoanCurrencyResolver.resolveCurrency(loan))
-                .map(ProjectedAmortizationScheduleModel::totalActualAmortization).orElse(BigDecimal.ZERO);
+                .map(model -> model.totalActualAmortizationWithDiscount(discountInForceOn(loan, model, cobDate))).orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * The total discount fee in force on {@code cobDate}. The model's discount is the latest (net of every adjustment);
+     * adding back the non-reversed discount fee adjustments dated after the COB date yields the discount that was
+     * effective on a replayed day, so a fast-forward does not evaluate amortization against a not-yet-effective change.
+     */
+    private BigDecimal discountInForceOn(final WorkingCapitalLoan loan, final ProjectedAmortizationScheduleModel model,
+            final LocalDate cobDate) {
+        final BigDecimal notYetEffective = transactionRepository.sumDiscountFeeAdjustmentsAfter(loan.getId(),
+                LoanTransactionType.DISCOUNT_FEE_ADJUSTMENT, cobDate);
+        return model.discountFeeAmount().getAmount().add(notYetEffective);
     }
 
     private void linkToTriggeringDiscountAdjustment(final WorkingCapitalLoan loan,
