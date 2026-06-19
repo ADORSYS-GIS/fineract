@@ -16,15 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.fineract.infrastructure.event.business.domain.workingcapitalloan.transaction;
 
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+public class WorkingCapitalLoanChargeAdjustmentPostBusinessEvent extends WorkingCapitalLoanTransactionBusinessEvent {
 
-public interface WorkingCapitalLoanChargeWritePlatformService {
+    private static final String TYPE = "WorkingCapitalLoanChargeAdjustmentPostBusinessEvent";
 
-    CommandProcessingResult createLoanCharge(Long loanId, JsonCommand command);
+    public WorkingCapitalLoanChargeAdjustmentPostBusinessEvent(final WorkingCapitalLoanTransaction value) {
+        super(value);
+    }
 
-    CommandProcessingResult adjustmentForLoanCharge(Long loanId, Long wcLoanChargeId, JsonCommand command);
+    public WorkingCapitalLoanChargeAdjustmentPostBusinessEvent(final WorkingCapitalLoanTransaction value, final Long aggregateRootId) {
+        super(value, aggregateRootId);
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
 }
