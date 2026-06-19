@@ -41,7 +41,6 @@ import org.apache.fineract.client.models.PostWorkingCapitalLoansBreachActionRequ
 import org.apache.fineract.client.models.PostWorkingCapitalLoansBreachActionResponse;
 import org.apache.fineract.client.models.PostWorkingCapitalLoansResponse;
 import org.apache.fineract.client.models.WorkingCapitalLoanBreachActionData;
-import org.apache.fineract.client.models.WorkingCapitalLoanBreachScheduleData;
 import org.apache.fineract.test.factory.WorkingCapitalLoanRequestFactory;
 import org.apache.fineract.test.stepdef.AbstractStepDef;
 import org.apache.fineract.test.support.TestContextKey;
@@ -99,26 +98,9 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
         log.info("Successfully verified {} breach action(s) for loan {}", actions.size(), loanId);
     }
 
-    @Then("Working Capital loan breach schedule periods have specific data:")
-    public void verifySpecificPeriods(final DataTable table) {
-        final Long loanId = getLoanId();
-        final List<WorkingCapitalLoanBreachScheduleData> periods = ok(
-                () -> fineractFeignClient.workingCapitalLoanBreachSchedule().retrieveBreachSchedule(loanId));
-
-        for (final Map<String, String> expected : table.asMaps()) {
-            final int periodNumber = Integer.parseInt(expected.get("periodNumber"));
-            final WorkingCapitalLoanBreachScheduleData actual = periods.stream().filter(p -> {
-                assert p.getPeriodNumber() != null;
-                return p.getPeriodNumber().equals(periodNumber);
-            }).findFirst().orElse(null);
-            assertThat(actual).as("Period %d should exist", periodNumber).isNotNull();
-            expected.forEach((field, value) -> verifyScheduleField(actual, field, value, periodNumber));
-        }
-    }
-
     private void executeRescheduleAction(final PostWorkingCapitalLoansBreachActionRequest request) {
         final Long loanId = getLoanId();
-        log.info("Creating breach RESCHEDULE action for WC loan {}: {}", loanId, request);
+        log.debug("Creating breach RESCHEDULE action for WC loan {}: {}", loanId, request);
 
         final PostWorkingCapitalLoansBreachActionResponse result = ok(
                 () -> fineractFeignClient.workingCapitalLoanBreachActions().createBreachAction(loanId, request));
@@ -149,27 +131,6 @@ public class WorkingCapitalBreachActionStepDef extends AbstractStepDef {
                 verifyOptionalField(expected, v -> assertThat(String.valueOf(actual.getFrequencyType())).as(label).isEqualTo(v),
                         () -> assertThat(actual.getFrequencyType()).as(label).isNull());
             default -> throw new IllegalArgumentException("Unknown action field: " + field);
-        }
-    }
-
-    private void verifyScheduleField(final WorkingCapitalLoanBreachScheduleData actual, final String field, final String expected,
-            final int periodNumber) {
-        final String label = "Period " + periodNumber + " " + field;
-        switch (field) {
-            case "periodNumber" -> assertThat(actual.getPeriodNumber()).as(label).isEqualTo(Integer.parseInt(expected));
-            case "fromDate" -> assertThat(actual.getFromDate()).as(label).isEqualTo(LocalDate.parse(expected));
-            case "toDate" -> assertThat(actual.getToDate()).as(label).isEqualTo(LocalDate.parse(expected));
-            case "numberOfDays" ->
-                verifyOptionalField(expected, v -> assertThat(actual.getNumberOfDays()).as(label).isEqualTo(Integer.parseInt(v)),
-                        () -> assertThat(actual.getNumberOfDays()).as(label).isNull());
-            case "minPaymentAmount" -> assertThat(actual.getMinPaymentAmount()).as(label).isEqualByComparingTo(new BigDecimal(expected));
-            case "outstandingAmount" -> assertThat(actual.getOutstandingAmount()).as(label).isEqualByComparingTo(new BigDecimal(expected));
-            case "nearBreach" ->
-                verifyOptionalField(expected, v -> assertThat(actual.getNearBreach()).as(label).isEqualTo(Boolean.parseBoolean(v)),
-                        () -> assertThat(actual.getNearBreach()).as(label).isNull());
-            case "breach" -> verifyOptionalField(expected, v -> assertThat(actual.getBreach()).as(label).isEqualTo(Boolean.parseBoolean(v)),
-                    () -> assertThat(actual.getBreach()).as(label).isNull());
-            default -> throw new IllegalArgumentException("Unknown schedule field: " + field);
         }
     }
 
