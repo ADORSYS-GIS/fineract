@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CreateStandingInstructionCommandHandler implements NewCommandSourceHandler {
 
-    private StandingInstructionWritePlatformService standingInstructionWritePlatformService;
+    private final StandingInstructionWritePlatformService standingInstructionWritePlatformService;
 
     @Override
     public CommandProcessingResult processCommand(JsonCommand command) {

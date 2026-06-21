@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateEmailCampaignCommandHandler implements NewCommandSourceHandler {
 
-    private EmailCampaignWritePlatformService emailCampaignWritePlatformService;
+    private final EmailCampaignWritePlatformService emailCampaignWritePlatformService;
 
     @Transactional
     @Override
