@@ -45,7 +45,9 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoa
 import org.apache.fineract.portfolio.workingcapitalloan.mapper.WorkingCapitalLoanDelinquencyRangeScheduleMapper;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanDelinquencyActionRepository;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanDelinquencyRangeScheduleRepository;
+import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanDelinquencyStartType;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProduct;
+import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductRelatedDetails;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -65,10 +67,9 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
             return;
         }
 
-        LocalDate fromDate = loan.getDisbursementDetails().stream().map(WorkingCapitalLoanDisbursementDetails::getActualDisbursementDate)
-                .filter(Objects::nonNull).findFirst().orElse(null);
+        LocalDate fromDate = resolveScheduleAnchorDate(loan);
         if (fromDate == null) {
-            log.warn("No actual disbursement date found for WC loan {}, skipping initial period generation", loan.getId());
+            log.warn("No anchor date found for WC loan {}, skipping initial period generation", loan.getId());
             return;
         }
         LocalDate toDate = calculateToDate(fromDate, rule.getFrequency(), rule.getFrequencyType());
@@ -195,6 +196,28 @@ public class WorkingCapitalLoanDelinquencyRangeScheduleServiceImpl implements Wo
         List<WorkingCapitalLoanDelinquencyRangeSchedule> periods = loanDelinquencyRangeScheduleRepository
                 .findByLoanIdOrderByPeriodNumberAsc(loanId);
         return capitalLoanDelinquencyRangeScheduleMapper.toDataList(periods);
+    }
+
+    /**
+     * Resolves the date the delinquency clock starts ticking, based on the loan's configured
+     * {@link WorkingCapitalLoanDelinquencyStartType}.
+     *
+     * <ul>
+     * <li>{@code LOAN_CREATION}: the loan submitted-on date is used as the basis.</li>
+     * <li>{@code DISBURSEMENT} (or unset): the first actual disbursement date is used as the basis.</li>
+     * </ul>
+     *
+     * The configured {@code delinquencyGraceDays} are not applied here; they are added when the derived
+     * {@code delinquencyStartDate} is computed at read time.
+     */
+    private LocalDate resolveScheduleAnchorDate(final WorkingCapitalLoan loan) {
+        final WorkingCapitalLoanProductRelatedDetails details = loan.getLoanProductRelatedDetails();
+        final WorkingCapitalLoanDelinquencyStartType startType = details != null ? details.getDelinquencyStartType() : null;
+        if (WorkingCapitalLoanDelinquencyStartType.LOAN_CREATION.equals(startType)) {
+            return loan.getSubmittedOnDate();
+        }
+        return loan.getDisbursementDetails().stream().map(WorkingCapitalLoanDisbursementDetails::getActualDisbursementDate)
+                .filter(Objects::nonNull).findFirst().orElse(null);
     }
 
     private DelinquencyMinimumPaymentPeriodAndRule getMinimumPaymentRule(WorkingCapitalLoan loan) {

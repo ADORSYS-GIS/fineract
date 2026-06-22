@@ -219,6 +219,12 @@ public final class WorkingCapitalLoanApiResourceSwagger {
         public StringEnumOptionData delinquencyStartType;
         @Schema(example = "0", description = "Number of days to shift the start of the first breach schedule period after disbursement")
         public Integer breachGraceDays;
+        @Schema(example = "[2024, 1, 14]", description = "Start date of the loan's breach, i.e. the fromDate of the earliest breached "
+                + "breach schedule period (the breach grace days are already reflected in this date). Null when the loan is not in breach")
+        public LocalDate breachStartDate;
+        @Schema(example = "[2024, 1, 14]", description = "Start date of the loan's delinquency, i.e. the fromDate of the earliest "
+                + "delinquent range schedule period shifted by delinquencyGraceDays. Null when the loan is not delinquent")
+        public LocalDate delinquencyStartDate;
         @Schema(example = "[2024, 1, 14]", description = "Last closed business date (COB)")
         public LocalDate lastClosedBusinessDate;
         public List<GetPaymentAllocation> paymentAllocation;

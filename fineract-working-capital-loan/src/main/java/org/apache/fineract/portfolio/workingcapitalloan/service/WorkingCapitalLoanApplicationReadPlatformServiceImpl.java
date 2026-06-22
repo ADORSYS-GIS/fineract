@@ -48,6 +48,8 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoa
 import org.apache.fineract.portfolio.workingcapitalloan.exception.WorkingCapitalLoanNotFoundException;
 import org.apache.fineract.portfolio.workingcapitalloan.mapper.WorkingCapitalLoanMapper;
 import org.apache.fineract.portfolio.workingcapitalloan.mapper.WorkingCapitalLoanSummaryMapper;
+import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanBreachScheduleRepository;
+import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanDelinquencyRangeScheduleRepository;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanRepository;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.data.WorkingCapitalBreachData;
 import org.apache.fineract.portfolio.workingcapitalloanbreach.service.WorkingCapitalBreachReadPlatformService;
@@ -78,6 +80,8 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
     private final WorkingCapitalLoanDelinquencyReadPlatformService workingCapitalLoanDelinquencyReadPlatformService;
     private final WorkingCapitalNearBreachReadPlatformService nearBreachReadPlatformService;
     private final ProjectedAmortizationScheduleRepositoryWrapper scheduleRepositoryWrapper;
+    private final WorkingCapitalLoanBreachScheduleRepository breachScheduleRepository;
+    private final WorkingCapitalLoanDelinquencyRangeScheduleRepository delinquencyRangeScheduleRepository;
 
     @Override
     public WorkingCapitalLoanTemplateData retrieveTemplate(final Long productId, final Long clientId) {
@@ -169,6 +173,7 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
                 ThreadLocalContextUtil.getBusinessDate());
         data.setCollectionData(collectionData);
         enrichWithRateAndTerm(loan, data);
+        enrichWithStartDates(loan, data);
         return data;
     }
 
@@ -189,6 +194,23 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
                 data.setCalculatedAnnualEir(BigDecimal.ONE.add(dailyEir, mc).pow(365, mc).subtract(BigDecimal.ONE, mc));
             }
         });
+    }
+
+    private void enrichWithStartDates(final WorkingCapitalLoan loan, final WorkingCapitalLoanData data) {
+        // breachStartDate: fromDate of the earliest breached period. The breach schedule already offsets its first
+        // period
+        // by breachGraceDays, so the grace period is implicitly reflected in the fromDate.
+        breachScheduleRepository.findTopByLoanIdAndBreachTrueOrderByFromDateAsc(loan.getId())
+                .ifPresent(period -> data.setBreachStartDate(period.getFromDate()));
+
+        // delinquencyStartDate: fromDate of the earliest delinquent period plus delinquencyGraceDays. The delinquency
+        // range
+        // schedule does not apply the grace days when generating periods, so they are added here.
+        delinquencyRangeScheduleRepository.findTopByLoanIdAndMinPaymentCriteriaMetFalseOrderByFromDateAsc(loan.getId())
+                .ifPresent(period -> {
+                    final int graceDays = data.getDelinquencyGraceDays() != null ? data.getDelinquencyGraceDays() : 0;
+                    data.setDelinquencyStartDate(period.getFromDate().plusDays(graceDays));
+                });
     }
 
     @Override

@@ -73,6 +73,8 @@ public interface WorkingCapitalLoanMapper {
     @Mapping(target = "delinquencyGraceDays", source = "loanProductRelatedDetails.delinquencyGraceDays")
     @Mapping(target = "delinquencyStartType", source = "loanProductRelatedDetails", qualifiedByName = "delinquencyStartTypeData")
     @Mapping(target = "breachGraceDays", source = "loanProductRelatedDetails.breachGraceDays")
+    @Mapping(target = "breachStartDate", ignore = true)
+    @Mapping(target = "delinquencyStartDate", ignore = true)
     @Mapping(target = "collectionData", ignore = true)
     @Mapping(target = "totalNoPayments", ignore = true)
     @Mapping(target = "periodPaymentAmount", ignore = true)
