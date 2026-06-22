@@ -18,22 +18,17 @@
  */
 package org.apache.fineract.portfolio.workingcapitalloan.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBreachSchedule;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBreachAction;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBreachActionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface WorkingCapitalLoanBreachScheduleRepository extends JpaRepository<WorkingCapitalLoanBreachSchedule, Long> {
+public interface WorkingCapitalLoanBreachActionRepository extends JpaRepository<WorkingCapitalLoanBreachAction, Long> {
 
-    List<WorkingCapitalLoanBreachSchedule> findByLoanIdOrderByPeriodNumberAsc(Long loanId);
+    List<WorkingCapitalLoanBreachAction> findByWorkingCapitalLoanIdOrderById(Long workingCapitalLoanId);
 
-    boolean existsByLoanId(Long loanId);
+    Optional<WorkingCapitalLoanBreachAction> findTopByWorkingCapitalLoanIdAndActionOrderByIdDesc(Long workingCapitalLoanId,
+            WorkingCapitalLoanBreachActionType action);
 
-    Optional<WorkingCapitalLoanBreachSchedule> findTopByLoanIdOrderByPeriodNumberDesc(Long loanId);
-
-    Optional<WorkingCapitalLoanBreachSchedule> findByLoanIdAndFromDateLessThanEqualAndToDateGreaterThanEqual(Long loanId,
-            LocalDate transactionDate, LocalDate transactionDate1);
-
-    List<WorkingCapitalLoanBreachSchedule> findByLoanIdAndToDateBeforeAndBreach(Long loanId, LocalDate toDateBefore, Boolean breach);
 }
