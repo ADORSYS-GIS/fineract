@@ -56,6 +56,7 @@ public interface NotificationMapperRepository extends JpaRepository<Notification
                 nm.notification.action,
                 nm.notification.notificationContent,
                 nm.notification.isSystemGenerated,
+                nm.isRead,
                 nm.createdAt
             )
             from NotificationMapper nm
@@ -76,6 +77,7 @@ public interface NotificationMapperRepository extends JpaRepository<Notification
                 nm.notification.action,
                 nm.notification.notificationContent,
                 nm.notification.isSystemGenerated,
+                nm.isRead,
                 nm.createdAt
             )
             from NotificationMapper nm
