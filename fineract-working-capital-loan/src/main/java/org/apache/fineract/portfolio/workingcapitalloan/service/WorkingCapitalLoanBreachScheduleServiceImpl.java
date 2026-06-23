@@ -280,13 +280,12 @@ public class WorkingCapitalLoanBreachScheduleServiceImpl implements WorkingCapit
     }
 
     private LocalDate effectivePauseEnd(final WorkingCapitalLoanBreachAction pause, final List<WorkingCapitalLoanBreachAction> resumes) {
-        // Resume ends the pause on the resume date, which is the first active (non-paused) day. Because pause start and
-        // end dates are both inclusive, the effective inclusive end is the day before the resume date.
+        // Resume shortens the pause to end on the resume date. Pause start and end dates are inclusive, so the resume
+        // date itself becomes the effective (inclusive) end and is still treated as a paused day.
         return resumes.stream()
                 .filter(resume -> !pause.getStartDate().isAfter(resume.getStartDate())
                         && !resume.getStartDate().isAfter(pause.getEndDate()))
-                .map(WorkingCapitalLoanBreachAction::getStartDate).min(Comparator.naturalOrder()).map(resumeDate -> resumeDate.minusDays(1))
-                .orElse(pause.getEndDate());
+                .map(WorkingCapitalLoanBreachAction::getStartDate).min(Comparator.naturalOrder()).orElse(pause.getEndDate());
     }
 
     private void applyRecordedPauses(final WorkingCapitalLoanBreachSchedule period, final List<EffectivePause> pauses) {

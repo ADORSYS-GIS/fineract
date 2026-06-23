@@ -259,14 +259,23 @@ public class WorkingCapitalLoanBreachActionParseAndValidator extends ParseAndVal
             return;
         }
         final boolean overlaps = existing.stream().filter(action -> WorkingCapitalLoanBreachActionType.PAUSE.equals(action.getAction()))
-                .anyMatch(action -> isOverlapping(startDate, endDate, action));
+                .anyMatch(pause -> isOverlapping(startDate, endDate, pause.getStartDate(), effectivePauseEnd(pause, existing)));
         if (overlaps) {
             dataValidator.reset().failWithCodeNoParameterAddedToErrorCode("overlapping.pause.periods");
         }
     }
 
-    private boolean isOverlapping(final LocalDate startDate, final LocalDate endDate, final WorkingCapitalLoanBreachAction other) {
-        return !startDate.isAfter(other.getEndDate()) && !other.getStartDate().isAfter(endDate);
+    private LocalDate effectivePauseEnd(final WorkingCapitalLoanBreachAction pause, final List<WorkingCapitalLoanBreachAction> existing) {
+        // A resumed pause effectively ends on the (inclusive) resume date, so a later pause may start the next day
+        return existing.stream().filter(action -> WorkingCapitalLoanBreachActionType.RESUME.equals(action.getAction()))
+                .map(WorkingCapitalLoanBreachAction::getStartDate)
+                .filter(resumeDate -> !pause.getStartDate().isAfter(resumeDate) && !resumeDate.isAfter(pause.getEndDate()))
+                .min(LocalDate::compareTo).orElse(pause.getEndDate());
+    }
+
+    private boolean isOverlapping(final LocalDate startDate, final LocalDate endDate, final LocalDate otherStart,
+            final LocalDate otherEnd) {
+        return !startDate.isAfter(otherEnd) && !otherStart.isAfter(endDate);
     }
 
     private void validateReschedule(final WorkingCapitalLoanBreachAction action, final WorkingCapitalLoan workingCapitalLoan,
