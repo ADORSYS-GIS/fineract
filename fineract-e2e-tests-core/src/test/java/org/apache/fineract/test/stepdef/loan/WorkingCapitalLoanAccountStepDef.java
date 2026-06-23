@@ -2572,6 +2572,21 @@ public class WorkingCapitalLoanAccountStepDef extends AbstractStepDef {
         validateRepaymentResponse(response, transactionAmount, transactionDate, loanId);
     }
 
+    @Then("Admin closes the Working Capital loan with a full repayment on {string}")
+    public void closeWorkingCapitalLoanWithFullRepayment(final String transactionDate) {
+        final Long loanId = getCreatedLoanId();
+        final GetWorkingCapitalLoansLoanIdResponse loanDetails = ok(
+                () -> fineractClient.workingCapitalLoans().retrieveWorkingCapitalLoanById(loanId));
+        Assertions.assertNotNull(loanDetails.getBalance());
+        Assertions.assertNotNull(loanDetails.getBalance().getTotalOutstanding());
+        final BigDecimal totalOutstanding = loanDetails.getBalance().getTotalOutstanding();
+        final PostWorkingCapitalLoanTransactionsRequest repaymentRequest = workingCapitalProductRequestFactory
+                .defaultWorkingCapitalLoanRepaymentRequest().transactionDate(transactionDate).transactionAmount(totalOutstanding);
+        final PostWorkingCapitalLoanTransactionsResponse response = executeRepaymentLikeById(loanId, "repayment", repaymentRequest);
+        Assertions.assertNotNull(loanDetails.getBalance());
+        validateRepaymentResponse(response, totalOutstanding.doubleValue(), transactionDate, loanId);
+    }
+
     @Then("Customer makes credit balance refund on {string} with {double} transaction amount on Working Capital loan")
     public void makeWorkingCapitalLoanCreditBalanceRefund(final String transactionDate, final double transactionAmount) {
         final Long loanId = getCreatedLoanId();
