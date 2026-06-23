@@ -56,6 +56,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.serialization.GoogleGsonSerializerHelper;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.core.service.TransactionBoundApplicationEventPublisher;
 import org.apache.fineract.infrastructure.hooks.event.HookEvent;
 import org.apache.fineract.infrastructure.hooks.event.HookEventSource;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -76,6 +77,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
     public static final String COMMAND_SOURCE_ID = "commandSourceId";
     private final PlatformSecurityContext context;
     private final ApplicationContext applicationContext;
+    private final TransactionBoundApplicationEventPublisher eventPublisher;
     private final ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
     private final ToApiJsonSerializer<CommandProcessingResult> toApiResultJsonSerializer;
     private final ConfigurationDomainService configurationDomainService;
@@ -404,7 +406,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
                 final HookEvent applicationEvent = new HookEvent(hookEventSource, serializedResult, appUser,
                         ThreadLocalContextUtil.getContext());
 
-                applicationContext.publishEvent(applicationEvent);
+                eventPublisher.publishEvent(applicationEvent);
             }
         } catch (Exception e) {
             log.error("Failed to publish hook event for entity: {}, action: {}", entityName, actionName, e);

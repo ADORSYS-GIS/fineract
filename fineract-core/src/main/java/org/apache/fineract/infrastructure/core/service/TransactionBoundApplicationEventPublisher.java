@@ -16,51 +16,41 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.notification.eventandlistener;
+package org.apache.fineract.infrastructure.core.service;
 
-import jakarta.jms.Queue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.fineract.infrastructure.core.condition.EnableFineractEventsCondition;
-import org.apache.fineract.notification.data.NotificationData;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Profile;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-@Service
-@Profile("activeMqEnabled")
-@Conditional(EnableFineractEventsCondition.class)
+@Component
 @RequiredArgsConstructor
 @Slf4j
-public class ActiveMQNotificationEventPublisher implements NotificationEventPublisher {
+public class TransactionBoundApplicationEventPublisher {
 
-    private final JmsTemplate jmsTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Override
-    public void broadcastNotification(NotificationData notificationData) {
+    public void publishEvent(Object event) {
         if (TransactionSynchronizationManager.isActualTransactionActive() && TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 
                 @Override
                 public void afterCommit() {
                     try {
-                        send(notificationData);
+                        doPublish(event);
                     } catch (Exception e) {
-                        log.error("Error while sending ActiveMQ notification event after transaction commit", e);
+                        log.error("Error while publishing application event after transaction commit: {}", event, e);
                     }
                 }
             });
             return;
         }
-        send(notificationData);
+        doPublish(event);
     }
 
-    private void send(NotificationData notificationData) {
-        Queue queue = new ActiveMQQueue("NotificationQueue");
-        jmsTemplate.send(queue, session -> session.createObjectMessage(notificationData));
+    private void doPublish(Object event) {
+        applicationEventPublisher.publishEvent(event);
     }
 }

@@ -57,6 +57,7 @@ import org.apache.fineract.infrastructure.core.domain.BatchRequestContextHolder;
 import org.apache.fineract.infrastructure.core.domain.FineractRequestContextHolder;
 import org.apache.fineract.infrastructure.core.exception.IdempotentCommandProcessUnderProcessingException;
 import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.apache.fineract.infrastructure.core.service.TransactionBoundApplicationEventPublisher;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.junit.jupiter.api.AfterEach;
@@ -79,6 +80,8 @@ public class SynchronousCommandProcessingServiceTest {
     private PlatformSecurityContext context;
     @Mock
     private ApplicationContext applicationContext;
+    @Mock
+    private TransactionBoundApplicationEventPublisher eventPublisher;
     @Mock
     private ToApiJsonSerializer<Map<String, Object>> toApiJsonSerializer;
     @Mock
@@ -643,11 +646,10 @@ public class SynchronousCommandProcessingServiceTest {
         try {
             underTest.executeCommand(commandWrapper, jsonCommand, false);
 
-            // Hook event should NOT have been published immediately
-            verify(applicationContext, never()).publishEvent(any());
-
-            // It should be registered as an afterCommit synchronization
+            // The hook event should be deferred via TransactionSynchronization registered on the current transaction
             assertEquals(1, TransactionSynchronizationManager.getSynchronizations().size());
+            // Verify hook event was NOT published immediately (deferred to afterCommit)
+            verify(eventPublisher, never()).publishEvent(any());
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
             BatchRequestContextHolder.resetIsEnclosingTransaction();
