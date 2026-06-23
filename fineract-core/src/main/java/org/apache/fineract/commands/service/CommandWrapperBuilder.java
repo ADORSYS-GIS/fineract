@@ -243,6 +243,7 @@ import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOAN;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOANCHARGE;
 import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKINGCAPITALLOANPRODUCT;
+import static org.apache.fineract.commands.domain.CommandWrapperConstants.ENTITY_WORKING_CAPITAL_LOAN_ORIGINATOR;
 import static org.apache.fineract.useradministration.service.AppUserConstants.PASSWORD;
 import static org.apache.fineract.useradministration.service.AppUserConstants.REPEAT_PASSWORD;
 
@@ -4101,6 +4102,26 @@ public class CommandWrapperBuilder {
         this.entityName = ENTITY_ACCOUNTTRANSFER;
         this.entityId = transferId;
         this.href = "/accounttransfers";
+        return this;
+    }
+
+    public CommandWrapperBuilder attachWorkingCapitalLoanOriginator(final Long loanId, final Long originatorId) {
+        this.actionName = ACTION_ATTACH;
+        this.entityName = ENTITY_WORKING_CAPITAL_LOAN_ORIGINATOR;
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.subentityId = originatorId;
+        this.href = "/working-capital-loans/" + loanId + "/originators/" + originatorId;
+        return this;
+    }
+
+    public CommandWrapperBuilder detachWorkingCapitalLoanOriginator(final Long loanId, final Long originatorId) {
+        this.actionName = ACTION_DETACH;
+        this.entityName = ENTITY_WORKING_CAPITAL_LOAN_ORIGINATOR;
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.subentityId = originatorId;
+        this.href = "/working-capital-loans/" + loanId + "/originators/" + originatorId;
         return this;
     }
 }

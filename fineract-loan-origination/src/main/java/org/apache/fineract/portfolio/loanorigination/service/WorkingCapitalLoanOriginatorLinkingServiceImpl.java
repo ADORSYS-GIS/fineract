@@ -21,12 +21,11 @@ package org.apache.fineract.portfolio.loanorigination.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.portfolio.loanaccount.service.LoanOriginatorLinkingService;
 import org.apache.fineract.portfolio.loanorigination.domain.LoanOriginator;
-import org.apache.fineract.portfolio.loanorigination.domain.LoanOriginatorMapping;
-import org.apache.fineract.portfolio.loanorigination.domain.LoanOriginatorMappingRepository;
 import org.apache.fineract.portfolio.loanorigination.domain.LoanOriginatorRepository;
+import org.apache.fineract.portfolio.loanorigination.domain.WorkingCapitalLoanOriginatorMapping;
+import org.apache.fineract.portfolio.loanorigination.domain.WorkingCapitalLoanOriginatorMappingRepository;
 import org.apache.fineract.portfolio.loanorigination.serialization.LoanApplicationOriginatorDataValidator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 /**
@@ -34,16 +33,15 @@ import org.springframework.stereotype.Service;
  * application. This service is active only when the loan-origination module is enabled.
  */
 @Slf4j
-@Primary
-@Service("loanOriginatorLinkingServiceImpl")
+@Service("workingCapitalLoanOriginatorLinkingServiceImpl")
 @ConditionalOnProperty(value = "fineract.module.loan-origination.enabled", havingValue = "true")
-public class LoanOriginatorLinkingServiceImpl extends AbstractLoanOriginatorLinkingServiceImpl {
+public class WorkingCapitalLoanOriginatorLinkingServiceImpl extends AbstractLoanOriginatorLinkingServiceImpl {
 
-    private final LoanOriginatorMappingRepository loanOriginatorMappingRepository;
+    private final WorkingCapitalLoanOriginatorMappingRepository loanOriginatorMappingRepository;
 
-    public LoanOriginatorLinkingServiceImpl(LoanOriginatorRepository loanOriginatorRepository,
+    public WorkingCapitalLoanOriginatorLinkingServiceImpl(LoanOriginatorRepository loanOriginatorRepository,
             LoanApplicationOriginatorDataValidator validator, LoanOriginatorHelper loanOriginatorHelper,
-            LoanOriginatorMappingRepository loanOriginatorMappingRepository) {
+            WorkingCapitalLoanOriginatorMappingRepository loanOriginatorMappingRepository) {
         super(loanOriginatorRepository, validator, loanOriginatorHelper);
         this.loanOriginatorMappingRepository = loanOriginatorMappingRepository;
     }
@@ -52,9 +50,9 @@ public class LoanOriginatorLinkingServiceImpl extends AbstractLoanOriginatorLink
     protected void createAndSaveOriginatorMapping(Long loanId, Long originatorId) {
         if (!loanOriginatorMappingRepository.existsByLoanIdAndOriginatorId(loanId, originatorId)) {
             final LoanOriginator originatorRef = loanOriginatorRepository.getReferenceById(originatorId);
-            final LoanOriginatorMapping mapping = LoanOriginatorMapping.create(loanId, originatorRef);
+            final WorkingCapitalLoanOriginatorMapping mapping = WorkingCapitalLoanOriginatorMapping.create(loanId, originatorRef);
             loanOriginatorMappingRepository.save(mapping);
-            log.debug("Attached originator {} to loan {}", originatorId, loanId);
+            log.debug("Attached originator {} to working capital loan {}", originatorId, loanId);
         }
     }
 }
