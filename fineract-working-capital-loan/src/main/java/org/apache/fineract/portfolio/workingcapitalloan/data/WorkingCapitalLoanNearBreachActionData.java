@@ -16,14 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+package org.apache.fineract.portfolio.workingcapitalloan.data;
 
-import java.time.LocalDate;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanNearBreachAction;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.NearBreachActionType;
 
-public interface WorkingCapitalLoanNearBreachEvaluationService {
-
-    void evaluateNearBreach(WorkingCapitalLoan loan, WorkingCapitalLoanNearBreachAction latestAction, LocalDate effectiveDate);
+public record WorkingCapitalLoanNearBreachActionData(Long id, Long loanId, NearBreachActionType action, BigDecimal threshold,
+        Integer frequency, String frequencyType, OffsetDateTime createdDate) {
 
 }

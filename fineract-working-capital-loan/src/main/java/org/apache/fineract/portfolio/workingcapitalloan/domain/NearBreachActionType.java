@@ -16,14 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+package org.apache.fineract.portfolio.workingcapitalloan.domain;
 
-import java.time.LocalDate;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanNearBreachAction;
-
-public interface WorkingCapitalLoanNearBreachEvaluationService {
-
-    void evaluateNearBreach(WorkingCapitalLoan loan, WorkingCapitalLoanNearBreachAction latestAction, LocalDate effectiveDate);
-
+public enum NearBreachActionType {
+    RESCHEDULE
 }

@@ -16,14 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+package org.apache.fineract.portfolio.workingcapitalloan.repository;
 
-import java.time.LocalDate;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
+import java.util.List;
+import java.util.Optional;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.NearBreachActionType;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanNearBreachAction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface WorkingCapitalLoanNearBreachEvaluationService {
+@Repository
+public interface WorkingCapitalLoanNearBreachActionRepository extends JpaRepository<WorkingCapitalLoanNearBreachAction, Long> {
 
-    void evaluateNearBreach(WorkingCapitalLoan loan, WorkingCapitalLoanNearBreachAction latestAction, LocalDate effectiveDate);
+    List<WorkingCapitalLoanNearBreachAction> findByWorkingCapitalLoanIdOrderByIdDesc(Long loanId);
 
+    Optional<WorkingCapitalLoanNearBreachAction> findTopByWorkingCapitalLoanIdAndActionOrderByIdDesc(Long loanId,
+            NearBreachActionType action);
 }

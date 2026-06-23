@@ -68,4 +68,5 @@
   <include relativeToChangelogFile="true" file="parts/0044_wc_loan_charge_adjustment.xml"/>
   <include relativeToChangelogFile="true" file="parts/0045_wc_loan_breach_action.xml"/>
   <include relativeToChangelogFile="true" file="parts/0046_wc_loan_breach_action_reschedule.xml"/>
+  <include relativeToChangelogFile="true" file="parts/0047_wc_loan_near_breach_action.xml"/>
 </databaseChangeLog>

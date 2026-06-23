@@ -18,12 +18,10 @@
  */
 package org.apache.fineract.portfolio.workingcapitalloan.service;
 
-import java.time.LocalDate;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
-import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanNearBreachAction;
+import java.util.List;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanNearBreachActionData;
 
-public interface WorkingCapitalLoanNearBreachEvaluationService {
+public interface WorkingCapitalLoanNearBreachActionReadService {
 
-    void evaluateNearBreach(WorkingCapitalLoan loan, WorkingCapitalLoanNearBreachAction latestAction, LocalDate effectiveDate);
-
+    List<WorkingCapitalLoanNearBreachActionData> retrieveNearBreachActions(Long loanId);
 }
