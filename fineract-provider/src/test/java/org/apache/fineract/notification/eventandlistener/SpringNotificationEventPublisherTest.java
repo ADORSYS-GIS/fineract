@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
 import org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
@@ -47,7 +48,7 @@ class SpringNotificationEventPublisherTest {
     @BeforeEach
     void setUp() {
         HashMap<BusinessDateType, LocalDate> businessDates = new HashMap<>();
-        businessDates.put(BusinessDateType.BUSINESS_DATE, LocalDate.now());
+        businessDates.put(BusinessDateType.BUSINESS_DATE, LocalDate.now(ZoneId.systemDefault()));
         ThreadLocalContextUtil.setBusinessDates(businessDates);
     }
 
