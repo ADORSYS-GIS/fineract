@@ -436,7 +436,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
 
         amortizationScheduleWriteService.applyDiscountFeeAdjustment(loan);
 
-        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+        if (loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
             accountingProcessor.postJournalEntriesForDiscountFee(loan, discountTransaction);
         }
 
@@ -566,7 +566,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         saveNewTransactionRelation(adjustmentTransaction, relatedDiscountTransaction, LoanTransactionRelationTypeEnum.RELATED);
         allocationRepository.saveAndFlush(WorkingCapitalLoanTransactionAllocation.forDiscountFeeAdjustment(adjustmentTransaction, amount));
 
-        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+        if (loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
             accountingProcessor.postJournalEntriesForDiscountFeeAdjustment(loan, adjustmentTransaction);
         }
 
@@ -768,7 +768,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
 
         handleNote(loan, command, changes);
 
-        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+        if (loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
             accountingProcessor.postJournalEntries(loan, transaction, allocation, false);
         }
 
@@ -813,7 +813,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
 
     private void triggerInlineAmortizationIfLoanClosed(final WorkingCapitalLoan loan, final LocalDate transactionDate) {
         if ((loan.getLoanStatus().isClosed() || loan.getLoanStatus().isOverpaid())
-                && loan.getLoanProduct().getAccountingRule().isCashBased()) {
+                && loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
             final BigDecimal discount = loan.getLoanProductRelatedDetails() != null ? loan.getLoanProductRelatedDetails().getDiscount()
                     : null;
             final boolean adjustmentNeeded = loan.getBalance() != null
@@ -910,7 +910,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
 
         this.loanRepository.saveAndFlush(loan);
 
-        if (loan.getLoanProduct().getAccountingRule().isCashBased()) {
+        if (loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
             accountingProcessor.postJournalEntries(loan, creditBalanceRefundTransaction, allocation, false);
         }
 
