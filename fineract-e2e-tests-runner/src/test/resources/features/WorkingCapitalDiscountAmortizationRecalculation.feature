@@ -1,5 +1,7 @@
+@WorkingCapitalDiscountFeeAmortizationRecalculationFeature
 Feature: Working Capital Discount Fee Amortization Recalculation
 
+  @TestRailId:C85360
   Scenario: Multiple COB runs accumulate discount fee amortization correctly - UC1
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -53,6 +55,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 10000.0   | 150.0              | 28.7           | 971.3            | 0.0               |
 
+  @TestRailId:C85361
   Scenario: Second COB run without new repayment does not produce a duplicate amortization transaction - UC2
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -88,6 +91,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 10000.0   | 50.0               | 9.61           | 990.39           | 0.0               |
 
+  @TestRailId:C85362
   Scenario: Undo of discount fee adjustment recalculates realized income from net amortization transactions - UC3
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -147,6 +151,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 10000.0   | 50.0               | 9.61           | 990.39           | 0.0               |
 
+  @TestRailId:C85363
   Scenario: Inline full discount recognition on loan close uses net amortization as base to compute remaining amount - UC4
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -189,6 +194,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 10000.0   | 10000.0            | 1000.0         | 0.0              | 0.0               |
 
+  @TestRailId:C85364
   Scenario: Inline recognition on close produces amortization adjustment when discount was reduced below already-posted amount - UC4b
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -234,6 +240,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 9005.0    | 9005.0             | 5.0            | 0.0              | 0.0               |
 
+  @TestRailId:C85365
   Scenario: Second COB after amortization adjustment does not produce a duplicate transaction - UC5
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -286,6 +293,7 @@ Feature: Working Capital Discount Fee Amortization Recalculation
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 9500.0    | 50.0               | 5.14           | 494.86           | 0.0               |
 
+  @TestRailId:C85366
   Scenario: Catch-up of COB does not produce amortization transactions before transaction date - UC6
     When Admin sets the business date to "01 January 2026"
     And Admin creates a client with random data
@@ -330,3 +338,100 @@ Feature: Working Capital Discount Fee Amortization Recalculation
     And Working capital loan account has the correct data:
       | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
       | 9500.0    | 50.0               | 5.14           | 494.86           | 0.0               |
+
+  @TestRailId:C85367
+  Scenario: Verify discount fee amortization transaction on working capital loan after repayment overpays loan - UC7
+    When Admin sets the business date to "01 January 2026"
+    And Admin creates a client with random data
+    And Admin creates a working capital loan with the following data:
+      | LoanProduct              | submittedOnDate | expectedDisbursementDate | principalAmount | totalPayment | periodPaymentRate | discount |
+      | WCLP_ADVANCED_ACCOUNTING | 01 January 2026 | 01 January 2026          | 9000            | 100000       | 18                | 0        |
+    And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
+    Then Working capital loan approval was successful
+    And Working capital loan account has the correct data:
+      | product.name             | submittedOnDate | expectedDisbursementDate | status   | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountApproved |
+      | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Approved | 0.0       | 9000.0            | 100000.0           | 18.0              | null             |
+    When Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
+    Then Working Capital loan status will be "ACTIVE"
+    And Verify Working Capital loan disbursement was successful
+    And Admin adds Discount fee with "1000" amount on Working Capital loan account for last disbursement
+    And Working capital loan account has the correct data:
+      | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discount |
+      | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | 1000.0    |
+    When Admin sets the business date to "02 January 2026"
+    And Admin runs inline COB job for Working Capital Loan by loanId
+    And Customer makes repayment on "02 January 2026" with 10200.0 transaction amount on Working Capital loan
+    Then Working Capital loan status will be "OVERPAID"
+    And Working capital loan account has the correct data:
+      | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
+      | 10000.0   | 10000.0            | 1000.0         | 0.0              | 200.0             |
+    And Working Capital Loan has transactions:
+      | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
+      | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
+      | 01 January 2026 | Discount Fee              | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Repayment                 | 10200.0           | 10000.0          | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Discount Fee Amortization | 1000.0            |                  |                   |                       | false    |
+    When Admin sets the business date to "03 January 2026"
+    When Admin runs inline COB job for Working Capital Loan
+    And Working capital loan account has the correct data:
+      | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
+      | 10000.0   | 10000.0            | 1000.0         | 0.0              | 200.0             |
+    And Working Capital Loan has transactions:
+      | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
+      | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
+      | 01 January 2026 | Discount Fee              | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Repayment                 | 10200.0           | 10000.0          | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Discount Fee Amortization | 1000.0            |                  |                   |                       | false    |
+
+  @TestRailId:C85368
+  Scenario: Verify none discount fee amortization nor discount fee adjustment amortization if discount fee adjustment pays off discount fee - UC8
+    When Admin sets the business date to "01 January 2026"
+    And Admin creates a client with random data
+    And Admin creates a working capital loan with the following data:
+      | LoanProduct              | submittedOnDate | expectedDisbursementDate | principalAmount | totalPayment | periodPaymentRate | discount |
+      | WCLP_ADVANCED_ACCOUNTING | 01 January 2026 | 01 January 2026          | 9000            | 100000       | 18                | 0        |
+    And Admin successfully approves the working capital loan on "01 January 2026" with "9000" amount and expected disbursement date on "01 January 2026"
+    Then Working capital loan approval was successful
+    And Working capital loan account has the correct data:
+      | product.name             | submittedOnDate | expectedDisbursementDate | status   | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discountApproved |
+      | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Approved | 0.0       | 9000.0            | 100000.0           | 18.0              | null             |
+    When Admin successfully disburse the Working Capital loan on "01 January 2026" with "9000" EUR transaction amount
+    Then Working Capital loan status will be "ACTIVE"
+    And Verify Working Capital loan disbursement was successful
+    And Admin adds Discount fee with "1000" amount on Working Capital loan account for last disbursement
+    And Working capital loan account has the correct data:
+      | product.name             | submittedOnDate | expectedDisbursementDate | status | principal | approvedPrincipal | totalPaymentVolume | periodPaymentRate | discount |
+      | WCLP_ADVANCED_ACCOUNTING | 2026-01-01      | 2026-01-01               | Active | 10000.0   | 9000.0            | 100000.0           | 18.0              | 1000.0     |
+    When Admin sets the business date to "02 January 2026"
+    And Admin runs inline COB job for Working Capital Loan by loanId
+    And Customer makes repayment on "02 January 2026" with 50.0 transaction amount on Working Capital loan
+    And Working capital loan account has the correct data:
+      | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
+      | 10000.0   | 50.0               | 0.0            | 1000.0           | 0.0               |
+    And Working Capital Loan has transactions:
+      | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
+      | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
+      | 01 January 2026 | Discount Fee              | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Repayment                 | 50.0              | 50.0             | 0.0               | 0.0                   | false    |
+    And Admin adds Discount fee adjustment with "1000" amount on transaction date "02 January 2026" on Working Capital loan account for last discount
+    And Working capital loan account has the correct data:
+      | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
+      | 9000.0    | 50.0               | 0.0            | 0.0              | 0.0               |
+    And Working Capital Loan has transactions:
+      | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
+      | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
+      | 01 January 2026 | Discount Fee              | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Repayment                 | 50.0              | 50.0             | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Discount Fee Adjustment   | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+    When Admin sets the business date to "03 January 2026"
+    When Admin runs inline COB job for Working Capital Loan
+    And Working capital loan account has the correct data:
+      | principal | totalPaidPrincipal | realizedIncome | unrealizedIncome | overpaymentAmount |
+      | 9000.0    | 50.0               | 0.0            | 0.0              | 0.0               |
+    And Working Capital Loan has transactions:
+      | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
+      | 01 January 2026 | Disbursement              | 9000.0            | 9000.0           | 0.0               | 0.0                   | false    |
+      | 01 January 2026 | Discount Fee              | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Repayment                 | 50.0              | 50.0             | 0.0               | 0.0                   | false    |
+      | 02 January 2026 | Discount Fee Adjustment   | 1000.0            | 1000.0           | 0.0               | 0.0                   | false    |
+
