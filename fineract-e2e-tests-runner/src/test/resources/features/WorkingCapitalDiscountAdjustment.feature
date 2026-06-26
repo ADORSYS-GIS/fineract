@@ -207,14 +207,14 @@ Feature: Working Capital Discount Adjustment
       | 01 January 2026 | Disbursement              | 100.0             | 100.0            | 0.0               | 0.0                   | false    |
       | 01 January 2026 | Discount Fee              | 12.0              | 12.0             | 0.0               | 0.0                   | false    |
       | 02 January 2026 | Repayment                 | 112.0             | 112.0            | 0.0               | 0.0                   | false    |
-      | 02 January 2026 | Discount Fee Amortization | 12.19             |                  |                   |                       | false    |
+      | 02 January 2026 | Discount Fee Amortization | 12.0              |                  |                   |                       | false    |
     Then Add Discount fee adjustment with "12" amount and transaction date "02 January 2026" on Working Capital loan account failed due to not active loan
     And Working Capital Loan has transactions:
       | transactionDate | type                      | transactionAmount | principalPortion | feeChargesPortion | penaltyChargesPortion | reversed |
       | 01 January 2026 | Disbursement              | 100.0             | 100.0            | 0.0               | 0.0                   | false    |
       | 01 January 2026 | Discount Fee              | 12.0              | 12.0             | 0.0               | 0.0                   | false    |
       | 02 January 2026 | Repayment                 | 112.0             | 112.0            | 0.0               | 0.0                   | false    |
-      | 02 January 2026 | Discount Fee Amortization | 12.19             |                  |                   |                       | false    |
+      | 02 January 2026 | Discount Fee Amortization | 12.0              |                  |                   |                       | false    |
 
   @TestRailId:C83034
   Scenario: Verify Discount fee adjustment failed when loan is overpaid - UC11
