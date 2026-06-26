@@ -104,10 +104,9 @@ public class JpaJdbcSameTransactionVisibilityTest {
         // physical PostgreSQL backend: JpaTransactionManager exposes EclipseLink's connection to plain JDBC even
         // without
         // an explicit DataSource binding (it derives the DataSource from the EntityManagerFactory).
-        assertThat(result.jpaBackendPid())
-                .as("JdbcTemplate must run on the same physical PostgreSQL backend as EclipseLink, so it can read the "
-                        + "JPA transaction's uncommitted writes")
-                .isEqualTo(result.jdbcBackendPid());
+        assertThat(result.jpaBackendPid()).as("""
+                JdbcTemplate must run on the same physical PostgreSQL backend as EclipseLink,
+                so it can read the JPA transaction's uncommitted writes""").isEqualTo(result.jdbcBackendPid());
         assertThat(result.jdbcCountInsideTransaction())
                 .as("sharing the connection, JdbcTemplate sees the flushed-but-uncommitted JPA row in the same transaction").isEqualTo(1);
     }
