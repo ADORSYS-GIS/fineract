@@ -219,7 +219,7 @@ public interface LoanProductTemplates {
                 .chargeOffExpenseAccountId(getExpenseAccountId("chargeOff"))//
                 .chargeOffFraudExpenseAccountId(getExpenseAccountId("chargeOffFraud"))//
                 .dateFormat(LoanTestData.DATETIME_PATTERN)//
-                .locale("en")//
+                .locale(LoanTestData.LOCALE)//
                 .enableAccrualActivityPosting(false)//
                 .multiDisburseLoan(false)//
                 .disallowExpectedDisbursements(false)//
@@ -260,5 +260,115 @@ public interface LoanProductTemplates {
     default PostLoanProductsRequest customizeProduct(PostLoanProductsRequest template,
             Function<PostLoanProductsRequest, PostLoanProductsRequest> customizer) {
         return customizer.apply(template);
+    }
+
+    default PostLoanProductsRequest onePeriod30DaysPeriodicAccrual(double interestRatePerPeriod) {
+        return onePeriod30DaysNoInterest()//
+                .interestRatePerPeriod(interestRatePerPeriod);
+    }
+
+    default PostLoanProductsRequest onePeriod30DaysPeriodicAccrual() {
+        return onePeriod30DaysPeriodicAccrual(0.0);
+    }
+
+    default PostLoanProductsRequest onePeriod30DaysPeriodicAccrualWithAdvancedAllocation() {
+        return onePeriod30DaysPeriodicAccrual()//
+                .transactionProcessingStrategyCode(TransactionProcessingStrategyCode.ADVANCED_PAYMENT_ALLOCATION_STRATEGY)//
+                .loanScheduleType("PROGRESSIVE")//
+                .loanScheduleProcessingType("HORIZONTAL")//
+                .addPaymentAllocationItem(LoanRequestBuilders.defaultPaymentAllocation());
+    }
+
+    default PostLoanProductsRequest fourPeriod1MonthWithoutInterest(String repaymentStrategy) {
+        PostLoanProductsRequest request = onePeriod30DaysPeriodicAccrual()//
+                .multiDisburseLoan(false)//
+                .disallowExpectedDisbursements(false)//
+                .allowApprovedDisbursedAmountsOverApplied(false)//
+                .overAppliedCalculationType(null)//
+                .overAppliedNumber(null)//
+                .principal(1000.0)//
+                .numberOfRepayments(4)//
+                .repaymentEvery(1)//
+                .repaymentFrequencyType(RepaymentFrequencyType.MONTHS_L)//
+                .transactionProcessingStrategyCode(repaymentStrategy);
+        if (TransactionProcessingStrategyCode.ADVANCED_PAYMENT_ALLOCATION_STRATEGY.equals(repaymentStrategy)) {
+            request.loanScheduleType("PROGRESSIVE")//
+                    .loanScheduleProcessingType("HORIZONTAL")//
+                    .addPaymentAllocationItem(LoanRequestBuilders.defaultPaymentAllocation());
+        } else {
+            request.loanScheduleType("CUMULATIVE")//
+                    .loanScheduleProcessingType(null)//
+                    .paymentAllocation(null);
+        }
+        return request;
+    }
+
+    default PostLoanProductsRequest create4IProgressive() {
+        final Long delinquencyBucketId = org.apache.fineract.integrationtests.common.products.DelinquencyBucketsHelper
+                .createDefaultBucket();
+        return new PostLoanProductsRequest().name(Utils.uniqueRandomStringGenerator("4I_PROGRESSIVE_", 6))//
+                .shortName(Utils.uniqueRandomStringGenerator("", 4))//
+                .description("4 installment product - progressive")//
+                .includeInBorrowerCycle(false)//
+                .useBorrowerCycle(false)//
+                .currencyCode("EUR")//
+                .digitsAfterDecimal(2)//
+                .principal(1000.0)//
+                .minPrincipal(100.0)//
+                .maxPrincipal(10000.0)//
+                .numberOfRepayments(4)//
+                .repaymentEvery(1)//
+                .repaymentFrequencyType(RepaymentFrequencyType.MONTHS_L)//
+                .interestRatePerPeriod(10D)//
+                .minInterestRatePerPeriod(0D)//
+                .maxInterestRatePerPeriod(120D)//
+                .interestRateFrequencyType(InterestRateFrequencyType.YEARS)//
+                .isLinkedToFloatingInterestRates(false)//
+                .allowVariableInstallments(false)//
+                .amortizationType(AmortizationType.EQUAL_INSTALLMENTS)//
+                .interestType(InterestType.DECLINING_BALANCE)//
+                .interestCalculationPeriodType(InterestCalculationPeriodType.DAILY)//
+                .allowPartialPeriodInterestCalculation(false)//
+                .transactionProcessingStrategyCode(TransactionProcessingStrategyCode.ADVANCED_PAYMENT_ALLOCATION_STRATEGY)//
+                .paymentAllocation(List.of(LoanRequestBuilders.defaultPaymentAllocation()))//
+                .creditAllocation(List.of())//
+                .overdueDaysForNPA(179)//
+                .daysInMonthType(DaysInMonthType.DAYS_30)//
+                .daysInYearType(DaysInYearType.DAYS_360)//
+                .isInterestRecalculationEnabled(true)//
+                .interestRecalculationCompoundingMethod(LoanTestData.InterestRecalculationCompoundingMethod.NONE)//
+                .rescheduleStrategyMethod(RescheduleStrategyMethod.ADJUST_LAST_UNPAID_PERIOD)//
+                .recalculationRestFrequencyType(LoanTestData.RecalculationRestFrequencyType.DAILY)//
+                .recalculationRestFrequencyInterval(1)//
+                .isArrearsBasedOnOriginalSchedule(false)//
+                .isCompoundingToBePostedAsTransaction(false)//
+                .preClosureInterestCalculationStrategy(1)//
+                .allowCompoundingOnEod(false)//
+                .canDefineInstallmentAmount(true)//
+                .repaymentStartDateType(1)//
+                .charges(List.of())//
+                .principalVariationsForBorrowerCycle(List.of())//
+                .interestRateVariationsForBorrowerCycle(List.of())//
+                .numberOfRepaymentVariationsForBorrowerCycle(List.of())//
+                .accountingRule(1)//
+                .canUseForTopup(false)//
+                .dateFormat(LoanTestData.DATETIME_PATTERN)//
+                .locale(LoanTestData.LOCALE)//
+                .multiDisburseLoan(true)//
+                .maxTrancheCount(10)//
+                .outstandingLoanBalance(10000.0)//
+                .disallowExpectedDisbursements(true)//
+                .allowApprovedDisbursedAmountsOverApplied(true)//
+                .overAppliedCalculationType("percentage")//
+                .overAppliedNumber(50)//
+                .principalThresholdForLastInstallment(50)//
+                .holdGuaranteeFunds(false)//
+                .accountMovesOutOfNPAOnlyOnArrearsCompletion(false)//
+                .isEqualAmortization(false)//
+                .delinquencyBucketId(delinquencyBucketId)//
+                .enableDownPayment(false)//
+                .enableInstallmentLevelDelinquency(false)//
+                .loanScheduleType("PROGRESSIVE")//
+                .loanScheduleProcessingType("HORIZONTAL");
     }
 }

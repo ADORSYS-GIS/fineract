@@ -28,6 +28,7 @@ import org.apache.fineract.client.feign.FineractFeignClient;
 import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.models.CommandProcessingResult;
 import org.apache.fineract.client.models.DeleteLoansLoanIdChargesChargeIdResponse;
+import org.apache.fineract.client.models.GetLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdChargesChargeIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdChargesTemplateResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
@@ -49,6 +50,8 @@ import org.apache.fineract.client.models.PostLoansRequest;
 import org.apache.fineract.client.models.PostLoansResponse;
 import org.apache.fineract.client.models.PostUpdateRescheduleLoansRequest;
 import org.apache.fineract.client.models.PostUpdateRescheduleLoansResponse;
+import org.apache.fineract.client.models.PutLoanProductsProductIdRequest;
+import org.apache.fineract.client.models.PutLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.PutLoansAvailableDisbursementAmountRequest;
 import org.apache.fineract.client.models.PutLoansAvailableDisbursementAmountResponse;
 import org.apache.fineract.client.models.PutLoansLoanIdChargesChargeIdRequest;
@@ -92,6 +95,14 @@ public class FeignLoanHelper {
     public Long createLoanProduct(PostLoanProductsRequest request) {
         PostLoanProductsResponse response = ok(() -> fineractClient.loanProducts().createLoanProduct(request));
         return response.getResourceId();
+    }
+
+    public GetLoanProductsProductIdResponse retrieveLoanProduct(Long productId) {
+        return ok(() -> fineractClient.loanProducts().retrieveOneLoanProduct(productId));
+    }
+
+    public PutLoanProductsProductIdResponse updateLoanProduct(Long productId, PutLoanProductsProductIdRequest request) {
+        return ok(() -> fineractClient.loanProducts().updateLoanProduct(productId, request));
     }
 
     public Long applyForLoan(PostLoansRequest request) {
