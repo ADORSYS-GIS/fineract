@@ -89,6 +89,7 @@ resolve {
     outputDir = file("${buildDir}/resources/main/static")
     openApiFile = file("${buildDir}/tmp/swagger/fineract-input.yaml")
     readerClass = 'org.apache.fineract.infrastructure.openapi.FineractOperationIdReader'
+    filterClass = 'org.apache.fineract.infrastructure.openapi.FineractOpenApiSpecFilter'
     sortOutput = true
     dependsOn(prepareInputYaml, classes)
 }
