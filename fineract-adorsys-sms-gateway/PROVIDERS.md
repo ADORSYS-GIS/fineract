@@ -28,7 +28,11 @@ The provider is selected by name at runtime. The selected provider receives a no
 | `console` | `ConsoleSmsProvider` | Local development provider that logs the SMS body to application logs. Use this for local OTP testing. |
 | `mock` | `MockSmsProvider` | Test provider for integration tests or environments where delivery is disabled. |
 | `twilio` | `TwilioSmsProvider` | Twilio-backed provider for real SMS delivery. |
+| `orange` | `OrangeSmsProvider` | Orange SMS API for Francophone Africa (Cameroon-ready with MSISDN normalization and OAuth2). |
+| `avlytext` | `AvlytextSmsProvider` | Avlytext SMS aggregator for African markets. |
 | `custom-http` | `CustomHttpSmsProvider` | Generic HTTPS provider integration for external SMS vendors. |
+| `sns` | `SnsSmsProvider` | AWS SNS for global SMS delivery with configurable sender ID and max price. |
+| `whatsapp` | `WhatsappSmsProvider` | WhatsApp message delivery via GOWA sidecar (aldinokemal2104/go-whatsapp-web-multidevice). |
 
 ## Switching providers
 
@@ -39,15 +43,15 @@ export SMS_PROVIDER_PRIMARY=console
 mvn spring-boot:run
 ```
 
-Optional fallback delivery is controlled by `SMS_PROVIDER_FALLBACK`.
+Optional fallback delivery is controlled by `SMS_PROVIDER_FALLBACK`. Supports a **comma-separated chain** of providers tried in order.
 
 ```bash
 export SMS_PROVIDER_PRIMARY=twilio
-export SMS_PROVIDER_FALLBACK=console
+export SMS_PROVIDER_FALLBACK=orange,avlytext,console
 mvn spring-boot:run
 ```
 
-When a send attempt fails through the primary provider, the gateway can attempt the fallback provider if it is configured and available.
+When a send attempt fails through the primary provider, the gateway tries each fallback provider in order until one succeeds. If all fail, the last error is returned.
 
 ## Local development: console provider
 
@@ -105,6 +109,41 @@ mvn spring-boot:run
 ```
 
 The custom HTTP provider requires HTTPS for external calls.
+
+## AWS SNS provider
+
+Use `sns` for delivery via AWS SNS.
+
+```bash
+export SMS_PROVIDER_PRIMARY=sns
+export SMS_PROVIDER_FALLBACK=console
+export SMS_SNS_REGION=eu-west-1
+export SMS_SNS_SENDER_ID=Webank
+export SMS_SNS_MAX_PRICE=1.00
+mvn spring-boot:run
+```
+
+`SMS_SNS_REGION` is required. Credentials are resolved via the [default AWS credentials chain](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/credentials-chain.html) (environment variables, ~/.aws/credentials, IAM roles).
+
+Optional attributes:
+- `SMS_SNS_SENDER_ID` — displayed as the SMS sender (default: `Webank`)
+- `SMS_SNS_MAX_PRICE` — max price per SMS in USD (no default)
+
+## WhatsApp provider
+
+Use `whatsapp` for delivery via WhatsApp through a GOWA sidecar instance.
+
+```bash
+export SMS_PROVIDER_PRIMARY=whatsapp
+export SMS_PROVIDER_FALLBACK=console
+export SMS_WHATSAPP_BASE_URL=http://gowa:8080
+export SMS_WHATSAPP_DEVICE_ID=device-1
+mvn spring-boot:run
+```
+
+`SMS_WHATSAPP_BASE_URL` is required. The sidecar must expose a `POST /send/message` endpoint accepting `{"phone": "...", "message": "..."}`.
+
+The recommended sidecar is [aldinokemal2104/go-whatsapp-web-multidevice](https://github.com/aldinokemal2104/go-whatsapp-web-multidevice).
 
 ## Per-request provider override
 
