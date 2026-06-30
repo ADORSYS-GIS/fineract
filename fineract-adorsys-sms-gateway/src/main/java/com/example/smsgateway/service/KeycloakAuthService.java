@@ -39,17 +39,20 @@ public class KeycloakAuthService {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
-    private String accessToken;
+    private volatile String accessToken;
+    private volatile long tokenExpiryTime;
 
     public KeycloakAuthService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
-    public String getAccessToken() {
-        if (accessToken == null && !authenticate()) {
-            logger.error("Authentication failed. Unable to retrieve access token.");
-            return null;
+    public synchronized String getAccessToken() {
+        if (accessToken == null || System.currentTimeMillis() >= tokenExpiryTime) {
+            if (!authenticate()) {
+                logger.error("Authentication failed. Unable to retrieve access token.");
+                return null;
+            }
         }
         return accessToken;
     }
@@ -76,7 +79,15 @@ public class KeycloakAuthService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 JsonNode responseBody = objectMapper.readTree(response.getBody());
                 this.accessToken = responseBody.get("access_token").asText();
-                logger.info("Access Token retrieved successfully.");
+                
+                long expiresInSeconds = 300; // Default fallback to 5 minutes
+                if (responseBody.has("expires_in")) {
+                    expiresInSeconds = responseBody.get("expires_in").asLong();
+                }
+                // Set expiry time to (current time + expires_in) minus a 30-second buffer
+                this.tokenExpiryTime = System.currentTimeMillis() + ((expiresInSeconds - 30) * 1000);
+                
+                logger.info("Access Token retrieved successfully. Expires in {} seconds", expiresInSeconds);
                 return true;
             } else {
                 logger.error("Failed to authenticate with Keycloak. Status: {}", response.getStatusCode());

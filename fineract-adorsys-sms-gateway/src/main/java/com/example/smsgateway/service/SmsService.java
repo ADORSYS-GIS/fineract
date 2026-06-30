@@ -25,17 +25,22 @@ public class SmsService {
 
     private final Map<String, SmsProvider> providers;
     private final String primaryProvider;
-    private final String fallbackProvider;
+    private final List<String> fallbackProviders;
     private final MeterRegistry meterRegistry;
 
     public SmsService(
             List<SmsProvider> providers,
             @Value("${sms.provider.primary:twilio}") String primaryProvider,
-            @Value("${sms.provider.fallback:}") String fallbackProvider,
+            @Value("${sms.provider.fallback:}") String fallbackProvidersRaw,
             MeterRegistry meterRegistry) {
         this.providers = providers.stream().collect(java.util.stream.Collectors.toMap(SmsProvider::name, provider -> provider));
         this.primaryProvider = primaryProvider;
-        this.fallbackProvider = fallbackProvider;
+        this.fallbackProviders = StringUtils.hasText(fallbackProvidersRaw)
+                ? java.util.Arrays.stream(fallbackProvidersRaw.split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .toList()
+                : java.util.Collections.emptyList();
         this.meterRegistry = meterRegistry;
     }
 
@@ -49,10 +54,23 @@ public class SmsService {
     public SmsSendResult send(SmsMessage message) {
         String requestedProvider = StringUtils.hasText(message.provider()) ? message.provider() : primaryProvider;
         SmsSendResult result = sendWithProvider(requestedProvider, message);
-        if (!result.success() && StringUtils.hasText(fallbackProvider) && !fallbackProvider.equals(requestedProvider)) {
-            logger.warn("SMS provider {} failed for message type {}, attempting fallback", requestedProvider, message.type());
-            result = sendWithProvider(fallbackProvider, message);
+        if (result.success()) {
+            return result;
         }
+
+        // Try fallback providers in order
+        for (String fallback : fallbackProviders) {
+            if (fallback.equals(requestedProvider)) {
+                continue;
+            }
+            logger.warn("SMS provider {} failed for message type {}, attempting fallback {}",
+                    requestedProvider, message.type(), fallback);
+            result = sendWithProvider(fallback, message);
+            if (result.success()) {
+                return result;
+            }
+        }
+
         return result;
     }
 

@@ -43,6 +43,26 @@ keycloak:
   client-id: ${KEYCLOAK_CLIENT_ID:setup-app-client}
   client-secret: ${KEYCLOAK_CLIENT_SECRET:**********}
 
+sms:
+  gateway:
+    api-key: ${SMS_GATEWAY_API_KEY:}
+  provider:
+    primary: ${SMS_PROVIDER_PRIMARY:twilio}
+    fallback: ${SMS_PROVIDER_FALLBACK:}
+  custom-http:
+    url: ${SMS_CUSTOM_HTTP_URL:}
+    api-key: ${SMS_CUSTOM_HTTP_API_KEY:}
+    sender: ${SMS_CUSTOM_HTTP_SENDER:Webank}
+  sns:
+    region: ${SMS_SNS_REGION:}
+    sender-id: ${SMS_SNS_SENDER_ID:Webank}
+    max-price: ${SMS_SNS_MAX_PRICE:}
+  whatsapp:
+    base-url: ${SMS_WHATSAPP_BASE_URL:}
+    device-id: ${SMS_WHATSAPP_DEVICE_ID:}
+  mock:
+    enabled: ${SMS_MOCK_ENABLED:false}
+
 logging:
   level:
     com.example.smsgateway.provider.OrangeSmsProvider: DEBUG
