@@ -2,7 +2,6 @@ package com.example.smsgateway.provider;
 
 import com.example.smsgateway.model.SmsMessage;
 import com.example.smsgateway.model.SmsSendResult;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -47,9 +48,9 @@ public class WhatsappSmsProvider implements SmsProvider {
 
         return RetryHelper.executeWithRetry(() -> {
             try {
-                String url = baseUrl.trimEnd('/') + "/send/message";
+                String url = (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl) + "/send/message";
                 if (StringUtils.hasText(deviceId)) {
-                    url += "?device_id=" + deviceId;
+                    url += "?device_id=" + URLEncoder.encode(deviceId, StandardCharsets.UTF_8);
                 }
 
                 HttpHeaders headers = new HttpHeaders();
