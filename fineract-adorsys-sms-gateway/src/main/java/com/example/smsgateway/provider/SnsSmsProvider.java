@@ -2,6 +2,7 @@ package com.example.smsgateway.provider;
 
 import com.example.smsgateway.model.SmsMessage;
 import com.example.smsgateway.model.SmsSendResult;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,8 @@ import software.amazon.awssdk.services.sns.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
 
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class SnsSmsProvider implements SmsProvider {
@@ -66,6 +69,14 @@ public class SnsSmsProvider implements SmsProvider {
         }
     }
 
+    @PreDestroy
+    public void destroy() {
+        if (snsClient != null) {
+            snsClient.close();
+            logger.info("SNS client closed");
+        }
+    }
+
     @Override
     public SmsSendResult send(SmsMessage message) {
         SnsClient client = getClient();
@@ -78,7 +89,7 @@ public class SnsSmsProvider implements SmsProvider {
                     .phoneNumber(message.to())
                     .message(message.body());
 
-            java.util.Map<String, MessageAttributeValue> attrs = new java.util.HashMap<>();
+            Map<String, MessageAttributeValue> attrs = new HashMap<>();
             if (StringUtils.hasText(senderId)) {
                 attrs.put("AWS.SNS.SMS.SenderID", MessageAttributeValue.builder()
                         .stringValue(senderId).dataType("String").build());
@@ -94,16 +105,23 @@ public class SnsSmsProvider implements SmsProvider {
             }
 
             PublishResponse response = client.publish(requestBuilder.build());
-            logger.info("SNS SMS sent to {}: messageId={}", message.to(), response.messageId());
+            logger.info("SNS SMS sent to {}: messageId={}", maskPhone(message.to()), response.messageId());
             return SmsSendResult.success(name(), response.messageId());
 
         } catch (Exception e) {
-            logger.error("SNS SMS send failed for {}", message.to(), e);
+            logger.error("SNS SMS send failed for {}", maskPhone(message.to()), e);
             return SmsSendResult.failure(name(), "PROVIDER_ERROR");
         }
     }
 
     private boolean isConfigured() {
         return StringUtils.hasText(region);
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 6) {
+            return "***";
+        }
+        return phone.substring(0, 4) + "***" + phone.substring(phone.length() - 2);
     }
 }

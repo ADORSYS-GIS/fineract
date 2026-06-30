@@ -5,6 +5,7 @@ import com.example.smsgateway.model.SmsSendResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 
 @Component
@@ -27,10 +29,13 @@ public class WhatsappSmsProvider implements SmsProvider {
     private final String deviceId;
 
     public WhatsappSmsProvider(
-            RestTemplate restTemplate,
+            RestTemplateBuilder restTemplateBuilder,
             @Value("${sms.whatsapp.base-url:}") String baseUrl,
             @Value("${sms.whatsapp.device-id:}") String deviceId) {
-        this.restTemplate = restTemplate;
+        this.restTemplate = restTemplateBuilder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(10))
+                .build();
         this.baseUrl = baseUrl;
         this.deviceId = deviceId;
     }
@@ -65,15 +70,15 @@ public class WhatsappSmsProvider implements SmsProvider {
                 ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
                 if (response.getStatusCode().is2xxSuccessful()) {
-                    logger.info("WhatsApp message sent to {}", message.to());
+                    logger.info("WhatsApp message sent to {}", maskPhone(message.to()));
                     return SmsSendResult.success(name(), null);
                 } else {
-                    logger.warn("WhatsApp provider returned {} for {}", response.getStatusCode(), message.to());
+                    logger.warn("WhatsApp provider returned {} for {}", response.getStatusCode(), maskPhone(message.to()));
                     return SmsSendResult.failure(name(), "PROVIDER_REJECTED");
                 }
 
             } catch (Exception ex) {
-                logger.error("Error sending WhatsApp message to {}", message.to(), ex);
+                logger.error("Error sending WhatsApp message to {}", maskPhone(message.to()), ex);
                 return SmsSendResult.failure(name(), mapExceptionToErrorCode(ex));
             }
         }, name());
@@ -88,5 +93,12 @@ public class WhatsappSmsProvider implements SmsProvider {
             return "INVALID_INPUT";
         }
         return "PROVIDER_ERROR";
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 6) {
+            return "***";
+        }
+        return phone.substring(0, 4) + "***" + phone.substring(phone.length() - 2);
     }
 }

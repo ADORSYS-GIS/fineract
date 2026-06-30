@@ -39,15 +39,15 @@ public class KeycloakAuthService {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
-    private String accessToken;
-    private long tokenExpiryTime;
+    private volatile String accessToken;
+    private volatile long tokenExpiryTime;
 
     public KeycloakAuthService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
-    public String getAccessToken() {
+    public synchronized String getAccessToken() {
         if (accessToken == null || System.currentTimeMillis() >= tokenExpiryTime) {
             if (!authenticate()) {
                 logger.error("Authentication failed. Unable to retrieve access token.");
