@@ -46,3 +46,8 @@ keycloak:
 logging:
   level:
     com.example.smsgateway.provider.OrangeSmsProvider: DEBUG
+
+# API key required on the X-KYC-Api-Key header for BFF-facing endpoints
+# (/sms/send, /otp/send, /otp/verify, /api/v1/otp/*). Empty/blank disables
+# enforcement (local dev / test). The docker-compose stack always sets this.
+SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}
