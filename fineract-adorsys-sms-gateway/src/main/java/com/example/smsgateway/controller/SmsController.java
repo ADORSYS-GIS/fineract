@@ -7,6 +7,7 @@ import com.example.smsgateway.model.OtpValidateRequest;
 import com.example.smsgateway.model.OtpValidateResponse;
 import com.example.smsgateway.service.MessageService;
 import com.example.smsgateway.service.OtpService;
+import com.example.smsgateway.service.SmsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,9 @@ public class SmsController {
 
     @Autowired
     private OtpService otpService;
+
+    @Autowired
+    private SmsService smsService;
 
     @PostMapping("/sms/")
     public void receiveSmsRequest(@RequestBody String rawPayload) {
@@ -84,5 +88,25 @@ public class SmsController {
                 "verified", response.valid(),
                 "status", response.status()
         ));
+    }
+
+    /**
+     * Generic SMS send endpoint for transactional messages that are not OTP-gated.
+     * Used by the BFF to send P2P viral-loop claim SMS to unregistered recipients
+     * (money waiting in escrow until the recipient installs WeBank and verifies
+     * their phone at KYC1).
+     *
+     * The BFF authenticates via the X-KYC-Api-Key header, the same key used for
+     * the /otp/* endpoints. Validation and provider failure are surfaced through
+     * the global ApiExceptionHandler (400 for invalid input, 429 for delivery
+     * failure).
+     */
+    @PostMapping("/sms/send")
+    public ResponseEntity<Void> sendGenericSms(@RequestBody Map<String, String> request) {
+        String phone = request.get("phone");
+        String message = request.get("message");
+        logger.info("Sending generic SMS to {}", phone);
+        smsService.sendSms(phone, message);
+        return ResponseEntity.accepted().build();
     }
 }
