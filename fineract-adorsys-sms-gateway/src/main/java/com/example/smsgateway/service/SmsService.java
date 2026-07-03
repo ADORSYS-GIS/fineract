@@ -6,22 +6,25 @@ import com.example.smsgateway.model.SmsSendResult;
 import com.example.smsgateway.provider.SmsProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
 @Service
 public class SmsService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SmsService.class);
-    private static final Pattern E164_PATTERN = Pattern.compile("^\\+[1-9]\\d{7,14}$");
+    private static final Logger logger = LoggerFactory.getLogger(
+        SmsService.class
+    );
+    private static final Pattern E164_PATTERN = Pattern.compile(
+        "^\\+[1-9]\\d{7,14}$"
+    );
 
     private final Map<String, SmsProvider> providers;
     private final String primaryProvider;
@@ -29,28 +32,77 @@ public class SmsService {
     private final MeterRegistry meterRegistry;
 
     public SmsService(
-            List<SmsProvider> providers,
-            @Value("${sms.provider.primary:twilio}") String primaryProvider,
-            @Value("${sms.provider.fallback:}") String fallbackProvider,
-            MeterRegistry meterRegistry) {
-        this.providers = providers.stream().collect(java.util.stream.Collectors.toMap(SmsProvider::name, provider -> provider));
+        List<SmsProvider> providers,
+        @Value("${sms.provider.primary:twilio}") String primaryProvider,
+        @Value("${sms.provider.fallback:}") String fallbackProvider,
+        MeterRegistry meterRegistry
+    ) {
+        this.providers = providers
+            .stream()
+            .collect(
+                java.util.stream.Collectors.toMap(
+                    SmsProvider::name,
+                    provider -> provider
+                )
+            );
         this.primaryProvider = primaryProvider;
         this.fallbackProvider = fallbackProvider;
         this.meterRegistry = meterRegistry;
     }
 
+    /**
+     * Convenience for Fineract-event SMS (deposit/withdrawal alerts). Tags the
+     * message {@link MessageType#FINERACT_EVENT} so metrics/logs distinguish
+     * Fineract webhook traffic from BFF-driven transactional SMS.
+     */
     public void sendSms(String to, String messageBody) {
-        SmsSendResult result = send(new SmsMessage(normalizePhoneNumber(to), sanitizeMessage(messageBody), MessageType.FINERACT_EVENT, null, Map.of()));
+        sendSms(to, messageBody, MessageType.FINERACT_EVENT);
+    }
+
+    /**
+     * Send a generic SMS tagged with an explicit message type so metrics and logs
+     * separate traffic classes (e.g. BFF P2P claim links use {@link MessageType#TRANSACTIONAL},
+     * not {@link MessageType#FINERACT_EVENT}). Throws {@link SmsDeliveryException}
+     * on delivery failure so the BFF maps it to 502 rather than retry-storming 429.
+     */
+    public void sendSms(
+        String to,
+        String messageBody,
+        MessageType messageType
+    ) {
+        SmsSendResult result = send(
+            new SmsMessage(
+                normalizePhoneNumber(to),
+                sanitizeMessage(messageBody),
+                messageType,
+                null,
+                Map.of()
+            )
+        );
         if (!result.success()) {
-            throw new IllegalStateException("SMS delivery failed");
+            throw new SmsDeliveryException(
+                "SMS delivery failed",
+                result.provider(),
+                result.errorCode()
+            );
         }
     }
 
     public SmsSendResult send(SmsMessage message) {
-        String requestedProvider = StringUtils.hasText(message.provider()) ? message.provider() : primaryProvider;
+        String requestedProvider = StringUtils.hasText(message.provider())
+            ? message.provider()
+            : primaryProvider;
         SmsSendResult result = sendWithProvider(requestedProvider, message);
-        if (!result.success() && StringUtils.hasText(fallbackProvider) && !fallbackProvider.equals(requestedProvider)) {
-            logger.warn("SMS provider {} failed for message type {}, attempting fallback", requestedProvider, message.type());
+        if (
+            !result.success() &&
+            StringUtils.hasText(fallbackProvider) &&
+            !fallbackProvider.equals(requestedProvider)
+        ) {
+            logger.warn(
+                "SMS provider {} failed for message type {}, attempting fallback",
+                requestedProvider,
+                message.type()
+            );
             result = sendWithProvider(fallbackProvider, message);
         }
         return result;
@@ -74,27 +126,68 @@ public class SmsService {
         if (!StringUtils.hasText(messageBody) || messageBody.length() > 1600) {
             throw new IllegalArgumentException("Invalid message body");
         }
-        return messageBody.replaceAll("[\\u0000-\\u001F&&[^\\n\\r\\t]]", "").trim();
+        return messageBody
+            .replaceAll("[\\u0000-\\u001F&&[^\\n\\r\\t]]", "")
+            .trim();
     }
 
-    private SmsSendResult sendWithProvider(String providerName, SmsMessage message) {
-        Optional<SmsProvider> provider = Optional.ofNullable(providers.get(providerName));
+    private SmsSendResult sendWithProvider(
+        String providerName,
+        SmsMessage message
+    ) {
+        Optional<SmsProvider> provider = Optional.ofNullable(
+            providers.get(providerName)
+        );
         if (provider.isEmpty()) {
-            meterRegistry.counter("sms_send_total", "provider", providerName, "status", "failure").increment();
+            meterRegistry
+                .counter(
+                    "sms_send_total",
+                    "provider",
+                    providerName,
+                    "status",
+                    "failure"
+                )
+                .increment();
             return SmsSendResult.failure(providerName, "UNKNOWN_PROVIDER");
         }
 
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
             SmsSendResult result = provider.get().send(message);
-            meterRegistry.counter("sms_send_total", "provider", providerName, "status", result.success() ? "success" : "failure").increment();
+            meterRegistry
+                .counter(
+                    "sms_send_total",
+                    "provider",
+                    providerName,
+                    "status",
+                    result.success() ? "success" : "failure"
+                )
+                .increment();
             return result;
         } catch (RuntimeException ex) {
-            logger.warn("SMS provider {} failed for message type {}", providerName, message.type());
-            meterRegistry.counter("sms_send_total", "provider", providerName, "status", "failure").increment();
+            logger.warn(
+                "SMS provider {} failed for message type {}",
+                providerName,
+                message.type()
+            );
+            meterRegistry
+                .counter(
+                    "sms_send_total",
+                    "provider",
+                    providerName,
+                    "status",
+                    "failure"
+                )
+                .increment();
             return SmsSendResult.failure(providerName, "PROVIDER_ERROR");
         } finally {
-            sample.stop(meterRegistry.timer("sms_send_latency", "provider", providerName));
+            sample.stop(
+                meterRegistry.timer(
+                    "sms_send_latency",
+                    "provider",
+                    providerName
+                )
+            );
         }
     }
 }

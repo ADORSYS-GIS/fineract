@@ -63,14 +63,17 @@ services:
     volumes:
       - ./fineract-adorsys-keycloak-theme/theme-1.0.1.jar:/opt/keycloak/providers/theme-1.0.1.jar:ro
     healthcheck:
-      test: ["CMD-SHELL", "timeout 3 sh -c 'cat < /dev/null > /dev/tcp/localhost/9000' || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "timeout 3 sh -c 'cat < /dev/null > /dev/tcp/localhost/9000' || exit 1",
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
       start_period: 60s
     networks:
       - fineract-network
-
 
   fineract-config-cli:
     build:
@@ -89,7 +92,6 @@ services:
     networks:
       - fineract-network
     restart: "no"
-
 
   keycloak-config-cli:
     image: adorsys/keycloak-config-cli:latest
@@ -117,6 +119,12 @@ services:
     build:
       context: fineract-adorsys-sms-gateway
       dockerfile: Dockerfile
+    environment:
+      # Shared secret gating all BFF-facing endpoints (/sms/send, /otp/*). Must
+      # match the BFF's KYC_MANAGER_API_KEY. Defaults to the shared dev key so
+      # the out-of-the-box stack keeps OTP flows working; override in production.
+      SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:-dev-sms-gateway-key}
+      SMS_GATEWAY_AUTH_DISABLED: ${SMS_GATEWAY_AUTH_DISABLED:-false}
     ports:
       - "8080:8080"
     depends_on:

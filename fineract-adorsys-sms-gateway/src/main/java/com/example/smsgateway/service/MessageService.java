@@ -1,18 +1,20 @@
 package com.example.smsgateway.service;
 
 import com.example.smsgateway.model.FineractHookPayload;
+import com.example.smsgateway.model.MessageType;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
 @Service
 public class MessageService {
 
-    private static final Logger logger = LoggerFactory.getLogger(MessageService.class);
+    private static final Logger logger = LoggerFactory.getLogger(
+        MessageService.class
+    );
 
     @Autowired
     private FineractService fineractService;
@@ -27,11 +29,20 @@ public class MessageService {
         if (templateId != -1) {
             try {
                 String template = fineractService.getSmsTemplate(templateId);
-                String phoneNumber = fineractService.getClientPhoneNumber(payload.getClientId());
+                String phoneNumber = fineractService.getClientPhoneNumber(
+                    payload.getClientId()
+                );
                 String message = buildMessage(template, payload);
 
-                logger.info("Sending Fineract event SMS for action {}", actionName);
-                smsService.sendSms(phoneNumber, message);
+                logger.info(
+                    "Sending Fineract event SMS for action {}",
+                    actionName
+                );
+                smsService.sendSms(
+                    phoneNumber,
+                    message,
+                    MessageType.FINERACT_EVENT
+                );
             } catch (Exception e) {
                 logger.error("Error processing SMS request", e);
             }
@@ -52,12 +63,23 @@ public class MessageService {
     private String buildMessage(String template, FineractHookPayload payload) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String transactionDate = LocalDate.now().format(formatter);
-        String accountBalance = fineractService.getAccountBalance(payload.getResponse().getSavingsId());
+        String accountBalance = fineractService.getAccountBalance(
+            payload.getResponse().getSavingsId()
+        );
 
         String message = template;
-        message = message.replace("{depositAmount}", payload.getRequest().getTransactionAmount().toString());
-        message = message.replace("{withdrawalAmount}", payload.getRequest().getTransactionAmount().toString());
-        message = message.replace("{savingsAccountNumber}", payload.getResponse().getSavingsId().toString());
+        message = message.replace(
+            "{depositAmount}",
+            payload.getRequest().getTransactionAmount().toString()
+        );
+        message = message.replace(
+            "{withdrawalAmount}",
+            payload.getRequest().getTransactionAmount().toString()
+        );
+        message = message.replace(
+            "{savingsAccountNumber}",
+            payload.getResponse().getSavingsId().toString()
+        );
         message = message.replace("{accountBalance}", accountBalance);
         message = message.replace("{transactionDate}", transactionDate);
 

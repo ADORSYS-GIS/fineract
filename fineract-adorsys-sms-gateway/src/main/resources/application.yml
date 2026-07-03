@@ -51,7 +51,9 @@ logging:
 # (/sms/send, /otp/send, /otp/verify, /api/v1/otp/*). A missing key rejects
 # every BFF-facing request with 401 (fail-closed) so misconfig is loud.
 # Set SMS_GATEWAY_API_KEY to the shared secret (must match the BFF's
-# KYC_MANAGER_API_KEY). The docker-compose stack sets this by default.
+# KYC_MANAGER_API_KEY). The docker-compose-adorsys.yml stack passes this
+# through from the host environment, defaulting to `dev-sms-gateway-key`
+# so the default stack works out of the box; override it in production.
 SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}
 
 # Dev/test only: set to true to bypass API-key auth entirely. Never enable

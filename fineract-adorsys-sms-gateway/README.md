@@ -39,6 +39,8 @@ Before running the application, you need to set the following environment variab
 | `FINERACT_API_URL` | The URL of your Fineract instance. |
 | `FINERACT_API_USER` | The username for your Fineract instance. |
 | `FINERACT_API_PASSWORD` | The password for your Fineract instance. |
+| `SMS_GATEWAY_API_KEY` | Shared secret required on the `X-KYC-Api-Key` header for all BFF-facing endpoints (`/sms/send`, `/otp/*`, `/api/v1/otp/*`). Must match the BFF's `KYC_MANAGER_API_KEY`. Empty → fail-closed (401 on all BFF routes). |
+| `SMS_GATEWAY_AUTH_DISABLED` | Dev/test only: `true` bypasses API-key auth entirely (never in production). Defaults to `false`. |
 
 ### Running the Application
 
@@ -69,6 +71,31 @@ The existing Fineract webhook endpoint remains:
 ```http
 POST /sms/
 ```
+
+## Generic SMS Send API
+
+For transactional (non-OTP) SMS initiated by the BFF (e.g. P2P viral-loop claim links):
+
+```http
+POST /sms/send
+Content-Type: application/json
+X-KYC-Api-Key: <shared secret, must match the BFF's KYC_MANAGER_API_KEY>
+```
+
+```json
+{
+  "phone": "+237670000000",
+  "message": "You've received money on WeBank. Install the app and verify your number to claim."
+}
+```
+
+- **Success:** `202 Accepted` — the send is dispatched asynchronously (input is
+  validated synchronously, so an invalid `phone`/`message` still returns `400`).
+- **Delivery failure** (synchronous callers): `502 Bad Gateway` with
+  `{"error":"SMS delivery failed","provider":"...","errorCode":"..."}`.
+- Async failures are logged and surfaced via the `sms_send_total` Prometheus
+  counter (`status="failure"`); they are tagged `TRANSACTIONAL` so they are
+  distinguishable from Fineract-event SMS in metrics and logs.
 
 ## OTP API
 
