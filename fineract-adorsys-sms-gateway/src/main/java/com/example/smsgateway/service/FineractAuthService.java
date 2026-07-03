@@ -12,14 +12,14 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.util.Collections;
+import java.util.Map;
 
 @Service
 public class FineractAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(FineractAuthService.class);
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
     private final String fineractApiUrl;
     private final String fineractUser;
     private final String fineractPassword;
@@ -33,11 +33,13 @@ public class FineractAuthService {
     private KeycloakAuthService keycloakAuthService;
 
     public FineractAuthService(RestTemplate restTemplate,
+                               ObjectMapper objectMapper,
                                @Value("${fineract.api.url}") String fineractApiUrl,
                                @Value("${fineract.api.user}") String fineractUser,
                                @Value("${fineract.api.password}") String fineractPassword,
                                @Value("${fineract.api.tenant}") String tenantId) {
         this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
         this.fineractApiUrl = fineractApiUrl;
         this.fineractUser = fineractUser;
         this.fineractPassword = fineractPassword;
@@ -66,7 +68,16 @@ public class FineractAuthService {
         headers.set("Fineract-Platform-TenantId", tenantId);
 
         String loginUrl = fineractApiUrl + "/authentication";
-        String requestBody = String.format("{\"username\": \"%s\", \"password\": \"%s\"}", fineractUser, fineractPassword);
+        
+        String requestBody;
+        try {
+            requestBody = objectMapper.writeValueAsString(Map.of(
+                    "username", fineractUser,
+                    "password", fineractPassword
+            ));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize Fineract credentials", e);
+        }
 
         HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
@@ -74,8 +85,7 @@ public class FineractAuthService {
             logger.info("Attempting to log in to Fineract at {}", loginUrl);
             String response = restTemplate.postForObject(loginUrl, request, String.class);
             logger.info("Successfully logged in to Fineract");
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response);
+            JsonNode root = objectMapper.readTree(response);
             this.authToken = root.path("base64EncodedAuthenticationKey").asText();
         } catch (Exception e) {
             logger.error("Failed to log in to Fineract", e);

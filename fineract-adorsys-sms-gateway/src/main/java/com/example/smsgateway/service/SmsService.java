@@ -28,7 +28,7 @@ public class SmsService {
 
     private final Map<String, SmsProvider> providers;
     private final String primaryProvider;
-    private final String fallbackProvider;
+    private final List<String> fallbackProviders;
     private final MeterRegistry meterRegistry;
 
     public SmsService(
@@ -46,7 +46,12 @@ public class SmsService {
                 )
             );
         this.primaryProvider = primaryProvider;
-        this.fallbackProvider = fallbackProvider;
+        this.fallbackProviders = StringUtils.hasText(fallbackProvidersRaw)
+                ? java.util.Arrays.stream(fallbackProvidersRaw.split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .toList()
+                : java.util.Collections.emptyList();
         this.meterRegistry = meterRegistry;
     }
 
@@ -105,6 +110,7 @@ public class SmsService {
             );
             result = sendWithProvider(fallbackProvider, message);
         }
+
         return result;
     }
 
