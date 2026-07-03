@@ -15,7 +15,7 @@ class ApiKeyAuthFilterTest {
 
     @Test
     void allowsRequestWithValidApiKey() throws ServletException, IOException {
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key");
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key", false);
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/sms/send");
         req.addHeader(ApiKeyAuthFilter.API_KEY_HEADER, "secret-key");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -29,7 +29,7 @@ class ApiKeyAuthFilterTest {
 
     @Test
     void rejectsRequestWithMissingApiKey() throws ServletException, IOException {
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key");
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key", false);
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/sms/send");
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
@@ -42,7 +42,7 @@ class ApiKeyAuthFilterTest {
 
     @Test
     void rejectsRequestWithWrongApiKey() throws ServletException, IOException {
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key");
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key", false);
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/otp/send");
         req.addHeader(ApiKeyAuthFilter.API_KEY_HEADER, "wrong");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -56,7 +56,7 @@ class ApiKeyAuthFilterTest {
 
     @Test
     void exemptsFineractWebhookFromAuth() throws ServletException, IOException {
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key");
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret-key", false);
         // Fineract webhook callback path — no API key header on that side.
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/sms/");
         MockHttpServletResponse res = new MockHttpServletResponse();
@@ -69,9 +69,25 @@ class ApiKeyAuthFilterTest {
     }
 
     @Test
-    void disablesEnforcementWhenKeyUnconfigured() throws ServletException, IOException {
-        // Empty key = enforcement disabled (local dev / test compat).
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("");
+    void rejectsWhenKeyUnconfiguredAndAuthEnabled() throws ServletException, IOException {
+        // Empty key + auth enabled (default) → fail closed (401), not open.
+        // A missing secret must be loud, not invisible.
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("", false);
+        MockHttpServletRequest req = new MockHttpServletRequest("POST", "/sms/send");
+        req.addHeader(ApiKeyAuthFilter.API_KEY_HEADER, "anything");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(req, res, chain);
+
+        assertEquals(401, res.getStatus());
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void allowsAllRequestsWhenAuthExplicitlyDisabled() throws ServletException, IOException {
+        // SMS_GATEWAY_AUTH_DISABLED=true → dev/test bypass, regardless of key.
+        ApiKeyAuthFilter filter = new ApiKeyAuthFilter("", true);
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/sms/send");
         MockHttpServletResponse res = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);

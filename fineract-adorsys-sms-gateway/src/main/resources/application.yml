@@ -48,6 +48,12 @@ logging:
     com.example.smsgateway.provider.OrangeSmsProvider: DEBUG
 
 # API key required on the X-KYC-Api-Key header for BFF-facing endpoints
-# (/sms/send, /otp/send, /otp/verify, /api/v1/otp/*). Empty/blank disables
-# enforcement (local dev / test). The docker-compose stack always sets this.
+# (/sms/send, /otp/send, /otp/verify, /api/v1/otp/*). A missing key rejects
+# every BFF-facing request with 401 (fail-closed) so misconfig is loud.
+# Set SMS_GATEWAY_API_KEY to the shared secret (must match the BFF's
+# KYC_MANAGER_API_KEY). The docker-compose stack sets this by default.
 SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}
+
+# Dev/test only: set to true to bypass API-key auth entirely. Never enable
+# in production — doing so reopens the open SMS-relay risk this filter closes.
+SMS_GATEWAY_AUTH_DISABLED: ${SMS_GATEWAY_AUTH_DISABLED:false}
