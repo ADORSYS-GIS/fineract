@@ -3,6 +3,7 @@ package com.example.smsgateway.controller;
 import com.example.smsgateway.service.SmsDeliveryException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,25 @@ public class ApiExceptionHandler {
         logger.warn("Rejected invalid request");
         return ResponseEntity.badRequest().body(
             Map.of("error", "Invalid request")
+        );
+    }
+
+    /**
+     * Async SMS executor overload ({@code AbortPolicy}). All bounded pool+queue workers
+     * for {@code smsSendExecutor} are busy, so the next /sms/send is rejected rather
+     * than run on the Tomcat request thread (which would re-block the very workflow
+     * the dedicated pool exists to isolate). 429 tells the BFF to back off; the send
+     * is NOT queued.
+     */
+    @ExceptionHandler(RejectedExecutionException.class)
+    public ResponseEntity<Map<String, String>> handleExecutorOverload(
+        RejectedExecutionException ex
+    ) {
+        logger.warn(
+            "Rejected async SMS send: smsSendExecutor pool+queue saturated"
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
+            Map.of("error", "SMS dispatch overloaded")
         );
     }
 

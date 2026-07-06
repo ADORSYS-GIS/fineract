@@ -6,9 +6,7 @@ import com.example.smsgateway.model.OtpGenerateRequest;
 import com.example.smsgateway.model.OtpGenerateResponse;
 import com.example.smsgateway.model.OtpValidateRequest;
 import com.example.smsgateway.model.OtpValidateResponse;
-import com.example.smsgateway.model.SmsMessage;
 import com.example.smsgateway.model.SmsSendRequest;
-import com.example.smsgateway.model.SmsSendResult;
 import com.example.smsgateway.service.MessageService;
 import com.example.smsgateway.service.OtpService;
 import com.example.smsgateway.service.SmsService;
@@ -17,9 +15,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,10 +35,6 @@ public class SmsController {
 
     @Autowired
     private SmsService smsService;
-
-    @Autowired
-    @Qualifier("smsSendExecutor")
-    private ThreadPoolTaskExecutor smsSendExecutor;
 
     @PostMapping("/sms/")
     public void receiveSmsRequest(@RequestBody String rawPayload) {
@@ -131,13 +123,17 @@ public class SmsController {
      *
      * <p>Authenticates via the {@code X-KYC-Api-Key} header, the same key used for
      * the {@code /otp/*} endpoints. Inputs are validated synchronously (400 on bad
-     * input); the actual provider send is dispatched asynchronously so a 202
-     * Accepted is returned immediately — provider retries (up to ~15s plus fallback)
-     * run on a dedicated thread pool that does not starve Tomcat workers serving
-     * the OTP and Fineract webhook endpoints. Delivery failure (async) is logged;
-     * for synchronous callers that still want a delivery result, the typed record
-     * surfaces 400 for invalid input, and 502 for delivery failure when called
-     * synchronously elsewhere.
+     * input) inside {@link SmsService#sendAsync}; the actual provider send is then
+     * dispatched asynchronously so a 202 Accepted is returned immediately — provider
+     * retries (up to ~15s plus the full fallback cascade) run on a dedicated
+     * {@code smsSendExecutor} that does not starve Tomcat workers serving the OTP
+     * and Fineract webhook endpoints. Async delivery failure is logged and surfaced
+     * via {@code sms_send_total{status="failure"}} — it is never returned to the
+     * caller, so /sms/send only ever returns 202 (accepted), 400 (bad input), or
+     * 429 (overload when the executor pool+queue are saturated). A 502 delivery
+     * failure can only occur for synchronous in-process callers of
+     * {@link SmsService#sendSms(String, String, MessageType)} (e.g. the OTP/Fineract
+     * event path), not for this HTTP endpoint.
      *
      * <p>Messages are tagged {@link MessageType#TRANSACTIONAL} so metrics and logs
      * separate BFF P2P traffic from Fineract-event SMS.
@@ -146,37 +142,15 @@ public class SmsController {
     public ResponseEntity<Void> sendGenericSms(
         @RequestBody SmsSendRequest request
     ) {
-        // Validate synchronously so a bad request still returns 400, not 202.
-        String phone = smsService.normalizePhoneNumber(request.phone());
-        String message = smsService.sanitizeMessage(request.message());
-        logger.info("Queuing generic SMS send to {}", phone);
-
-        SmsMessage smsMessage = new SmsMessage(
-            phone,
-            message,
-            MessageType.TRANSACTIONAL,
-            null,
-            Map.of()
+        // Validation runs synchronously inside sendAsync (IllegalArgumentException -> 400),
+        // then the provider send is queued on the dedicated executor. Under backpressure
+        // (pool+queue full, AbortPolicy) submit throws RejectedExecutionException which
+        // ApiExceptionHandler maps to 429 — never blocks the Tomcat request thread.
+        smsService.sendAsync(
+            request.phone(),
+            request.message(),
+            MessageType.TRANSACTIONAL
         );
-        smsSendExecutor.submit(() -> {
-            try {
-                SmsSendResult result = smsService.send(smsMessage);
-                if (!result.success()) {
-                    logger.error(
-                        "Async SMS send failed: to={}, provider={}, errorCode={}",
-                        phone,
-                        result.provider(),
-                        result.errorCode()
-                    );
-                }
-            } catch (Exception e) {
-                logger.error(
-                    "Async SMS send encountered an error: to={}",
-                    phone,
-                    e
-                );
-            }
-        });
         return ResponseEntity.accepted().build();
     }
 }

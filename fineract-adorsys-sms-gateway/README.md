@@ -91,11 +91,21 @@ X-KYC-Api-Key: <shared secret, must match the BFF's KYC_MANAGER_API_KEY>
 
 - **Success:** `202 Accepted` — the send is dispatched asynchronously (input is
   validated synchronously, so an invalid `phone`/`message` still returns `400`).
-- **Delivery failure** (synchronous callers): `502 Bad Gateway` with
-  `{"error":"SMS delivery failed","provider":"...","errorCode":"..."}`.
-- Async failures are logged and surfaced via the `sms_send_total` Prometheus
-  counter (`status="failure"`); they are tagged `TRANSACTIONAL` so they are
-  distinguishable from Fineract-event SMS in metrics and logs.
+- **Overload:** `429 Too Many Requests` with `{"error":"SMS dispatch overloaded"}` —
+  returned when the dedicated `smsSendExecutor` pool+queue are saturated. The send
+  is **not** queued; the BFF should back off and retry. (Delivery failure is *not*
+  429; see below.)
+- **Delivery failure is not returned to the /sms/send caller.** Async provider
+  failures are logged and surfaced via the `sms_send_total` Prometheus counter
+  (`status="failure"`); they are tagged `TRANSACTIONAL` so they are distinguishable
+  from Fineract-event SMS in metrics and logs. A `502 Bad Gateway`
+  (`{"error":"SMS delivery failed","provider":"...","errorCode":"..."}`) can
+  only occur for **synchronous in-process** callers of
+  `SmsService.sendSms(String, String, MessageType)` (e.g. the OTP / Fineract-event
+  path), **not** from `POST /sms/send`, which is async-only.
+- **Backpressure design:** the async executor uses `AbortPolicy` (not
+  `CallerRunsPolicy`) precisely so overload surfaces as an explicit 429 instead of
+  running the ~15-30s provider send on the Tomcat request thread.
 
 ## OTP API
 

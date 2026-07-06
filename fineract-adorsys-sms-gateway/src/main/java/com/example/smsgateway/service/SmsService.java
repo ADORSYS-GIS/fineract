@@ -6,13 +6,18 @@ import com.example.smsgateway.model.SmsSendResult;
 import com.example.smsgateway.provider.SmsProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -30,29 +35,27 @@ public class SmsService {
     private final String primaryProvider;
     private final List<String> fallbackProviders;
     private final MeterRegistry meterRegistry;
+    private final ThreadPoolTaskExecutor sendExecutor;
 
     public SmsService(
         List<SmsProvider> providers,
         @Value("${sms.provider.primary:twilio}") String primaryProvider,
-        @Value("${sms.provider.fallback:}") String fallbackProvider,
-        MeterRegistry meterRegistry
+        @Value("${sms.provider.fallback:}") String fallbackProvidersRaw,
+        MeterRegistry meterRegistry,
+        @Qualifier("smsSendExecutor") ThreadPoolTaskExecutor sendExecutor
     ) {
         this.providers = providers
             .stream()
-            .collect(
-                java.util.stream.Collectors.toMap(
-                    SmsProvider::name,
-                    provider -> provider
-                )
-            );
+            .collect(Collectors.toMap(SmsProvider::name, provider -> provider));
         this.primaryProvider = primaryProvider;
         this.fallbackProviders = StringUtils.hasText(fallbackProvidersRaw)
-                ? java.util.Arrays.stream(fallbackProvidersRaw.split(","))
-                        .map(String::trim)
-                        .filter(StringUtils::hasText)
-                        .toList()
-                : java.util.Collections.emptyList();
+            ? Arrays.stream(fallbackProvidersRaw.split(","))
+                  .map(String::trim)
+                  .filter(StringUtils::hasText)
+                  .toList()
+            : Collections.emptyList();
         this.meterRegistry = meterRegistry;
+        this.sendExecutor = sendExecutor;
     }
 
     /**
@@ -98,20 +101,73 @@ public class SmsService {
             ? message.provider()
             : primaryProvider;
         SmsSendResult result = sendWithProvider(requestedProvider, message);
-        if (
-            !result.success() &&
-            StringUtils.hasText(fallbackProvider) &&
-            !fallbackProvider.equals(requestedProvider)
-        ) {
-            logger.warn(
-                "SMS provider {} failed for message type {}, attempting fallback",
-                requestedProvider,
-                message.type()
-            );
-            result = sendWithProvider(fallbackProvider, message);
+        if (!result.success()) {
+            for (String fallback : fallbackProviders) {
+                if (fallback.equals(requestedProvider)) {
+                    continue;
+                }
+                logger.warn(
+                    "SMS provider {} failed for message type {}, attempting fallback {}",
+                    requestedProvider,
+                    message.type(),
+                    fallback
+                );
+                result = sendWithProvider(fallback, message);
+                if (result.success()) {
+                    return result;
+                }
+            }
         }
 
         return result;
+    }
+
+    /**
+     * Validates the request synchronously (so a bad phone/message still surfaces as a
+     * synchronous IllegalArgumentException mapped to 400) then dispatches the actual
+     * provider send asynchronously on the dedicated {@code smsSendExecutor}. Returns
+     * immediately; delivery failures are logged and surfaced via the
+     * {@code sms_send_total} Prometheus counter, not returned to the caller — so an
+     * HTTP caller of /sms/send always gets 202 (accepted), 400 (bad input), or 429
+     * (overload, when the executor pool+queue is saturated).
+     *
+     * @throws IllegalArgumentException if {@code to} is not a valid E.164 number or
+     *     {@code messageBody} is empty/over-length — thrown synchronously from the
+     *     calling thread.
+     * @throws RejectedExecutionException if the async pool+queue are saturated — thrown
+     *     synchronously so an HTTP layer can map it to 429 overload instead of
+     *     silently blocking the request thread (the behavior the pool was built to
+     *     avoid).
+     */
+    public void sendAsync(String to, String messageBody, MessageType type) {
+        SmsMessage message = new SmsMessage(
+            normalizePhoneNumber(to),
+            sanitizeMessage(messageBody),
+            type,
+            null,
+            Map.of()
+        );
+        // submit() throws RejectedExecutionException synchronously under AbortPolicy when
+        // the pool+queue are full; that propagates to the controller and maps to 429.
+        sendExecutor.submit(() -> {
+            try {
+                SmsSendResult result = send(message);
+                if (!result.success()) {
+                    logger.error(
+                        "Async SMS send failed: to={}, provider={}, errorCode={}",
+                        message.to(),
+                        result.provider(),
+                        result.errorCode()
+                    );
+                }
+            } catch (Exception e) {
+                logger.error(
+                    "Async SMS send encountered an error: to={}",
+                    message.to(),
+                    e
+                );
+            }
+        });
     }
 
     public String normalizePhoneNumber(String phoneNumber) {

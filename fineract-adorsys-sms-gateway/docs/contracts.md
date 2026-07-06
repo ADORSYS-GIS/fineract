@@ -35,11 +35,17 @@ Request:
 - **Success:** `202 Accepted` — the send is dispatched asynchronously; input is
   validated synchronously so an invalid `phone`/`message` returns `400
   {"error":"Invalid request"}`.
-- **Delivery failure (caller-visible only when called synchronously):** `502 Bad
-  Gateway` `{"error":"SMS delivery failed","provider":"...","errorCode":"..."}`.
-  Async failures are logged and surfaced via `sms_send_total{status="failure"}`.
-- **Rate-limiting:** `429 Too Many Requests` (reserved for upstream rate-limit
-  responses / OTP rate limits — not delivery failure).
+- **Overload:** `429 Too Many Requests` `{"error":"SMS dispatch overloaded"}` —
+  returned synchronously when the `smsSendExecutor` pool+queue are saturated
+  (`AbortPolicy`); the send is **not** queued and the BFF should back off. (This is
+  distinct from delivery failure, which is never 429.)
+- **Delivery failure is not returned over HTTP.** Async provider failures are
+  logged and surfaced via `sms_send_total{status="failure"}`; they are **not**
+  returned to the /sms/send caller. A `502 Bad Gateway`
+  `{"error":"SMS delivery failed","provider":"...","errorCode":"..."}` can only
+  occur for **synchronous in-process** callers of
+  `SmsService.sendSms(String, String, MessageType)` (e.g. the OTP / Fineract-event
+  path), not from `POST /sms/send`, which is async-only (202/400/429).
 - **Message type:** tagged `TRANSACTIONAL` (metrics: `sms_send_total`, latency:
   `sms_send_latency`), distinct from `FINERACT_EVENT` used by the webhook path.
 
@@ -65,3 +71,4 @@ Request:
 | Date | Change | Consumers updated |
 |---|---|---|
 | 2025-07-03 | Added `POST /sms/send`; introduced `X-KYC-Api-Key` auth on all BFF-facing endpoints; delivery failure → 502. | Go BFF (P2P viral loop) |
+| 2026-07-06 | Review fixes: deleted legacy `ApiKeyFilter`+`FilterConfig` so `ApiKeyAuthFilter` is the single auth layer (its `/sms/` exemption now takes effect); restored the full multi-provider fallback cascade in `SmsService.send`; moved async dispatch into `SmsService.sendAsync`; `AbortPolicy`+429 on executor saturation instead of `CallerRunsPolicy`. Clarified that `POST /sms/send` returns 202/400/429 (never 502 over HTTP); 502 applies only to synchronous in-process `SmsService.sendSms(...)` callers. | Go BFF (no contract break) |
