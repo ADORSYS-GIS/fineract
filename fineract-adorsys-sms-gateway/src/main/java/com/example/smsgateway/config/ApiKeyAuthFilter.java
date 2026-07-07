@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Validates the {@code X-KYC-Api-Key} header against the configured
+ * Validates the {@code X-SMS-Gateway-Api-Key} header against the configured
  * {@code SMS_GATEWAY_API_KEY} for BFF-facing endpoints.
  *
  * <p>This gates the {@code /sms/send} endpoint (and all other non-exempt BFF-facing
@@ -43,7 +43,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         ApiKeyAuthFilter.class
     );
 
-    static final String API_KEY_HEADER = "X-KYC-Api-Key";
+    static final String API_KEY_HEADER = "X-SMS-Gateway-Api-Key";
 
     private final String expectedApiKey;
     private final boolean authDisabled;

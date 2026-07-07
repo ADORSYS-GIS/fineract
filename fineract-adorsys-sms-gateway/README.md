@@ -39,7 +39,7 @@ Before running the application, you need to set the following environment variab
 | `FINERACT_API_URL` | The URL of your Fineract instance. |
 | `FINERACT_API_USER` | The username for your Fineract instance. |
 | `FINERACT_API_PASSWORD` | The password for your Fineract instance. |
-| `SMS_GATEWAY_API_KEY` | Shared secret required on the `X-KYC-Api-Key` header for all BFF-facing endpoints (`/sms/send`, `/otp/*`, `/api/v1/otp/*`). Must match the BFF's `KYC_MANAGER_API_KEY`. Empty → fail-closed (401 on all BFF routes). |
+| `SMS_GATEWAY_API_KEY` | Shared secret required on the `X-SMS-Gateway-Api-Key` header for all BFF-facing endpoints (`/sms/send`, `/otp/*`, `/api/v1/otp/*`). Must match the BFF's `SMS_GATEWAY_API_KEY`. Empty → fail-closed (401 on all BFF routes). |
 | `SMS_GATEWAY_AUTH_DISABLED` | Dev/test only: `true` bypasses API-key auth entirely (never in production). Defaults to `false`. |
 
 ### Running the Application
@@ -79,7 +79,7 @@ For transactional (non-OTP) SMS initiated by the BFF (e.g. P2P viral-loop claim 
 ```http
 POST /sms/send
 Content-Type: application/json
-X-KYC-Api-Key: <shared secret, must match the BFF's KYC_MANAGER_API_KEY>
+X-SMS-Gateway-Api-Key: <shared secret, must match the BFF's SMS_GATEWAY_API_KEY>
 ```
 
 ```json

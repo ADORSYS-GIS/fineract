@@ -27,7 +27,7 @@ avoids for OTP (which at least rate-limits and gates by principal).
    traffic from Fineract-event SMS.
 
 2. **Gate all BFF-facing endpoints** (`/sms/send`, `/otp/*`, `/api/v1/otp/*`) behind
-   an `ApiKeyAuthFilter` validating `X-KYC-Api-Key` against `SMS_GATEWAY_API_KEY`,
+   an `ApiKeyAuthFilter` validating `X-SMS-Gateway-Api-Key` against `SMS_GATEWAY_API_KEY`,
    fail-closed by default. Auth is bypassed only for explicitly exempt paths
    (`/sms/` webhook, `/actuator`, OpenAPI docs) or when
    `SMS_GATEWAY_AUTH_DISABLED=true` (dev/test only, logs a warning).
@@ -40,10 +40,10 @@ avoids for OTP (which at least rate-limits and gates by principal).
 
 | Consumer | Calls | Auth header |
 |---|---|---|
-| Go BFF (`webank-mobile`) | `POST /sms/send`, `POST /otp/*` | `X-KYC-Api-Key: <KYC_MANAGER_API_KEY>` |
+| Go BFF (`webank-mobile`) | `POST /sms/send`, `POST /otp/*` | `X-SMS-Gateway-Api-Key: <SMS_GATEWAY_API_KEY>` |
 | Apache Fineract | `POST /sms/` (webhook) | none (exempt; network-restricted) |
 
-The BFF's `KYC_MANAGER_API_KEY` and the gateway's `SMS_GATEWAY_API_KEY` **must hold
+The BFF's `SMS_GATEWAY_API_KEY` and the gateway's `SMS_GATEWAY_API_KEY` **must hold
 the same value**. The BFF config name is historical/misleading (`KYC_MANAGER_BASE_URL`
 actually points at this gateway), kept for compatibility.
 

@@ -121,7 +121,7 @@ public class SmsController {
      * (money waiting in escrow until the recipient installs WeBank and verifies
      * their phone at KYC1).
      *
-     * <p>Authenticates via the {@code X-KYC-Api-Key} header, the same key used for
+     * <p>Authenticates via the {@code X-SMS-Gateway-Api-Key} header, the same key used for
      * the {@code /otp/*} endpoints. Inputs are validated synchronously (400 on bad
      * input) inside {@link SmsService#sendAsync}; the actual provider send is then
      * dispatched asynchronously so a 202 Accepted is returned immediately — provider
