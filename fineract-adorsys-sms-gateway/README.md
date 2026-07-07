@@ -39,6 +39,8 @@ Before running the application, you need to set the following environment variab
 | `FINERACT_API_URL` | The URL of your Fineract instance. |
 | `FINERACT_API_USER` | The username for your Fineract instance. |
 | `FINERACT_API_PASSWORD` | The password for your Fineract instance. |
+| `SMS_GATEWAY_API_KEY` | Shared secret required on the `X-SMS-Gateway-Api-Key` header for all BFF-facing endpoints (`/sms/send`, `/otp/*`, `/api/v1/otp/*`). Must match the BFF's `SMS_GATEWAY_API_KEY`. Empty → fail-closed (401 on all BFF routes). |
+| `SMS_GATEWAY_AUTH_DISABLED` | Dev/test only: `true` bypasses API-key auth entirely (never in production). Defaults to `false`. |
 
 ### Running the Application
 
@@ -69,6 +71,41 @@ The existing Fineract webhook endpoint remains:
 ```http
 POST /sms/
 ```
+
+## Generic SMS Send API
+
+For transactional (non-OTP) SMS initiated by the BFF (e.g. P2P viral-loop claim links):
+
+```http
+POST /sms/send
+Content-Type: application/json
+X-SMS-Gateway-Api-Key: <shared secret, must match the BFF's SMS_GATEWAY_API_KEY>
+```
+
+```json
+{
+  "phone": "+237670000000",
+  "message": "You've received money on WeBank. Install the app and verify your number to claim."
+}
+```
+
+- **Success:** `202 Accepted` — the send is dispatched asynchronously (input is
+  validated synchronously, so an invalid `phone`/`message` still returns `400`).
+- **Overload:** `429 Too Many Requests` with `{"error":"SMS dispatch overloaded"}` —
+  returned when the dedicated `smsSendExecutor` pool+queue are saturated. The send
+  is **not** queued; the BFF should back off and retry. (Delivery failure is *not*
+  429; see below.)
+- **Delivery failure is not returned to the /sms/send caller.** Async provider
+  failures are logged and surfaced via the `sms_send_total` Prometheus counter
+  (`status="failure"`); they are tagged `TRANSACTIONAL` so they are distinguishable
+  from Fineract-event SMS in metrics and logs. A `502 Bad Gateway`
+  (`{"error":"SMS delivery failed","provider":"...","errorCode":"..."}`) can
+  only occur for **synchronous in-process** callers of
+  `SmsService.sendSms(String, String, MessageType)` (e.g. the OTP / Fineract-event
+  path), **not** from `POST /sms/send`, which is async-only.
+- **Backpressure design:** the async executor uses `AbortPolicy` (not
+  `CallerRunsPolicy`) precisely so overload surfaces as an explicit 429 instead of
+  running the ~15-30s provider send on the Tomcat request thread.
 
 ## OTP API
 
