@@ -72,8 +72,14 @@ logging:
 # SMS_GATEWAY_API_KEY). The docker-compose-adorsys.yml stack passes this
 # through from the host environment, defaulting to `dev-sms-gateway-key`
 # so the default stack works out of the box; override it in production.
-SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}
+#
+# NOTE: SMS_GATEWAY_API_KEY and SMS_GATEWAY_AUTH_DISABLED are NOT declared
+# as YAML keys here. They are read directly by ApiKeyAuthFilter via
+# @Value("${SMS_GATEWAY_API_KEY:}") / @Value("${SMS_GATEWAY_AUTH_DISABLED:false}").
+# Declaring them as `SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}` below creates
+# a self-referential placeholder that Spring rejects at startup with
+# "Circular placeholder reference" — see ApiKeyAuthFilter for the consumption.
 
-# Dev/test only: set to true to bypass API-key auth entirely. Never enable
-# in production — doing so reopens the open SMS-relay risk this filter closes.
-SMS_GATEWAY_AUTH_DISABLED: ${SMS_GATEWAY_AUTH_DISABLED:false}
+# Dev/test only: set SMS_GATEWAY_AUTH_DISABLED=true to bypass API-key auth
+# entirely. Never enable in production — doing so reopens the open SMS-relay
+# risk this filter closes.
