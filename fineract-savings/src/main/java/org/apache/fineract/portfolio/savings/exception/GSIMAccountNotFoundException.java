@@ -16,12 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.workingcapitalloan.service;
+package org.apache.fineract.portfolio.savings.exception;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
+import org.springframework.dao.EmptyResultDataAccessException;
 
-public interface InternalWorkingCapitalLoanPaymentService {
+/**
+ * A {@link RuntimeException} thrown when a GSIM account is not found.
+ */
+public class GSIMAccountNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-    void makePayment(Long loanId, BigDecimal amount, LocalDate transactionDate);
+    public GSIMAccountNotFoundException(final Long gsimId, final EmptyResultDataAccessException e) {
+        super("error.msg.gsim.account.id.invalid", "GSIM account with identifier " + gsimId + " does not exist", gsimId, e);
+    }
 }
