@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.workingcapitalloan.service;
 import com.google.gson.JsonElement;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepository;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -41,6 +43,7 @@ import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
 import org.apache.fineract.infrastructure.core.service.MathUtil;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.event.business.domain.BusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.workingcapitalloan.transaction.WorkingCapitalLoanCreditBalanceRefundTransactionBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.workingcapitalloan.transaction.WorkingCapitalLoanDisbursalTransactionBusinessEvent;
@@ -58,6 +61,8 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
 import org.apache.fineract.portfolio.workingcapitalloan.WorkingCapitalLoanConstants;
 import org.apache.fineract.portfolio.workingcapitalloan.accounting.WorkingCapitalLoanAccountingProcessor;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanAllocationPlan;
+import org.apache.fineract.portfolio.workingcapitalloan.data.WorkingCapitalLoanAllocationRequest;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBalance;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanCharge;
@@ -101,7 +106,6 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
     private final PaymentDetailWritePlatformService paymentDetailService;
     private final WorkingCapitalLoanBalanceRepository balanceRepository;
     private final WorkingCapitalLoanAmortizationScheduleWriteService amortizationScheduleWriteService;
-    private final InternalWorkingCapitalLoanPaymentService internalWorkingCapitalLoanPaymentService;
     private final CodeValueRepository codeValueRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final WorkingCapitalLoanAccountingProcessor accountingProcessor;
@@ -112,6 +116,13 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
     private final WorkingCapitalLoanTransactionReprocessingService transactionReprocessingService;
     private final WorkingCapitalLoanChargeRepository chargeRepository;
     private final WorkingCapitalLoanPaymentAllocationProcessor allocationProcessor;
+    private final WorkingCapitalLoanDelinquencyRangeScheduleService delinquencyRangeScheduleService;
+    private final GlobalConfigurationRepositoryWrapper globalConfigurationRepository;
+    private final WorkingCapitalLoanDelinquencyClassificationService delinquencyClassificationService;
+    private final WorkingCapitalLoanBreachScheduleService breachScheduleService;
+    private final WorkingCapitalLoanAllocationRequestFactory allocationRequestFactory;
+    private final WorkingCapitalLoanAllocationApplier allocationApplier;
+    private final WorkingCapitalLoanBalanceUpdater balanceUpdater;
 
     @Override
     public CommandProcessingResult approveApplication(final Long loanId, final JsonCommand command) {
@@ -614,6 +625,7 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         return switch (transaction.getTypeOf()) {
             case DISCOUNT_FEE_ADJUSTMENT -> undoDiscountFeeAdjustment(loan, transaction, command);
             case CHARGE_ADJUSTMENT -> undoChargeAdjustment(loan, transaction, command);
+            case REPAYMENT, GOODWILL_CREDIT -> undoTransaction(loan, transaction, command);
             default -> throw new PlatformApiDataValidationException("validation.msg.wc.loan.transaction.undo.not.supported",
                     "Undo is not supported for transaction type " + transaction.getTypeOf(),
                     WorkingCapitalLoanConstants.transactionTypeParamName);
@@ -729,20 +741,20 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                 .orElseGet(() -> WorkingCapitalLoanBalance.createFor(loan));
         final List<WorkingCapitalLoanCharge> charges = this.chargeRepository.findByLoanIdAndActiveTrueOrderByDueDateAscIdAsc(loanId);
 
-        // Allocate the amount across penalty/fee/principal following the loan's configured payment allocation order
-        // (principal-only when no order is configured). This updates the charge paid amounts and the loan balance.
-        final WorkingCapitalLoanPaymentAllocationProcessor.AllocationResult allocationResult = allocationProcessor.allocate(loan, balance,
-                charges, transactionDate, transactionAmount);
+        // Decide the allocation across penalty/fee/principal following the loan's configured payment allocation order
+        // (principal-only when no order is configured), then materialize it onto the charges and refresh the balance.
+        final WorkingCapitalLoanAllocationRequest allocationRequest = allocationRequestFactory.build(loan, balance, charges,
+                transactionDate, transactionAmount);
+        final WorkingCapitalLoanAllocationPlan allocationPlan = allocationProcessor.plan(allocationRequest);
+        final WorkingCapitalLoanTransactionAllocation allocation = allocationApplier.apply(transaction, null, allocationPlan, charges);
+        balanceUpdater.apply(balance, allocationPlan);
         this.chargeRepository.saveAll(charges);
         this.balanceRepository.saveAndFlush(balance);
-
-        final WorkingCapitalLoanTransactionAllocation allocation = WorkingCapitalLoanTransactionAllocation.forPortions(transaction,
-                allocationResult.principalPortion(), allocationResult.feeChargesPortion(), allocationResult.penaltyChargesPortion());
         this.allocationRepository.saveAndFlush(allocation);
 
         // Only the principal portion affects the amortization and delinquency/breach schedules; fee and penalty
         // portions settle charges.
-        final BigDecimal principalPortion = allocationResult.principalPortion();
+        final BigDecimal principalPortion = allocationPlan.principalPortion();
 
         // A backdated transaction can change how the other transactions allocate across charges, so it triggers
         // reprocessing. When the loan has charges, reprocessing rebuilds the amortization schedule from scratch, so
@@ -758,9 +770,12 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
         }
         if (backdated) {
             transactionReprocessingService.reprocessTransactions(loan, allTransactions);
+            delinquencyRangeScheduleService.reprocessDelinquencySchedule(loan);
+        } else {
+            delinquencyRangeScheduleService.applyRepayment(loan, transactionDate, principalPortion);
         }
-        // Delinquency and breach schedules are maintained incrementally here; reprocessing does not rebuild them.
-        internalWorkingCapitalLoanPaymentService.makePayment(loanId, principalPortion, transactionDate);
+        // Breach schedule is maintained incrementally here; reprocessing does not rebuild it.
+        breachScheduleService.applyRepayment(loanId, transactionDate, principalPortion);
 
         handleStateChanges(loan, transactionDate);
         triggerInlineAmortizationIfLoanClosed(loan, transactionDate);
@@ -834,10 +849,17 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                     : BigDecimal.ZERO;
             if (overpaymentAmount.compareTo(BigDecimal.ZERO) > 0) {
                 this.stateMachine.transition(WorkingCapitalLoanEvent.LOAN_OVERPAID, loan);
-                loan.setMaturedOnDate(transactionDate);
+                if (loan.getMaturedOnDate() == null) {
+                    loan.setMaturedOnDate(transactionDate);
+                }
             } else if (principalOutstanding.compareTo(BigDecimal.ZERO) == 0) {
                 this.stateMachine.transition(WorkingCapitalLoanEvent.LOAN_REPAID_IN_FULL, loan);
-                loan.setMaturedOnDate(transactionDate);
+                if (loan.getMaturedOnDate() == null) {
+                    loan.setMaturedOnDate(transactionDate);
+                }
+            } else if (principalOutstanding.compareTo(BigDecimal.ZERO) > 0 && loan.getMaturedOnDate() != null) {
+                this.stateMachine.transition(WorkingCapitalLoanEvent.LOAN_REOPENED, loan);
+                loan.setMaturedOnDate(null);
             }
         }
     }
@@ -969,6 +991,59 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
                 .withLoanId(loanId).with(changes).build();
     }
 
+    public CommandProcessingResult undoTransaction(final WorkingCapitalLoan loan, final WorkingCapitalLoanTransaction transaction,
+            JsonCommand command) {
+
+        validator.validateUndoTransaction(command, loan, transaction);
+
+        Map<String, Object> changes = new HashMap<>();
+        changes.put("reversed", true);
+        transaction.setReversed(true);
+
+        ExternalId reversalExternalId = externalIdFactory
+                .create(command.stringValueOfParameterNamedAllowingNull(WorkingCapitalLoanConstants.reversalExternalIdParamName));
+        transaction.setReversalExternalId(reversalExternalId);
+        changes.put("reversalExternalId", reversalExternalId);
+
+        LocalDate reversedOnDate = ThreadLocalContextUtil.getBusinessDate();
+        transaction.setReversedOnDate(reversedOnDate);
+        changes.put("reversedOnDate", reversedOnDate);
+
+        final List<WorkingCapitalLoanCharge> charges = this.chargeRepository.findByLoanIdAndActiveTrueOrderByDueDateAscIdAsc(loan.getId());
+        if (charges.isEmpty()) {
+            // The simple total adjustment below is only correct when there is no overpayment to redistribute. If the
+            // loan was overpaid, a full re-allocation is needed so a former overpayment portion folds back into
+            // principal instead of leaving the allocations and schedule disagreeing with the balance.
+            final WorkingCapitalLoanBalance balance = this.balanceRepository.findByWcLoan_Id(loan.getId()).orElse(null);
+            final boolean wasOverpaid = balance != null && MathUtil.isGreaterThanZero(balance.getOverpaymentAmount());
+            if (wasOverpaid) {
+                transactionReprocessingService.reprocessTransactionsForChargeFreeUndo(loan);
+            } else {
+                amortizationScheduleWriteService.applyRepaymentUndo(loan, transaction.getTransactionDate(),
+                        transaction.getAllocation().getPrincipalPortion());
+                updateBalanceOnUndoRepayment(loan, transaction.getTransactionAmount());
+            }
+        } else {
+            transactionReprocessingService.reprocessTransactions(loan);
+        }
+
+        breachScheduleService.applyRepaymentUndo(loan.getId(), transaction.getTransactionDate(),
+                transaction.getAllocation().getPrincipalPortion());
+        delinquencyRangeScheduleService.reprocessDelinquencySchedule(loan);
+
+        if (loan.getLoanProduct().getAccountingRule().isAccrualWithDeferredRevenueAmortization()) {
+            accountingProcessor.postReversalJournalEntries(loan, transaction);
+        }
+
+        handleStateChanges(loan, transaction.getReversedOnDate());
+        changes.put("status", loan.getLoanStatus());
+
+        handleNote(loan, command, changes);
+
+        return new CommandProcessingResultBuilder().withLoanId(loan.getId()).withLoanExternalId(loan.getExternalId())
+                .withEntityId(transaction.getId()).withEntityExternalId(transaction.getExternalId()).with(changes).build();
+    }
+
     @Override
     public CommandProcessingResult makeGoodwillCredit(Long loanId, JsonCommand command) {
         return makeRepaymentLikeTransaction(loanId, command, LoanTransactionType.GOODWILL_CREDIT);
@@ -1022,6 +1097,22 @@ public class WorkingCapitalLoanWritePlatformServiceImpl implements WorkingCapita
             balance.setTotalDiscountFee(balance.getTotalDiscountFee().add(discountAmount));
             balance.setPrincipal(balance.getPrincipal().add(discountAmount));
         }
+        this.balanceRepository.saveAndFlush(balance);
+    }
+
+    private void updateBalanceOnUndoRepayment(final WorkingCapitalLoan loan, final BigDecimal transactionAmount) {
+        final WorkingCapitalLoanBalance balance = this.balanceRepository.findByWcLoan_Id(loan.getId())
+                .orElseGet(() -> WorkingCapitalLoanBalance.createFor(loan));
+
+        final BigDecimal currentTotalPaidPrincipal = MathUtil.nullToZero(balance.getPrincipalPaid());
+        final BigDecimal currentOverpayment = MathUtil.nullToZero(balance.getOverpaymentAmount());
+
+        final BigDecimal amountSubtractFromOverpayment = currentOverpayment.min(transactionAmount);
+        final BigDecimal amountSubtractFromPrincipal = transactionAmount.subtract(amountSubtractFromOverpayment);
+
+        balance.setOverpaymentAmount(currentOverpayment.subtract(amountSubtractFromOverpayment));
+        balance.setPrincipalPaid(currentTotalPaidPrincipal.subtract(amountSubtractFromPrincipal));
+
         this.balanceRepository.saveAndFlush(balance);
     }
 
