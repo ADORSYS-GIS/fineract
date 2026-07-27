@@ -119,6 +119,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # A stale branch with today's date may still exist on origin from a
+          # previous run whose PR was closed without merging (closing a PR
+          # does not delete its branch). We already confirmed above that no
+          # OPEN PR/issue references this branch name, so it's safe to drop
+          # any leftover remote branch before recreating it.
+          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+
           git checkout -b "$BRANCH_NAME" develop
 
           if git merge upstream/develop --no-edit; then
