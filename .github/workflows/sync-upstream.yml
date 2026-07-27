@@ -27,7 +27,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
-  workflows: write
 
 jobs:
   sync:
@@ -38,7 +37,12 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN can never create/update files under .github/workflows/
+          # (GitHub hard-blocks this regardless of the `permissions:` block above).
+          # Since upstream syncs routinely touch workflow files, we need a PAT
+          # with the `workflow` scope (classic) or "Workflows: Read and write"
+          # (fine-grained), stored as the SYNC_PAT repository secret.
+          token: ${{ secrets.SYNC_PAT }}
           persist-credentials: false
 
       - name: Add upstream remote
@@ -48,8 +52,9 @@ jobs:
 
       - name: Configure origin remote with auth
         run: |
-          # Configure origin with the GitHub token for authentication
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          # Configure origin with the PAT for authentication so we can push
+          # branches containing changes to .github/workflows/*
+          git remote set-url origin https://x-access-token:${{ secrets.SYNC_PAT }}@github.com/${{ github.repository }}.git
 
       - name: Compute branch name
         id: branch
