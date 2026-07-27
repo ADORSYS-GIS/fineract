@@ -32,6 +32,7 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoa
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBreachSchedule;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanNearBreachAction;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPeriodFrequencyType;
+import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanBreachActionRepository;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanBreachScheduleRepository;
 import org.apache.fineract.portfolio.workingcapitalloannearbreach.domain.WorkingCapitalNearBreach;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 public class WorkingCapitalLoanNearBreachEvaluationServiceImpl implements WorkingCapitalLoanNearBreachEvaluationService {
 
     private final WorkingCapitalLoanBreachScheduleRepository breachScheduleRepository;
+    private final WorkingCapitalLoanBreachActionRepository breachActionRepository;
 
     @Override
     public void evaluateNearBreach(final WorkingCapitalLoan loan, final WorkingCapitalLoanNearBreachAction latestAction,
@@ -53,6 +55,11 @@ public class WorkingCapitalLoanNearBreachEvaluationServiceImpl implements Workin
         }
         final WorkingCapitalLoanBreachSchedule period = relevantPeriod.get();
         if (period.getNearBreach() != null) {
+            return;
+        }
+        if (isBreachEvaluationDisabled(loan.getId(), effectiveDate)) {
+            log.debug("Skipping near breach evaluation for WC loan {} - breach evaluation is disabled as of {}", loan.getId(),
+                    effectiveDate);
             return;
         }
         final WorkingCapitalNearBreach config = loan.getLoanProductRelatedDetails().getNearBreach();
@@ -76,7 +83,7 @@ public class WorkingCapitalLoanNearBreachEvaluationServiceImpl implements Workin
 
     private boolean evaluatePeriod(final Long loanId, final WorkingCapitalLoanBreachSchedule period, final BigDecimal threshold,
             final Integer frequency, final WorkingCapitalLoanPeriodFrequencyType frequencyType, final LocalDate effectiveDate) {
-        if (period.getMinPaymentAmount().compareTo(BigDecimal.ZERO) == 0) {
+        if (period.getMinPaymentAmount() == null || period.getMinPaymentAmount().compareTo(BigDecimal.ZERO) == 0) {
             return false;
         }
         final LocalDate firstEvalDate = addFrequency(period.getFromDate(), frequency, frequencyType);
@@ -133,6 +140,10 @@ public class WorkingCapitalLoanNearBreachEvaluationServiceImpl implements Workin
             case MONTHS -> date.plusMonths(amount);
             case YEARS -> date.plusYears(amount);
         };
+    }
+
+    private boolean isBreachEvaluationDisabled(final Long loanId, final LocalDate date) {
+        return breachActionRepository.isBreachDisabledAsOf(loanId, date);
     }
 
 }
