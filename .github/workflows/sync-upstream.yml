@@ -45,6 +45,11 @@ jobs:
           git remote add upstream https://github.com/apache/fineract.git || true
           git fetch upstream develop
 
+      - name: Configure origin remote with auth
+        run: |
+          # Configure origin with the GitHub token for authentication
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
       - name: Compute branch name
         id: branch
         run: |
