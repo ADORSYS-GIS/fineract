@@ -127,8 +127,7 @@ jobs:
           BODY
           )" \
             --base develop \
-            --head "$BRANCH_NAME" \
-            --label "upstream-sync"
+            --head "$BRANCH_NAME"
 
       - name: Create issue on merge conflicts
         if: steps.check.outputs.behind != '0' && steps.merge.outputs.status == 'conflicts'
