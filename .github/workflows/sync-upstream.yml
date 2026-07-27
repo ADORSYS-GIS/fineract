@@ -23,6 +23,12 @@ on:
     - cron: '0 6 * * 1' # every monday at 06:00 UTC
   workflow_dispatch: # Allow manual trigger
 
+# Prevent two runs (e.g. cron + manual dispatch) from racing each other and
+# pushing/creating conflicting branches, PRs, or issues at the same time.
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
@@ -73,8 +79,39 @@ jobs:
             echo "Fork is $BEHIND commits behind upstream."
           fi
 
-      - name: Create sync branch and merge
+      - name: Check for existing open sync PR or issue
         if: steps.check.outputs.behind != '0'
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Avoid duplicate work if a previous run's PR/issue is still open:
+          # - an unmerged sync PR means a push from this run would fail
+          #   anyway (non-fast-forward) and would just create pointless noise.
+          # - an unresolved conflict issue means today's conflicts are almost
+          #   certainly the same ones already reported.
+          EXISTING_PR=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --base develop \
+            --state open \
+            --search "sync/upstream in:head" \
+            --json number \
+            --jq 'length')
+          EXISTING_ISSUE=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --label "upstream-sync" \
+            --search "\"merge conflicts detected\" in:title" \
+            --json number \
+            --jq 'length')
+          echo "pr_count=$EXISTING_PR" >> "$GITHUB_OUTPUT"
+          echo "issue_count=$EXISTING_ISSUE" >> "$GITHUB_OUTPUT"
+          if [ "$EXISTING_PR" -gt 0 ] || [ "$EXISTING_ISSUE" -gt 0 ]; then
+            echo "An open upstream-sync PR or conflict issue already exists. Skipping this run."
+          fi
+
+      - name: Create sync branch and merge
+        if: steps.check.outputs.behind != '0' && steps.existing.outputs.pr_count == '0' && steps.existing.outputs.issue_count == '0'
         id: merge
         env:
           BRANCH_NAME: ${{ steps.branch.outputs.name }}
