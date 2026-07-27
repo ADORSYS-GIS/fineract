@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
+import org.apache.fineract.portfolio.workingcapitalloan.data.TransactionDateAndAmountHolder;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -77,4 +78,14 @@ public interface WorkingCapitalLoanTransactionRepository extends JpaRepository<W
 
     boolean existsByExternalId(ExternalId externalId);
 
+    @Query("""
+            SELECT t.transactionDate, SUM(t.transactionAmount)
+            FROM WorkingCapitalLoanTransaction t
+            WHERE t.reversed = FALSE
+            AND t.wcLoan.id = :wcLoanId
+            AND t.transactionType in :transactionTypes
+            GROUP BY t.transactionDate
+            """)
+    List<TransactionDateAndAmountHolder> fetchTransactionDateAndAmount(@Param("wcLoanId") Long wcLoanId,
+            @Param("transactionTypes") List<LoanTransactionType> transactionTypes);
 }

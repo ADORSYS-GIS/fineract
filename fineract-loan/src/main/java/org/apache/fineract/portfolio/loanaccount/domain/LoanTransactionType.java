@@ -18,6 +18,9 @@
  */
 package org.apache.fineract.portfolio.loanaccount.domain;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum LoanTransactionType {
 
     INVALID(0, "loanTransactionType.invalid"), //
@@ -189,7 +192,7 @@ public enum LoanTransactionType {
 
     public boolean isRepaymentType() {
         return (isRepayment() || isMerchantIssuedRefund() || isPayoutRefund() || isGoodwillCredit() || isChargeRefund() || isDownPayment()
-                || isInterestPaymentWaiver());
+                || isInterestPaymentWaiver() || isChargeAdjustment());
     }
 
     public boolean isRecoveryRepayment() {
@@ -286,5 +289,9 @@ public enum LoanTransactionType {
 
     public boolean isDiscountFeeAmortization() {
         return this == LoanTransactionType.DISCOUNT_FEE_AMORTIZATION;
+    }
+
+    public static List<LoanTransactionType> getRepaymentLikeTransactionTypes() {
+        return Arrays.stream(LoanTransactionType.values()).filter(LoanTransactionType::isRepaymentType).toList();
     }
 }

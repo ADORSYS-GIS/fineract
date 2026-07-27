@@ -131,6 +131,14 @@ public class WorkingCapitalLoanTransaction extends AbstractAuditableWithUTCDateT
         return txn;
     }
 
+    public static WorkingCapitalLoanTransaction payoutRefund(final WorkingCapitalLoan loan, final BigDecimal amount,
+            final PaymentDetail paymentDetail, final LocalDate transactionDate, final CodeValue classification,
+            final ExternalId externalId) {
+        final WorkingCapitalLoanTransaction txn = new WorkingCapitalLoanTransaction();
+        txn.initialize(loan, LoanTransactionType.PAYOUT_REFUND, transactionDate, amount, paymentDetail, classification, externalId);
+        return txn;
+    }
+
     public static WorkingCapitalLoanTransaction creditBalanceRefund(final WorkingCapitalLoan loan, final BigDecimal amount,
             final PaymentDetail paymentDetail, final LocalDate transactionDate, final CodeValue classification,
             final ExternalId externalId) {
@@ -194,6 +202,13 @@ public class WorkingCapitalLoanTransaction extends AbstractAuditableWithUTCDateT
         return transaction;
     }
 
+    public static WorkingCapitalLoanTransaction accrual(final WorkingCapitalLoan loan, final ExternalId externalId, final BigDecimal amount,
+            final LocalDate transactionDate) {
+        final WorkingCapitalLoanTransaction transaction = new WorkingCapitalLoanTransaction();
+        transaction.initialize(loan, LoanTransactionType.ACCRUAL, transactionDate, amount, null, null, externalId);
+        return transaction;
+    }
+
     private void initialize(final WorkingCapitalLoan loan, final LoanTransactionType transactionType, final LocalDate transactionDate,
             final BigDecimal amount, final PaymentDetail paymentDetail, final CodeValue classification, final ExternalId externalId) {
         this.wcLoan = loan;
@@ -207,9 +222,5 @@ public class WorkingCapitalLoanTransaction extends AbstractAuditableWithUTCDateT
         this.reversed = false;
         this.reversalExternalId = null;
         this.reversedOnDate = null;
-    }
-
-    public boolean isRepaymentLike() {
-        return transactionType == LoanTransactionType.REPAYMENT || transactionType == LoanTransactionType.GOODWILL_CREDIT;
     }
 }

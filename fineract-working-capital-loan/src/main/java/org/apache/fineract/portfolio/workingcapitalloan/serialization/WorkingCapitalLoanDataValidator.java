@@ -52,6 +52,7 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.NearBreachActionT
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoan;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPeriodFrequencyType;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransaction;
+import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanBreachActionRepository;
 import org.apache.fineract.portfolio.workingcapitalloan.repository.WorkingCapitalLoanTransactionRepository;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalLoanProductRelatedDetail;
 import org.springframework.stereotype.Component;
@@ -64,6 +65,7 @@ public class WorkingCapitalLoanDataValidator {
     private final ExpectedDisbursementDateValidator expectedDisbursementDateValidator;
     private final WorkingCapitalLoanTransactionRepository transactionRepository;
     private final CodeValueRepository codeValueRepository;
+    private final WorkingCapitalLoanBreachActionRepository breachActionRepository;
 
     // Per requirement: only principal, discount, approved date, expected disbursement date, and notes
     private static final Set<String> APPROVAL_SUPPORTED_PARAMETERS = new HashSet<>(
@@ -121,6 +123,8 @@ public class WorkingCapitalLoanDataValidator {
     private static final int NOTE_MAX_LENGTH = 1000;
     private static final int EXTERNAL_ID_MAX_LENGTH = 100;
     private static final int PAYMENT_DETAIL_STRING_MAX_LENGTH = 50;
+    private static final Set<LoanStatus> REPAYMENT_LIKE_TXN_ALLOWED_LOAN_STATUSES = Set.of(LoanStatus.ACTIVE,
+            LoanStatus.CLOSED_OBLIGATIONS_MET, LoanStatus.OVERPAID);
 
     public void validateDiscountTransaction(final WorkingCapitalLoan loan, final String json, BigDecimal discountAmount,
             final String note) {
@@ -630,7 +634,7 @@ public class WorkingCapitalLoanDataValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validateRepayment(final String json, final WorkingCapitalLoan loan, LoanTransactionType goodwillCredit) {
+    public void validateRepayment(final String json, final WorkingCapitalLoan loan, LoanTransactionType transactionType) {
         if (StringUtils.isBlank(json)) {
             throw new InvalidJsonException();
         }
@@ -696,19 +700,24 @@ public class WorkingCapitalLoanDataValidator {
         validatePaymentDetails(baseDataValidator, element);
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
-        if (LoanTransactionType.REPAYMENT.equals(goodwillCredit)) {
-            if (!LoanStatus.ACTIVE.equals(loan.getLoanStatus()) && !LoanStatus.CLOSED_OBLIGATIONS_MET.equals(loan.getLoanStatus())
-                    && !LoanStatus.OVERPAID.equals(loan.getLoanStatus())) {
-                throw new PlatformApiDataValidationException("validation.msg.wc.loan.transition.not.allowed",
-                        "Repayment is allowed only for active/overpaid loans", WorkingCapitalLoanConstants.loanStatusParamName);
-            }
-        } else if (LoanTransactionType.GOODWILL_CREDIT.equals(goodwillCredit)) {
-            if (!LoanStatus.ACTIVE.equals(loan.getLoanStatus()) && !LoanStatus.CLOSED_OBLIGATIONS_MET.equals(loan.getLoanStatus())
-                    && !LoanStatus.OVERPAID.equals(loan.getLoanStatus())) {
-                throw new PlatformApiDataValidationException("validation.msg.wc.loan.transition.not.allowed",
-                        "Goodwill Credit is allowed only for active/closed obligations met/overpaid loans",
-                        WorkingCapitalLoanConstants.loanStatusParamName);
-            }
+        validateRepaymentAllowedForLoanStatus(loan.getLoanStatus(), transactionType);
+    }
+
+    private void validateRepaymentAllowedForLoanStatus(final LoanStatus loanStatus, final LoanTransactionType transactionType) {
+        if (transactionType == null || REPAYMENT_LIKE_TXN_ALLOWED_LOAN_STATUSES.contains(loanStatus)) {
+            return;
+        }
+
+        final String errorMessage = switch (transactionType) {
+            case REPAYMENT -> "Repayment is allowed only for active/closed obligations met/overpaid loans";
+            case PAYOUT_REFUND -> "Payout Refund is allowed only for active/closed obligations met/overpaid loans";
+            case GOODWILL_CREDIT -> "Goodwill Credit is allowed only for active/closed obligations met/overpaid loans";
+            default -> null;
+        };
+
+        if (errorMessage != null) {
+            throw new PlatformApiDataValidationException("validation.msg.wc.loan.transition.not.allowed", errorMessage,
+                    WorkingCapitalLoanConstants.loanStatusParamName);
         }
     }
 
@@ -804,6 +813,10 @@ public class WorkingCapitalLoanDataValidator {
         if (loan.getLoanProductRelatedDetails().getNearBreach() == null) {
             baseDataValidator.reset()
                     .failWithCodeNoParameterAddedToErrorCode("near.breach.action.not.allowed.loan.has.no.near.breach.configuration");
+        }
+
+        if (breachActionRepository.isBreachDisabledAsOf(loan.getId(), DateUtils.getBusinessLocalDate())) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("breach.is.disabled");
         }
 
         final String actionStr = this.fromApiJsonHelper.extractStringNamed(WorkingCapitalLoanConstants.nearBreachActionParamName, element);
@@ -927,6 +940,14 @@ public class WorkingCapitalLoanDataValidator {
 
         if (transaction.isReversed()) {
             baseDataValidator.reset().parameter("transaction").failWithCode("transaction.already.undone", transaction.getId());
+        }
+
+        final LoanStatus loanStatus = loan.getLoanStatus();
+        final boolean undoAllowedForStatus = LoanStatus.ACTIVE.equals(loanStatus) || LoanStatus.CLOSED_OBLIGATIONS_MET.equals(loanStatus)
+                || LoanStatus.OVERPAID.equals(loanStatus);
+        if (!undoAllowedForStatus) {
+            baseDataValidator.reset().parameter(WorkingCapitalLoanConstants.loanStatusParamName)
+                    .failWithCode("undo.transaction.not.allowed.for.loan.status");
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
