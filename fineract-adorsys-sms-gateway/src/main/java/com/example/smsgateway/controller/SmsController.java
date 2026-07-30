@@ -75,12 +75,16 @@ public class SmsController {
     public ResponseEntity<Map<String, Object>> sendOtpCompatibility(
         @RequestBody Map<String, String> request
     ) {
+        String purpose = request.get("purpose");
+        if (purpose == null || purpose.isBlank()) {
+            purpose = request.get("context");
+        }
         OtpGenerateResponse response = otpService.generateAndSend(
             new OtpGenerateRequest(
                 request.get("phone"),
                 request.get("user_id"),
                 null,
-                request.get("context"),
+                purpose,
                 request.get("provider")
             )
         );
@@ -100,13 +104,17 @@ public class SmsController {
     public ResponseEntity<Map<String, Object>> verifyOtpCompatibility(
         @RequestBody Map<String, String> request
     ) {
+        String purpose = request.get("purpose");
+        if (purpose == null || purpose.isBlank()) {
+            purpose = request.get("context");
+        }
         OtpValidateResponse response = otpService.validate(
             new OtpValidateRequest(
                 request.get("request_id"),
                 request.get("phone"),
                 request.get("user_id"),
                 null,
-                request.get("context"),
+                purpose,
                 request.get("otp")
             )
         );

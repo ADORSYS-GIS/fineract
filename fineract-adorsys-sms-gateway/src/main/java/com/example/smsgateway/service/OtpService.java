@@ -104,10 +104,16 @@ public class OtpService {
         String phoneNumber = smsService.normalizePhoneNumber(request.phoneNumber());
         String purpose = sanitizePurpose(request.purpose());
         String principal = principal(request.userId(), request.sessionId(), phoneNumber, purpose);
-        String requestId = StringUtils.hasText(request.requestId()) ? safe(request.requestId()) : principalIndex.get(principal);
         if (!allow(verifyRateLimits, principal, maxVerifyAttempts, verifyWindowSeconds)) {
             logger.warn("OTP verify rate limit exceeded for purpose {}", purpose);
             meterRegistry.counter("otp_events_total", "event", "verify_rate_limited").increment();
+            return new OtpValidateResponse(false, "INVALID");
+        }
+
+        String requestId = StringUtils.hasText(request.requestId()) ? safe(request.requestId()) : principalIndex.get(principal);
+        if (requestId == null) {
+            principalIndex.remove(principal);
+            meterRegistry.counter("otp_events_total", "event", "invalid").increment();
             return new OtpValidateResponse(false, "INVALID");
         }
 
