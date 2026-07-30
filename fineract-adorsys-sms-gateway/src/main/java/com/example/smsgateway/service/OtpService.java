@@ -40,6 +40,7 @@ public class OtpService {
     private final int maxVerifyAttempts;
     private final int verifyWindowSeconds;
     private final String issuer;
+    private final String androidAppHash;
     private final Map<String, OtpRecord> otpStore = new ConcurrentHashMap<>();
     private final Map<String, String> principalIndex = new ConcurrentHashMap<>();
     private final Map<String, RateLimitRecord> sendRateLimits = new ConcurrentHashMap<>();
@@ -54,7 +55,8 @@ public class OtpService {
             @Value("${otp.send-window-seconds:300}") int sendWindowSeconds,
             @Value("${otp.max-verify-attempts:5}") int maxVerifyAttempts,
             @Value("${otp.verify-window-seconds:300}") int verifyWindowSeconds,
-            @Value("${otp.issuer:Webank}") String issuer) {
+            @Value("${otp.issuer:Webank}") String issuer,
+            @Value("${android.otp.hash:ZWY1OTBkZmE3ZWM1NDUwYmMyZmJjNzk0MDIzZjNjMzRmZDFhZjg1ZGQ1M2E3OTQ0ZGRkODIwOGJjY2YxZGNiNA}") String androidAppHash) {
         this.smsService = smsService;
         this.meterRegistry = meterRegistry;
         this.length = length;
@@ -64,6 +66,7 @@ public class OtpService {
         this.maxVerifyAttempts = maxVerifyAttempts;
         this.verifyWindowSeconds = verifyWindowSeconds;
         this.issuer = issuer;
+        this.androidAppHash = androidAppHash;
     }
 
     public OtpGenerateResponse generateAndSend(OtpGenerateRequest request) {
@@ -82,7 +85,8 @@ public class OtpService {
         otpStore.put(requestId, new OtpRecord(hashOtp(otp), phoneNumber, safe(request.userId()), safe(request.sessionId()), purpose, expiresAt, false));
         principalIndex.put(principal, requestId);
 
-        String body = "Your " + issuer + " verification code is " + otp;
+        // Build OTP message with Android app hash for SMS Retriever
+        String body = "Votre code WeBank: " + otp + "\n" + androidAppHash;
         SmsSendResult result = smsService.send(new SmsMessage(phoneNumber, body, MessageType.OTP, request.provider(), Map.of("purpose", purpose)));
         if (!result.success()) {
             otpStore.remove(requestId);

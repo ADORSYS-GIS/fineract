@@ -80,6 +80,14 @@ logging:
 # a self-referential placeholder that Spring rejects at startup with
 # "Circular placeholder reference" — see ApiKeyAuthFilter for the consumption.
 
-# Dev/test only: set SMS_GATEWAY_AUTH_DISABLED=true to bypass API-key auth
-# entirely. Never enable in production — doing so reopens the open SMS-relay
-# risk this filter closes.
+# Dev/test only: set to true to bypass API-key auth entirely. Never enable
+# in production — doing so reopens the open SMS-relay risk this filter closes.
+SMS_GATEWAY_AUTH_DISABLED: false
+
+# Android SMS Retriever configuration
+# This hash is generated from the application package name using SHA-256
+# and base64 encoding. It's used to identify incoming SMS messages from
+# this app for automatic OTP autofill on Android devices.
+android:
+  otp:
+    hash: ${ANDROID_OTP_HASH:ZWY1OTBkZmE3ZWM1NDUwYmMyZmJjNzk0MDIzZjNjMzRmZDFhZjg1ZGQ1M2E3OTQ0ZGRkODIwOGJjY2YxZGNiNA}
