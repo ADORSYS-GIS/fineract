@@ -56,7 +56,7 @@ public class OtpService {
             @Value("${otp.max-verify-attempts:5}") int maxVerifyAttempts,
             @Value("${otp.verify-window-seconds:300}") int verifyWindowSeconds,
             @Value("${otp.issuer:Webank}") String issuer,
-            @Value("${android.otp.hash:ZWY1OTBkZmE3ZWM1NDUwYmMyZmJjNzk0MDIzZjNjMzRmZDFhZjg1ZGQ1M2E3OTQ0ZGRkODIwOGJjY2YxZGNiNA}") String androidAppHash) {
+            @Value("${android.otp.hash:FA+9qCX9VSu}") String androidAppHash) {
         this.smsService = smsService;
         this.meterRegistry = meterRegistry;
         this.length = length;
@@ -85,8 +85,10 @@ public class OtpService {
         otpStore.put(requestId, new OtpRecord(hashOtp(otp), phoneNumber, safe(request.userId()), safe(request.sessionId()), purpose, expiresAt, false));
         principalIndex.put(principal, requestId);
 
-        // Build OTP message with Android app hash for SMS Retriever
-        String body = "Votre code WeBank: " + otp + "\n" + androidAppHash;
+        // Build OTP message with Android app hash for SMS Retriever if configured
+        String body = StringUtils.hasText(androidAppHash)
+                ? "Votre code WeBank: " + otp + "\n" + androidAppHash.trim()
+                : "Votre code WeBank: " + otp;
         SmsSendResult result = smsService.send(new SmsMessage(phoneNumber, body, MessageType.OTP, request.provider(), Map.of("purpose", purpose)));
         if (!result.success()) {
             otpStore.remove(requestId);

@@ -90,4 +90,4 @@ SMS_GATEWAY_AUTH_DISABLED: false
 # this app for automatic OTP autofill on Android devices.
 android:
   otp:
-    hash: ${ANDROID_OTP_HASH:ZWY1OTBkZmE3ZWM1NDUwYmMyZmJjNzk0MDIzZjNjMzRmZDFhZjg1ZGQ1M2E3OTQ0ZGRkODIwOGJjY2YxZGNiNA}
+    hash: ${ANDROID_OTP_HASH:FA+9qCX9VSu}
