@@ -67,6 +67,12 @@ public class OtpService {
         this.verifyWindowSeconds = verifyWindowSeconds;
         this.issuer = issuer;
         this.androidAppHash = androidAppHash;
+
+        if (StringUtils.hasText(androidAppHash) && androidAppHash.trim().length() != 11) {
+            throw new IllegalArgumentException(
+                "android.otp.hash must be an 11-character SMS Retriever app hash, got "
+                    + androidAppHash.trim().length() + " characters");
+        }
     }
 
     public OtpGenerateResponse generateAndSend(OtpGenerateRequest request) {
@@ -85,10 +91,13 @@ public class OtpService {
         otpStore.put(requestId, new OtpRecord(hashOtp(otp), phoneNumber, safe(request.userId()), safe(request.sessionId()), purpose, expiresAt, false));
         principalIndex.put(principal, requestId);
 
-        // Build OTP message with Android app hash for SMS Retriever if configured
+        // Build OTP message with Android app hash for SMS Retriever if configured.
+        // Ends with the Android SMS Retriever app hash so the client can
+        // auto-fill without SMS permissions. The hash MUST be last — see
+        // OtpExtractor in webank-mobile for the parsing side of this contract.
         String body = StringUtils.hasText(androidAppHash)
-                ? "Votre code WeBank: " + otp + "\n" + androidAppHash.trim()
-                : "Votre code WeBank: " + otp;
+                ? "Votre code " + issuer + ": " + otp + "\n" + androidAppHash.trim()
+                : "Votre code " + issuer + ": " + otp;
         SmsSendResult result = smsService.send(new SmsMessage(phoneNumber, body, MessageType.OTP, request.provider(), Map.of("purpose", purpose)));
         if (!result.success()) {
             otpStore.remove(requestId);
@@ -114,7 +123,6 @@ public class OtpService {
 
         String requestId = StringUtils.hasText(request.requestId()) ? safe(request.requestId()) : principalIndex.get(principal);
         if (requestId == null) {
-            principalIndex.remove(principal);
             meterRegistry.counter("otp_events_total", "event", "invalid").increment();
             return new OtpValidateResponse(false, "INVALID");
         }

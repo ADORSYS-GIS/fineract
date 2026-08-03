@@ -50,7 +50,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
     public ApiKeyAuthFilter(
         @Value("${SMS_GATEWAY_API_KEY:}") String expectedApiKey,
-        @Value("${SMS_GATEWAY_AUTH_DISABLED}") boolean authDisabled
+        @Value("${SMS_GATEWAY_AUTH_DISABLED:false}") boolean authDisabled
     ) {
         this.expectedApiKey = expectedApiKey;
         this.authDisabled = authDisabled;

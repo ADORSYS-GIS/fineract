@@ -75,19 +75,17 @@ logging:
 #
 # NOTE: SMS_GATEWAY_API_KEY and SMS_GATEWAY_AUTH_DISABLED are NOT declared
 # as YAML keys here. They are read directly by ApiKeyAuthFilter via
-# @Value("${SMS_GATEWAY_API_KEY:}") / @Value("${SMS_GATEWAY_AUTH_DISABLED:false}").
-# Declaring them as `SMS_GATEWAY_API_KEY: ${SMS_GATEWAY_API_KEY:}` below creates
-# a self-referential placeholder that Spring rejects at startup with
-# "Circular placeholder reference" — see ApiKeyAuthFilter for the consumption.
+# Dev/test only: set SMS_GATEWAY_AUTH_DISABLED=true to bypass API-key auth
+# entirely. Never enable in production — doing so reopens the open SMS-relay
+# risk this filter closes.
 
-# Dev/test only: set to true to bypass API-key auth entirely. Never enable
-# in production — doing so reopens the open SMS-relay risk this filter closes.
-SMS_GATEWAY_AUTH_DISABLED: false
-
-# Android SMS Retriever configuration
-# This hash is generated from the application package name using SHA-256
-# and base64 encoding. It's used to identify incoming SMS messages from
-# this app for automatic OTP autofill on Android devices.
+# Android SMS Retriever app hash — the 11-character token appended to every
+# OTP SMS so the client app can read it without SMS permissions.
+#
+# Derived from the package name AND the signing certificate, so debug and
+# release builds have DIFFERENT hashes. Generate with
+# mobile/scripts/generate_android_sms_hash.sh in webank-mobile, per keystore.
 android:
   otp:
     hash: ${ANDROID_OTP_HASH:FA+9qCX9VSu}
+
