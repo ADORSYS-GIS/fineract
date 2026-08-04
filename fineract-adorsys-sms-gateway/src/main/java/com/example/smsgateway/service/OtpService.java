@@ -56,7 +56,7 @@ public class OtpService {
             @Value("${otp.max-verify-attempts:5}") int maxVerifyAttempts,
             @Value("${otp.verify-window-seconds:300}") int verifyWindowSeconds,
             @Value("${otp.issuer:Webank}") String issuer,
-            @Value("${android.otp.hash:FA+9qCX9VSu}") String androidAppHash) {
+            @Value("${android.otp.hash}") String androidAppHash) {
         this.smsService = smsService;
         this.meterRegistry = meterRegistry;
         this.length = length;

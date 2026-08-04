@@ -43,7 +43,7 @@ class OtpServiceTest {
                 5,
                 300,
                 "Webank",
-                "FA+9qCX9VSu"
+                "tRpk021s0UP"
         );
 
         OtpGenerateRequest request = new OtpGenerateRequest("+237690000000", "user-1", "session-1", "registration", "twilio");
@@ -57,7 +57,7 @@ class OtpServiceTest {
         SmsMessage sentMsg = captor.getValue();
 
         assertTrue(sentMsg.body().startsWith("Votre code Webank: "));
-        assertTrue(sentMsg.body().endsWith("\nFA+9qCX9VSu"));
+        assertTrue(sentMsg.body().endsWith("\ntRpk021s0UP"));
         assertEquals(MessageType.OTP, sentMsg.type());
     }
 
@@ -119,7 +119,7 @@ class OtpServiceTest {
                 5,
                 300,
                 "Webank",
-                "FA+9qCX9VSu"
+                "tRpk021s0UP"
         );
 
         OtpValidateRequest request = new OtpValidateRequest(null, "+237690000000", "user-unknown", "session-1", "registration", "123456");

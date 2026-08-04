@@ -73,11 +73,13 @@ logging:
 # through from the host environment, defaulting to `dev-sms-gateway-key`
 # so the default stack works out of the box; override it in production.
 #
-# NOTE: SMS_GATEWAY_API_KEY and SMS_GATEWAY_AUTH_DISABLED are NOT declared
-# as YAML keys here. They are read directly by ApiKeyAuthFilter via
 # Dev/test only: set SMS_GATEWAY_AUTH_DISABLED=true to bypass API-key auth
 # entirely. Never enable in production — doing so reopens the open SMS-relay
 # risk this filter closes.
+#
+# NOTE: SMS_GATEWAY_API_KEY and SMS_GATEWAY_AUTH_DISABLED are read directly by
+# ApiKeyAuthFilter via @Value annotations. They are NOT declared as YAML keys
+# here to avoid the circular-placeholder failure described above.
 
 # Android SMS Retriever app hash — the 11-character token appended to every
 # OTP SMS so the client app can read it without SMS permissions.
@@ -85,7 +87,10 @@ logging:
 # Derived from the package name AND the signing certificate, so debug and
 # release builds have DIFFERENT hashes. Generate with
 # mobile/scripts/generate_android_sms_hash.sh in webank-mobile, per keystore.
+#
+# Intentionally has no default: a wrong hash fails silently (autofill just
+# never happens), so an unset value must fail loudly at startup instead.
 android:
   otp:
-    hash: ${ANDROID_OTP_HASH:FA+9qCX9VSu}
+    hash: ${ANDROID_OTP_HASH}
 
