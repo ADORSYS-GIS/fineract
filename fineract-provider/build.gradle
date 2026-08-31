@@ -145,6 +145,12 @@ dependencies {
 
 apply from: 'dependencies.gradle'
 
+test {
+    systemProperty 'fineract.modulith.report', System.getProperty('fineract.modulith.report', 'false')
+    maxHeapSize = '2g'
+    jvmArgs += ['-XX:MaxMetaspaceSize=1g']
+}
+
 // Configuration for the modernizer plugin
 // https://github.com/andygoossens/gradle-modernizer-plugin
 modernizer {
@@ -313,7 +319,7 @@ bootJar {
 
 jib {
     from {
-        image = 'azul/zulu-openjdk-alpine:21'
+        image = 'azul/zulu-openjdk-alpine:25'
         platforms {
             platform {
                 architecture = System.getProperty("os.arch").equals("aarch64")?"arm64":"amd64"
