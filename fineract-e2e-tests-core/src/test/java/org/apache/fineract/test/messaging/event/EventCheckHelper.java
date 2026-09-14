@@ -163,6 +163,7 @@ import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.W
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanDiscountFeeTransactionBusinessEvent;
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanGoodwillCreditTransactionBusinessEvent;
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanPayoutRefundTransactionBusinessEvent;
+import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanRecoveryPaymentTransactionBusinessEvent;
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanRepaymentTransactionBusinessEvent;
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanUndoDisbursalTransactionBusinessEvent;
 import org.apache.fineract.test.messaging.event.workingcapitalloan.transaction.WorkingCapitalLoanUndoWriteOffTransactionBusinessEvent;
@@ -1000,6 +1001,11 @@ public class EventCheckHelper {
         });
     }
 
+    public void workingCapitalLoanStatusChangedEventOverpaidOnDateCheck(final Long loanId) {
+        workingCapitalLoanEventMatchesApiCheck(WorkingCapitalLoanStatusChangedEvent.class, loanId,
+                (event, body) -> assertEventDateEqualsApiDate("overpaidOnDate", event.getOverpaidOnDate(), body.getOverpaidOnDate()));
+    }
+
     public void workingCapitalLoanBalanceChangedEventPausePeriodsCheck(final Long loanId) {
         workingCapitalLoanEventMatchesApiCheck(WorkingCapitalLoanBalanceChangedEvent.class, loanId, (event, body) -> {
             assertThat(event.getDelinquent()).isNotNull();
@@ -1265,6 +1271,14 @@ public class EventCheckHelper {
         final GetWorkingCapitalLoanTransactionIdResponse transaction = findLastWorkingCapitalLoanTransaction(loanId, "chargeOff", false,
                 "Charge-off transaction not found");
         workingCapitalLoanTransactionEventCheck(WorkingCapitalLoanChargeOffTransactionBusinessEvent.class, loanId, transaction,
+                expectedAmount, false);
+    }
+
+    public void workingCapitalLoanRecoveryPaymentTransactionEventCheck(final Long loanId, final BigDecimal expectedAmount) {
+        waitForTransactionCommit();
+        final GetWorkingCapitalLoanTransactionIdResponse transaction = findLastWorkingCapitalLoanTransaction(loanId, "recoveryRepayment",
+                false, "Recovery payment transaction not found");
+        workingCapitalLoanTransactionEventCheck(WorkingCapitalLoanRecoveryPaymentTransactionBusinessEvent.class, loanId, transaction,
                 expectedAmount, false);
     }
 
