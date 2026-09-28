@@ -864,6 +864,26 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder discountFeeWorkingCapitalLoanTransaction(final Long loanId, final Long transactionId) {
+        this.actionName = ACTION_DISCOUNTFEE;
+        this.entityName = ENTITY_WORKINGCAPITALLOAN;
+        this.entityId = loanId;
+        this.subentityId = transactionId;
+        this.loanId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/transactions/" + transactionId + "?command=discountFee";
+        return this;
+    }
+
+    public CommandWrapperBuilder discountFeeAdjustmentWorkingCapitalLoanTransaction(final Long loanId, final Long transactionId) {
+        this.actionName = ACTION_DISCOUNTFEEADJUSTMENT;
+        this.entityName = ENTITY_WORKINGCAPITALLOAN;
+        this.entityId = loanId;
+        this.subentityId = transactionId;
+        this.loanId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/transactions/" + transactionId + "?command=discountFeeAdjustment";
+        return this;
+    }
+
     public CommandWrapperBuilder undoWorkingCapitalLoanTransaction(final Long loanId, final Long transactionId) {
         this.actionName = ACTION_UNDO;
         this.entityName = ENTITY_WORKINGCAPITALLOANTRANSACTION;
@@ -1185,6 +1205,15 @@ public class CommandWrapperBuilder {
 
     public CommandWrapperBuilder adjustmentForWorkingCapitalLoanCharge(final Long loanId, final Long loanChargeId) {
         this.actionName = ACTION_ADJUSTMENT;
+        this.entityName = ENTITY_WORKINGCAPITALLOANCHARGE;
+        this.entityId = loanChargeId;
+        this.loanId = loanId;
+        this.href = "/working-capital-loans/" + loanId + "/charges/" + loanChargeId;
+        return this;
+    }
+
+    public CommandWrapperBuilder waiveWorkingCapitalLoanCharge(final Long loanId, final Long loanChargeId) {
+        this.actionName = ACTION_WAIVE;
         this.entityName = ENTITY_WORKINGCAPITALLOANCHARGE;
         this.entityId = loanChargeId;
         this.loanId = loanId;
@@ -3864,6 +3893,15 @@ public class CommandWrapperBuilder {
 
     public CommandWrapperBuilder updateExternalAssetOwnerLoanProductAttribute(final Long loanProductId, final Long attributeId) {
         this.actionName = ACTION_UPDATE;
+        this.entityName = ENTITY_EXTERNAL_ASSET_OWNER_LOAN_PRODUCT_ATTRIBUTE;
+        this.productId = loanProductId;
+        this.entityId = attributeId;
+        this.href = "/external-asset-owners/loan-product/" + loanProductId + "/attributes/" + attributeId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteExternalAssetOwnerLoanProductAttribute(final Long loanProductId, final Long attributeId) {
+        this.actionName = ACTION_DELETE;
         this.entityName = ENTITY_EXTERNAL_ASSET_OWNER_LOAN_PRODUCT_ATTRIBUTE;
         this.productId = loanProductId;
         this.entityId = attributeId;

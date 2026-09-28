@@ -32,6 +32,7 @@ import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.workingcapitalloan.calc.ProjectedAmortizationScheduleModel.RateChange;
 import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalAmortizationType;
+import org.apache.fineract.portfolio.workingcapitalloanproduct.domain.WorkingCapitalPaymentAmountCalculationStrategy;
 
 /**
  * The amortization schedule, walked one day at a time until the loan is square.
@@ -78,12 +79,54 @@ final class AmortizationWalk {
     private final int minimumDays;
     private final int currencyScale;
     private final MathContext mc;
+    /** Which input the plan is solved from; decides the plan cursor and how the tail is re-priced. */
+    private final WorkingCapitalPaymentAmountCalculationStrategy strategy;
+    /**
+     * Product annual EIR (%). Non-null only for Annual EIR strategy — same role as {@link #basePeriodPaymentRate} for
+     * TPV.
+     */
+    private final BigDecimal annualEir;
+    /** Fixed daily payment. Non-null only for Payment Amount strategy — the plan is solved from it directly. */
+    private final BigDecimal paymentAmount;
 
     AmortizationWalk(final WorkingCapitalAmortizationType amortizationType, final BigDecimal netDisbursement, final BigDecimal discountFee,
             final BigDecimal totalPaymentVolume, final BigDecimal basePeriodPaymentRate, final int npvDayCount,
             final LocalDate expectedDisbursementDate, final int firstPeriodDayOffset, final LocalDate calculatedTillDate,
             final Map<LocalDate, BigDecimal> paymentsByDate, final List<RateChange> rateChanges, final int minimumDays,
             final CurrencyData currency, final MathContext mc) {
+        this(amortizationType, netDisbursement, discountFee, totalPaymentVolume, basePeriodPaymentRate, npvDayCount,
+                expectedDisbursementDate, firstPeriodDayOffset, calculatedTillDate, paymentsByDate, rateChanges, minimumDays, currency, mc,
+                WorkingCapitalPaymentAmountCalculationStrategy.TPV, null, null);
+    }
+
+    static AmortizationWalk forPaymentAmount(final WorkingCapitalAmortizationType amortizationType, final BigDecimal netDisbursement,
+            final BigDecimal discountFee, final BigDecimal paymentAmount, final int npvDayCount, final LocalDate expectedDisbursementDate,
+            final int firstPeriodDayOffset, final LocalDate calculatedTillDate, final Map<LocalDate, BigDecimal> paymentsByDate,
+            final int minimumDays, final CurrencyData currency, final MathContext mc) {
+        return new AmortizationWalk(amortizationType, netDisbursement, discountFee, null, null, npvDayCount, expectedDisbursementDate,
+                firstPeriodDayOffset, calculatedTillDate, paymentsByDate, List.of(), minimumDays, currency, mc,
+                WorkingCapitalPaymentAmountCalculationStrategy.PAYMENT_AMOUNT, null, paymentAmount);
+    }
+
+    /**
+     * Annual EIR walk: plan is solved from {@code annualEir} (like TPV solves from TPV × rate). Mid-life re-price keeps
+     * the contractual daily from the plan and only re-solves term / closing / IRR. Rate changes are not used.
+     */
+    AmortizationWalk(final WorkingCapitalAmortizationType amortizationType, final BigDecimal netDisbursement, final BigDecimal discountFee,
+            final BigDecimal annualEir, final int npvDayCount, final LocalDate expectedDisbursementDate, final int firstPeriodDayOffset,
+            final LocalDate calculatedTillDate, final Map<LocalDate, BigDecimal> paymentsByDate, final int minimumDays,
+            final CurrencyData currency, final MathContext mc) {
+        this(amortizationType, netDisbursement, discountFee, null, null, npvDayCount, expectedDisbursementDate, firstPeriodDayOffset,
+                calculatedTillDate, paymentsByDate, List.of(), minimumDays, currency, mc,
+                WorkingCapitalPaymentAmountCalculationStrategy.ANNUAL_EIR, annualEir, null);
+    }
+
+    private AmortizationWalk(final WorkingCapitalAmortizationType amortizationType, final BigDecimal netDisbursement,
+            final BigDecimal discountFee, final BigDecimal totalPaymentVolume, final BigDecimal basePeriodPaymentRate,
+            final int npvDayCount, final LocalDate expectedDisbursementDate, final int firstPeriodDayOffset,
+            final LocalDate calculatedTillDate, final Map<LocalDate, BigDecimal> paymentsByDate, final List<RateChange> rateChanges,
+            final int minimumDays, final CurrencyData currency, final MathContext mc,
+            final WorkingCapitalPaymentAmountCalculationStrategy strategy, final BigDecimal annualEir, final BigDecimal paymentAmount) {
         this.amortizationType = amortizationType;
         this.flatRatio = AmortizationParams.flatRatio(amortizationType, netDisbursement, discountFee, mc);
         this.netDisbursement = netDisbursement;
@@ -100,6 +143,9 @@ final class AmortizationWalk {
                 : rateChanges.stream().sorted(Comparator.comparing(RateChange::effectiveDate)).toList();
         this.currencyScale = currency.getDecimalPlaces();
         this.mc = mc;
+        this.strategy = strategy;
+        this.annualEir = annualEir;
+        this.paymentAmount = paymentAmount;
     }
 
     /**
@@ -113,6 +159,11 @@ final class AmortizationWalk {
 
     private LocalDate dateOfDay(final int dayIndex) {
         return expectedDisbursementDate.plusDays((long) dayIndex - 1 + firstPeriodDayOffset);
+    }
+
+    /** Annual EIR and Payment Amount fix the daily payment up front, so a re-price keeps it and re-solves the rest. */
+    private boolean isPaymentDriven() {
+        return !strategy.isTpv();
     }
 
     /** Day the rate change takes effect on, clamped so a change dated before the first instalment lands on it. */
@@ -139,8 +190,14 @@ final class AmortizationWalk {
         final List<AmortizationDay> days = new ArrayList<>();
         final int appliedCount = paymentsByDate.size();
 
-        final PlanCursor plan = new PlanCursor(amortizationType, flatRatio, netDisbursement, discountFee, totalPaymentVolume,
-                basePeriodPaymentRate, npvDayCount, currencyScale, mc);
+        final PlanCursor plan = switch (strategy) {
+            case PAYMENT_AMOUNT -> PlanCursor.forPaymentAmount(amortizationType, flatRatio, netDisbursement, discountFee, paymentAmount,
+                    npvDayCount, currencyScale, mc);
+            case ANNUAL_EIR ->
+                new PlanCursor(amortizationType, flatRatio, netDisbursement, discountFee, annualEir, npvDayCount, currencyScale, mc);
+            case TPV -> new PlanCursor(amortizationType, flatRatio, netDisbursement, discountFee, totalPaymentVolume, basePeriodPaymentRate,
+                    npvDayCount, currencyScale, mc);
+        };
 
         BigDecimal balance = netDisbursement;
         BigDecimal actualBalanceExact = netDisbursement;
@@ -206,8 +263,11 @@ final class AmortizationWalk {
                 final BigDecimal unearnedFee = discountFee.subtract(aggregatedHighPrecisionActual, mc);
                 if (balance.signum() > 0 && unearnedFee.signum() > 0) {
                     try {
-                        projection = AmortizationParams.solve(amortizationType, balance, unearnedFee, totalPaymentVolume, rateInForce,
-                                npvDayCount, currencyScale, mc);
+                        projection = isPaymentDriven()
+                                ? AmortizationParams.solveFromKnownPayment(amortizationType, balance, unearnedFee,
+                                        plan.solved().dailyPayment(), mc, npvDayCount, currencyScale)
+                                : AmortizationParams.solve(amortizationType, balance, unearnedFee, totalPaymentVolume, rateInForce,
+                                        npvDayCount, currencyScale, mc);
                     } catch (final IllegalArgumentException | IllegalStateException | ArithmeticException e) {
                         // A position no rate can be solved from keeps the one it had. The projection is then the stale
                         // one it would have been anyway, which is worse than re-priced but better than no schedule.
