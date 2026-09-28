@@ -273,6 +273,9 @@ public abstract class TestContextKey {
     public static final String ASSET_EXTERNALIZATION_PREVIOUS_OWNER_EXTERNAL_ID = "assetExternalizationPreviousOwnerExternalId";
     public static final String EXTERNAL_ASSET_OWNER_CREATE_RESPONSE = "externalAssetOwnerCreateResponse";
     public static final String EXTERNAL_ASSET_OWNER_EXTERNAL_ID = "externalAssetOwnerExternalId";
+    public static final String EXTERNAL_ASSET_OWNER_LOAN_PRODUCT_ATTRIBUTE_TEMPLATE = "externalAssetOwnerLoanProductAttributeTemplate";
+    public static final String EXTERNAL_ASSET_OWNER_LOAN_PRODUCT_ATTRIBUTE_LAST_RESPONSE = "externalAssetOwnerLoanProductAttributeLastResponse";
+    public static final String EXTERNAL_ASSET_OWNER_LOAN_PRODUCT_ATTRIBUTE_LOAN_PRODUCT_ID = "externalAssetOwnerLoanProductAttributeLoanProductId";
     public static final String TRANSACTION_EVENT = "transactionEvent";
     public static final String LOAN_WRITE_OFF_RESPONSE = "loanWriteOffResponse";
     public static final String LOAN_DELINQUENCY_ACTION_RESPONSE = "loanDelinquencyActionResponse";
@@ -359,6 +362,9 @@ public abstract class TestContextKey {
     public static final String WORKING_CAPITAL_LOAN_PRODUCT_UPDATE_RESPONSE = "workingCapitalLoanProductUpdateResponse";
     public static final String WORKING_CAPITAL_LOAN_PRODUCT_TEMPLATE_RESPONSE = "workingCapitalLoanProductTemplateResponse";
     public static final String WORKING_CAPITAL_LOAN_PRODUCT_FOR_LOAN_TEST = "workingCapitalLoanProductForLoanTest";
+    public static final String LOAN_PRODUCT_CREATE_REQUEST = "loanProductCreateRequest";
+    public static final String LOAN_PRODUCT_CREATE_RESPONSE = "loanProductCreateResponse";
+    public static final String LOAN_PRODUCT_TEMPLATE_RESPONSE = "loanProductTemplateResponse";
     public static final String DELINQUENCY_BUCKET_ID = "delinquencyBucketId";
     public static final String DELINQUENCY_BUCKET_CREATE_REQUEST = "delinquencyBucketCreateRequest";
     public static final String DELINQUENCY_BUCKET_UPDATE_REQUEST = "delinquencyBucketUpdateRequest";
@@ -384,6 +390,8 @@ public abstract class TestContextKey {
     public static final String WORKING_CAPITAL_LOAN_CHARGE_IDS = "workingCapitalLoanChargeIds";
     public static final String WORKING_CAPITAL_CHARGE_TEMPLATE = "workingCapitalChargeTemplate";
     public static final String WORKING_CAPITAL_CHARGE_ADJUSTMENT_RESPONSE = "workingCapitalChargeAdjustmentResponse";
+    public static final String WORKING_CAPITAL_CHARGE_WAIVER_RESPONSE = "workingCapitalChargeWaiverResponse";
+    public static final String WORKING_CAPITAL_CHARGE_WAIVER_REVERSAL_EXTERNAL_ID = "workingCapitalChargeWaiverReversalExternalId";
     public static final String WORKING_CAPITAL_LOAN_DISBURSE_DISCOUNT_EXTERNAL_ID_USER_GENERATED = "workingCapitalLoanDisburseDiscountExternalIdUserGenerated";
     public static final String WORKING_CAPITAL_LOAN_DISCOUNT_FEE_EXTERNAL_ID_USER_GENERATED = "workingCapitalLoanDiscountFeeExternalIdUserGenerated";
     public static final String WORKING_CAPITAL_LOAN_DISCOUNT_FEE_RESPONSE = "workingCapitalLoanDiscountFeeResponse";
