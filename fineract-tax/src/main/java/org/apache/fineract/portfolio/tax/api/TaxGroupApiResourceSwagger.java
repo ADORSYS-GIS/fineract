@@ -54,6 +54,10 @@ final class TaxGroupApiResourceSwagger {
             public GetTaxesGroupTaxComponent taxComponent;
             @Schema(example = "[2016, 4, 11]")
             public LocalDate startDate;
+            @Schema(example = "[2016, 4, 11]")
+            public LocalDate endDate;
+            @Schema(example = "true", description = "Only present on the template response. True if the group is editable and this component's start date is still in the future, so it can be moved.")
+            public Boolean componentEditable;
         }
 
         @Schema(example = "7")
@@ -61,6 +65,10 @@ final class TaxGroupApiResourceSwagger {
         @Schema(example = "tax group 1")
         public String name;
         public Set<GetTaxesGroupTaxAssociations> taxAssociations;
+        @Schema(example = "[2016, 4, 11]")
+        public LocalDate businessDate;
+        @Schema(example = "true", description = "Only present on the template response. False if the group is linked to a charge, savings product or savings account.")
+        public Boolean groupEditable;
     }
 
     @Schema(description = "PostTaxesGroupRequest")
@@ -109,6 +117,8 @@ final class TaxGroupApiResourceSwagger {
             public Long id;
             @Schema(example = "7")
             public Long taxComponentId;
+            @Schema(example = "22 April 2016", description = "Only accepted when the group is not linked and this component's current start date is still in the future. Must be today or later and before the component's end date.")
+            public String startDate;
             @Schema(example = "22 April 2016")
             public String endDate;
         }
@@ -135,8 +145,10 @@ final class TaxGroupApiResourceSwagger {
 
                 private PutTaxesGroupModifiedComponents() {}
 
-                @Schema(example = "Apr 22, 2016 12:00:00 AM")
-                public String endDate;
+                @Schema(example = "[2016, 4, 22]")
+                public LocalDate startDate;
+                @Schema(example = "[2016, 4, 22]")
+                public LocalDate endDate;
                 @Schema(example = "7")
                 public Long taxComponentId;
             }
