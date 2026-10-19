@@ -42,7 +42,7 @@ public enum EntityTables {
     GROUP("m_group", "Group", "group_id", "id", CREATE, ACTIVATE, CLOSE), //
     CENTER("m_center", "Center", "m_group", "center_id", "id"), //
     OFFICE("m_office", "Office", "office_id", "id"), //
-    LOAN_PRODUCT("m_product_loan", "Loan Product", "product_loan_id", "id"), //
+    LOAN_PRODUCT("m_product_loan", "Loan Product", "product_loan_id", "id", CREATE), //
     LOAN("m_loan", "Loan", "loan_id", "id", CREATE, APPROVE, DISBURSE, WITHDRAWN, REJECTED, WRITE_OFF), //
     SAVINGS_PRODUCT("m_savings_product", "Savings Product", "savings_product_id", "id"), //
     SAVINGS("m_savings_account", "Savings Account", "savings_account_id", "id", CREATE, APPROVE, ACTIVATE, WITHDRAWN, REJECTED, CLOSE), //
@@ -55,6 +55,9 @@ public enum EntityTables {
     static final EntityTables[] ENTITY_VALUES = values();
 
     private static final List<String> ENTITY_NAMES = Arrays.stream(ENTITY_VALUES).map(EntityTables::getName).toList();
+
+    private static final List<String> CHECKABLE_ENTITY_NAMES = Arrays.stream(ENTITY_VALUES).filter(EntityTables::hasCheck)
+            .map(EntityTables::getName).toList();
 
     private static final Map<String, EntityTables> BY_ENTITY_NAME = Arrays.stream(ENTITY_VALUES)
             .collect(Collectors.toMap(EntityTables::getName, e -> e));
@@ -123,6 +126,10 @@ public enum EntityTables {
 
     public static List<String> getEntityNames() {
         return ENTITY_NAMES;
+    }
+
+    public static List<String> getCheckableEntityNames() {
+        return CHECKABLE_ENTITY_NAMES;
     }
 
     public static EntityTables fromEntityName(String name) {

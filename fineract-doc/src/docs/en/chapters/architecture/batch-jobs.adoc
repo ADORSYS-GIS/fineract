@@ -286,6 +286,42 @@ POST /fineract-provider/api/v1/jobs/LOAN_COB/inline?tenantIdentifier={tenantId}
 ----
 In this case the Loan COB job will work only with the given loan IDs.
 
+== Executing missed runs
+
+The scheduler runs in memory and has no persistent job store. A cron fire that happens while Fineract is down never happens, and a fire that happens while the scheduler is suspended is vetoed. Both are lost by default.
+
+When `fineract.job.execute-missed-runs` (environment variable `FINERACT_JOB_EXECUTE_MISSED_RUNS`, default `false`) is `true`, the scheduler replays what was missed. The `next_run_time` of a job records the first run that never happened, because a vetoed fire never advances it, and this is used as the start of the job's trigger, so Quartz applies its own misfire handling:
+
+* By default a job fires once, as soon as the scheduler is up, however many runs it missed.
+* `Increase Business Date by 1 day` fires once per missed run, one after another, so the business date moves one day per missed run. `Increase COB Date by 1 day` fires once.
+* A job never runs concurrently with itself. Fires while the scheduler is suspended are still vetoed and do not advance `next_run_time`.
+
+The replay happens in two places:
+
+* On boot, for every active job whose `next_run_time` is in the past. A tenant with `reset_scheduler_on_bootup` is un-suspended before its jobs are registered, so the replayed fires are not vetoed.
+* On `POST /scheduler?command=start`, which registers each active job with a past `next_run_time` again in the same way and clears `is_misfired`. With the property off the existing `execute_misfired_jobs` replay is unchanged.
+
+`next_run_time` is the instant of a Quartz fire time and is compared as an instant, so neither the tenant's nor the JVM's time zone changes what counts as missed. The cron expression itself is evaluated in the tenant's time zone. The column has no zone, a `Date` is mapped with the JVM's default zone, so keep the same default zone (the shipped images use `-Duser.timezone=UTC`) across restarts.
+
+There is no dependency between jobs in general. The jobs that have to run in order are `Increase Business Date by 1 day`, `Increase COB Date by 1 day`, `Loan COB` and `Working Capital Loan COB`: the COB reads the COB date when it starts, so it must not start before the business date has caught up. They are in `scheduler_group` 1, which has a Quartz scheduler of its own with a single thread, so they never run concurrently. Jobs are registered by `task_priority` (highest first, then by id), and when several fires are due the one with the oldest fire time goes first, so the replayed business date runs come before the COB runs. Every other job is in `scheduler_group` 0, the shared scheduler with several threads. The group of a job cannot be changed through the API. The consequence of the single thread is that a long Loan COB delays the Working Capital COB and the next midnight fires of the group; the business date job still fires once per missed day.
+
+A replayed run executes on the day of the catch-up, not on the day it was missed, so a job that depends on the real clock or on a business date that has not caught up yet sees the current state. Known limits:
+
+* Periodic standing instructions lose the skipped dates, because they match the exact business date.
+* Retained Earning is wrong if the business date jumps over a year end in one step.
+* Jobs outside COB date their postings on the catch-up day.
+* Report mailing sends duplicates after a long gap.
+
+=== COB catch-up after a replayed COB run
+
+A regular `Loan COB` run only closes the loans that are exactly one day behind (or have never been closed), so a loan that is further behind is not reached by a single replayed run. With `fineract.job.execute-missed-runs` on, when a `Loan COB` or `Working Capital Loan COB` run finishes `COMPLETED`, the same catch-up that `POST /loans/catch-up` (`/working-capital-loans/catch-up`) starts is started:
+
+* It runs one COB per day, from the day after the oldest closed loan up to the current COB date.
+* On a normal night, when all loans are up to date, nothing is started.
+* It is not started when a catch-up is already running.
+* It is never started at the end of a catch-up run itself (a run whose `IS_CATCH_UP` parameter is `true`). The final status of a run is saved before the listener runs, so at the end of each day of a catch-up no catch-up is seen as running, and the catch-up thread still holds the COB date. Starting another one there would queue a catch-up per day, and one loan that keeps failing would keep the queue growing.
+* Like the catch-up endpoint, it first unlocks loans that are hard locked by a COB that failed, so with the property on such loans are retried every night. One loan that is stuck far in the past makes the catch-up run every day since its last closed date.
+
 == Global Configuration for enabling/disabling jobs
 
 Some jobs can be enabled/disabled with global configuration.
@@ -306,3 +342,9 @@ If the job is disabled with the global configuration then it cannot be scheduled
 |true
 
 |===
+
+== Keeping the scheduler suspended across restarts
+
+`POST /scheduler?command=stop` suspends the scheduler of a tenant (`scheduler_detail.is_suspended`). The `reset_scheduler_on_bootup` column of the same row is `true` by default and un-suspends the tenant again when Fineract boots, so a restart silently starts the scheduler that was stopped. There is no REST endpoint for this column.
+
+When `fineract.job.reset-scheduler-on-bootup-enabled` (environment variable `FINERACT_JOB_RESET_SCHEDULER_ON_BOOTUP_ENABLED`, default `true`) is `false`, boot ignores `reset_scheduler_on_bootup` and a suspended scheduler stays suspended until `POST /scheduler?command=start`. With the default the behaviour is unchanged.
