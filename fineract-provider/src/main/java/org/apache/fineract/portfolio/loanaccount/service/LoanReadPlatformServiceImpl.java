@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +84,7 @@ import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.common.domain.DaysInYearCustomStrategyType;
+import org.apache.fineract.portfolio.common.domain.MonthEndDueDateStrategy;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.common.service.CommonEnumerations;
 import org.apache.fineract.portfolio.delinquency.data.DelinquencyRangeData;
@@ -555,6 +557,16 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
     @Override
     public LoanTransactionData retrieveLoanPrePaymentTemplate(final LoanTransactionType repaymentTransactionType, final Long loanId,
             LocalDate onDate) {
+        return retrieveLoanPayOffTemplate(repaymentTransactionType, loanId, onDate, false);
+    }
+
+    @Override
+    public LoanTransactionData retrieveLoanEarlyTerminationTemplate(final Long loanId, final LocalDate onDate) {
+        return retrieveLoanPayOffTemplate(LoanTransactionType.REPAYMENT, loanId, onDate, true);
+    }
+
+    private LoanTransactionData retrieveLoanPayOffTemplate(final LoanTransactionType repaymentTransactionType, final Long loanId,
+            final LocalDate onDate, final boolean earlyTermination) {
 
         this.context.authenticatedUser();
         this.loanUtilService.validateRepaymentTransactionType(repaymentTransactionType);
@@ -569,8 +581,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
         final LocalDate earliestUnpaidInstallmentDate = DateUtils.getBusinessLocalDate();
         final LocalDate recalculateFrom = null;
         final ScheduleGeneratorDTO scheduleGeneratorDTO = loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
-        final OutstandingAmountsDTO outstandingAmounts = loadTransactionProcessingService.fetchPrepaymentDetail(scheduleGeneratorDTO,
-                onDate, loan);
+        final OutstandingAmountsDTO outstandingAmounts = earlyTermination
+                ? loadTransactionProcessingService.fetchEarlyTerminationDetail(scheduleGeneratorDTO, onDate, loan)
+                : loadTransactionProcessingService.fetchPrepaymentDetail(scheduleGeneratorDTO, onDate, loan);
         final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(repaymentTransactionType);
         final Collection<PaymentTypeData> paymentOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
         final BigDecimal outstandingLoanBalance = outstandingAmounts.principal().getAmount();
@@ -852,6 +865,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                     + " l.is_floating_interest_rate as isFloatingInterestRate, "
                     + " l.interest_rate_differential as interestRateDifferential, "
                     + " l.days_in_year_custom_strategy as daysInYearCustomStrategy, "
+                    + " l.month_end_due_date_strategy as monthEndDueDateStrategy, "
                     + " l.enable_income_capitalization as enableIncomeCapitalization, "
                     + " l.capitalized_income_calculation_type as capitalizedIncomeCalculationType, "
                     + " l.capitalized_income_strategy as capitalizedIncomeStrategy, "
@@ -1258,6 +1272,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
             final StringEnumOptionData buyDownFeeIncomeType = ApiFacingEnum.getStringEnumOptionData(LoanBuyDownFeeIncomeType.class,
                     rs.getString("buyDownFeeIncomeType"));
             final boolean merchantBuyDownFee = rs.getBoolean("merchantBuyDownFee");
+            final StringEnumOptionData monthEndDueDateStrategy = ApiFacingEnum.getStringEnumOptionData(MonthEndDueDateStrategy.class,
+                    rs.getString("monthEndDueDateStrategy"));
 
             return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
                     clientOfficeId, clientExternalId, groupData, loanType, loanProductId, loanProductName, loanProductDescription,
@@ -1280,7 +1296,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                     chargeOffBehaviour.getValueAsStringEnumOptionData(), interestRecognitionOnDisbursementDate, allowFullTermForTranche,
                     daysInYearCustomStrategy, enableIncomeCapitalization, capitalizedIncomeCalculationType, capitalizedIncomeStrategy,
                     capitalizedIncomeType, enableBuyDownFee, buyDownFeeCalculationType, buyDownFeeStrategy, buyDownFeeIncomeType,
-                    merchantBuyDownFee);
+                    merchantBuyDownFee).setMonthEndDueDateStrategy(monthEndDueDateStrategy);
         }
     }
 
@@ -1847,7 +1863,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                 LEFT JOIN m_loan_reschedule_request lrr ON lrr.loan_id = l.id
                 -- this is to identify the applicable rates when base rate is changed
                 LEFT JOIN m_floating_rates bfr ON bfr.is_base_lending_rate = TRUE
-                LEFT JOIN m_floating_rates_periods bfrp ON bfr.id = bfrp.floating_rates_id AND bfrp.created_date >= ?
+                LEFT JOIN m_floating_rates_periods bfrp ON bfr.id = bfrp.floating_rates_id AND bfrp.created_on_utc >= ?
                 WHERE l.loan_status_id = ?
                   AND l.is_npa = FALSE
                   AND l.is_charged_off = FALSE
@@ -1861,7 +1877,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                         -- float rate changes
                         (fr.is_active = TRUE
                             AND frp.is_active = TRUE
-                            AND (frp.created_date >= ?
+                            AND (frp.created_on_utc >= ?
                                  OR (bfrp.id IS NOT NULL
                                      AND frp.is_differential_to_base_lending_rate = TRUE
                                      AND frp.from_date >= bfrp.from_date))
@@ -1871,8 +1887,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                 """;
         try {
             LocalDate currentdate = DateUtils.getBusinessLocalDate();
-            // will look only for yesterday modified rates
-            LocalDate yesterday = DateUtils.getBusinessLocalDate().minusDays(1);
+            // will look only for yesterday modified rates; compared against created_on_utc (a UTC timestamp), so
+            // bind the tenant's actual start-of-day boundary rather than a bare date, which the DB would otherwise
+            // interpret in its own session time zone instead of the tenant's.
+            OffsetDateTime yesterday = DateUtils.getOffsetDateTimeOfTenantFromLocalDate(DateUtils.getBusinessLocalDate().minusDays(1));
             return this.jdbcTemplate.queryForList(sql, Long.class, yesterday, LoanStatus.ACTIVE.getValue(), currentdate, currentdate,
                     currentdate, yesterday);
         } catch (final EmptyResultDataAccessException e) {
@@ -1883,8 +1901,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
     @Override
     public List<Long> fetchLoansForInterestRecalculation(Integer pageSize, Long maxLoanIdInList, String officeHierarchy) {
         LocalDate currentdate = DateUtils.getBusinessLocalDate();
-        // will look only for yesterday modified rates
-        LocalDate yesterday = DateUtils.getBusinessLocalDate().minusDays(1);
+        // will look only for yesterday modified rates; compared against created_on_utc (a UTC timestamp), so bind
+        // the tenant's actual start-of-day boundary rather than a bare date, which the DB would otherwise interpret
+        // in its own session time zone instead of the tenant's.
+        OffsetDateTime yesterday = DateUtils.getOffsetDateTimeOfTenantFromLocalDate(DateUtils.getBusinessLocalDate().minusDays(1));
         final String sql = """
                 SELECT l.id
                 FROM m_loan l
@@ -1903,7 +1923,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                 LEFT JOIN m_loan_reschedule_request lrr ON lrr.loan_id = l.id
                 -- this is to identify the applicable rates when base rate is changed
                 LEFT JOIN m_floating_rates bfr ON bfr.is_base_lending_rate = TRUE
-                LEFT JOIN m_floating_rates_periods bfrp ON bfr.id = bfrp.floating_rates_id AND bfrp.created_date >= ?
+                LEFT JOIN m_floating_rates_periods bfrp ON bfr.id = bfrp.floating_rates_id AND bfrp.created_on_utc >= ?
                 WHERE l.loan_status_id = ?
                     AND l.is_npa = FALSE
                     AND l.is_charged_off = FALSE
@@ -1915,15 +1935,16 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
                         OR
                          (fr.is_active = TRUE
                              AND frp.is_active = TRUE
-                             AND (frp.created_date >= ?
+                             AND (frp.created_on_utc >= ?
                                   OR (bfrp.id IS NOT NULL
                                       AND frp.is_differential_to_base_lending_rate = TRUE
                                       AND frp.from_date >= bfrp.from_date))
                              AND lrr.loan_id IS NULL)
                     )
-                    AND l.id >= ?
+                    AND l.id > ?
                     AND o.hierarchy like ?
                 GROUP BY l.id
+                ORDER BY l.id
                 LIMIT ?
                 """;
         try {

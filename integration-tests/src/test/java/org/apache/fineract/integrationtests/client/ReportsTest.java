@@ -79,8 +79,8 @@ public class ReportsTest extends FeignIntegrationTest {
 
     @Test
     void listReports() {
-        // count is 85 because @BeforeAll creates StringParamIntegrationTest fixture report
-        assertThat(ok(() -> fineractClient().reports().retrieveAllReports())).hasSize(85);
+        // count is 88 because @BeforeAll creates StringParamIntegrationTest fixture report
+        assertThat(ok(() -> fineractClient().reports().retrieveAllReports())).hasSize(88);
     }
 
     @Test

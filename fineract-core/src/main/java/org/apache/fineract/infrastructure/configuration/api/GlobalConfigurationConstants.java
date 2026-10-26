@@ -84,7 +84,6 @@ public final class GlobalConfigurationConstants {
     public static final String ENABLE_INSTANT_DELINQUENCY_CALCULATION = "enable-instant-delinquency-calculation";
     public static final String PASSWORD_REUSE_CHECK_HISTORY_COUNT = "password-reuse-check-history-count";
     public static final String FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT = "allow-force-withdrawal-on-savings-account";
-    public static final String FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT_LIMIT = "force-withdrawal-on-savings-account-limit";
     public static final String FORCE_PASSWORD_RESET_ON_FIRST_LOGIN = "force-password-reset-on-first-login";
     public static final String ALLOW_CASH_AND_NON_CASH_ACCRUAL = "allow-cash-and-non-cash-accrual";
     public static final String BLOCK_TRANSACTIONS_ON_CLOSED_OVERPAID_LOANS = "block-transactions-on-closed-overpaid-loans";
@@ -93,9 +92,13 @@ public final class GlobalConfigurationConstants {
     public static final String LAST_MONTH_OF_FINANCIAL_YEAR = "last-month-of-financial-year";
     public static final String RETAINED_EARNING_GL_ACCOUNT = "retained-gl-account";
     public static final String RETAINED_EARNING_USED_BY_REPORT_NAME = "retained-earning-used-by-report-name";
+    public static final String RETAINED_EARNING_WC_USED_BY_REPORT_NAME = "retained-earning-wc-used-by-report-name";
     public static final String OFFICE_ID = "office-id";
     public static final String DISALLOW_BACKDATED_TRANSACTIONS = "disallow-backdated-transactions";
     public static final String WCL_CHARGE_ACCRUAL_TIME = "wcl-charge-accrual-time";
+    public static final String PL_CHARGE_ACCRUAL_TIME = "pl-charge-accrual-time";
+    public static final String PAYOFF_SCHEDULE_PREVIEW_MAX_PAYOFF_PERIODS = "payoff-schedule-preview-max-payoff-periods";
+    public static final String PAYOFF_SCHEDULE_PREVIEW_MAX_TERM_PERIODS = "payoff-schedule-preview-max-term-periods";
 
     private GlobalConfigurationConstants() {}
 }
