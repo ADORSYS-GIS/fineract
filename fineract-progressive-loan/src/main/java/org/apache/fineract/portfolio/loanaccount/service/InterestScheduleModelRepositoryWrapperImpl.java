@@ -49,6 +49,7 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
     private final ProgressiveLoanInterestScheduleModelParserService progressiveLoanInterestScheduleModelParserService;
     private final AdvancedPaymentScheduleTransactionProcessor advancedPaymentScheduleTransactionProcessor;
     private final FlushModeHandler flushModeHandler;
+    private final LoanMeetingCalendarService loanMeetingCalendarService;
 
     @Transactional
     @Override
@@ -95,7 +96,8 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
     public Optional<ProgressiveLoanInterestScheduleModel> extractModel(Optional<ProgressiveLoanModel> progressiveLoanModel) {
         return progressiveLoanModel.map(ProgressiveLoanModel::getJsonModel) //
                 .map(jsonModel -> progressiveLoanInterestScheduleModelParserService.fromJson(jsonModel,
-                        LoanConfigurationDetailsMapper.map(progressiveLoanModel.get().getLoan()), MoneyHelper.getMathContext(),
+                        LoanConfigurationDetailsMapper.map(progressiveLoanModel.get().getLoan(), loanMeetingCalendarService),
+                        MoneyHelper.getMathContext(),
                         progressiveLoanModel.get().getLoan().getLoanProductRelatedDetail().getInstallmentAmountInMultiplesOf()));
     }
 
@@ -118,7 +120,7 @@ public class InterestScheduleModelRepositoryWrapperImpl implements InterestSched
                         loan.getActiveLoanTermVariations());
                 ctx.setChargedOff(loan.isChargedOff());
                 ctx.setWrittenOff(loan.isClosedWrittenOff());
-                ctx.setContractTerminated(loan.isContractTermination());
+                ctx.setContractTerminated(loan.isTerminatedEarly());
                 advancedPaymentScheduleTransactionProcessor.recalculateInterestForDate(businessDate, ctx);
             }
         } else {

@@ -26,11 +26,14 @@ import io.cucumber.java.en.Then;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.client.feign.FineractFeignClient;
 import org.apache.fineract.client.models.PostOfficesResponse;
@@ -44,6 +47,9 @@ public class ReportingStepDef extends AbstractStepDef {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH);
     private static final String TRIAL_BALANCE_REPORT = "Trial Balance Summary Report with Asset Owner";
+    private static final String WC_TRANSACTION_SUMMARY_REPORT = "Transaction Summary Report for Working Capital Loans";
+    private static final String WC_TRANSACTION_SUMMARY_REPORT_WITH_ASSET_OWNER = "Transaction Summary Report with Asset Owner for Working Capital Loans";
+    private static final String WORKING_CAPITAL_TRIAL_BALANCE_REPORT = "Trial Balance Summary Report for Working Capital Loans";
     private final FineractFeignClient fineractClient;
 
     @Then("Transaction Summary Report for date {string} has the following data:")
@@ -72,6 +78,22 @@ public class ReportingStepDef extends AbstractStepDef {
         verifyColumnNullability("Transaction Summary Report with Asset Owner", dateStr, columnName, true);
     }
 
+    @Then("Transaction Summary Report for Working Capital Loans for date {string} has the following data:")
+    public void transactionSummaryReportForWorkingCapitalLoansHasData(final String dateStr, final DataTable dataTable) {
+        verifyReportDataWithEmptyValues(WC_TRANSACTION_SUMMARY_REPORT, dateStr, dataTable);
+    }
+
+    @Then("Transaction Summary Report with Asset Owner for Working Capital Loans for date {string} has the following data:")
+    public void transactionSummaryReportWithAssetOwnerForWorkingCapitalLoansHasData(final String dateStr, final DataTable dataTable) {
+        verifyReportDataWithEmptyValues(WC_TRANSACTION_SUMMARY_REPORT_WITH_ASSET_OWNER, dateStr, dataTable);
+    }
+
+    @Then("Transaction Summary Report with Asset Owner for Working Capital Loans for date {string} has originatorId, asset owner externalId and the following data:")
+    public void transactionSummaryReportWithAssetOwnerForWorkingCapitalLoansHasDataWithOriginatorId(final String dateStr,
+            final DataTable dataTable) {
+        verifyReportDataWithOwnerExternalIdAndOriginatorId(WC_TRANSACTION_SUMMARY_REPORT_WITH_ASSET_OWNER, dateStr, dataTable);
+    }
+
     @Then("Trial Balance Summary Report with Asset Owner for date {string} has originatorId, asset owner externalId and the following data:")
     public void trialBalanceSummaryReportWithAssetOwnerHasDataWithOwnerExternalIdAndOriginatorId(final String dateStr,
             final DataTable dataTable) {
@@ -80,20 +102,55 @@ public class ReportingStepDef extends AbstractStepDef {
 
     @Then("Trial Balance Summary Report with Asset Owner for date {string} has a row for GL account {string} with non-zero ending balance")
     public void trialBalanceHasNonZeroEndingBalanceForGlAccount(final String dateStr, final String glCode) {
-        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
-        assertThat(ending).as("Trial Balance for %s: expected GL account '%s' to be present", dateStr, glCode).isNotNull();
-        assertThat(ending.signum())
-                .as("Trial Balance for %s: expected GL account '%s' ending balance to be non-zero but was %s", dateStr, glCode, ending)
-                .isNotEqualTo(0);
+        verifyNonZeroEndingBalanceForGlAccount(TRIAL_BALANCE_REPORT, dateStr, glCode);
     }
 
     @Then("Trial Balance Summary Report with Asset Owner for date {string} shows GL account {string} closed out")
     public void trialBalanceShowsGlAccountClosedOut(final String dateStr, final String glCode) {
-        final BigDecimal ending = sumColumnForGlAccount(executeReport(TRIAL_BALANCE_REPORT, dateStr), glCode, "endingbalance");
+        verifyGlAccountClosedOut(TRIAL_BALANCE_REPORT, dateStr, glCode);
+    }
+
+    @Then("Trial Balance Summary Report for Working Capital Loans for date {string} has originatorId and the following data:")
+    public void workingCapitalTrialBalanceSummaryReportHasDataWithOriginatorId(final String dateStr, final DataTable dataTable) {
+        verifyBalanceReportDataWithOwnerExternalIdAndOriginatorId(WORKING_CAPITAL_TRIAL_BALANCE_REPORT, dateStr, dataTable);
+    }
+
+    @Then("Trial Balance Summary Report for Working Capital Loans for date {string} has a row for GL account {string} with non-zero ending balance")
+    public void workingCapitalTrialBalanceHasNonZeroEndingBalanceForGlAccount(final String dateStr, final String glCode) {
+        verifyNonZeroEndingBalanceForGlAccount(WORKING_CAPITAL_TRIAL_BALANCE_REPORT, dateStr, glCode);
+    }
+
+    @Then("Trial Balance Summary Report for Working Capital Loans for date {string} shows GL account {string} closed out")
+    public void workingCapitalTrialBalanceShowsGlAccountClosedOut(final String dateStr, final String glCode) {
+        verifyGlAccountClosedOut(WORKING_CAPITAL_TRIAL_BALANCE_REPORT, dateStr, glCode);
+    }
+
+    @Then("Trial Balance Summary Report with Asset Owner for date {string} has no rows")
+    public void trialBalanceHasNoRows(final String dateStr) {
+        assertThat(executeReport(TRIAL_BALANCE_REPORT, dateStr).getData()).as("Trial Balance for %s: expected no rows", dateStr).isEmpty();
+    }
+
+    @Then("Trial Balance Summary Report for Working Capital Loans for date {string} has no rows")
+    public void workingCapitalTrialBalanceHasNoRows(final String dateStr) {
+        assertThat(executeReport(WORKING_CAPITAL_TRIAL_BALANCE_REPORT, dateStr).getData())
+                .as("Working Capital Trial Balance for %s: expected no rows", dateStr).isEmpty();
+    }
+
+    private void verifyNonZeroEndingBalanceForGlAccount(final String reportName, final String dateStr, final String glCode) {
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(reportName, dateStr), glCode, "endingbalance");
+        assertThat(ending).as("%s for %s: expected GL account '%s' to be present", reportName, dateStr, glCode).isNotNull();
+        assertThat(ending.signum())
+                .as("%s for %s: expected GL account '%s' ending balance to be non-zero but was %s", reportName, dateStr, glCode, ending)
+                .isNotEqualTo(0);
+    }
+
+    private void verifyGlAccountClosedOut(final String reportName, final String dateStr, final String glCode) {
+        final BigDecimal ending = sumColumnForGlAccount(executeReport(reportName, dateStr), glCode, "endingbalance");
         if (ending != null) {
-            assertThat(ending.signum()).as(
-                    "Trial Balance for %s: expected GL account '%s' to be closed out (absent or zero ending balance) but it has ending balance %s",
-                    dateStr, glCode, ending).isEqualTo(0);
+            assertThat(ending.signum())
+                    .as("%s for %s: expected GL account '%s' to be closed out (absent or zero ending balance) but it has ending balance %s",
+                            reportName, dateStr, glCode, ending)
+                    .isEqualTo(0);
         }
     }
 
@@ -104,6 +161,15 @@ public class ReportingStepDef extends AbstractStepDef {
         final List<String> headers = expected.getFirst();
 
         verifyReportData(reportName, response, expected, headers);
+    }
+
+    private void verifyReportDataWithEmptyValues(final String reportName, final String dateStr, final DataTable dataTable) {
+        final RunReportsResponse response = executeReport(reportName, dateStr);
+
+        final List<List<String>> expected = dataTable.asLists();
+        final List<String> headers = expected.getFirst();
+
+        verifyReportDataWithEmptyValues(reportName, response, expected, headers);
     }
 
     private List<List<String>> verifyReportDataHeaders(final String reportName, final RunReportsResponse response,
@@ -165,11 +231,14 @@ public class ReportingStepDef extends AbstractStepDef {
             List<String> headers) {
         for (int i = 1; i < expected.size(); i++) {
             final List<String> expRow = expected.get(i).stream().map(v -> v == null ? "" : v).toList();
-            String expectedDescription = expRow.get(3);
-            String expectedAssetOwnerId = expRow.get(4);
+            // Rows are identified by product, GL account, description and asset owner (columns 1-4), so a report
+            // listing the same GL account for several products is matched to the right row.
             final List<String> actRow = actual.stream()
-                    .filter(actualRow -> actualRow.contains(expectedDescription) && actualRow.contains(expectedAssetOwnerId)).findFirst()
-                    .orElseThrow(() -> new RuntimeException(String.format("No such row is found in %s report!", reportName)));
+                    .filter(actualRow -> IntStream.rangeClosed(1, 4)
+                            .allMatch(k -> expRow.get(k).isEmpty() || expRow.get(k).equals(actualRow.get(k))))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException(String.format("No such row is found in %s report: %s%nAll actual rows:%n%s",
+                            reportName, expRow, formatRows(actual))));
             for (int j = 0; j < headers.size(); j++) {
                 if (expRow.get(j).isEmpty()) {
                     assertThat(actRow.get(j).isEmpty() || actRow.get(j).equals("null")).isTrue();
@@ -204,6 +273,11 @@ public class ReportingStepDef extends AbstractStepDef {
     private void verifyReportDataWithOwnerExternalIdAndOriginatorId(final String reportName, final String dateStr,
             final DataTable dataTable) {
         String originatorExternalId = testContext().get(TestContextKey.ORIGINATOR_EXTERNAL_ID);
+        String secondOriginatorExternalId = testContext().get(TestContextKey.ORIGINATOR_SECOND_EXTERNAL_ID);
+        // "originator_external_ids" = every originator created in the scenario, rendered like the report column:
+        // sorted, comma-separated. The ids are UUIDs, so the Java sort order matches the DB collation of STRING_AGG.
+        String allOriginatorExternalIds = Stream.of(originatorExternalId, secondOriginatorExternalId).filter(Objects::nonNull).sorted()
+                .collect(Collectors.joining(", "));
         String ownerExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_OWNER_EXTERNAL_ID);
         String previousOwnerExternalId = testContext().get(TestContextKey.ASSET_EXTERNALIZATION_PREVIOUS_OWNER_EXTERNAL_ID);
 
@@ -232,6 +306,7 @@ public class ReportingStepDef extends AbstractStepDef {
                     expectedRow.set(index, originatorExternalId);
                 }
             }
+            Collections.replaceAll(expectedRow, "originator_external_ids", allOriginatorExternalIds);
         });
         verifyReportDataWithEmptyValues(reportName, response, expected, headers);
     }

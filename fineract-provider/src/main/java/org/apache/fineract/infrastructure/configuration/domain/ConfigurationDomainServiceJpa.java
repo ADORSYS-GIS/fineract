@@ -29,6 +29,8 @@ import org.apache.fineract.infrastructure.cache.domain.PlatformCache;
 import org.apache.fineract.infrastructure.cache.domain.PlatformCacheRepository;
 import org.apache.fineract.infrastructure.configuration.api.GlobalConfigurationConstants;
 import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationAllowedValues.AllowedValues;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.useradministration.domain.Permission;
 import org.apache.fineract.useradministration.domain.PermissionRepository;
 import org.apache.fineract.useradministration.exception.PermissionNotFoundException;
@@ -62,17 +64,13 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public List<String> getAllowedLoanStatusesForExternalAssetTransfer() {
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ALLOWED_LOAN_STATUSES_FOR_EXTERNAL_ASSET_TRANSFER);
-        return List.of(property.getStringValue().split(","));
+    public List<LoanStatus> getAllowedLoanStatusesForExternalAssetTransfer() {
+        return resolveAll(GlobalConfigurationAllowedValues.ALLOWED_LOAN_STATUSES_FOR_EXTERNAL_ASSET_TRANSFER);
     }
 
     @Override
-    public List<String> getAllowedLoanStatusesOfDelayedSettlementForExternalAssetTransfer() {
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ALLOWED_LOAN_STATUSES_OF_DELAYED_SETTLEMENT_FOR_EXTERNAL_ASSET_TRANSFER);
-        return List.of(property.getStringValue().split(","));
+    public List<LoanStatus> getAllowedLoanStatusesOfDelayedSettlementForExternalAssetTransfer() {
+        return resolveAll(GlobalConfigurationAllowedValues.ALLOWED_LOAN_STATUSES_OF_DELAYED_SETTLEMENT_FOR_EXTERNAL_ASSET_TRANSFER);
     }
 
     @Override
@@ -387,6 +385,18 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         return property.getValue();
     }
 
+    private <E extends Enum<E>> E resolve(final AllowedValues<E> allowedValues) {
+        return allowedValues.resolve(getStoredStringValue(allowedValues));
+    }
+
+    private <E extends Enum<E>> List<E> resolveAll(final AllowedValues<E> allowedValues) {
+        return allowedValues.resolveAll(getStoredStringValue(allowedValues));
+    }
+
+    private String getStoredStringValue(final AllowedValues<?> allowedValues) {
+        return getGlobalConfigurationPropertyData(allowedValues.configName()).getStringValue();
+    }
+
     @NotNull
     private GlobalConfigurationPropertyData getGlobalConfigurationPropertyData(final String propertyName) {
         return globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName).toData();
@@ -399,32 +409,16 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
 
     @Override
     public String getAccountMappingForPaymentType() {
-        String defaultValue = "Asset"; // 1 Stands for Account mapped from asset only
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ACCOUNT_MAPPING_FOR_PAYMENT_TYPE);
-        if (property.isEnabled()) {
-            String value = property.getStringValue();
-            if (StringUtils.isBlank(value)) {
-                return defaultValue;
-            }
-            return value;
-        }
-        return defaultValue;
+        final AllowedValues<?> allowedValues = GlobalConfigurationAllowedValues.ACCOUNT_MAPPING_FOR_PAYMENT_TYPE;
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(allowedValues.configName());
+        return property.isEnabled() ? allowedValues.resolveValue(property.getStringValue()) : allowedValues.defaultValue();
     }
 
     @Override
     public String getAccountMappingForCharge() {
-        String defaultValue = "Income"; // 1 Stands for Account mapped from income only
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ACCOUNT_MAPPING_FOR_CHARGE);
-        if (property.isEnabled()) {
-            String value = property.getStringValue();
-            if (StringUtils.isBlank(value)) {
-                return defaultValue;
-            }
-            return value;
-        }
-        return defaultValue;
+        final AllowedValues<?> allowedValues = GlobalConfigurationAllowedValues.ACCOUNT_MAPPING_FOR_CHARGE;
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(allowedValues.configName());
+        return property.isEnabled() ? allowedValues.resolveValue(property.getStringValue()) : allowedValues.defaultValue();
     }
 
     @Override
@@ -517,27 +511,18 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public String getAccrualDateConfigForCharge() {
-        String defaultValue = "due-date";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE);
-        String value = property.getStringValue();
-        if (StringUtils.isBlank(value)) {
-            return defaultValue;
-        }
-        return value;
+    public ChargeAccrualDateConfig getAccrualDateConfigForCharge() {
+        return resolve(GlobalConfigurationAllowedValues.CHARGE_ACCRUAL_DATE);
     }
 
     @Override
-    public String getNextPaymentDateConfigForLoan() {
-        String defaultValue = "earliest-unpaid-date";
-        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.NEXT_PAYMENT_DUE_DATE);
-        String value = property.getStringValue();
-        if (StringUtils.isBlank(value)) {
-            return defaultValue;
-        }
-        return value;
+    public ChargeAccrualTimeConfig getWclChargeAccrualTime() {
+        return resolve(GlobalConfigurationAllowedValues.WCL_CHARGE_ACCRUAL_TIME);
+    }
+
+    @Override
+    public NextPaymentDueDateConfig getNextPaymentDateConfigForLoan() {
+        return resolve(GlobalConfigurationAllowedValues.NEXT_PAYMENT_DUE_DATE);
     }
 
     @Override
@@ -546,9 +531,13 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public String getAssetOwnerTransferOustandingInterestStrategy() {
-        return getGlobalConfigurationPropertyData(
-                GlobalConfigurationConstants.ASSET_OWNER_TRANSFER_OUTSTANDING_INTEREST_CALCULATION_STRATEGY).getStringValue();
+    public boolean isPlChargeAccrualRealTime() {
+        return resolve(GlobalConfigurationAllowedValues.PL_CHARGE_ACCRUAL_TIME) == ChargeAccrualTimeConfig.REAL_TIME;
+    }
+
+    @Override
+    public OutstandingInterestStrategyConfig getAssetOwnerTransferOustandingInterestStrategy() {
+        return resolve(GlobalConfigurationAllowedValues.OUTSTANDING_INTEREST_STRATEGY);
     }
 
     @Override
@@ -557,8 +546,8 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
-    public Long retrieveForceWithdrawalOnSavingsAccountLimit() {
-        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT_LIMIT).getValue();
+    public Long getForceWithdrawalOnSavingsAccountLimit() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT).getValue();
     }
 
     @Override
@@ -635,6 +624,13 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     }
 
     @Override
+    public String getRetainedEarningWorkingCapitalUsedByReportName() {
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(
+                GlobalConfigurationConstants.RETAINED_EARNING_WC_USED_BY_REPORT_NAME);
+        return property.getStringValue();
+    }
+
+    @Override
     public boolean isBackdatedTransactionsDisallowed() {
         return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.DISALLOW_BACKDATED_TRANSACTIONS).isEnabled();
     }
@@ -648,5 +644,15 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     public Long getOfficeId() {
         final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(GlobalConfigurationConstants.OFFICE_ID);
         return property.getValue();
+    }
+
+    @Override
+    public Long retrievePayoffSchedulePreviewMaxPayoffPeriods() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.PAYOFF_SCHEDULE_PREVIEW_MAX_PAYOFF_PERIODS).getValue();
+    }
+
+    @Override
+    public Long retrievePayoffSchedulePreviewMaxTermPeriods() {
+        return getGlobalConfigurationPropertyData(GlobalConfigurationConstants.PAYOFF_SCHEDULE_PREVIEW_MAX_TERM_PERIODS).getValue();
     }
 }

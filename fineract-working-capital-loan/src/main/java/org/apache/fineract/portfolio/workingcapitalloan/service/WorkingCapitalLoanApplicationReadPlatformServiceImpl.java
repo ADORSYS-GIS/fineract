@@ -51,6 +51,7 @@ import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoa
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanBreachSchedule;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanDelinquencyRangeSchedule;
 import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanPeriodFrequencyType;
+import org.apache.fineract.portfolio.workingcapitalloan.domain.WorkingCapitalLoanTransactionFinder;
 import org.apache.fineract.portfolio.workingcapitalloan.exception.WorkingCapitalLoanNotFoundException;
 import org.apache.fineract.portfolio.workingcapitalloan.mapper.WorkingCapitalLoanMapper;
 import org.apache.fineract.portfolio.workingcapitalloan.mapper.WorkingCapitalLoanSummaryMapper;
@@ -94,6 +95,7 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
     private final AppUserRepository appUserRepository;
     private final WorkingCapitalLoanPeriodPaymentRateChangeReadService rateChangeReadService;
+    private final WorkingCapitalLoanTransactionFinder transactionFinder;
 
     @Override
     public WorkingCapitalLoanTemplateData retrieveTemplate(final Long productId, final Long clientId) {
@@ -186,6 +188,7 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
         data.setDelinquent(collectionData);
         data.setCharges(chargeReadPlatformService.retrieveLoanCharges(loanId));
         enrichWithFullCurrency(data);
+        enrichWithTotalPayment(loanId, data);
         enrichWithSubmittedBy(loan, data);
         enrichWithRateAndTerm(loan, data);
         final List<WorkingCapitalLoanPeriodPaymentRateChangeData> rateChangeHistory = rateChangeReadService.retrieveRateChangeHistory(loan);
@@ -212,6 +215,10 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
                 currency.getInMultiplesOf(), appCurrency.getDisplaySymbol(), appCurrency.getNameCode());
         data.setCurrency(fullCurrency);
         Optional.ofNullable(data.getSummary()).ifPresent(summary -> summary.setCurrency(fullCurrency));
+    }
+
+    private void enrichWithTotalPayment(final Long loanId, final WorkingCapitalLoanData data) {
+        Optional.ofNullable(data.getSummary()).ifPresent(summary -> summary.setTotalPayment(transactionFinder.sumPayments(loanId)));
     }
 
     private void enrichWithSubmittedBy(final WorkingCapitalLoan loan, final WorkingCapitalLoanData data) {
@@ -244,10 +251,10 @@ public class WorkingCapitalLoanApplicationReadPlatformServiceImpl implements Wor
             data.setBreachEffectiveStartDate(resolveBreachEffectiveStartDate(period, data.getBreachGraceDays()));
         });
 
-        // delinquencyStartDate: fromDate of the earliest delinquent period. The delinquency range schedule bakes the
-        // delinquency grace days into the toDate of its first period, so the fromDate is the raw anchor date.
-        delinquencyRangeScheduleRepository.findTopByLoanIdAndMinPaymentCriteriaMetFalseOrderByFromDateAsc(loan.getId())
-                .ifPresent(period -> {
+        // Same open-past-due definition as pastDueDays: instant classification can mark a period delinquent while
+        // minPaymentCriteriaMet is still NULL (before COB evaluates it), so FALSE-only would leave these empty.
+        delinquencyRangeScheduleRepository.findOpenPastDuePeriodsOrderByFromDateAsc(loan.getId(), ThreadLocalContextUtil.getBusinessDate())
+                .stream().findFirst().ifPresent(period -> {
                     data.setDelinquencyStartDate(period.getFromDate());
                     data.setDelinquencyEffectiveStartDate(resolveDelinquencyEffectiveStartDate(period, data.getDelinquencyGraceDays()));
                     Optional.ofNullable(data.getSummary()).ifPresent(summary -> summary.setOverdueSinceDate(period.getToDate()));
