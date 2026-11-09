@@ -29,6 +29,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
@@ -51,8 +52,10 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 /**
- * The overdraft interest split (overdraft allowed and an interest receivable GL account mapped) must include every
- * transaction whose balance falls in a posting period, not only those dated in the period's first calendar month.
+ * The overdraft interest split (overdraft allowed and an interest receivable GL account mapped) calculates the days in
+ * credit and the overdrawn days of a posting period separately. It must include every transaction whose balance falls
+ * in the period, not only those dated in its first calendar month, and come to the same interest as the calculation
+ * without the split.
  */
 class SavingsAccountOverdraftInterestSplitTest {
 
@@ -105,7 +108,8 @@ class SavingsAccountOverdraftInterestSplitTest {
         final LocalDate februaryEnd = LocalDate.of(2025, 2, 28);
 
         // overdrawn from Jan 16 into February, back in credit from Feb 20: the split path must match the unsplit
-        // calculation for every period, neither missing the carried overdraft days nor counting them twice
+        // calculation for every period, neither missing the carried overdraft days nor counting them twice. Interest
+        // is compounded daily, so the interest of the January days in credit also counts for the overdrawn days after
         final SavingsAccountData withoutSplit = accountOverdrawnAcrossMonthEnd(false);
         final SavingsAccountData withSplit = accountOverdrawnAcrossMonthEnd(true);
 
@@ -118,14 +122,80 @@ class SavingsAccountOverdraftInterestSplitTest {
                 .isCloseTo(interestFor(withoutSplit, businessDate, februaryStart, februaryEnd), within(new BigDecimal("0.01")));
     }
 
+    @Test
+    void overdraftSplitMonthlyCompoundingChargesOverdraftInterestForDaysOverdrawnInTheSameMonth() {
+        final LocalDate businessDate = LocalDate.of(2025, 2, 2);
+        final LocalDate januaryEnd = LocalDate.of(2025, 1, 31);
+
+        // in credit from Jan 1 to Jan 7, then overdrawn by 10 until the month end: the interest of the days in
+        // credit is only compounded at the end of January, so it must not count for the overdrawn days
+        final SavingsAccountData withoutSplit = accountOverdrawnWithinFirstMonth(false, SavingsPostingInterestPeriodType.MONTHLY, "21");
+        final SavingsAccountData withSplit = accountOverdrawnWithinFirstMonth(true, SavingsPostingInterestPeriodType.MONTHLY, "21");
+
+        // 10,000 for 7 days at 10% and -10 for 24 days at 21%, both over 365 days
+        assertThat(interestFor(withSplit, businessDate, ACTIVATION_DATE, januaryEnd, period -> !period.isOverdraftInterest()))
+                .as("interest for the days in credit").isEqualByComparingTo("19.18");
+        assertThat(interestFor(withSplit, businessDate, ACTIVATION_DATE, januaryEnd, PostingPeriod::isOverdraftInterest))
+                .as("overdraft interest for the overdrawn days").isEqualByComparingTo("-0.14");
+        assertThat(interestFor(withSplit, businessDate, ACTIVATION_DATE, januaryEnd)).as("January interest with the overdraft split")
+                .isCloseTo(interestFor(withoutSplit, businessDate, ACTIVATION_DATE, januaryEnd), within(new BigDecimal("0.01")));
+    }
+
+    @Test
+    void overdraftSplitMonthlyCompoundingPaysNoInterestForOverdrawnDaysWithoutOverdraftRate() {
+        final SavingsAccountData account = accountOverdrawnWithinFirstMonth(true, SavingsPostingInterestPeriodType.MONTHLY, "0");
+
+        assertThat(interestFor(account, LocalDate.of(2025, 2, 2), ACTIVATION_DATE, LocalDate.of(2025, 1, 31),
+                PostingPeriod::isOverdraftInterest)).as("interest for the overdrawn days").isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void overdraftSplitQuarterlyPostingCompoundsBothPartsAtEachMonthEnd() {
+        final LocalDate businessDate = LocalDate.of(2025, 4, 2);
+        final LocalDate quarterEnd = LocalDate.of(2025, 3, 31);
+
+        final SavingsAccountData withoutSplit = accountOverdrawnWithinFirstMonth(false, SavingsPostingInterestPeriodType.QUATERLY, "21");
+        final SavingsAccountData withSplit = accountOverdrawnWithinFirstMonth(true, SavingsPostingInterestPeriodType.QUATERLY, "21");
+
+        assertThat(interestFor(withSplit, businessDate, ACTIVATION_DATE, quarterEnd)).as("Q1 interest with the overdraft split")
+                .isCloseTo(interestFor(withoutSplit, businessDate, ACTIVATION_DATE, quarterEnd), within(new BigDecimal("0.01")));
+    }
+
+    @Test
+    void overdraftSplitLinksTheTwoPeriodsOfAnInterval() {
+        final LocalDate businessDate = LocalDate.of(2025, 2, 2);
+        final LocalDate januaryEnd = LocalDate.of(2025, 1, 31);
+
+        // in credit from Jan 1 to Jan 7 and overdrawn after, so the split builds two periods for January
+        final List<PostingPeriod> january = januaryPeriods(service.calculateInterestUsing(MATH_CONTEXT, businessDate, false, false, 1, null,
+                false, accountOverdrawnWithinFirstMonth(true, SavingsPostingInterestPeriodType.MONTHLY, "21")), januaryEnd);
+        assertThat(january).hasSize(2);
+        assertThat(january.get(0).getSecondPartOfInterval()).isSameAs(january.get(1));
+        assertThat(january.get(1).getSecondPartOfInterval()).isNull();
+
+        final List<PostingPeriod> januaryWithoutSplit = januaryPeriods(service.calculateInterestUsing(MATH_CONTEXT, businessDate, false,
+                false, 1, null, false, accountOverdrawnWithinFirstMonth(false, SavingsPostingInterestPeriodType.MONTHLY, "21")),
+                januaryEnd);
+        assertThat(januaryWithoutSplit).singleElement().satisfies(period -> assertThat(period.getSecondPartOfInterval()).isNull());
+    }
+
+    private static List<PostingPeriod> januaryPeriods(final List<PostingPeriod> postingPeriods, final LocalDate januaryEnd) {
+        return postingPeriods.stream().filter(period -> period.getPeriodInterval().endDate().equals(januaryEnd)).toList();
+    }
+
     private BigDecimal interestFor(final SavingsAccountData account, final LocalDate businessDate, final LocalDate periodStart,
             final LocalDate periodEnd) {
+        return interestFor(account, businessDate, periodStart, periodEnd, period -> true);
+    }
+
+    private BigDecimal interestFor(final SavingsAccountData account, final LocalDate businessDate, final LocalDate periodStart,
+            final LocalDate periodEnd, final Predicate<PostingPeriod> part) {
         final List<PostingPeriod> postingPeriods = service.calculateInterestUsing(MATH_CONTEXT, businessDate, false, false, 1, null, false,
                 account);
         return postingPeriods.stream()
                 .filter(period -> period.getPeriodInterval().startDate().equals(periodStart)
                         && period.getPeriodInterval().endDate().equals(periodEnd))
-                .map(PostingPeriod::getInterestEarned).reduce(Money.zero(CURRENCY), Money::plus).getAmount();
+                .filter(part).map(PostingPeriod::getInterestEarned).reduce(Money.zero(CURRENCY), Money::plus).getAmount();
     }
 
     private SavingsAccountData accountWithTwoDeposits(final boolean allowOverdraft, final boolean interestReceivableMapped) {
@@ -142,6 +212,17 @@ class SavingsAccountOverdraftInterestSplitTest {
         transactions.add(transaction(2L, SavingsAccountTransactionType.WITHDRAWAL, LocalDate.of(2025, 1, 16), "20000", "10000"));
         transactions.add(transaction(3L, SavingsAccountTransactionType.DEPOSIT, LocalDate.of(2025, 2, 20), "20000", "10000"));
         return account(transactions, SavingsPostingInterestPeriodType.MONTHLY, true, interestReceivableMapped);
+    }
+
+    private SavingsAccountData accountOverdrawnWithinFirstMonth(final boolean interestReceivableMapped,
+            final SavingsPostingInterestPeriodType postingPeriodType, final String overdraftInterestRate) {
+        final List<SavingsAccountTransactionData> transactions = new ArrayList<>();
+        transactions.add(transaction(1L, SavingsAccountTransactionType.DEPOSIT, ACTIVATION_DATE, "10000", null));
+        transactions.add(transaction(2L, SavingsAccountTransactionType.WITHDRAWAL, LocalDate.of(2025, 1, 8), "10010", "10"));
+        final SavingsAccountData account = account(transactions, postingPeriodType, true, interestReceivableMapped);
+        when(account.getInterestCompoundingPeriodTypeId()).thenReturn(SavingsCompoundingInterestPeriodType.MONTHLY.getValue());
+        when(account.getNominalAnnualInterestRateOverdraft()).thenReturn(new BigDecimal(overdraftInterestRate));
+        return account;
     }
 
     private SavingsAccountData account(final List<SavingsAccountTransactionData> transactions,
@@ -163,8 +244,7 @@ class SavingsAccountOverdraftInterestSplitTest {
         when(account.getInterestCalculationTypeId()).thenReturn(SavingsInterestCalculationType.DAILY_BALANCE.getValue());
         when(account.getInterestCalculationDaysInYearTypeId()).thenReturn(SavingsInterestCalculationDaysInYearType.DAYS_365.getValue());
         when(account.isAllowOverdraft()).thenReturn(allowOverdraft);
-        // an unmapped account is read as 0 (ResultSet#getLong on a NULL column), which selects the unsplit calculation
-        when(account.getGlAccountIdForInterestReceivable()).thenReturn(interestReceivableMapped ? 1L : 0L);
+        when(account.hasInterestReceivableMapping()).thenReturn(interestReceivableMapped);
         return account;
     }
 

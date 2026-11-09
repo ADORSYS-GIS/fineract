@@ -73,6 +73,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.infrastructure.codes.service.CodeReadPlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
+import org.apache.fineract.infrastructure.configuration.domain.GlobalConfigurationRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -147,6 +148,7 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
     private final BusinessEventNotifierService businessEventNotifierService;
     private final DatatableReadService datatableReadService;
     private final DatatableUtil datatableUtil;
+    private final GlobalConfigurationRepositoryWrapper globalConfigurationRepository;
 
     @Transactional
     @Override
@@ -197,6 +199,9 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
         this.jdbcTemplate.update("DELETE FROM m_permission WHERE code IN " + placeholders, permissionCodes);
         this.jdbcTemplate.update("DELETE FROM x_registered_table WHERE registered_table_name = ?", datatable);
         this.jdbcTemplate.update("DELETE FROM c_configuration WHERE name = ?", datatable);
+        // The row is deleted with plain JDBC, so the cached snapshot of all configurations must be dropped here or
+        // a PPI datatable keeps resolving as a configuration until the cache entry expires.
+        this.globalConfigurationRepository.removeFromCache();
     }
 
     @Transactional
@@ -474,14 +479,12 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
                     updateUniqueConstraintsForTable(datatableName, changeColumns, mapColumnNameDefinition);
                     // update indexes
                     updateIndexesForTable(datatableName, changeColumns, mapColumnNameDefinition);
-                } catch (final Exception e) {
+                } catch (final RuntimeException e) {
                     log.error("Exception while modifying a datatable", e);
                     if (e.getMessage().contains("Error on rename")) {
                         throw new PlatformServiceUnavailableException("error.msg.datatable.column.update.not.allowed",
                                 "One of the column name modification not allowed", e);
                     }
-                    // handle all other exceptions in here
-
                     // check if exception message contains the
                     // "invalid use of null value" SQL exception message
                     // throw a 503 HTTP error -
@@ -490,6 +493,9 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
                         throw new PlatformServiceUnavailableException("error.msg.datatable.column.update.not.allowed",
                                 "One of the data table columns contains null values", e);
                     }
+                    // Any other failed DDL must surface: swallowing it answered 200 (MariaDB/MySQL) or left the
+                    // PostgreSQL transaction aborted, so the next statement failed with an unrelated error.
+                    throw e;
                 }
             }
         } catch (final JpaSystemException | DataIntegrityViolationException e) {
@@ -639,6 +645,9 @@ public class DatatableWriteServiceImpl implements DatatableWriteService {
             if (category.equals(DataTableApiConstant.CATEGORY_PPI)) {
                 this.namedParameterJdbcTemplate
                         .update("insert into c_configuration (name, value, enabled ) values( :dataTableName, '0', false)", paramMap);
+                // Same reason as in deregisterDatatable: the row is inserted with plain JDBC, so without this eviction
+                // a snapshot cached before the registration keeps reporting the new configuration as not found.
+                this.globalConfigurationRepository.removeFromCache();
             }
 
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {

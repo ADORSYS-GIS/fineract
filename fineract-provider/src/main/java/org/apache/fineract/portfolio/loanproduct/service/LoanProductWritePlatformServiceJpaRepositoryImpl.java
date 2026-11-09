@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.ErrorHandler;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -140,6 +141,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                     command, this.aprCalculator, floatingRate, rates, loanProductPaymentAllocationRules, loanProductCreditAllocationRules);
 
             loanProduct.updateLoanProductInRelatedClasses();
+            validateDownPaymentCharges(loanProduct);
             loanProduct.setTransactionProcessingStrategyName(
                     loanRepaymentScheduleTransactionProcessorFactory.determineProcessor(loanTransactionProcessingStrategyCode).getName());
 
@@ -260,6 +262,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                 }
             }
 
+            validateDownPaymentCharges(product);
+
             if (changes.containsKey("paymentAllocation")) {
                 final List<LoanProductPaymentAllocationRule> loanProductPaymentAllocationRules = advancedPaymentJsonParser
                         .assembleLoanProductPaymentAllocationRules(command, product.getTransactionProcessingStrategyCode());
@@ -354,6 +358,16 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         return isChangeFromFloatingToFlatOrViceVersa || isChangeInCriticalFloatingRateParams;
     }
 
+    private void validateDownPaymentCharges(final LoanProduct product) {
+        if (product.supportsDownPaymentCharges()) {
+            return;
+        }
+        product.getCharges().stream().filter(Charge::isDownPaymentCharge).findFirst().ifPresent(charge -> {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.product.down.payment.charge.requires.progressive.down.payment",
+                    "Down payment charge can be attached only to a progressive loan product with down payment enabled.", charge.getId());
+        });
+    }
+
     private List<Charge> assembleListOfProductCharges(final JsonCommand command, final String currencyCode) {
 
         final List<Charge> charges = new ArrayList<>();
@@ -413,12 +427,12 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
      * Guaranteed to throw an exception no matter what the data integrity issue is.
      */
     private void handleDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
-        if (realCause.getMessage().contains("'external_id'")) {
+        if (realCause.getMessage().contains("'external_id'") || realCause.getMessage().contains("m_product_loan_external_id_key")) {
 
             final String externalId = command.stringValueOfParameterNamed("externalId");
             throw new PlatformDataIntegrityException("error.msg.product.loan.duplicate.externalId",
                     "Loan Product with externalId `" + externalId + "` already exists", "externalId", externalId, realCause);
-        } else if (realCause.getMessage().contains("'unq_name'")) {
+        } else if (realCause.getMessage().contains("'unq_name'") || realCause.getMessage().contains("m_product_loan_name_key")) {
 
             final String name = command.stringValueOfParameterNamed("name");
             throw new PlatformDataIntegrityException("error.msg.product.loan.duplicate.name",

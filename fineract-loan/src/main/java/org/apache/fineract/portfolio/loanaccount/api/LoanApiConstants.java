@@ -44,6 +44,8 @@ public interface LoanApiConstants {
     String chargesParameterName = "charges";
     String loanIdTobeApproved = "loanId";
     String postDatedChecks = "postDatedChecks";
+    String skipDownPaymentFeeParameterName = "skipDownPaymentFee";
+    String downPaymentFeeAmountParameterName = "downPaymentFeeAmount";
 
     String approvedLoanAmountParameterName = "approvedLoanAmount";
     String approvedOnDateParameterName = "approvedOnDate";
@@ -75,6 +77,8 @@ public interface LoanApiConstants {
     String amortizationTypeParameterName = "amortizationType";
     String amortizationTypeOptionsParameterName = "amortizationTypeOptions";
     String repaymentFrequencyTypeParameterName = "repaymentFrequencyType";
+    String FIRST_REPAYMENT_DAY_OF_MONTH = "firstRepaymentDayOfMonth";
+    String SECOND_REPAYMENT_DAY_OF_MONTH = "secondRepaymentDayOfMonth";
     String loanTermFrequencyTypeParameterName = "loanTermFrequencyType";
     String loanTermFrequencyParameterName = "loanTermFrequency";
     String numberOfRepaymentsParameterName = "numberOfRepayments";

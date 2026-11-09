@@ -143,7 +143,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final boolean postReversals = false;
         this.depositAccountTransactionDataValidator.validateActivation(command);
         final MathContext mc = MathContext.DECIMAL64;
-        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFromInUserScope(savingsId,
                 DepositAccountType.FIXED_DEPOSIT);
         checkClientOrGroupActive(account);
 
@@ -250,7 +250,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         final boolean postReversals = false;
         this.depositAccountTransactionDataValidator.validateActivation(command);
 
-        final RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+        final RecurringDepositAccount account = (RecurringDepositAccount) this.depositAccountAssembler.assembleFromInUserScope(savingsId,
                 DepositAccountType.RECURRING_DEPOSIT);
         checkClientOrGroupActive(account);
 
@@ -1222,9 +1222,9 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
                 if (changes.get("reinvestedDepositId") != null) {
                     Long reinvestedDepositId = (Long) changes.get("reinvestedDepositId");
-                    Money amountForDeposit = account.activateWithBalance();
                     final FixedDepositAccount reinvestAccount = (FixedDepositAccount) this.depositAccountAssembler
                             .assembleFrom(reinvestedDepositId, DepositAccountType.FIXED_DEPOSIT);
+                    Money amountForDeposit = reinvestAccount.activateWithBalance();
                     Money activationChargeAmount = getActivationCharge(reinvestAccount);
                     if (activationChargeAmount.isGreaterThanZero()) {
                         payActivationCharge(reinvestAccount);
