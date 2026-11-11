@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.products.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.math.BigDecimal;
 import java.util.Set;
 
 /**
@@ -427,8 +428,8 @@ final class ProductsApiResourceSwagger {
         public Integer totalShares;
         @Schema(example = "50")
         public Integer totalSharesIssued;
-        @Schema(example = "1")
-        public Integer unitPrice;
+        @Schema(example = "1.0")
+        public BigDecimal unitPrice;
         @Schema(example = "50")
         public Integer shareCapital;
         @Schema(example = "1")
@@ -555,6 +556,18 @@ final class ProductsApiResourceSwagger {
         public Long shareEquityId;
         @Schema(example = "4", description = "Required with accountingRule=2 (cash based)")
         public Long incomeFromFeeAccountId;
+        @Schema(description = "Optional with accountingRule=2 (cash based): routes the share reference entry to a payment type specific GL account")
+        public Set<PostProductsPaymentChannelToFundSourceMappings> paymentChannelToFundSourceMappings;
+
+        static final class PostProductsPaymentChannelToFundSourceMappings {
+
+            private PostProductsPaymentChannelToFundSourceMappings() {}
+
+            @Schema(example = "1")
+            public Long paymentTypeId;
+            @Schema(example = "12")
+            public Long fundSourceAccountId;
+        }
     }
 
     @Schema(description = "PostProductsTypeResponse")
@@ -577,6 +590,11 @@ final class ProductsApiResourceSwagger {
         public String locale;
         @Schema(example = "5.0")
         public Double unitPrice;
+        @Schema(example = "2000")
+        public Integer totalShares;
+        @Schema(example = "2000")
+        public Integer sharesIssued;
+        public Set<PostProductsTypeRequest.PostProductsPaymentChannelToFundSourceMappings> paymentChannelToFundSourceMappings;
     }
 
     @Schema(description = "PutProductsTypeProductIdResponse")

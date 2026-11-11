@@ -1242,6 +1242,11 @@ final class LoansApiResourceSwagger {
         public Integer numberOfRepayments;
         @Schema(example = "1")
         public Integer repaymentEvery;
+        @Schema(example = "10", description = "First due day of the month of a semi-monthly loan, between 1 and 27.")
+        public Integer firstRepaymentDayOfMonth;
+        @Schema(example = "25", description = "Second due day of the month of a semi-monthly loan, between 2 and 31 and "
+                + "greater than the first one. A day the month lacks falls on its last day, so 31 is the last day of every month.")
+        public Integer secondRepaymentDayOfMonth;
         public GetLoansLoanIdRepaymentFrequencyType repaymentFrequencyType;
         @Schema(example = "1")
         public Integer fixedLength;
@@ -1394,6 +1399,11 @@ final class LoansApiResourceSwagger {
         public Integer numberOfRepayments;
         @Schema(example = "1")
         public Integer repaymentEvery;
+        @Schema(example = "10", description = "First due day of the month of a semi-monthly loan, between 1 and 27.")
+        public Integer firstRepaymentDayOfMonth;
+        @Schema(example = "25", description = "Second due day of the month of a semi-monthly loan, between 2 and 31 and "
+                + "greater than the first one. A day the month lacks falls on its last day, so 31 is the last day of every month.")
+        public Integer secondRepaymentDayOfMonth;
         @Schema(example = "2")
         public Integer repaymentFrequencyType;
         @Schema(example = "1")
@@ -1654,6 +1664,11 @@ final class LoansApiResourceSwagger {
         public Integer numberOfRepayments;
         @Schema(example = "1")
         public Integer repaymentEvery;
+        @Schema(example = "10", description = "First due day of the month of a semi-monthly loan, between 1 and 27.")
+        public Integer firstRepaymentDayOfMonth;
+        @Schema(example = "25", description = "Second due day of the month of a semi-monthly loan, between 2 and 31 and "
+                + "greater than the first one. A day the month lacks falls on its last day, so 31 is the last day of every month.")
+        public Integer secondRepaymentDayOfMonth;
         @Schema(example = "0")
         public Integer repaymentFrequencyType;
         @Schema(example = "1")
@@ -1762,6 +1777,8 @@ final class LoansApiResourceSwagger {
 
             private PutLoansLoanIdDisbursementData() {}
 
+            @Schema(example = "1")
+            public Long id;
             @Schema(example = "dd MMMM yyyy")
             public String dateFormat;
             @Schema(example = "en")
@@ -1918,6 +1935,10 @@ final class LoansApiResourceSwagger {
         public String note;
         @Schema(example = "28 June 2022")
         public String actualDisbursementDate;
+        @Schema(example = "false", description = "When true, active unpaid down payment fees due on the disbursement date are deactivated and not auto-collected")
+        public Boolean skipDownPaymentFee;
+        @Schema(example = "15.00", description = "Absolute amount, in the loan currency, of the down payment fee created for the down payment period of this disbursement; overrides the configured flat or percentage amount")
+        public BigDecimal downPaymentFeeAmount;
         @Schema(example = "31 March 2024")
         public String transactionDate;
         @Schema(example = "3")

@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import org.apache.fineract.portfolio.accounts.data.request.AccountChargesRequest;
 
 /**
  * Created by Chirag Gupta on 12/20/17.
@@ -105,6 +106,10 @@ final class AccountsApiResourceSwagger {
             public String approvedByLastname;
             @Schema(example = "[2016, 4, 1]")
             public LocalDate activatedDate;
+            @Schema(example = "[2016, 4, 1]")
+            public LocalDate rejectedDate;
+            @Schema(example = "[2016, 4, 1]")
+            public LocalDate closedDate;
         }
 
         static final class GetAccountsCurrency {
@@ -194,6 +199,36 @@ final class AccountsApiResourceSwagger {
             public Double chargeAmount;
             @Schema(example = "5.05")
             public Double amountPaid;
+            public GetAccountsPurchasedSharesPaymentDetailData paymentDetailData;
+        }
+
+        static final class GetAccountsPurchasedSharesPaymentDetailData {
+
+            private GetAccountsPurchasedSharesPaymentDetailData() {}
+
+            static final class GetAccountsPurchasedSharesPaymentType {
+
+                private GetAccountsPurchasedSharesPaymentType() {}
+
+                @Schema(example = "1")
+                public Long id;
+                @Schema(example = "Cash")
+                public String name;
+            }
+
+            @Schema(example = "1")
+            public Long id;
+            public GetAccountsPurchasedSharesPaymentType paymentType;
+            @Schema(example = "acc123")
+            public String accountNumber;
+            @Schema(example = "che123")
+            public String checkNumber;
+            @Schema(example = "rou123")
+            public String routingCode;
+            @Schema(example = "rec123")
+            public String receiptNumber;
+            @Schema(example = "ban123")
+            public String bankNumber;
         }
 
         static final class GetAccountsLockPeriodTypeEnum {
@@ -484,6 +519,20 @@ final class AccountsApiResourceSwagger {
         public String approvedDate;
         @Schema(example = "Share Account Approval Note", description = "command=approve")
         public String note;
+        @Schema(example = "01 January 2026", description = "command=close")
+        public String closedDate;
+        @Schema(example = "1", description = "command=applyadditionalshares, redeemshares, close")
+        public Long paymentTypeId;
+        @Schema(example = "acc123", description = "command=applyadditionalshares, redeemshares, close")
+        public String accountNumber;
+        @Schema(example = "che123", description = "command=applyadditionalshares, redeemshares, close")
+        public String checkNumber;
+        @Schema(example = "rou123", description = "command=applyadditionalshares, redeemshares, close")
+        public String routingCode;
+        @Schema(example = "rec123", description = "command=applyadditionalshares, redeemshares, close")
+        public String receiptNumber;
+        @Schema(example = "ban123", description = "command=applyadditionalshares, redeemshares, close")
+        public String bankNumber;
     }
 
     @Schema(description = "PostAccountsTypeAccountIdResponse")
@@ -508,6 +557,7 @@ final class AccountsApiResourceSwagger {
         public String applicationDate;
         @Schema(example = "20")
         public Integer requestedShares;
+        public List<AccountChargesRequest> charges;
     }
 
     @Schema(description = "PutAccountsTypeAccountIdResponse")
@@ -523,8 +573,8 @@ final class AccountsApiResourceSwagger {
             public String dateFormat;
             @Schema(example = "01 April 2016")
             public String applicationDate;
-            @Schema(example = "20")
-            public Integer requestedShares;
+            @Schema(example = "Transaction", description = "The server reports a changed share request with the literal \"Transaction\", not the count")
+            public String requestedShares;
             @Schema(example = "en")
             public String locale;
         }

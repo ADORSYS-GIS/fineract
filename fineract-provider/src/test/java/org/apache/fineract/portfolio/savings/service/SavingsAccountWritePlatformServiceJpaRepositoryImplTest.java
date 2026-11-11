@@ -54,6 +54,7 @@ import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksWritePlatformService;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
+import org.apache.fineract.infrastructure.security.exception.NoAuthorizationException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.holiday.domain.HolidayRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
@@ -89,6 +90,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -171,6 +174,7 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
 
     private Method validateTransactionsForTransfer;
     private Method undoWithdrawalFee;
+    private Method getLastChargePayment;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -180,6 +184,9 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
         undoWithdrawalFee = SavingsAccountWritePlatformServiceJpaRepositoryImpl.class.getDeclaredMethod("undoWithdrawalFee",
                 SavingsAccount.class, SavingsAccountTransaction.class);
         undoWithdrawalFee.setAccessible(true);
+        getLastChargePayment = SavingsAccountWritePlatformServiceJpaRepositoryImpl.class.getDeclaredMethod("getLastChargePayment",
+                List.class);
+        getLastChargePayment.setAccessible(true);
     }
 
     @AfterEach
@@ -261,6 +268,19 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
         when(savingsAccount.getTransactions()).thenReturn(List.of(transaction));
 
         assertThatNoException().isThrownBy(() -> validateTransactionsForTransfer.invoke(service, savingsAccount, transferDate));
+    }
+
+    @Test
+    void getLastChargePayment_backdatedLaterPayment_picksHighestId() throws Exception {
+        final SavingsAccountTransaction laterBackdated = mock(SavingsAccountTransaction.class);
+        when(laterBackdated.getId()).thenReturn(2L);
+        when(laterBackdated.getTransactionDate()).thenReturn(LocalDate.of(2026, 10, 10));
+        final SavingsAccountTransaction earlier = mock(SavingsAccountTransaction.class);
+        when(earlier.getId()).thenReturn(1L);
+        when(earlier.getTransactionDate()).thenReturn(LocalDate.of(2026, 10, 20));
+
+        assertThat(getLastChargePayment.invoke(service, List.of(laterBackdated, earlier))).isSameAs(laterBackdated);
+        assertThat(getLastChargePayment.invoke(service, List.of())).isNull();
     }
 
     @Test
@@ -390,6 +410,33 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
     }
 
     @Test
+    void activate_shouldRejectUserOutsideAccountOfficeHierarchy() {
+        Long savingsId = 1L;
+        JsonCommand command = mock(JsonCommand.class);
+
+        when(savingAccountAssembler.assembleFromInUserScope(savingsId, false))
+                .thenThrow(new NoAuthorizationException("The user doesn't have enough permissions to access the resource."));
+
+        assertThatThrownBy(() -> service.activate(savingsId, command)).isInstanceOf(NoAuthorizationException.class);
+        verify(savingAccountAssembler, never()).assembleFrom(anyLong(), anyBoolean());
+        verify(savingAccountRepositoryWrapper, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void blockAccount_shouldLoadSavingsAccountInUserScope() {
+        Long savingsId = 1L;
+        SavingsAccount account = mock(SavingsAccount.class);
+        JsonCommand command = mock(JsonCommand.class);
+        when(savingAccountAssembler.assembleFromInUserScope(savingsId, false)).thenReturn(account);
+        when(account.block()).thenThrow(new IllegalStateException("Stop after loading the account"));
+
+        assertThatThrownBy(() -> service.blockAccount(savingsId, command)).isInstanceOf(IllegalStateException.class);
+
+        verify(savingAccountAssembler).assembleFromInUserScope(savingsId, false);
+        verify(savingAccountAssembler, never()).assembleFrom(savingsId, false);
+    }
+
+    @Test
     void postInterest_shouldValidateRequestAndUpdateManualInterestPostingExternalId() {
         Long savingsId = 1L;
         LocalDate transactionDate = LocalDate.of(2024, 4, 5);
@@ -451,7 +498,7 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
 
         setupTenantContext(businessDate);
         when(savingAccountAssembler.getPivotConfigStatus()).thenReturn(false);
-        when(savingAccountAssembler.assembleFrom(savingsId, false)).thenReturn(account);
+        when(savingAccountAssembler.assembleFromInUserScope(savingsId, false)).thenReturn(account);
         when(account.findExistingTransactionIds()).thenReturn(Set.of(10L));
         when(account.findExistingReversedTransactionIds()).thenReturn(Set.of(11L));
         when(account.officeId()).thenReturn(1L);
@@ -587,23 +634,14 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
     }
 
     @Test
-    void selectAccountId_cashBasedInterestPosting_debitsInterestOnSavings() {
+    void selectAccountId_interestPosting_leavesTheAccountsToTheSharedRules() {
         final SavingsAccountTransactionData transaction = transactionOfType(SavingsAccountTransactionType.INTEREST_POSTING);
 
         service.selectAccountId(transaction, savingsAccountWithGlAccounts(true));
-
-        verify(transaction).setAccountDebit(INTEREST_ON_SAVINGS_GL_ACCOUNT_ID);
-        verify(transaction).setAccountCredit(SAVINGS_CONTROL_GL_ACCOUNT_ID);
-    }
-
-    @Test
-    void selectAccountId_accrualInterestPosting_debitsInterestPayable() {
-        final SavingsAccountTransactionData transaction = transactionOfType(SavingsAccountTransactionType.INTEREST_POSTING);
-
         service.selectAccountId(transaction, savingsAccountWithGlAccounts(false));
 
-        verify(transaction).setAccountDebit(INTEREST_PAYABLE_GL_ACCOUNT_ID);
-        verify(transaction).setAccountCredit(SAVINGS_CONTROL_GL_ACCOUNT_ID);
+        verify(transaction, never()).setAccountDebit(any());
+        verify(transaction, never()).setAccountCredit(any());
     }
 
     @Test
@@ -637,6 +675,32 @@ class SavingsAccountWritePlatformServiceJpaRepositoryImplTest {
 
         verify(transaction).setAccountDebit(OVERDRAFT_PORTFOLIO_GL_ACCOUNT_ID);
         verify(transaction).setAccountCredit(INTEREST_RECEIVABLE_GL_ACCOUNT_ID);
+    }
+
+    @ParameterizedTest(name = "backdatedTxnsAllowedTill={0}")
+    @ValueSource(booleans = { false, true })
+    void postInterestForJob_newPosting_getsGlAccountsWithAndWithoutPivotDateConfig(final boolean backdatedTxnsAllowedTill) {
+        setupTenantContext(LocalDate.of(2025, 4, 1));
+        final SavingsAccountData account = savingsAccountWithGlAccounts(false);
+        final SavingsAccountTransactionData existingDeposit = transactionOfType(SavingsAccountTransactionType.DEPOSIT);
+        when(existingDeposit.getId()).thenReturn(1L);
+        // the job books overdraft interest from the accounts chosen here; an interest posting is booked from
+        // SavingsInterestPostingLegs and gets none (selectAccountId_interestPosting_leavesTheAccountsToTheSharedRules)
+        final SavingsAccountTransactionData newPosting = transactionOfType(SavingsAccountTransactionType.OVERDRAFT_INTEREST);
+        when(newPosting.getId()).thenReturn(null);
+        when(newPosting.getRunningBalance()).thenReturn(new BigDecimal("-100"));
+        when(account.getNominalAnnualInterestRate()).thenReturn(new BigDecimal("5"));
+        when(account.getSavingsAccountTransactionData()).thenReturn(List.of(existingDeposit, newPosting));
+        when(configurationDomainService.retrieveFinancialYearBeginningMonth()).thenReturn(1);
+        when(savingsAccountInterestPostingService.postInterest(any(), any(), anyBoolean(), anyBoolean(), any(), any(),
+                Mockito.eq(backdatedTxnsAllowedTill), Mockito.same(account))).thenReturn(account);
+
+        service.postInterest(account, false, null, backdatedTxnsAllowedTill);
+
+        verify(newPosting).setAccountDebit(OVERDRAFT_PORTFOLIO_GL_ACCOUNT_ID);
+        verify(newPosting).setAccountCredit(INTEREST_RECEIVABLE_GL_ACCOUNT_ID);
+        verify(existingDeposit, never()).setAccountDebit(any());
+        verify(existingDeposit, never()).setAccountCredit(any());
     }
 
     private static SavingsAccountTransactionData transactionOfType(final SavingsAccountTransactionType type) {

@@ -31,6 +31,7 @@ import org.apache.fineract.client.feign.util.CallFailedRuntimeException;
 import org.apache.fineract.client.feign.util.FeignCalls;
 import org.apache.fineract.client.models.AccountTransferRequest;
 import org.apache.fineract.client.models.CommandProcessingResult;
+import org.apache.fineract.client.models.GetAccountTransfersPageItems;
 import org.apache.fineract.client.models.PostAccountTransfersResponse;
 import org.apache.fineract.client.models.PostClientsRequest;
 import org.apache.fineract.client.models.PostUsersRequest;
@@ -41,8 +42,8 @@ import org.apache.fineract.integrationtests.client.feign.helpers.FeignOfficeHelp
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignRoleHelper;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignUserHelper;
 import org.apache.fineract.integrationtests.client.feign.modules.AccountTransferRequestBuilders;
+import org.apache.fineract.integrationtests.client.feign.modules.ClientTestData;
 import org.apache.fineract.integrationtests.client.feign.modules.SavingsTestData;
-import org.apache.fineract.integrationtests.common.ClientHelper;
 import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
 import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.accounting.Account;
@@ -132,12 +133,12 @@ public class AccountTransferOfficeHierarchyAccessIntegrationTest extends FeignSa
         Long clientB = createClientInOffice(officeBId);
         Long toSavingsInOfficeB = createApproveActivateSavings(clientB, productId, today);
 
-        Long transferInOfficeA = ok(
-                () -> transfer(fineractClient(), today, officeAId, clientA, fromSavingsId, officeAId, clientA, toSavingsInOfficeA))
-                .getResourceId();
-        Long transferAcrossOffices = ok(
-                () -> transfer(fineractClient(), today, officeAId, clientA, fromSavingsId, officeBId, clientB, toSavingsInOfficeB))
-                .getResourceId();
+        Long transferInOfficeA = transferTransactionId(
+                ok(() -> transfer(fineractClient(), today, officeAId, clientA, fromSavingsId, officeAId, clientA, toSavingsInOfficeA))
+                        .getResourceId());
+        Long transferAcrossOffices = transferTransactionId(
+                ok(() -> transfer(fineractClient(), today, officeAId, clientA, fromSavingsId, officeBId, clientB, toSavingsInOfficeB))
+                        .getResourceId());
 
         FineractFeignClient officeAUser = createUserInOffice(officeAId, UNDO_PERMISSIONS);
         FineractFeignClient officeBUser = createUserInOffice(officeBId, UNDO_PERMISSIONS);
@@ -147,6 +148,13 @@ public class AccountTransferOfficeHierarchyAccessIntegrationTest extends FeignSa
 
         assertNotNull(ok(() -> undo(officeAUser, transferInOfficeA)).getResourceId(),
                 "User from the accounts' office must be able to undo a transfer between them");
+    }
+
+    /** Undo takes the transfer transaction id, while create returns the transfer detail id. */
+    private static Long transferTransactionId(Long accountTransferDetailId) {
+        List<GetAccountTransfersPageItems> transfers = accountTransferHelper.retrieveTransfersByAccountDetailId(accountTransferDetailId);
+        assertEquals(1, transfers.size());
+        return transfers.get(0).getId();
     }
 
     private static CommandProcessingResult undo(FineractFeignClient client, Long accountTransferId) {
@@ -170,9 +178,10 @@ public class AccountTransferOfficeHierarchyAccessIntegrationTest extends FeignSa
     }
 
     private Long createClientInOffice(Long officeId) {
-        return clientHelper.createClient(new PostClientsRequest().officeId(officeId).legalFormId(1L)
-                .firstname(Utils.randomFirstNameGenerator()).lastname(Utils.randomLastNameGenerator()).active(true)
-                .activationDate(ClientHelper.DEFAULT_DATE).dateFormat(SavingsTestData.DATETIME_PATTERN).locale(SavingsTestData.LOCALE))
+        return clientHelper
+                .createClient(new PostClientsRequest().officeId(officeId).legalFormId(1L).firstname(Utils.randomFirstNameGenerator())
+                        .lastname(Utils.randomLastNameGenerator()).active(true).activationDate(ClientTestData.DEFAULT_ACTIVATION_DATE)
+                        .dateFormat(SavingsTestData.DATETIME_PATTERN).locale(SavingsTestData.LOCALE))
                 .getClientId();
     }
 

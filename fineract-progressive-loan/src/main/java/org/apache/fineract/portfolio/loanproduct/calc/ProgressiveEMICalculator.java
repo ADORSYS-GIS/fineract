@@ -58,6 +58,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanApplica
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelRepaymentPeriod;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleProcessingType;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.SemiMonthlyScheduleDates;
 import org.apache.fineract.portfolio.loanproduct.calc.data.EmiAdjustment;
 import org.apache.fineract.portfolio.loanproduct.calc.data.EmiChangeOperation;
 import org.apache.fineract.portfolio.loanproduct.calc.data.EqualAmortizationValues;
@@ -79,6 +80,7 @@ public final class ProgressiveEMICalculator implements EMICalculator {
 
     private static final BigDecimal DIVISOR_100 = new BigDecimal("100");
     private static final BigDecimal ONE_WEEK_IN_DAYS = BigDecimal.valueOf(7);
+    private static final int SEMI_MONTHLY_PERIODS_IN_YEAR = 24;
 
     private final ScheduledDateGenerator scheduledDateGenerator;
 
@@ -296,6 +298,8 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 .numberOfRepayments(loanProductRelatedDetail.getNumberOfRepayments())
                 .repaymentEvery(loanProductRelatedDetail.getRepayEvery())
                 .repaymentPeriodFrequencyType(loanProductRelatedDetail.getRepaymentPeriodFrequencyType())
+                .firstRepaymentDayOfMonth(loanProductRelatedDetail.getFirstRepaymentDayOfMonth())
+                .secondRepaymentDayOfMonth(loanProductRelatedDetail.getSecondRepaymentDayOfMonth())
                 // Interest configuration
                 .interestRatePerPeriod(loanProductRelatedDetail.getAnnualNominalInterestRate())
                 .annualNominalInterestRate(loanProductRelatedDetail.getAnnualNominalInterestRate())
@@ -786,7 +790,7 @@ public final class ProgressiveEMICalculator implements EMICalculator {
         boolean isBeforeFirstDisbursement = targetDate.isBefore(scheduleModelCopy.repaymentPeriods().getFirst().getFromDate());
         boolean isAfterMaturityDate = !targetDate.isBefore(scheduleModelCopy.getLastRepaymentPeriod().getDueDate());
         if (isBeforeFirstDisbursement) {
-            scheduleModelCopy.repaymentPeriods().forEach(rp -> rp.getInterestPeriods().clear());
+            scheduleModelCopy.repaymentPeriods().forEach(rp -> scheduleModelCopy.removeInterestPeriods(rp, 0));
             return scheduleModelCopy;
         } else if (isAfterMaturityDate) {
             return scheduleModelCopy;
@@ -802,7 +806,7 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 if (rp.getDueDate().isAfter(targetDate)) {
                     if (rp.equals(repaymentPeriod)) {
                         rp.findInterestPeriod(targetDate).ifPresent(ip -> {
-                            ip.setDueDate(targetDate);
+                            scheduleModelCopy.truncateInterestPeriodDueDate(ip, targetDate);
                             int index = rp.getInterestPeriods().indexOf(ip);
                             int nextIdx = index + 1;
                             boolean thereIsInterestPeriodFromDateOnTargetDate = ip.getRepaymentPeriod().getInterestPeriods()
@@ -814,8 +818,7 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                                 ip.addCreditedPrincipalAmount(nextInterestPeriod.getCreditedPrincipal());
                                 ip.addCreditedInterestAmount(nextInterestPeriod.getCreditedInterest());
                             }
-                            ip.getRepaymentPeriod().getInterestPeriods()
-                                    .subList(nextIdx, ip.getRepaymentPeriod().getInterestPeriods().size()).clear();
+                            scheduleModelCopy.removeInterestPeriods(ip.getRepaymentPeriod(), nextIdx);
                         });
                     } else if (rp.getPrevious().isPresent() && rp.getPrevious().get().equals(repaymentPeriod)
                             && (rp.getInterestPeriods().getFirst().getCreditedInterest().isGreaterThanZero()
@@ -824,12 +827,11 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                         // period
                         // if so, we need to retain that interest period, but need to update due date to match with from
                         // date -> 0 interest
-                        rp.getInterestPeriods().getFirst().setDueDate(rp.getInterestPeriods().getFirst().getFromDate());
-                        if (rp.getInterestPeriods().size() > 1) {
-                            rp.getInterestPeriods().subList(1, rp.getInterestPeriods().size()).clear();
-                        }
+                        scheduleModelCopy.truncateInterestPeriodDueDate(rp.getInterestPeriods().getFirst(),
+                                rp.getInterestPeriods().getFirst().getFromDate());
+                        scheduleModelCopy.removeInterestPeriods(rp, 1);
                     } else {
-                        rp.getInterestPeriods().clear();
+                        scheduleModelCopy.removeInterestPeriods(rp, 0);
                     }
                 }
             });
@@ -1116,6 +1118,9 @@ public final class ProgressiveEMICalculator implements EMICalculator {
             case MONTHS -> MonthlyDueDateResolver.plusMonths(repaymentStartDate, loanApplicationTerms.getFixedLength() + variationDays,
                     loanApplicationTerms.getMonthEndDueDateStrategy());
             case YEARS -> repaymentStartDate.plusYears(loanApplicationTerms.getFixedLength() + variationDays);
+            // The periods are of unequal length, so the fixed length is walked one due date at a time.
+            case SEMI_MONTHLY -> SemiMonthlyScheduleDates.plusPeriods(repaymentStartDate, loanApplicationTerms.getFixedLength(),
+                    scheduleModel.loanProductRelatedDetail().semiMonthlyDueDays()).plusDays(variationDays);
             case INVALID, WHOLE_TERM -> throw new IllegalArgumentException(
                     "Unsupported period frequency type for fixed length: " + loanApplicationTerms.getRepaymentPeriodFrequencyType());
         };
@@ -1205,6 +1210,10 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                     false);
         }
 
+        // Collected while attaching rather than re-derived from dates afterwards: after maturity the first re-aged
+        // period starts on the maturity date, not on the transaction date, and a date based filter would leave it
+        // out of the EMI adjustment.
+        final List<RepaymentPeriod> reAgedRepaymentPeriods = new ArrayList<>();
         for (final RepaymentPeriod newPeriod : newPeriods) {
             final Money newPrincipal = newPeriod.getDuePrincipal();
             final Money newInterest = newPeriod.getDueInterest();
@@ -1215,6 +1224,7 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 firstPeriod.getInterestPeriods().getLast().setDueDate(newPeriod.getDueDate());
                 firstPeriod.setEmi(newPrincipal.add(newInterest));
                 calculateRateFactorForRepaymentPeriod(firstRepaymentPeriod, scheduleModel);
+                reAgedRepaymentPeriods.add(firstPeriod);
             } else {
                 final RepaymentPeriod rp = RepaymentPeriod.create(
                         !existingRepaymentPeriods.isEmpty() ? existingRepaymentPeriods.getLast() : null,
@@ -1227,14 +1237,9 @@ public final class ProgressiveEMICalculator implements EMICalculator {
 
                 existingRepaymentPeriods.add(rp);
                 calculateRateFactorForRepaymentPeriod(rp, scheduleModel);
+                reAgedRepaymentPeriods.add(rp);
             }
         }
-
-        final List<RepaymentPeriod> reAgedRepaymentPeriods = existingRepaymentPeriods.stream()
-                .filter(repaymentPeriod -> (repaymentPeriod.getFromDate().isEqual(targetDate)
-                        && repaymentPeriod.getDueDate().isEqual(reAgeFirstDueDate))
-                        || !repaymentPeriod.getFromDate().isBefore(reAgeFirstDueDate))
-                .toList();
 
         calculateOutstandingBalance(scheduleModel);
         calculateLastUnpaidRepaymentPeriodEMI(scheduleModel, targetDate);
@@ -1278,8 +1283,15 @@ public final class ProgressiveEMICalculator implements EMICalculator {
         final List<RepaymentPeriod> periodsBeforeTransactionDate = existingRepaymentPeriods.stream()
                 .filter(rp -> !rp.getFromDate().isAfter(transactionDate) && !rp.isFullyPaid()).toList();
 
+        // The overdue recalculation places the aggregated negative balance correction on the transaction date, except
+        // when the transaction is after maturity: the recalculation is clamped to the maturity date and the correction
+        // sits on the interest period ending there. Reverse it wherever it was placed, otherwise the re-aged periods
+        // start from the balance net of that correction instead of the full outstanding principal.
+        final LocalDate maturityDate = existingRepaymentPeriods.getLast().getDueDate();
+        final LocalDate overdueCorrectionDate = transactionDate.isAfter(maturityDate) ? maturityDate : transactionDate;
+
         periodsBeforeTransactionDate.forEach(rp -> {
-            rp.getInterestPeriods().stream().filter(ip -> ip.getDueDate().isEqual(transactionDate)).forEach(ip -> {
+            rp.getInterestPeriods().stream().filter(ip -> ip.getDueDate().isEqual(overdueCorrectionDate)).forEach(ip -> {
                 if (!ip.getBalanceCorrectionAmount().isZero()) {
                     ip.addBalanceCorrectionAmount(ip.getBalanceCorrectionAmount().negated());
                 }
@@ -1551,6 +1563,17 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 return rateFactorByRepaymentPeriod(interestRate, BigDecimal.ONE, repaymentEvery, BigDecimal.valueOf(52), actualDaysInPeriod,
                         calculatedDaysInPeriod, mc);
             }
+            if (loanProductRelatedDetail.getRepaymentPeriodFrequencyType().isSemiMonthly()) {
+                // Every semi-monthly period carries the same rate, 1/24 of the annual one, whatever its length in days.
+                // With partial periods allowed an irregular interval, such as a first period that is shorter than a
+                // regular one, is charged the share of the regular semi-monthly periods it covers.
+                if (loanProductRelatedDetail.isAllowPartialPeriodInterestCalculation()) {
+                    return rateFactorBySemiMonthlyPeriodsCovered(interestRate, interestPeriodFromDate, interestPeriodDueDate,
+                            loanProductRelatedDetail, mc);
+                }
+                return rateFactorByRepaymentPeriod(interestRate, BigDecimal.ONE, repaymentEvery,
+                        BigDecimal.valueOf(SEMI_MONTHLY_PERIODS_IN_YEAR), actualDaysInPeriod, calculatedDaysInPeriod, mc);
+            }
         }
 
         // TODO check: loanApplicationTerms.calculatePeriodsBetweenDates(startDate, endDate); // calculate period data
@@ -1572,6 +1595,9 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 case MONTHS -> calculatePeriodRatio(scheduleModel, repaymentPeriod, ChronoUnit.MONTHS, mc);
                 case WEEKS -> calculatePeriodRatio(scheduleModel, repaymentPeriod, ChronoUnit.WEEKS, mc);
                 case DAYS -> calculatePeriodRatio(scheduleModel, repaymentPeriod, ChronoUnit.DAYS, mc);
+                // Consecutive due dates are one period apart; only an irregular period gets a fraction.
+                case SEMI_MONTHLY -> SemiMonthlyScheduleDates.periodsBetween(repaymentPeriod.getFromDate(), repaymentPeriod.getDueDate(),
+                        loanProductRelatedDetail.semiMonthlyDueDays(), mc);
                 default -> throw new UnsupportedOperationException("Unsupported repayment frequency: " + repaymentFrequency);
             };
 
@@ -1690,6 +1716,16 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 return rateFactorByRepaymentPeriod(interestRate, BigDecimal.ONE, repaymentEvery, BigDecimal.valueOf(52), actualDaysInPeriod,
                         calculatedDaysInRepaymentPeriod, mc);
             }
+            if (loanProductRelatedDetail.getRepaymentPeriodFrequencyType().isSemiMonthly()) {
+                // Same 1/24 rate the interest is charged with, so the EMI amortises the loan exactly; with partial
+                // periods allowed, the same prorated share of it.
+                if (loanProductRelatedDetail.isAllowPartialPeriodInterestCalculation()) {
+                    return rateFactorBySemiMonthlyPeriodsCovered(interestRate, interestPeriodFromDate, interestPeriodDueDate,
+                            loanProductRelatedDetail, mc);
+                }
+                return rateFactorByRepaymentPeriod(interestRate, BigDecimal.ONE, repaymentEvery,
+                        BigDecimal.valueOf(SEMI_MONTHLY_PERIODS_IN_YEAR), actualDaysInPeriod, calculatedDaysInRepaymentPeriod, mc);
+            }
         }
 
         // TODO check: loanApplicationTerms.calculatePeriodsBetweenDates(startDate, endDate); // calculate period data
@@ -1778,6 +1814,9 @@ public final class ProgressiveEMICalculator implements EMICalculator {
                 rateFactorByRepaymentEveryWeek(interestRate, repaymentEvery, daysInYear, actualDaysInPeriod, calculatedDaysInPeriod, mc);
             case MONTHS -> rateFactorByRepaymentEveryMonth(interestRate, repaymentEvery, daysInMonth, daysInYear, actualDaysInPeriod,
                     calculatedDaysInPeriod, mc);
+            // With 30-day months each semi-monthly period counts as half a month, i.e. 15 days.
+            case SEMI_MONTHLY -> rateFactorByRepaymentPeriod(interestRate, daysInMonth.divide(BigDecimal.valueOf(2), mc), repaymentEvery,
+                    daysInYear, actualDaysInPeriod, calculatedDaysInPeriod, mc);
             default -> throw new UnsupportedOperationException("Invalid repayment frequency"); // not supported yet
         };
     }
@@ -1981,10 +2020,10 @@ public final class ProgressiveEMICalculator implements EMICalculator {
         return new EmiAdjustment(repaymentPeriods.getFirst().getEmi(), repaymentPeriods.getFirst().getEmi().copy(0.0), repaymentPeriods, 0);
     }
 
-    private void calculateRateFactorForScheduleTillDateInclusive(ProgressiveLoanInterestScheduleModel scheduleModelCopy,
-            LocalDate targetDate) {
+    private void calculateRateFactorForScheduleTillDateInclusive(final ProgressiveLoanInterestScheduleModel scheduleModelCopy,
+            final LocalDate targetDate) {
         scheduleModelCopy.findRepaymentPeriod(targetDate).flatMap(rp -> rp.findInterestPeriod(targetDate))
-                .ifPresent(ip -> ip.setDueDate(targetDate));
+                .ifPresent(ip -> scheduleModelCopy.truncateInterestPeriodDueDate(ip, targetDate));
 
         calculateRateFactorForPeriods(scheduleModelCopy.repaymentPeriods(), scheduleModelCopy);
 
@@ -2139,6 +2178,19 @@ public final class ProgressiveEMICalculator implements EMICalculator {
             final MathContext mc) {
         return rateFactorByRepaymentPeriod(interestRate, daysInMonth, repaymentEvery, daysInYear, actualDaysInPeriod,
                 calculatedDaysInPeriod, mc);
+    }
+
+    /**
+     * Rate factor of an interval of a semi-monthly loan that allows partial periods: 1/24 of the annual rate for each
+     * regular semi-monthly period the interval covers, a fraction of it for the part of a period it overlaps. Two
+     * consecutive due dates are exactly one period apart, so a regular period keeps the 1/24 rate.
+     */
+    private BigDecimal rateFactorBySemiMonthlyPeriodsCovered(final BigDecimal interestRate, final LocalDate fromDate,
+            final LocalDate dueDate, final ILoanConfigurationDetails loanProductRelatedDetail, final MathContext mc) {
+        final BigDecimal semiMonthlyPeriodsCovered = SemiMonthlyScheduleDates.periodsBetween(fromDate, dueDate,
+                loanProductRelatedDetail.semiMonthlyDueDays(), mc);
+        return rateFactorByRepaymentPeriod(interestRate, semiMonthlyPeriodsCovered, BigDecimal.ONE,
+                BigDecimal.valueOf(SEMI_MONTHLY_PERIODS_IN_YEAR), BigDecimal.ONE, BigDecimal.ONE, mc);
     }
 
     /**

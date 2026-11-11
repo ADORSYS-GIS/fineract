@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.avro.BulkMessageItemV1;
@@ -72,8 +73,18 @@ public class EventStore {
         return events.stream().filter(em -> type.getIdExtractor().apply(em.getData()).equals(id)).reduce((first, second) -> second);
     }
 
+    public <R, T extends Event<R>> long countReceivedEventsById(T type, Long id) {
+        return findReceivedAndVerifiedByType(type).stream().filter(em -> id.equals(type.getIdExtractor().apply(em.getData()))).count();
+    }
+
     public <R, T extends Event<R>> List<EventMessage<R>> findAllEventsById(T type, Long id) {
         return findByType(type).stream().filter(em -> id.equals(type.getIdExtractor().apply(em.getData()))).collect(Collectors.toList());
+    }
+
+    // Received and already verified events of the type, for a step that needs the payload of an earlier event
+    public <R, T extends Event<R>> List<EventMessage<R>> findReceivedAndVerifiedByType(T type) {
+        return Stream.concat(receivedEvents.stream(), verifiedEvents.stream()).filter(em -> em.getType().equals(type.getEventName()))
+                .map(em -> (EventMessage<R>) em).collect(Collectors.toList());
     }
 
     public <R, T extends Event<R>> List<EventMessage<R>> findByType(T type) {

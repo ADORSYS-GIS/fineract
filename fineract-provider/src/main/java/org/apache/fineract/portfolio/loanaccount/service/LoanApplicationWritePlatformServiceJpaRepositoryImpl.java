@@ -85,10 +85,12 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.SemiMonthlyScheduleDates;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleAssembler;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationTransitionValidator;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationValidator;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanDownPaymentTransactionValidator;
+import org.apache.fineract.portfolio.loanaccount.service.LoanDownPaymentFeeEventNotifier.FeeState;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.domain.RecalculationFrequencyType;
 import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
@@ -130,6 +132,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final LoanDownPaymentTransactionValidator loanDownPaymentTransactionValidator;
     private final LoanScheduleService loanScheduleService;
     private final LoanOriginatorLinkingService loanOriginatorLinkingService;
+    private final LoanDownPaymentFeeEventNotifier loanDownPaymentFeeEventNotifier;
 
     @Transactional
     @Override
@@ -176,6 +179,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
             // Trigger business event
             businessEventNotifierService.notifyPostBusinessEvent(new LoanCreatedBusinessEvent(loan));
+            loanDownPaymentFeeEventNotifier.notifyFeeChanges(loan, Map.of());
             // Building response
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
@@ -258,8 +262,19 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
         }
 
-        final Calendar calendar = Calendar.createRepeatingCalendar(title, calendarStartDate, CalendarType.COLLECTION.getValue(),
-                calendarFrequencyType, frequency, updatedRepeatsOnDay, recalculationFrequencyNthDay);
+        final Calendar calendar;
+        if (recalculationFrequencyType == SAME_AS_REPAYMENT_PERIOD
+                && loan.getLoanProductRelatedDetail().getRepaymentPeriodFrequencyType().isSemiMonthly()) {
+            // Calendar frequencies have no semi-monthly value; without this the stored rule would be FREQ=INVALID,
+            // which fails every later read of the calendar.
+            calendar = Calendar.createRepeatingCalendar(title, calendarStartDate, CalendarType.COLLECTION.getValue(),
+                    SemiMonthlyScheduleDates.toRecurrence(
+                            SemiMonthlyScheduleDates.requireDueDays(loan.getLoanProductRelatedDetail().getFirstRepaymentDayOfMonth(),
+                                    loan.getLoanProductRelatedDetail().getSecondRepaymentDayOfMonth())));
+        } else {
+            calendar = Calendar.createRepeatingCalendar(title, calendarStartDate, CalendarType.COLLECTION.getValue(), calendarFrequencyType,
+                    frequency, updatedRepeatsOnDay, recalculationFrequencyNthDay);
+        }
         final CalendarInstance calendarInstance = CalendarInstance.from(calendar, loan.loanInterestRecalculationDetails().getId(),
                 calendarEntityType.getValue());
         this.calendarInstanceRepository.save(calendarInstance);
@@ -271,6 +286,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         try {
             Loan loan = retrieveLoanBy(loanId);
+            final Map<Long, FeeState> downPaymentFeesBefore = loanDownPaymentFeeEventNotifier.captureFees(loan);
             // Validations (prior assembling)
             this.loanApplicationValidator.validateForModify(command, loan);
             // Assembling loan
@@ -300,6 +316,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             }
 
             businessEventNotifierService.notifyPostBusinessEvent(new LoanApplicationModifiedBusinessEvent(loan));
+            loanDownPaymentFeeEventNotifier.notifyFeeChanges(loan, downPaymentFeesBefore);
 
             return new CommandProcessingResultBuilder() //
                     .withEntityId(loanId) //
@@ -460,13 +477,15 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
      * Guaranteed to throw an exception no matter what the data integrity issue is.
      */
     private void handleDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
-        if (realCause.getMessage().contains("loan_account_no_UNIQUE")
-                || (realCause.getCause() != null && realCause.getCause().getMessage().contains("loan_account_no_UNIQUE"))) {
+        if (realCause.getMessage().contains("loan_account_no_UNIQUE") || realCause.getMessage().contains("m_loan_account_no_key")
+                || (realCause.getCause() != null && (realCause.getCause().getMessage().contains("loan_account_no_UNIQUE")
+                        || realCause.getCause().getMessage().contains("m_loan_account_no_key")))) {
             final String accountNo = command.stringValueOfParameterNamed("accountNo");
             throw new PlatformDataIntegrityException("error.msg.loan.duplicate.accountNo",
                     "Loan with accountNo `" + accountNo + "` already exists", "accountNo", accountNo);
-        } else if (realCause.getMessage().contains("loan_externalid_UNIQUE")
-                || (realCause.getCause() != null && realCause.getCause().getMessage().contains("loan_externalid_UNIQUE"))
+        } else if (realCause.getMessage().contains("loan_externalid_UNIQUE") || realCause.getMessage().contains("m_loan_external_id_key")
+                || (realCause.getCause() != null && (realCause.getCause().getMessage().contains("loan_externalid_UNIQUE")
+                        || realCause.getCause().getMessage().contains("m_loan_external_id_key")))
                 || realCause.getMessage().toLowerCase().contains("external_id_unique")) {
             final String externalId = command.stringValueOfParameterNamed("externalId");
             throw new PlatformDataIntegrityException("error.msg.loan.duplicate.externalId",
