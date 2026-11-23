@@ -72,7 +72,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.configuration.service.TemporaryConfigurationServiceContainer;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -106,7 +105,6 @@ import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
-import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.apache.fineract.portfolio.savings.domain.interest.SavingsAccountTransactionDetailsForPostingPeriod;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountBlockedException;
@@ -136,7 +134,7 @@ import org.springframework.util.CollectionUtils;
 public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long> implements IDepositAccountType {
 
     private static final Logger LOG = LoggerFactory.getLogger(SavingsAccount.class);
-    private static final SavingsAccountInterestCalculator INTEREST_CALCULATOR = new SavingsAccountInterestCalculator();
+    private static final SavingsAccountLockPeriodCalculator LOCK_PERIOD_CALCULATOR = new SavingsAccountLockPeriodCalculator();
 
     @Version
     int version;
@@ -318,10 +316,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     @Transient
     protected boolean accountNumberRequiresAutoGeneration = false;
     @Transient
-    protected SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper;
-    @Transient
-    protected SavingsHelper savingsHelper;
-    @Transient
     protected List<SavingsAccountTransaction> savingsAccountTransactions = new ArrayList<>();
     @Transient
     private List<SavingsAccountTransactionReplacement> transactionReplacements = new ArrayList<>();
@@ -349,8 +343,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     private BigDecimal savingsOnHoldAmount;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "account", orphanRemoval = true, fetch = FetchType.LAZY)
     protected List<InteropIdentifier> identifiers = new ArrayList<>();
-
-    public transient ConfigurationDomainService configurationDomainService;
 
     protected SavingsAccount() {
         //
@@ -453,17 +445,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         // this.savingsOfficerHistory = null;
         this.withHoldTax = withHoldTax;
         this.taxGroup = product.getTaxGroup();
-    }
-
-    /**
-     * Used after fetching/hydrating a {@link SavingsAccount} object to inject helper services/components used for
-     * update summary details after events/transactions on a {@link SavingsAccount}.
-     */
-    public void setHelpers(final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
-            final SavingsHelper savingsHelper, final ConfigurationDomainService configurationDomainService) {
-        this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
-        this.savingsHelper = savingsHelper;
-        this.configurationDomainService = configurationDomainService;
     }
 
     public void setSavingsAccountTransactions(final List<SavingsAccountTransaction> savingsAccountTransactions) {
@@ -621,7 +602,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     // Determine the last transaction for given day
-    protected SavingsAccountTransaction findLastTransaction(final LocalDate date) {
+    public SavingsAccountTransaction findLastTransaction(final LocalDate date) {
 
         SavingsAccountTransaction savingsTransaction = null;
         List<SavingsAccountTransaction> trans = getTransactions();
@@ -635,7 +616,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return savingsTransaction;
     }
 
-    protected SavingsAccountTransaction findLastFilteredTransactionWithPivotConfig(final LocalDate date) {
+    public SavingsAccountTransaction findLastFilteredTransactionWithPivotConfig(final LocalDate date) {
         SavingsAccountTransaction savingsTransaction = null;
         List<SavingsAccountTransaction> trans = getSavingsAccountTransactionsWithPivotConfig();
         for (final SavingsAccountTransaction transaction : trans) {
@@ -678,48 +659,13 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     /**
-     * All interest calculation based on END-OF-DAY-BALANCE.
-     *
-     * Interest calculation is performed on-the-fly over all account transactions.
-     *
-     *
-     * 1. Calculate Interest From Beginning Of Account 1a. determine the 'crediting' periods that exist for this savings
-     * acccount 1b. determine the 'compounding' periods that exist within each 'crediting' period calculate the amount
-     * of interest due at the end of each 'crediting' period check if an existing 'interest posting' transaction exists
-     * for date and matches the amount posted
-     *
-     * @param isInterestTransfer
-     *            TODO
+     * Resolves the effective "up to" date for interest calculation given a calculation date. For a regular savings
+     * account this is the date itself; fixed and recurring deposits cap it at the maturity date. Used by the
+     * {@code SavingsAccountInterestCalculationService} to resolve the date polymorphically, as the former
+     * {@code calculateInterestUsing} overrides did.
      */
-
-    public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate upToInterestCalculationDate,
-            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate, final boolean backdatedTxnsAllowedTill, final boolean postReversals) {
-
-        // no openingBalance concept supported yet but probably will to allow for
-        // migrations.
-        // Check global configurations and 'pivot' date is null
-        Money openingAccountBalance = backdatedTxnsAllowedTill ? Money.of(this.currency, this.summary.getRunningBalanceOnPivotDate())
-                : Money.zero(this.currency);
-
-        // update existing transactions so derived balance fields are correct.
-        recalculateDailyBalances(openingAccountBalance, upToInterestCalculationDate, backdatedTxnsAllowedTill, postReversals);
-
-        List<PostingPeriod> allPostingPeriods = new ArrayList<>();
-        if (hasInterestCalculation() || hasOverdraftInterestCalculation()) {
-            allPostingPeriods = INTEREST_CALCULATOR.calculatePostingPeriods(this, mc, upToInterestCalculationDate, isInterestTransfer,
-                    isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, backdatedTxnsAllowedTill);
-            this.summary.updateFromInterestPeriodSummaries(this.currency, allPostingPeriods);
-        }
-
-        if (backdatedTxnsAllowedTill) {
-            this.summary.updateSummaryWithPivotConfig(this.currency, this.savingsAccountTransactionSummaryWrapper, null,
-                    this.savingsAccountTransactions);
-        } else {
-            this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
-        }
-
-        return allPostingPeriods;
+    public LocalDate interestCalculationUpToDate(final LocalDate upToInterestCalculationDate) {
+        return upToInterestCalculationDate;
     }
 
     public BigDecimal getEffectiveInterestRateAsFractionAccrual(final MathContext mc, final LocalDate upToInterestCalculationDate) {
@@ -727,15 +673,15 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     @SuppressWarnings("unused")
-    protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate upToInterestCalculationDate) {
+    public BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate upToInterestCalculationDate) {
         return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100L), mc);
     }
 
-    private boolean hasInterestCalculation() {
+    public boolean hasInterestCalculation() {
         return !MathUtil.isEmpty(nominalAnnualInterestRate);
     }
 
-    private boolean hasOverdraftInterestCalculation() {
+    public boolean hasOverdraftInterestCalculation() {
         return isAllowOverdraft() && !MathUtil.isEmpty(getOverdraftLimit()) && !MathUtil.isEmpty(nominalAnnualInterestRateOverdraft);
     }
 
@@ -744,7 +690,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                 .sorted(new SavingsAccountTransactionComparator()).collect(Collectors.toList());
     }
 
-    protected List<SavingsAccountTransaction> retreiveOrderedNonInterestPostingTransactions() {
+    public List<SavingsAccountTransaction> retreiveOrderedNonInterestPostingTransactions() {
         final List<SavingsAccountTransaction> listOfTransactionsSorted = retrieveListOfTransactions();
 
         final List<SavingsAccountTransaction> orderedNonInterestPostingTransactions = new ArrayList<>();
@@ -759,7 +705,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return orderedNonInterestPostingTransactions;
     }
 
-    protected List<SavingsAccountTransaction> retreiveOrderedNonInterestPostingSavingsTransactionsWithPivotConfig() {
+    public List<SavingsAccountTransaction> retreiveOrderedNonInterestPostingSavingsTransactionsWithPivotConfig() {
         final List<SavingsAccountTransaction> listOfTransactionsSorted = retrieveSortedTransactions();
 
         final List<SavingsAccountTransaction> orderedNonInterestPostingTransactions = new ArrayList<>();
@@ -883,7 +829,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         resetAccountTransactionsEndOfDayBalances(accountTransactionsSorted, interestPostingUpToDate);
     }
 
-    protected void resetAccountTransactionsEndOfDayBalances(final List<SavingsAccountTransaction> accountTransactionsSorted,
+    public void resetAccountTransactionsEndOfDayBalances(final List<SavingsAccountTransaction> accountTransactionsSorted,
             final LocalDate interestPostingUpToDate) {
         // loop over transactions in reverse
         LocalDate endOfBalanceDate = interestPostingUpToDate;
@@ -918,7 +864,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         final String resourceTypeName = depositAccountType().resourceName();
         if (isNotActive()) {
             final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
-            final ApiParameterError error = ApiParameterError.parameterError(
+            final ApiParameterError error = ApiParameterError.parameterErrorWithValue(
                     "error.msg." + resourceTypeName + ".transaction.account.is.not.active", defaultUserMessage, "transactionDate",
                     transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
 
@@ -930,8 +876,9 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
         if (DateUtils.isDateInTheFuture(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Transaction date cannot be in the future.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg." + resourceTypeName + ".transaction.in.the.future",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
+            final ApiParameterError error = ApiParameterError.parameterErrorWithValue(
+                    "error.msg." + resourceTypeName + ".transaction.in.the.future", defaultUserMessage, "transactionDate",
+                    transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
@@ -975,8 +922,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         }
 
         if (backdatedTxnsAllowedTill) {
-            this.summary.updateSummaryWithPivotConfig(this.currency, this.savingsAccountTransactionSummaryWrapper, transaction,
-                    this.savingsAccountTransactions);
+            this.summary.updateSummaryWithPivotConfig(this.currency, transaction);
         }
 
         return transaction;
@@ -1035,11 +981,18 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
     public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee,
             final boolean backdatedTxnsAllowedTill, final Long relaxingDaysConfigForPivotDate, String refNo) {
+        return withdraw(transactionDTO, applyWithdrawFee, backdatedTxnsAllowedTill, relaxingDaysConfigForPivotDate, refNo, false);
+    }
+
+    public SavingsAccountTransaction withdraw(final SavingsAccountTransactionDTO transactionDTO, final boolean applyWithdrawFee,
+            final boolean backdatedTxnsAllowedTill, final Long relaxingDaysConfigForPivotDate, String refNo,
+            final boolean isForceWithdrawal) {
         if (!isTransactionsAllowed()) {
 
             final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.account.is.not.active",
-                    defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
+            final ApiParameterError error = ApiParameterError.parameterErrorWithValue(
+                    "error.msg.savingsaccount.transaction.account.is.not.active", defaultUserMessage, "transactionDate",
+                    transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
             dataValidationErrors.add(error);
@@ -1049,7 +1002,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
         if (DateUtils.isDateInTheFuture(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Transaction date cannot be in the future.";
-            final ApiParameterError error = ApiParameterError.parameterError("error.msg.savingsaccount.transaction.in.the.future",
+            final ApiParameterError error = ApiParameterError.parameterErrorWithValue("error.msg.savingsaccount.transaction.in.the.future",
                     defaultUserMessage, "transactionDate", transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
 
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
@@ -1074,7 +1027,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (isAccountLocked(transactionDTO.getTransactionDate())) {
             final String defaultUserMessage = "Withdrawal is not allowed. No withdrawals are allowed until after "
                     + getLockedInUntilDate().format(transactionDTO.getFormatter());
-            final ApiParameterError error = ApiParameterError.parameterError(
+            final ApiParameterError error = ApiParameterError.parameterErrorWithValue(
                     "error.msg.savingsaccount.transaction.withdrawals.blocked.during.lockin.period", defaultUserMessage, "transactionDate",
                     transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()),
                     getLockedInUntilDate().format(transactionDTO.getFormatter()));
@@ -1098,7 +1051,9 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.withdrawal(this, office(),
                 transactionDTO.getPaymentDetail(), transactionDTO.getTransactionDate(), transactionDTO.getTransactionTime(),
                 transactionAmountMoney, refNo);
-
+        if (isForceWithdrawal) {
+            transaction.markAsForceTransaction();
+        }
         if (backdatedTxnsAllowedTill) {
             addTransactionToExisting(transaction);
         } else {
@@ -1111,8 +1066,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
         if (backdatedTxnsAllowedTill) {
-            this.summary.updateSummaryWithPivotConfig(this.currency, this.savingsAccountTransactionSummaryWrapper, transaction,
-                    this.savingsAccountTransactions);
+            this.summary.updateSummaryWithPivotConfig(this.currency, transaction);
         }
         return transaction;
     }
@@ -1252,7 +1206,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
     public void validateAccountBalanceConstraints(final BigDecimal transactionAmount, final boolean isException,
             final List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions, final boolean backdatedTxnsAllowedTill,
-            final boolean isForceWithdrawal) {
+            final boolean isForceWithdrawal, final boolean forceWithdrawalEnabled, final Long forceWithdrawalLimit) {
 
         List<SavingsAccountTransaction> transactionsSortedByDate = backdatedTxnsAllowedTill ? retrieveSortedTransactions()
                 : retrieveListOfTransactions();
@@ -1280,8 +1234,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             // deal with potential minRequiredBalance and
             // enforceMinRequiredBalance
             if (!isException && transaction.canProcessBalanceCheck() && !isOverdraft()) {
-                if (violatesMinRequiredBalance(runningBalance, minRequiredBalance)
-                        && !isForceWithdrawalAllowed(isForceWithdrawal, runningBalance)) {
+                if (violatesMinRequiredBalance(runningBalance, minRequiredBalance) && !isForceWithdrawalAllowed(transaction,
+                        isForceWithdrawal, runningBalance, forceWithdrawalEnabled, forceWithdrawalLimit)) {
                     throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,
                             transactionAmount);
                 }
@@ -1294,8 +1248,10 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         // interest posting
         // and should be checked after processing all transactions
         if (isOverdraft()) {
-            if (violatesMinRequiredBalance(runningBalance, minRequiredBalance)
-                    && !isForceWithdrawalAllowed(isForceWithdrawal, runningBalance)) {
+            final SavingsAccountTransaction lastTransaction = transactionsSortedByDate.isEmpty() ? null
+                    : transactionsSortedByDate.get(transactionsSortedByDate.size() - 1);
+            if (violatesMinRequiredBalance(runningBalance, minRequiredBalance) && !isForceWithdrawalAllowed(lastTransaction,
+                    isForceWithdrawal, runningBalance, forceWithdrawalEnabled, forceWithdrawalLimit)) {
                 throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
             }
         }
@@ -1350,21 +1306,26 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
      * Checks whether a force withdrawal is allowed based on the global configuration and the configured negative
      * balance limit.
      *
-     * @param isForceWithdrawal
-     *            whether the current transaction is a force withdrawal
+     * @param transaction
+     *            the transaction currently being evaluated in the historical balance-recalculation loop; may be
+     *            {@code null} when evaluating the final overdraft-only check that runs after the loop
+     * @param isCurrentOperationForceWithdrawal
+     *            whether the transaction/operation currently being processed by the caller is a force withdrawal
      * @param runningBalance
-     *            the current running balance of the account
+     *            the running balance of the account at this point in the historical recalculation
+     * @param forceWithdrawalEnabled
+     *            whether force withdrawal on savings accounts is globally enabled
+     * @param forceWithdrawalLimit
+     *            the configured negative balance limit allowed for a force withdrawal
      * @return true if force withdrawal is enabled and the running balance is within the allowed negative limit
      */
-    private boolean isForceWithdrawalAllowed(final boolean isForceWithdrawal, final Money runningBalance) {
-        if (!isForceWithdrawal || this.configurationDomainService == null) {
+    private boolean isForceWithdrawalAllowed(final SavingsAccountTransaction transaction, final boolean isCurrentOperationForceWithdrawal,
+            final Money runningBalance, final boolean forceWithdrawalEnabled, final Long forceWithdrawalLimit) {
+        final boolean isForcedContext = (transaction != null && transaction.isForceTransaction()) || isCurrentOperationForceWithdrawal;
+        if (!isForcedContext || !forceWithdrawalEnabled || forceWithdrawalLimit == null) {
             return false;
         }
-        if (!this.configurationDomainService.isForceWithdrawalOnSavingsAccountEnabled()) {
-            return false;
-        }
-        Long limit = this.configurationDomainService.getForceWithdrawalOnSavingsAccountLimit();
-        BigDecimal limitBd = BigDecimal.valueOf(limit);
+        BigDecimal limitBd = BigDecimal.valueOf(forceWithdrawalLimit);
         if (limitBd.compareTo(BigDecimal.ZERO) > 0) {
             limitBd = limitBd.negate();
         }
@@ -2667,22 +2628,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     }
 
     private LocalDate calculateDateAccountIsLockedUntil(final LocalDate activationLocalDate) {
-
-        LocalDate lockedInUntilLocalDate = null;
-        final PeriodFrequencyType lockinPeriodFrequencyType = PeriodFrequencyType.fromInt(this.lockinPeriodFrequencyType);
-        switch (lockinPeriodFrequencyType) {
-            case INVALID, SEMI_MONTHLY -> {
-                // SEMI_MONTHLY is a loan repayment frequency and is never offered as a savings lock-in period, so it
-                // leaves the account unlocked just like an unset frequency does.
-            }
-            case DAYS -> lockedInUntilLocalDate = activationLocalDate.plusDays(this.lockinPeriodFrequency);
-            case WEEKS -> lockedInUntilLocalDate = activationLocalDate.plusWeeks(this.lockinPeriodFrequency);
-            case MONTHS -> lockedInUntilLocalDate = activationLocalDate.plusMonths(this.lockinPeriodFrequency);
-            case YEARS -> lockedInUntilLocalDate = activationLocalDate.plusYears(this.lockinPeriodFrequency);
-            case WHOLE_TERM -> LOG.error("TODO Implement calculateDateAccountIsLockedUntil for WHOLE_TERM");
-        }
-
-        return lockedInUntilLocalDate;
+        return LOCK_PERIOD_CALCULATOR.calculateDateAccountIsLockedUntil(activationLocalDate, this.lockinPeriodFrequency,
+                PeriodFrequencyType.fromInt(this.lockinPeriodFrequencyType));
     }
 
     public Group group() {
@@ -3041,8 +2988,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         transaction.getSavingsAccountChargesPaid().add(chargePaidBy);
         if (backdatedTxnsAllowedTill) {
             this.savingsAccountTransactions.add(transaction);
-            this.summary.updateSummaryWithPivotConfig(this.currency, this.savingsAccountTransactionSummaryWrapper, transaction,
-                    this.savingsAccountTransactions);
+            this.summary.updateSummaryWithPivotConfig(this.currency, transaction);
         } else {
             this.transactions.add(transaction);
         }
@@ -3095,7 +3041,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return getActivationDate() == null ? getSubmittedOnDate() : getActivationDate();
     }
 
-    protected boolean isTransferInterestToOtherAccount() {
+    public boolean isTransferInterestToOtherAccount() {
         return false;
     }
 
@@ -3289,12 +3235,14 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         this.withHoldTax = withHoldTax;
     }
 
-    protected boolean applyWithholdTaxForDepositAccounts(final LocalDate interestPostingUpToDate, boolean recalucateDailyBalance,
-            final boolean backdatedTxnsAllowedTill) {
+    /**
+     * Creates or updates the withhold tax transaction of a deposit account, given the total interest posted as
+     * calculated by the caller from the account's current transactions.
+     */
+    protected boolean applyWithholdTaxForDepositAccounts(final LocalDate interestPostingUpToDate, final BigDecimal totalInterestPosted,
+            boolean recalucateDailyBalance, final boolean backdatedTxnsAllowedTill) {
         final List<SavingsAccountTransaction> withholdTransactions = findWithHoldTransactions();
         SavingsAccountTransaction withholdTransaction = findTransactionFor(interestPostingUpToDate, withholdTransactions);
-        final BigDecimal totalInterestPosted = this.savingsAccountTransactionSummaryWrapper.calculateTotalInterestPosted(this.currency,
-                this.transactions);
         if (withholdTransaction == null && this.withHoldTax()) {
             boolean isWithholdTaxAdded = createWithHoldTransaction(totalInterestPosted, interestPostingUpToDate, backdatedTxnsAllowedTill);
             recalucateDailyBalance = recalucateDailyBalance || isWithholdTaxAdded;
@@ -3306,6 +3254,9 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         return recalucateDailyBalance;
     }
 
+    /**
+     * The caller must refresh the summary afterwards, as the entity does not calculate its totals.
+     */
     public void setSubStatusInactive(final boolean backdatedTxnsAllowedTill) {
         this.sub_status = SavingsAccountSubStatusEnum.INACTIVE.getValue();
         LocalDate transactionDate = DateUtils.getBusinessLocalDate();
@@ -3319,13 +3270,15 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         }
         boolean postReversals = false;
         recalculateDailyBalances(Money.zero(this.currency), transactionDate, backdatedTxnsAllowedTill, postReversals);
-        this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
     public void setSubStatusDormant() {
         this.sub_status = SavingsAccountSubStatusEnum.DORMANT.getValue();
     }
 
+    /**
+     * The caller must refresh the summary afterwards, as the entity does not calculate its totals.
+     */
     public void escheat(AppUser appUser) {
         this.status = SavingsAccountStatusType.CLOSED.getValue();
         this.sub_status = SavingsAccountSubStatusEnum.ESCHEAT.getValue();
@@ -3339,7 +3292,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             this.transactions.add(transaction);
         }
         recalculateDailyBalances(Money.zero(this.currency), transactionDate, false, postReversals);
-        this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
     public void loadLazyCollections() {
@@ -3351,8 +3303,11 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         } // Ensure lazy loading of group if set
     }
 
-    public void updateSavingsAccountSummary(final List<SavingsAccountTransaction> transactions) {
-        this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, transactions);
+    /**
+     * Stores the summary totals calculated by {@link SavingsAccountTransactionSummaryWrapper#calculateSummaryTotals}.
+     */
+    public void updateSavingsAccountSummary(final SavingsAccountSummaryTotals totals) {
+        this.summary.updateSummary(totals);
     }
 
     public void updateReason(final String reasonForBlock) {

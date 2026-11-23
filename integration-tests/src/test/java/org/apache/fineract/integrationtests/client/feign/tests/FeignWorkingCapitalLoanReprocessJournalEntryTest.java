@@ -35,6 +35,7 @@ import org.apache.fineract.integrationtests.client.feign.helpers.FeignClientHelp
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignJournalEntryHelper;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignWorkingCapitalLoanHelper;
 import org.apache.fineract.integrationtests.client.feign.modules.WorkingCapitalLoanRequestBuilders;
+import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.accounting.Account;
 import org.apache.fineract.integrationtests.common.workingcapitalloanproduct.WorkingCapitalLoanProductHelper;
 import org.apache.fineract.integrationtests.common.workingcapitalloanproduct.WorkingCapitalLoanProductTestBuilder;
@@ -116,8 +117,7 @@ public class FeignWorkingCapitalLoanReprocessJournalEntryTest extends FeignInteg
 
             // R1 on day 20 settles the 100 fee: DR fund source 100, CR fees receivable 100.
             businessDateHelper.updateBusinessDate("BUSINESS_DATE", "2026-01-20");
-            final Long r1Id = wcLoanHelper.makeRepayment(loanId,
-                    WorkingCapitalLoanRequestBuilders.repayment(BigDecimal.valueOf(100), "20 January 2026"));
+            wcLoanHelper.makeRepayment(loanId, WorkingCapitalLoanRequestBuilders.repayment(BigDecimal.valueOf(100), "20 January 2026"));
 
             // Backdated R2 on day 10 settles the fee first on replay, triggering the full reprocess. R2 is the newly
             // created transaction whose entries must be booked exactly once (not once by the write flow AND again by
@@ -195,23 +195,21 @@ public class FeignWorkingCapitalLoanReprocessJournalEntryTest extends FeignInteg
     }
 
     private Long createAccrualProduct() {
-        final Long productId = productHelper
-                .createWorkingCapitalLoanProduct(
-                        new WorkingCapitalLoanProductTestBuilder().withName("WCL ReprocJe " + UUID.randomUUID().toString().substring(0, 8))
-                                .withShortName(UUID.randomUUID().toString().replace("-", "").substring(0, 4))
-                                .withAccountingRule(AccountingRuleEnum.ACC_DEF_REV_AM)
-                                .withFundSourceAccountId(fundSourceAccount.getAccountID().longValue())
-                                .withLoanPortfolioAccountId(loanPortfolioAccount.getAccountID().longValue())
-                                .withTransfersInSuspenseAccountId(transfersSuspenseAccount.getAccountID().longValue())
-                                .withIncomeFromDiscountFeeAccountId(incomeFromDiscountFeeAccount.getAccountID().longValue())
-                                .withReceivableFeeAccountId(feesReceivableAccount.getAccountID().longValue())
-                                .withReceivablePenaltyAccountId(penaltiesReceivableAccount.getAccountID().longValue())
-                                .withIncomeFromFeeAccountId(incomeFromFeeAccount.getAccountID().longValue())
-                                .withIncomeFromPenaltyAccountId(incomeFromPenaltyAccount.getAccountID().longValue())
-                                .withIncomeFromRecoveryAccountId(incomeFromRecoveryAccount.getAccountID().longValue())
-                                .withWriteOffAccountId(writeOffAccount.getAccountID().longValue())
-                                .withOverpaymentLiabilityAccountId(overpaymentAccount.getAccountID().longValue())
-                                .withDeferredIncomeLiabilityAccountId(deferredIncomeAccount.getAccountID().longValue()).build())
+        final Long productId = productHelper.createWorkingCapitalLoanProduct(
+                new WorkingCapitalLoanProductTestBuilder().withName("WCL ReprocJe " + UUID.randomUUID().toString().substring(0, 8))
+                        .withShortName(Utils.uniqueRandomStringGenerator("", 4)).withAccountingRule(AccountingRuleEnum.ACC_DEF_REV_AM)
+                        .withFundSourceAccountId(fundSourceAccount.getAccountID().longValue())
+                        .withLoanPortfolioAccountId(loanPortfolioAccount.getAccountID().longValue())
+                        .withTransfersInSuspenseAccountId(transfersSuspenseAccount.getAccountID().longValue())
+                        .withIncomeFromDiscountFeeAccountId(incomeFromDiscountFeeAccount.getAccountID().longValue())
+                        .withReceivableFeeAccountId(feesReceivableAccount.getAccountID().longValue())
+                        .withReceivablePenaltyAccountId(penaltiesReceivableAccount.getAccountID().longValue())
+                        .withIncomeFromFeeAccountId(incomeFromFeeAccount.getAccountID().longValue())
+                        .withIncomeFromPenaltyAccountId(incomeFromPenaltyAccount.getAccountID().longValue())
+                        .withIncomeFromRecoveryAccountId(incomeFromRecoveryAccount.getAccountID().longValue())
+                        .withWriteOffAccountId(writeOffAccount.getAccountID().longValue())
+                        .withOverpaymentLiabilityAccountId(overpaymentAccount.getAccountID().longValue())
+                        .withDeferredIncomeLiabilityAccountId(deferredIncomeAccount.getAccountID().longValue()).build())
                 .getResourceId();
         createdProductIds.add(productId);
         return productId;

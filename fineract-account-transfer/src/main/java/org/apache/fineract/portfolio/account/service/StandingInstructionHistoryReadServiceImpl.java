@@ -45,15 +45,15 @@ import org.springframework.jdbc.core.RowMapper;
 
 public class StandingInstructionHistoryReadServiceImpl implements StandingInstructionHistoryReadService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private final DatabaseSpecificSQLGenerator sqlGenerator;
-    private final ColumnValidator columnValidator;
+    protected final JdbcTemplate jdbcTemplate;
+    protected final DatabaseSpecificSQLGenerator sqlGenerator;
+    protected final ColumnValidator columnValidator;
 
     // mapper
-    private final StandingInstructionHistoryMapper standingInstructionHistoryMapper;
+    protected final StandingInstructionHistoryMapper standingInstructionHistoryMapper;
 
     // pagination
-    private final PaginationHelper paginationHelper;
+    protected final PaginationHelper paginationHelper;
 
     public StandingInstructionHistoryReadServiceImpl(final JdbcTemplate jdbcTemplate, final ColumnValidator columnValidator,
             DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper) {
@@ -200,7 +200,7 @@ public class StandingInstructionHistoryReadServiceImpl implements StandingInstru
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 

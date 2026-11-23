@@ -45,6 +45,7 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargesPaidByData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionDataComparator;
 import org.apache.fineract.portfolio.savings.domain.SavingsHelper;
+import org.apache.fineract.portfolio.savings.domain.SavingsInterestCalculationUtil;
 import org.apache.fineract.portfolio.savings.domain.interest.PostingPeriod;
 import org.apache.fineract.portfolio.tax.data.TaxComponentData;
 import org.apache.fineract.portfolio.tax.service.TaxUtils;
@@ -53,7 +54,7 @@ import org.jspecify.annotations.NonNull;
 @RequiredArgsConstructor
 public class SavingsAccountInterestPostingServiceImpl implements SavingsAccountInterestPostingService {
 
-    private final SavingsHelper savingsHelper;
+    protected final SavingsHelper savingsHelper;
 
     @Override
     public SavingsAccountData postInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
@@ -284,10 +285,14 @@ public class SavingsAccountInterestPostingServiceImpl implements SavingsAccountI
                 .fromInt(savingsAccountData.getInterestCalculationDaysInYearTypeId());
 
         List<LocalDate> postedAsOnDates = getManualPostingDates(savingsAccountData);
+        if (isSavingsInterestPostingAtCurrentPeriodEnd) {
+            // With this configuration manual postings are dated on their period end, not on the day after it
+            postedAsOnDates.replaceAll(postedAsOnDate -> postedAsOnDate.plusDays(1));
+        }
         if (postInterestOnDate != null) {
             postedAsOnDates.add(postInterestOnDate);
         }
-        final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
+        final List<LocalDateInterval> postingPeriodIntervals = SavingsInterestCalculationUtil.determineInterestPostingPeriods(
                 savingsAccountData.getStartInterestCalculationDate(), upToInterestCalculationDate, postingPeriodType,
                 financialYearBeginningMonth, postedAsOnDates);
 
@@ -369,7 +374,7 @@ public class SavingsAccountInterestPostingServiceImpl implements SavingsAccountI
             }
         }
 
-        this.savingsHelper.calculateInterestForAllPostingPeriods(monetaryCurrency, allPostingPeriods,
+        SavingsInterestCalculationUtil.calculateInterestForAllPostingPeriods(monetaryCurrency, allPostingPeriods,
                 getLockedInUntilLocalDate(savingsAccountData), false);
 
         savingsAccountData.getSummary().updateFromInterestPeriodSummaries(monetaryCurrency, allPostingPeriods);

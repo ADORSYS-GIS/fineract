@@ -44,6 +44,7 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.portfolio.interestratechart.data.InterestRateChartValidator;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChartRepositoryWrapper;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChartSlab;
@@ -54,9 +55,9 @@ import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 @RequiredArgsConstructor
 public class InterestRateChartSlabAssembler {
 
-    private final FromJsonHelper fromApiJsonHelper;
-    private final InterestRateChartRepositoryWrapper interestRateChartRepositoryWrapper;
-    private final InterestIncentiveAssembler incentiveAssembler;
+    protected final FromJsonHelper fromApiJsonHelper;
+    protected final InterestRateChartRepositoryWrapper interestRateChartRepositoryWrapper;
+    protected final InterestIncentiveAssembler incentiveAssembler;
 
     /**
      * Assembles a new {@link InterestRateChartSlab} from JSON Slabs passed in request
@@ -79,7 +80,7 @@ public class InterestRateChartSlabAssembler {
         final InterestRateChartSlab newChartSlab = assembleChartSlabs(chart, elementObject, currencyCode, locale);
         // validate chart Slabs
         newChartSlab.slabFields().validateChartSlabPlatformRules(command, baseDataValidator, locale);
-        chart.validateChartSlabs(baseDataValidator);
+        InterestRateChartValidator.validateChartSlabs(chart, baseDataValidator);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
         return newChartSlab;

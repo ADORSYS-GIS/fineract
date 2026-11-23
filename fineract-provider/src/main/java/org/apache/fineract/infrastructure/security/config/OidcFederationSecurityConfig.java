@@ -20,6 +20,7 @@ package org.apache.fineract.infrastructure.security.config;
 
 import jakarta.servlet.Filter;
 import org.apache.fineract.infrastructure.businessdate.service.BusinessDateReadPlatformService;
+import org.apache.fineract.infrastructure.core.config.ApiAuthorizationRules;
 import org.apache.fineract.infrastructure.core.config.FineractProperties;
 import org.apache.fineract.infrastructure.core.domain.FineractRequestContextHolder;
 import org.apache.fineract.infrastructure.core.filters.CallerIpTrackingFilter;
@@ -49,6 +50,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -100,9 +102,6 @@ public class OidcFederationSecurityConfig {
     private TenantOidcConfigService tenantOidcConfigService;
 
     @Autowired
-    private DynamicJwtIssuerAuthenticationManagerResolver dynamicIssuerResolver;
-
-    @Autowired
     private BusinessDateReadPlatformService businessDateReadPlatformService;
 
     @Autowired
@@ -130,11 +129,13 @@ public class OidcFederationSecurityConfig {
 
     @Bean
     @Order(100)
-    public SecurityFilterChain oidcFederationFilterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/api/**")
-                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/*/echo").permitAll().anyRequest().authenticated())
-                .csrf(AbstractHttpConfigurer::disable)
+    public SecurityFilterChain oidcFederationFilterChain(HttpSecurity http,
+            DynamicJwtIssuerAuthenticationManagerResolver dynamicIssuerResolver) throws Exception {
+        http.securityMatcher("/api/**").authorizeHttpRequests(auth -> {
+            auth.requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll().requestMatchers(HttpMethod.POST, "/api/*/echo").permitAll();
+            ApiAuthorizationRules.configure(auth, AuthenticatedAuthorizationManager.authenticated());
+            auth.anyRequest().authenticated();
+        }).csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Bearer JWT validation — multi-issuer dynamic resolver (DB + YAML fallback)
                 .oauth2ResourceServer(resourceServer -> resourceServer.authenticationManagerResolver(dynamicIssuerResolver))

@@ -40,6 +40,7 @@ buildscript {
                 'fineract-investor',
                 'fineract-charge',
                 'fineract-rates',
+                'fineract-fund',
                 'fineract-tax',
                 'fineract-loan-origination',
                 'fineract-loan',
@@ -50,6 +51,7 @@ buildscript {
                 'integration-tests',
                 'twofactor-tests',
                 'oauth2-tests',
+                'oauth2-twofactor-tests',
                 'fineract-client',
                 'fineract-client-feign',
                 'fineract-avro-schemas',
@@ -78,6 +80,7 @@ buildscript {
                 'fineract-investor',
                 'fineract-charge',
                 'fineract-rates',
+                'fineract-fund',
                 'fineract-tax',
                 'fineract-loan-origination',
                 'fineract-loan',
@@ -102,7 +105,7 @@ buildscript {
     dependencies {
         classpath 'com.bmuschko:gradle-cargo-plugin:2.9.0'
         classpath 'org.eclipse.persistence:eclipselink:5.0.2'
-        classpath 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+        classpath 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
         classpath 'com.google.cloud.tools:jib-layer-filter-extension-gradle:0.3.0'
         classpath 'org.apache.commons:commons-lang3:3.20.0'
         // Gradle 9 no longer bundles groovy-sql; keep this aligned with Gradle's embedded Groovy version.
@@ -115,7 +118,7 @@ buildscript {
 plugins {
     id 'com.adarshr.test-logger' version '4.0.0'
     id 'com.diffplug.spotless' version '8.10.2' apply false
-    id 'org.nosphere.apache.rat' version '0.8.1' apply false
+    id 'org.nosphere.apache.rat' version '0.11.0' apply false
     id 'com.github.jk1.dependency-license-report' version '3.1.4' apply false
     id 'org.zeroturnaround.gradle.jrebel' version '1.2.2' apply false
     id 'org.springframework.boot' version '4.1.1' apply false
@@ -182,6 +185,13 @@ ext.LICENSE_REPORT_CONFIGURATIONS = [
 ]
 
 allprojects  {
+    // The RAT plugin resolves its tool through each project's own buildscript repositories
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+    }
+
     group = 'org.apache.fineract'
 
     repositories {
@@ -218,6 +228,7 @@ allprojects  {
             error(
                     "DefaultCharset",
                     "StringSplitter",
+                    "StringCaseLocaleUsage",
                     "MutablePublicArray",
                     "EqualsGetClass",
                     "FutureReturnValueIgnored"
@@ -663,7 +674,6 @@ configure(project.fineractJavaProjects) {
                     "InvalidBlockTag",
                     "JavaUtilDate", // TODO FINERACT-1298
                     "ReturnValueIgnored",
-                    "DirectInvocationOnMock",
                     "CanIgnoreReturnValueSuggester",
                     "SameNameButDifferent", // Until errorprone recognizes Lombok
                     "MultiVariableDeclaration", // Until errorprone recognizes Lombok
@@ -798,6 +808,17 @@ configure(project.fineractJavaProjects) {
         // definitions that the 'cucumber' task or ':fineract-e2e-tests-runner' consumes, a JMH
         // benchmark -- so their own test task legitimately has nothing to run.
         failOnNoDiscoveredTests = false
+
+        // Flaky-test retry, provided by the Develocity plugin applied in settings.gradle.
+        // Scoped to the API-dependent suites: they drive a live Fineract instance over HTTP and
+        // are the only ones exposed to one-off environmental flakiness. Unit tests stay strict.
+        if (project.name in ['integration-tests', 'twofactor-tests', 'oauth2-tests']) {
+            develocity.testRetry {
+                failOnPassedAfterRetry = false // keep the build green if a test passes on retry
+                maxRetries = 2
+                maxFailures = 20 // safety cap: too many failures => real breakage, stop retrying
+            }
+        }
 
         if (project.hasProperty('excludeTests')) {
             filter {

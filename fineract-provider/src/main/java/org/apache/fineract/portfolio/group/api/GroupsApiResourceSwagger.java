@@ -139,6 +139,8 @@ final class GroupsApiResourceSwagger {
 
             @Schema(example = "4")
             public Long id;
+            @Schema(example = "000000004")
+            public String accountNo;
             @Schema(example = "AnotherGroup")
             public String name;
             @Schema(example = "000-1A")
@@ -259,19 +261,6 @@ final class GroupsApiResourceSwagger {
         public Long resourceId;
     }
 
-    @Schema(description = "DeleteGroupsGroupIdResponse")
-    public static final class DeleteGroupsGroupIdResponse {
-
-        private DeleteGroupsGroupIdResponse() {}
-
-        @Schema(example = "1")
-        public Long officeId;
-        @Schema(example = "2")
-        public Long groupId;
-        @Schema(example = "2")
-        public Long resourceId;
-    }
-
     @Schema(description = "PostGroupsGroupIdCommandUnassignStaffRequest")
     public static final class PostGroupsGroupIdCommandUnassignStaffRequest {
 
@@ -298,45 +287,6 @@ final class GroupsApiResourceSwagger {
         @Schema(example = "1")
         public Long resourceId;
         public PostGroupsGroupIdCommandUnassignStaffChanges changes;
-    }
-
-    @Schema(description = "PutGroupsGroupIdRequest")
-    public static final class PutGroupsGroupIdRequest {
-
-        private PutGroupsGroupIdRequest() {}
-
-        @Schema(example = "First Group (changed)")
-        public String name;
-        @Schema(example = "externalId1")
-        public String externalId;
-        @Schema(example = "1")
-        public Long staffId;
-    }
-
-    @Schema(description = "PutGroupsGroupIdResponse")
-    public static final class PutGroupsGroupIdResponse {
-
-        private PutGroupsGroupIdResponse() {}
-
-        static final class PutGroupsGroupIdChanges {
-
-            private PutGroupsGroupIdChanges() {}
-
-            @Schema(example = "First Group (changed)")
-            public String name;
-            @Schema(example = "externalId1")
-            public String externalId;
-            @Schema(example = "1")
-            public Long staffId;
-        }
-
-        @Schema(example = "1")
-        public Long officeId;
-        @Schema(example = "1")
-        public Long groupId;
-        @Schema(example = "1")
-        public Long resourceId;
-        public PutGroupsGroupIdChanges changes;
     }
 
     @Schema(description = "GetGroupsGroupIdAccountsResponse")

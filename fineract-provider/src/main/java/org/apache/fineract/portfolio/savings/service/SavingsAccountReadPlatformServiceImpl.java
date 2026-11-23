@@ -382,9 +382,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("tr.id as transactionId, tr.transaction_type_enum as transactionType, ");
             sqlBuilder.append("tr.transaction_date as transactionDate, tr.amount as transactionAmount,");
             sqlBuilder.append("tr.submitted_on_date as transSubmittedOnDate,tr.cumulative_balance_derived as cumulativeBalance,");
-            sqlBuilder.append("tr.running_balance_derived as runningBalance, tr.is_reversed as reversed,");
+            sqlBuilder.append("tr.running_balance_derived as runningBalance, tr.is_reversed as reversed, tr.is_reversal as reversal,");
             sqlBuilder.append("tr.balance_end_date_derived as balanceEndDate, tr.overdraft_amount_derived as overdraftAmount,");
-            sqlBuilder.append("tr.is_manual as manualTransaction,tr.office_id as officeId, ");
+            sqlBuilder.append("tr.is_manual as manualTransaction, tr.is_force_transaction as forceTransaction, tr.office_id as officeId, ");
             sqlBuilder.append("pd.payment_type_id as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, ");
             sqlBuilder.append("pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode, ");
             sqlBuilder.append("pt.value as paymentTypeName, ");
@@ -432,7 +432,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -675,10 +675,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     final BigDecimal outstandingChargeAmount = null;
                     final BigDecimal runningBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "runningBalance");
                     final boolean reversed = rs.getBoolean("reversed");
+                    final boolean reversal = rs.getBoolean("reversal");
                     final Long officeId = rs.getLong("officeId");
                     final BigDecimal cumulativeBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "cumulativeBalance");
 
-                    final boolean postInterestAsOn = false;
+                    final boolean manualTransaction = rs.getBoolean("manualTransaction");
 
                     PaymentDetailData paymentDetailData = null;
                     if (transactionType.isDepositOrWithdrawal()) {
@@ -693,8 +694,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
                     savingsAccountTransactionData = SavingsAccountTransactionData.create(transactionId, transactionType, paymentDetailData,
                             id, accountNo, date, currency, amount, outstandingChargeAmount, runningBalance, reversed, transSubmittedOnDate,
-                            postInterestAsOn, cumulativeBalance, balanceEndDate);
+                            manualTransaction, cumulativeBalance, balanceEndDate, reversal);
                     savingsAccountTransactionData.setOverdraftAmount(overdraftAmount);
+                    savingsAccountTransactionData.setForceTransaction(rs.getBoolean("forceTransaction"));
 
                     transMap.put("id", transactionId);
                     if (savingsAccountData.getOfficeId() == null) {
@@ -775,7 +777,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -953,7 +955,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -1170,7 +1172,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -1242,7 +1244,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -1419,7 +1421,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 

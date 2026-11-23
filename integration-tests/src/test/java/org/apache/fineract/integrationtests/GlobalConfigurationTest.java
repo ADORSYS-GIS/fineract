@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.client.feign.FineractFeignClient;
@@ -193,12 +194,12 @@ public class GlobalConfigurationTest {
         GlobalConfigurationPropertyData restricted = globalConfigurationHelper
                 .retrieveConfigurationByName(GlobalConfigurationConstants.CHARGE_ACCRUAL_DATE);
         assertEquals(List.of("due-date", "submitted-date"), restricted.getAllowedValues());
-        assertEquals(Boolean.FALSE, restricted.getMultipleValuesAllowed());
+        assertEquals(Boolean.valueOf(false), restricted.getMultipleValuesAllowed());
 
         GlobalConfigurationPropertyData multiple = globalConfigurationHelper
                 .retrieveConfigurationByName(GlobalConfigurationConstants.ACCOUNT_MAPPING_FOR_CHARGE);
         assertEquals(List.of("Income", "Liability", "Expense"), multiple.getAllowedValues());
-        assertEquals(Boolean.TRUE, multiple.getMultipleValuesAllowed());
+        assertEquals(Boolean.valueOf(true), multiple.getMultipleValuesAllowed());
 
         GlobalConfigurationPropertyData unrestricted = globalConfigurationHelper
                 .retrieveConfigurationByName(GlobalConfigurationConstants.PENALTY_WAIT_PERIOD);
@@ -292,8 +293,8 @@ public class GlobalConfigurationTest {
     @Test
     public void testPpiDatatableRegistrationIsVisibleAsAConfigurationWithTheSingleNodeCache() {
         final String appTable = "m_client";
-        final String datatableName = ok(() -> fineractClient.dataTables()
-                .createDatatable(new PostDataTablesRequest().datatableName(Utils.uniqueRandomStringGenerator("dt_ppi_", 5).toLowerCase())
+        final String datatableName = ok(() -> fineractClient.dataTables().createDatatable(
+                new PostDataTablesRequest().datatableName(Utils.uniqueRandomStringGenerator("dt_ppi_", 5).toLowerCase(Locale.ROOT))
                         .apptableName(appTable).entitySubType("PERSON").multiRow(false)
                         .addColumnsItem(new PostColumnHeaderData().name("score").type("Number").mandatory(false))))
                 .getResourceIdentifier();

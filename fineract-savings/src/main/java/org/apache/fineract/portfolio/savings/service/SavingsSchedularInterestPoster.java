@@ -63,14 +63,14 @@ public class SavingsSchedularInterestPoster {
 
     private static final String SAVINGS_TRANSACTION_IDENTIFIER = "S";
 
-    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
-    private final JdbcTemplate jdbcTemplate;
-    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
-    private final PlatformSecurityContext platformSecurityContext;
+    protected final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+    protected final JdbcTemplate jdbcTemplate;
+    protected final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
+    protected final PlatformSecurityContext platformSecurityContext;
 
-    private final List<SavingsAccountData> savingsAccountDataList = new ArrayList<>();
-    private Collection<SavingsAccountData> savingAccounts;
-    private boolean backdatedTxnsAllowedTill;
+    protected final List<SavingsAccountData> savingsAccountDataList = new ArrayList<>();
+    protected Collection<SavingsAccountData> savingAccounts;
+    protected boolean backdatedTxnsAllowedTill;
 
     // Runs through the JDBC transaction manager (not the primary JPA one) so READ_UNCOMMITTED is applied per-connection
     // by DataSourceTransactionManager rather than via EclipseLink's shared DatabaseLogin. This keeps the primary JPA
@@ -332,8 +332,8 @@ public class SavingsSchedularInterestPoster {
                             savingsAccountTransactionData.getBalanceNumberOfDays(), savingsAccountTransactionData.getRunningBalance(),
                             savingsAccountTransactionData.getCumulativeBalance(), auditTime, userId, auditTime, userId,
                             savingsAccountTransactionData.isManualTransaction(), savingsAccountTransactionData.getRefNo(),
-                            savingsAccountTransactionData.isReversalTransaction(), savingsAccountTransactionData.getOverdraftAmount(),
-                            currentDate });
+                            savingsAccountTransactionData.isReversalTransaction(), savingsAccountTransactionData.isForceTransaction(),
+                            savingsAccountTransactionData.getOverdraftAmount(), currentDate });
                 } else {
                     updateParams.add(new Object[] { savingsAccountTransactionData.isReversed(), savingsAccountTransactionData.getAmount(),
                             savingsAccountTransactionData.getOverdraftAmount(), savingsAccountTransactionData.getBalanceEndDate(),
@@ -428,8 +428,8 @@ public class SavingsSchedularInterestPoster {
         return "INSERT INTO m_savings_account_transaction (savings_account_id, office_id, is_reversed, transaction_type_enum, transaction_date, transaction_time, transaction_time_offset, amount, balance_end_date_derived, "
                 + "balance_number_of_days_derived, running_balance_derived, cumulative_balance_derived, " + CREATED_DATE_DB_FIELD + ", "
                 + CREATED_BY_DB_FIELD + ", " + LAST_MODIFIED_DATE_DB_FIELD + ", " + LAST_MODIFIED_BY_DB_FIELD
-                + ", is_manual, ref_no, is_reversal, "
-                + "overdraft_amount_derived, submitted_on_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + ", is_manual, ref_no, is_reversal, is_force_transaction, "
+                + "overdraft_amount_derived, submitted_on_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 
     private String batchQueryForSavingsSummaryUpdate() {

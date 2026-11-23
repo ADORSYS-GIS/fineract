@@ -508,9 +508,9 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
                 .findUnReversedSystemJournalEntriesByTransactionId(SAVINGS_TRANSACTION_IDENTIFIER + transactionId);
         for (final JournalEntry journalEntry : journalEntries) {
             persistJournalEntry(JournalEntry.createNew(journalEntry.getOffice(), journalEntry.getPaymentDetail(),
-                    journalEntry.getGlAccount(), journalEntry.getCurrencyCode(), journalEntry.getTransactionId(), Boolean.FALSE,
-                    transactionDate, journalEntry.isDebitEntry() ? JournalEntryType.CREDIT : JournalEntryType.DEBIT,
-                    journalEntry.getAmount(), journalEntry.getDescription(), journalEntry.getEntityType(), journalEntry.getEntityId(),
+                    journalEntry.getGlAccount(), journalEntry.getCurrencyCode(), journalEntry.getTransactionId(), false, transactionDate,
+                    journalEntry.isDebitEntry() ? JournalEntryType.CREDIT : JournalEntryType.DEBIT, journalEntry.getAmount(),
+                    journalEntry.getDescription(), journalEntry.getEntityType(), journalEntry.getEntityId(),
                     journalEntry.getReferenceNumber(), journalEntry.getLoanTransactionId(), journalEntry.getSavingsTransactionId(),
                     journalEntry.getClientTransactionId(), journalEntry.getShareTransactionId()));
         }
@@ -944,11 +944,11 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
     }
 
     private static ChargePaymentDTO singleChargePayment(final List<ChargePaymentDTO> chargePaymentDTOs) {
-        /**
+        /*
          * Accounting module currently supports a single charge per transaction, throw an error if this is not the case
          * here so any developers changing the expected portfolio behavior would also take care of modifying the
          * accounting code appropriately
-         **/
+         */
         if (chargePaymentDTOs.size() != 1) {
             throw new PlatformDataIntegrityException("Recent Portfolio changes w.r.t Charges for Savings have Broken the accounting code",
                     "Recent Portfolio changes w.r.t Charges for Savings have Broken the accounting code");
@@ -1292,10 +1292,10 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
             ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(loanProductId,
                     PortfolioProductType.LOAN.getValue(), accountMappingTypeId);
 
-            /****
+            /*
              * Get more specific mapping for FUND source accounts (based on payment channels). Note that fund source
              * placeholder ID would be same for both cash and accrual accounts
-             ***/
+             */
             if (accountMappingTypeId == CashAccountsForLoan.FUND_SOURCE.getValue()) {
                 final ProductToGLAccountMapping paymentChannelSpecificAccountMapping = this.accountMappingRepository
                         .findByProductIdAndProductTypeAndFinancialAccountTypeAndPaymentTypeId(loanProductId,
@@ -1318,11 +1318,11 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
     private GLAccount getLinkedGLAccountForLoanCharges(final Long loanProductId, final int accountMappingTypeId, final Long chargeId) {
         ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(loanProductId,
                 PortfolioProductType.LOAN.getValue(), accountMappingTypeId);
-        /*****
+        /*
          * Get more specific mappings for Charges and penalties (based on the actual charge /penalty coupled with the
          * loan product). Note the income from fees and income from penalties placeholder ID would be the same for both
          * cash and accrual based accounts
-         *****/
+         */
 
         // Check for charge-specific mappings for all account types (not just income accounts)
         // This allows charge-specific GL account mappings for debit accounts as well
@@ -1342,11 +1342,11 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
 
         ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(savingsProductId,
                 PortfolioProductType.SAVING.getValue(), accountMappingTypeId);
-        /*****
+        /*
          * Get more specific mappings for Charges and penalties (based on the actual charge /penalty coupled with the
          * loan product). Note the income from fees and income from penalties placeholder ID would be the same for both
          * cash and accrual based accounts
-         *****/
+         */
 
         // Vishwas TODO: remove this condition as it should always be true
 
@@ -1378,10 +1378,10 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
         } else {
             ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(savingsProductId,
                     PortfolioProductType.SAVING.getValue(), accountMappingTypeId);
-            /****
+            /*
              * Get more specific mapping for FUND source accounts (based on payment channels). Note that fund source
              * placeholder ID would be same for both cash and accrual accounts
-             ***/
+             */
             if (accountMappingTypeId == CashAccountsForSavings.SAVINGS_REFERENCE.getValue()) {
                 final ProductToGLAccountMapping paymentChannelSpecificAccountMapping = this.accountMappingRepository
                         .findByProductIdAndProductTypeAndFinancialAccountTypeAndPaymentTypeId(savingsProductId,
@@ -1422,11 +1422,11 @@ public class AccountingProcessorHelperImpl implements AccountingProcessorHelper 
     private GLAccount getLinkedGLAccountForShareCharges(final Long shareProductId, final int accountMappingTypeId, final Long chargeId) {
         ProductToGLAccountMapping accountMapping = this.accountMappingRepository.findCoreProductToFinAccountMapping(shareProductId,
                 PortfolioProductType.SHARES.getValue(), accountMappingTypeId);
-        /*****
+        /*
          * Get more specific mappings for Charges and penalties (based on the actual charge /penalty coupled with the
          * loan product). Note the income from fees and income from penalties placeholder ID would be the same for both
          * cash and accrual based accounts
-         *****/
+         */
 
         final ProductToGLAccountMapping chargeSpecificIncomeAccountMapping = this.accountMappingRepository
                 .findProductIdAndProductTypeAndFinancialAccountTypeAndChargeId(shareProductId, PortfolioProductType.SHARES.getValue(),
