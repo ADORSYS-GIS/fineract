@@ -14,7 +14,7 @@ import org.apache.fineract.organisation.monetary.domain.OrganisationCurrency;
 import org.apache.fineract.organisation.monetary.domain.OrganisationCurrencyRepository;
 import org.apache.fineract.organisation.monetary.exception.CurrencyInUseException;
 import org.apache.fineract.organisation.monetary.service.CurrencyWritePlatformService;
-import org.apache.fineract.portfolio.charge.service.ChargeReadPlatformService;
+import org.apache.fineract.portfolio.charge.service.ChargeReadService;
 import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.springframework.beans.factory.InitializingBean;
@@ -37,7 +37,7 @@ public class CustomCurrencyWritePlatformService implements CurrencyWritePlatform
     private final OrganisationCurrencyRepository organisationCurrencyRepository;
     private final LoanProductReadPlatformService loanProductService;
     private final SavingsProductReadPlatformService savingsProductService;
-    private final ChargeReadPlatformService chargeService;
+    private final ChargeReadService chargeService;
 
     @Override
     public void afterPropertiesSet() {
