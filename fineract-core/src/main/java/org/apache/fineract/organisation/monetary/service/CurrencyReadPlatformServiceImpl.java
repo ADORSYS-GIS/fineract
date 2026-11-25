@@ -37,9 +37,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private final SQLQueryFactory queryFactory;
-    private final CurrencyRowMapper currencyRowMapper = new CurrencyRowMapper();
+    protected final JdbcTemplate jdbcTemplate;
+    protected final SQLQueryFactory queryFactory;
+    protected final CurrencyRowMapper currencyRowMapper = new CurrencyRowMapper();
 
     @Override
     public List<CurrencyData> retrieveAllowedCurrencies() {
@@ -50,9 +50,7 @@ public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformServ
 
     @Override
     public List<CurrencyData> retrieveAllPlatformCurrencies() {
-        final String sql = "select " + this.currencyRowMapper.schema() + " from m_currency c order by c.name";
-
-        return this.jdbcTemplate.query(sql, this.currencyRowMapper); // NOSONAR
+        return queryFactory.select(new CurrencyDataProjection()).from(mCurrency).orderBy(mCurrency.name.asc()).fetch();
     }
 
     @Override
@@ -83,7 +81,7 @@ public class CurrencyReadPlatformServiceImpl implements CurrencyReadPlatformServ
             return new CurrencyData(code, name, decimalPlaces, inMultiplesOf, displaySymbol, nameCode);
         }
 
-        public String schema() {
+        private String schema() {
             return " c.code as code, c.name as name, c.decimal_places as decimalPlaces,c.currency_multiplesof as inMultiplesOf, c.display_symbol as displaySymbol, c.internationalized_name_code as nameCode ";
         }
     }

@@ -37,6 +37,7 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.portfolio.interestratechart.data.InterestRateChartValidator;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChartFields;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChartRepositoryWrapper;
@@ -45,9 +46,9 @@ import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChartS
 @RequiredArgsConstructor
 public class InterestRateChartAssembler {
 
-    private final FromJsonHelper fromApiJsonHelper;
-    private final InterestRateChartRepositoryWrapper interestRateChartRepositoryWrapper;
-    private final InterestRateChartSlabAssembler chartSlabAssembler;
+    protected final FromJsonHelper fromApiJsonHelper;
+    protected final InterestRateChartRepositoryWrapper interestRateChartRepositoryWrapper;
+    protected final InterestRateChartSlabAssembler chartSlabAssembler;
 
     /**
      * Assembles a new {@link InterestRateChart} from JSON Slabs passed in request
@@ -87,7 +88,7 @@ public class InterestRateChartAssembler {
         final InterestRateChartFields fields = InterestRateChartFields.createNew(name, description, fromDate, toDate,
                 isPrimaryGroupingByAmount);
         final InterestRateChart newChart = InterestRateChart.createNew(fields, newChartSlabs);
-        newChart.validateChartSlabs(baseDataValidator);
+        InterestRateChartValidator.validateChartSlabs(newChart, baseDataValidator);
         return newChart;
     }
 

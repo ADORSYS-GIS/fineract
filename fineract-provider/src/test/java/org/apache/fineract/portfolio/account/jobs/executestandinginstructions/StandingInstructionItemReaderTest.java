@@ -31,7 +31,7 @@ import java.util.List;
 import org.apache.fineract.portfolio.account.data.StandingInstructionData;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionPriority;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
-import org.apache.fineract.portfolio.account.service.StandingInstructionReadPlatformService;
+import org.apache.fineract.portfolio.account.service.StandingInstructionReadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,14 +49,14 @@ class StandingInstructionItemReaderTest {
     private static final int PAGE_SIZE = 2;
 
     @Mock
-    private StandingInstructionReadPlatformService readService;
+    private StandingInstructionReadService readService;
 
     private StandingInstructionItemReader reader;
 
     @BeforeEach
     void setUp() {
         reader = new StandingInstructionItemReader(PAGE_SIZE, readService);
-        final StepExecution stepExecution = new StepExecution(ExecuteStandingInstructionsConstant.WORKER_STEP,
+        final StepExecution stepExecution = new StepExecution(1L, ExecuteStandingInstructionsConstant.WORKER_STEP,
                 new JobExecution(1L, new JobInstance(1L, ExecuteStandingInstructionsConstant.JOB_NAME), new JobParameters()));
         stepExecution.getExecutionContext().putLong(ExecuteStandingInstructionsConstant.MIN_ACCOUNT_KEY, 100L);
         stepExecution.getExecutionContext().putLong(ExecuteStandingInstructionsConstant.MAX_ACCOUNT_KEY, 199L);

@@ -45,8 +45,8 @@ import org.springframework.jdbc.core.RowMapper;
 @RequiredArgsConstructor
 public class AccountingRuleReadPlatformServiceImpl implements AccountingRuleReadPlatformService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private final GLAccountReadPlatformService glAccountReadPlatformService;
+    protected final JdbcTemplate jdbcTemplate;
+    protected final GLAccountReadPlatformService glAccountReadPlatformService;
 
     private static final class AccountingRuleDataExtractor implements ResultSetExtractor<Map<Long, AccountingRuleData>> {
 
@@ -72,7 +72,7 @@ public class AccountingRuleReadPlatformServiceImpl implements AccountingRuleRead
             this.schemaSql = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schemaSql;
         }
 
@@ -184,7 +184,7 @@ public class AccountingRuleReadPlatformServiceImpl implements AccountingRuleRead
 
     private static final class AccountingTagRuleDataMapper implements RowMapper<AccountingTagRuleData> {
 
-        public String taggedAccountSchema() {
+        private String taggedAccountSchema() {
             return " tag.id as id,tag.tag_id as tagId, tag.acc_type_enum as transactionType, cv.code_value as tagName from m_code_value cv join acc_rule_tags tag on tag.tag_id=cv.id "
                     + "join acc_accounting_rule rule on tag.acc_rule_id=rule.id ";
         }

@@ -25,11 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.apache.fineract.client.models.JournalEntryTransactionItem;
+import org.apache.fineract.client.models.PostSavingsAccountTransactionsResponse;
 import org.apache.fineract.client.models.PostSavingsProductsRequest;
 import org.apache.fineract.client.models.PostTaxesComponentsRequest;
 import org.apache.fineract.client.models.PostTaxesGroupRequest;
@@ -49,6 +51,8 @@ import org.apache.fineract.integrationtests.common.accounting.Account;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @Order(2)
 public class SavingsInterestPostingJobIntegrationTest extends FeignSavingsTestBase {
@@ -278,7 +282,7 @@ public class SavingsInterestPostingJobIntegrationTest extends FeignSavingsTestBa
         schedulerHelper.executeAndAwaitJob(POST_INTEREST_JOB_NAME);
 
         final SavingsAccountTransactionData holdTransaction = savingsTransactionHelper.getTransaction(savingsId, holdTransactionId);
-        assertEquals(Boolean.FALSE, holdTransaction.getReversed(), "Interest posting must not reverse the hold transaction");
+        assertEquals(Boolean.valueOf(false), holdTransaction.getReversed(), "Interest posting must not reverse the hold transaction");
         SavingsTestValidators.verifyAmount(new BigDecimal("-100"), holdTransaction.getRunningBalance(),
                 "Hold running balance must remain equal to the ledger balance");
         assertEquals(0,
@@ -442,6 +446,65 @@ public class SavingsInterestPostingJobIntegrationTest extends FeignSavingsTestBa
             final Predicate<SavingsAccountTransactionData> type) {
         return savingsTransactionHelper.getTransactions(savingsId).stream().filter(t -> reversed == Boolean.TRUE.equals(t.getReversed()))
                 .filter(t -> t.getTransactionType() != null).filter(type);
+    }
+
+    @ParameterizedTest(name = "interest posted on the period end date: {0}")
+    @ValueSource(booleans = { false, true })
+    public void testPostInterestJobDoesNotPostManuallyPostedInterestAgain(final boolean postAtPeriodEnd) {
+        globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.SAVINGS_INTEREST_POSTING_CURRENT_PERIOD_END,
+                new PutGlobalConfigurationsRequest().enabled(postAtPeriodEnd));
+        final Long savingsId = createActiveSavings("01 March 2019",
+                createSavingsProduct(SavingsRequestBuilders
+                        .savingsProduct(SavingsTestData.InterestCompoundingPeriodType.MONTHLY,
+                                SavingsTestData.InterestPostingPeriodType.MONTHLY, SavingsTestData.InterestCalculationType.DAILY_BALANCE)
+                        .nominalAnnualInterestRate(11.0)).getResourceId());
+        deposit(savingsId, "20013", "01 March 2019");
+        // posting as on a past date would also post the interest due up to the business date, leaving nothing to the
+        // job
+        runAt("25 March 2019", () -> savingsTransactionHelper.postInterestAsOn(savingsId, "25 March 2019"));
+        runAt("01 April 2019", () -> schedulerHelper.executeAndAwaitJob(POST_INTEREST_JOB_NAME));
+
+        final List<SavingsAccountTransactionData> interestPostings = savingsTransactionHelper.getTransactions(savingsId).stream()
+                .filter(transaction -> Boolean.TRUE.equals(transaction.getTransactionType().getInterestPosting()))
+                .filter(transaction -> !Boolean.TRUE.equals(transaction.getReversed()))
+                .sorted(Comparator.comparing(SavingsAccountTransactionData::getDate)).toList();
+        final int postingDayOffset = postAtPeriodEnd ? 1 : 0;
+
+        assertEquals(2, interestPostings.size(), "The manual posting and the posting for the rest of March");
+        // 20013 x 11% x 24 / 365 for 1 to 24 March
+        SavingsTestValidators.verifyAmount(new BigDecimal("144.7516"), interestPostings.get(0).getAmount(), "Manually posted interest");
+        assertEquals(LocalDate.of(2019, Month.MARCH, 25).minusDays(postingDayOffset), interestPostings.get(0).getDate(),
+                "Date of the manual posting");
+        // 20013 x 11% x 7 / 365 for 25 to 31 March
+        SavingsTestValidators.verifyAmount(new BigDecimal("42.2192"), interestPostings.get(1).getAmount(),
+                "The job must post only the interest of the days after the manual posting");
+        assertEquals(LocalDate.of(2019, Month.APRIL, 1).minusDays(postingDayOffset), interestPostings.get(1).getDate(),
+                "Date of the posting by the job");
+    }
+
+    @Test
+    public void testForceFlagSurvivesInterestPostingJobReplacement() {
+        businessDateHelper.runAt("2022-04-13", () -> {
+            globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.FORCE_WITHDRAWAL_ON_SAVINGS_ACCOUNT,
+                    new PutGlobalConfigurationsRequest().value(1000L).enabled(true));
+
+            final String forcedWithdrawalDate = "12 April 2022";
+            final Long savingsId = createActiveDailyPostingSavings(START_DATE);
+
+            deposit(savingsId, "100", START_DATE);
+            final PostSavingsAccountTransactionsResponse forced = savingsTransactionHelper.forceWithdraw(savingsId, "110",
+                    forcedWithdrawalDate);
+            deposit(savingsId, "60", forcedWithdrawalDate);
+
+            schedulerHelper.executeAndAwaitJob(POST_INTEREST_JOB_NAME);
+
+            final boolean originalWasReplaced = savingsTransactionHelper.getTransactions(savingsId).stream()
+                    .anyMatch(t -> forced.getResourceId().equals(t.getId()) && Boolean.TRUE.equals(t.getReversed()));
+            assertTrue(originalWasReplaced, "The job did not replace the forced withdrawal, so this test does not exercise the copy");
+
+            final PostSavingsAccountTransactionsResponse regular = savingsTransactionHelper.withdraw(savingsId, "3", "13 April 2022");
+            assertNotNull(regular.getResourceId(), "Regular withdrawal failed after the job replaced the forced withdrawal");
+        });
     }
 
     private long countActiveTransactionsOn(final Long savingsId, final LocalDate date) {

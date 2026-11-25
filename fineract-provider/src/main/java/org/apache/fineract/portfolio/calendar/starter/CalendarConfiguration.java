@@ -22,7 +22,6 @@ import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDoma
 import org.apache.fineract.portfolio.calendar.domain.CalendarHistoryRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.apache.fineract.portfolio.calendar.domain.CalendarRepository;
-import org.apache.fineract.portfolio.calendar.serialization.CalendarCommandFromApiJsonDeserializer;
 import org.apache.fineract.portfolio.calendar.service.CalendarDropdownReadPlatformService;
 import org.apache.fineract.portfolio.calendar.service.CalendarDropdownReadPlatformServiceImpl;
 import org.apache.fineract.portfolio.calendar.service.CalendarReadPlatformService;
@@ -33,6 +32,7 @@ import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.group.domain.GroupRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.service.LoanWritePlatformService;
+import org.apache.fineract.portfolio.meeting.domain.MeetingRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,12 +57,12 @@ public class CalendarConfiguration {
     @Bean
     @ConditionalOnMissingBean(CalendarWritePlatformService.class)
     public CalendarWritePlatformService calendarWritePlatformService(CalendarRepository calendarRepository,
-            CalendarHistoryRepository calendarHistoryRepository, CalendarCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            CalendarInstanceRepository calendarInstanceRepository, LoanWritePlatformService loanWritePlatformService,
-            ConfigurationDomainService configurationDomainService, GroupRepositoryWrapper groupRepository,
-            LoanRepositoryWrapper loanRepositoryWrapper, ClientRepositoryWrapper clientRepository) {
-        return new CalendarWritePlatformServiceJpaRepositoryImpl(calendarRepository, calendarHistoryRepository, fromApiJsonDeserializer,
-                calendarInstanceRepository, loanWritePlatformService, configurationDomainService, groupRepository, loanRepositoryWrapper,
-                clientRepository);
+            CalendarHistoryRepository calendarHistoryRepository, CalendarInstanceRepository calendarInstanceRepository,
+            LoanWritePlatformService loanWritePlatformService, ConfigurationDomainService configurationDomainService,
+            GroupRepositoryWrapper groupRepository, LoanRepositoryWrapper loanRepositoryWrapper, ClientRepositoryWrapper clientRepository,
+            MeetingRepository meetingRepository) {
+        return new CalendarWritePlatformServiceJpaRepositoryImpl(calendarRepository, calendarHistoryRepository, calendarInstanceRepository,
+                loanWritePlatformService, configurationDomainService, groupRepository, loanRepositoryWrapper, clientRepository,
+                meetingRepository);
     }
 }

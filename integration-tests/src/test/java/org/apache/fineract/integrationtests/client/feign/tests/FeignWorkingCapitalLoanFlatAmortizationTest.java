@@ -52,6 +52,7 @@ import org.apache.fineract.integrationtests.client.feign.helpers.FeignClientHelp
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignJournalEntryHelper;
 import org.apache.fineract.integrationtests.client.feign.helpers.FeignWorkingCapitalLoanHelper;
 import org.apache.fineract.integrationtests.client.feign.modules.WorkingCapitalLoanRequestBuilders;
+import org.apache.fineract.integrationtests.common.Utils;
 import org.apache.fineract.integrationtests.common.accounting.Account;
 import org.apache.fineract.integrationtests.common.workingcapitalloanproduct.WorkingCapitalLoanProductHelper;
 import org.apache.fineract.integrationtests.common.workingcapitalloanproduct.WorkingCapitalLoanProductTestBuilder;
@@ -316,7 +317,7 @@ public class FeignWorkingCapitalLoanFlatAmortizationTest extends FeignIntegratio
             wcLoanHelper.executeInlineWCCOB(loanId);
 
             final GetWorkingCapitalLoansLoanIdResponse loan = wcLoanHelper.getLoanDetails(loanId);
-            assertEquals(Boolean.TRUE, loan.getStatus().getClosedObligationsMet(), "9000 + 1000 paid in full closes the loan");
+            assertEquals(Boolean.valueOf(true), loan.getStatus().getClosedObligationsMet(), "9000 + 1000 paid in full closes the loan");
 
             final List<GetWorkingCapitalLoanTransactionIdResponse> amortizations = amortizationTransactions(loanId);
             assertEquals(3, amortizations.size(), "one amortization per repayment");
@@ -403,7 +404,7 @@ public class FeignWorkingCapitalLoanFlatAmortizationTest extends FeignIntegratio
             wcLoanHelper.executeInlineWCCOB(loanId);
 
             final GetWorkingCapitalLoansLoanIdResponse loan = wcLoanHelper.getLoanDetails(loanId);
-            assertEquals(Boolean.TRUE, loan.getStatus().getClosedObligationsMet(), "9500 + 500 paid in full closes the loan");
+            assertEquals(Boolean.valueOf(true), loan.getStatus().getClosedObligationsMet(), "9500 + 500 paid in full closes the loan");
             final List<GetWorkingCapitalLoanTransactionIdResponse> amortizations = amortizationTransactions(loanId);
             assertEquals(3, amortizations.size(), "one amortization per repayment");
             assertEqualBigDecimal(new BigDecimal("495.00"), amortizations.get(2).getTransactionAmount(), "closing amortization");
@@ -470,7 +471,7 @@ public class FeignWorkingCapitalLoanFlatAmortizationTest extends FeignIntegratio
             wcLoanHelper.executeInlineWCCOB(loanId);
 
             final GetWorkingCapitalLoansLoanIdResponse loan = wcLoanHelper.getLoanDetails(loanId);
-            assertEquals(Boolean.TRUE, loan.getStatus().getClosedObligationsMet(), "9000 paid in full closes the loan");
+            assertEquals(Boolean.valueOf(true), loan.getStatus().getClosedObligationsMet(), "9000 paid in full closes the loan");
             assertEquals(1, amortizationTransactions(loanId).size(), "the payoff earns nothing either");
             assertEquals(1, adjustmentTransactions(loanId).size(), "the payoff must not need a second adjustment");
             assertEqualBigDecimal(BigDecimal.ZERO, netAmortization(loanId), "fully paid: net amortization equals the fee, which is zero");
@@ -672,7 +673,7 @@ public class FeignWorkingCapitalLoanFlatAmortizationTest extends FeignIntegratio
     private WorkingCapitalLoanProductTestBuilder productBuilder(final String amortizationType) {
         return new WorkingCapitalLoanProductTestBuilder()
                 .withName("WCL " + amortizationType + " " + UUID.randomUUID().toString().substring(0, 8))
-                .withShortName(UUID.randomUUID().toString().replace("-", "").substring(0, 4)).withAmortizationType(amortizationType)
+                .withShortName(Utils.uniqueRandomStringGenerator("", 4)).withAmortizationType(amortizationType)
                 .withAllowAttributeOverrides(Map.of("discountDefault", Boolean.TRUE)).withAccountingRule(AccountingRuleEnum.ACC_DEF_REV_AM)
                 .withFundSourceAccountId(fundSourceAccount.getAccountID().longValue())
                 .withLoanPortfolioAccountId(loanPortfolioAccount.getAccountID().longValue())

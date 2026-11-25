@@ -35,6 +35,7 @@ import org.apache.fineract.organisation.staff.exception.StaffNotFoundException;
 import org.apache.fineract.organisation.staff.service.StaffReadService;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationType;
+import org.apache.fineract.portfolio.client.contract.ClientObligeeReadService;
 import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
@@ -55,7 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformService {
+public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformService, ClientObligeeReadService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuarantorReadPlatformServiceImpl.class);
 
@@ -143,7 +144,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                 .append(" left join m_deposit_account_on_hold_transaction oht on oht.id = gt.deposit_on_hold_transaction_id")//
                 .append(" left JOIN m_savings_account sa on sa.id = COALESCE(aa.linked_savings_account_id, oht.savings_account_id)");
 
-        public String schema() {
+        private String schema() {
             return this.sqlBuilder.toString();
         }
 
@@ -215,7 +216,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
             sql = sb.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.sql;
         }
 
@@ -270,7 +271,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
             sql = sb.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.sql;
         }
 
@@ -354,7 +355,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
             sql = sb.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.sql;
         }
 

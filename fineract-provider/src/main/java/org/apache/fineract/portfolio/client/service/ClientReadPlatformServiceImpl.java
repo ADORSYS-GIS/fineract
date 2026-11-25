@@ -18,14 +18,12 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +57,7 @@ import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.domain.ClientStatus;
 import org.apache.fineract.portfolio.client.exception.ClientNotFoundException;
 import org.apache.fineract.portfolio.client.mapper.ClientMapper;
-import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagement;
-import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagementRepositoryWrapper;
+import org.apache.fineract.portfolio.collateralmanagement.service.ClientCollateralReadService;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -86,7 +83,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ParentGroupsMapper clientGroupsMapper = new ParentGroupsMapper();
 
     private final ColumnValidator columnValidator;
-    private final ClientCollateralManagementRepositoryWrapper clientCollateralManagementRepositoryWrapper;
+    private final ClientCollateralReadService clientCollateralReadService;
     private final ClientRepositoryWrapper clientRepositoryWrapper;
     private final ClientNonPersonRepositoryWrapper clientNonPersonRepositoryWrapper;
     private final ClientMapper clientMapper;
@@ -232,20 +229,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                 clientData.setClientNonPersonDetails(toClientNonPersonData(clientNonPerson));
             }
 
-            // Get client collaterals
-            final Collection<ClientCollateralManagement> clientCollateralManagements = this.clientCollateralManagementRepositoryWrapper
-                    .getCollateralsPerClient(clientId);
-            final Set<ClientCollateralManagementData> clientCollateralManagementDataSet = new HashSet<>();
-
-            // Map to client collateral data class
-            for (ClientCollateralManagement clientCollateralManagement : clientCollateralManagements) {
-                BigDecimal total = clientCollateralManagement.getTotal();
-                BigDecimal totalCollateral = clientCollateralManagement.getTotalCollateral(total);
-                clientCollateralManagementDataSet.add(new ClientCollateralManagementData(clientCollateralManagement.getId(),
-                        clientCollateralManagement.getCollaterals().getName(), clientCollateralManagement.getQuantity(),
-                        clientCollateralManagement.getCollaterals().getPctToBase(),
-                        clientCollateralManagement.getCollaterals().getBasePrice(), total, totalCollateral));
-            }
+            // Get client collaterals (mapped to DTOs by the collateral-management module)
+            final Set<ClientCollateralManagementData> clientCollateralManagementDataSet = this.clientCollateralReadService
+                    .retrieveCollateralDataForClient(clientId);
 
             final String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();
 
@@ -391,7 +377,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             this.schema = sqlBuilder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schema;
         }
 
@@ -509,7 +495,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     private static final class ParentGroupsMapper implements RowMapper<GroupGeneralData> {
 
-        public String parentGroupsSchema() {
+        private String parentGroupsSchema() {
             return "gp.id As groupId , gp.account_no as accountNo, gp.display_name As groupName from m_client cl JOIN m_group_client gc ON cl.id = gc.client_id "
                     + "JOIN m_group gp ON gp.id = gc.group_id WHERE cl.id  = ?";
         }
@@ -540,7 +526,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             this.schema = builder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schema;
         }
 
@@ -571,7 +557,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
     private static final class ClientIdentifierMapper implements RowMapper<ClientData> {
 
-        public String clientLookupByIdentifierSchema() {
+        private String clientLookupByIdentifierSchema() {
             return "c.id as id, c.account_no as accountNo, c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, "
                     + "c.fullname as fullname, c.display_name as displayName," + "c.office_id as officeId, o.name as officeName "
                     + " from m_client c, m_office o, m_client_identifier ci " + "where o.id = c.office_id and c.id=ci.client_id "
@@ -673,7 +659,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             this.schema = builder.toString();
         }
 
-        public String schema() {
+        private String schema() {
             return this.schema;
         }
 

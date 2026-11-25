@@ -174,8 +174,8 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
                 BigDecimal officeRunningBalance = calculateRunningBalance(entryData, officeRunningBalanceMap);
                 BigDecimal runningBalance = calculateRunningBalance(entryData, runningBalanceMap);
 
-                params.add(new Object[] { Boolean.TRUE, runningBalance, officeRunningBalance,
-                        platformSecurityContext.authenticatedUser().getId(), DateUtils.getAuditOffsetDateTime(), entryData.getId() });
+                params.add(new Object[] { true, runningBalance, officeRunningBalance, platformSecurityContext.authenticatedUser().getId(),
+                        DateUtils.getAuditOffsetDateTime(), entryData.getId() });
                 batchIndex++;
                 if (batchIndex == batchUpdateSize || index == entryDataList.size() - 1) {
                     this.jdbcTemplate.batchUpdate(sql, params);
@@ -251,14 +251,14 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
 
     private static final class GLJournalEntryMapper implements RowMapper<JournalEntryData> {
 
-        public String officeRunningBalanceSchema() {
+        private String officeRunningBalanceSchema() {
             return "select je.id as id,je.account_id as glAccountId,je.type_enum as entryType,je.amount as amount, "
                     + "glAccount.classification_enum as classification,je.office_id as officeId "
                     + "from acc_gl_journal_entry je , acc_gl_account glAccount " + "where je.account_id = glAccount.id "
                     + "and je.office_id=? and je.entry_date >= ? order by je.entry_date,je.id";
         }
 
-        public String organizationRunningBalanceSchema() {
+        private String organizationRunningBalanceSchema() {
             return "select je.id as id,je.account_id as glAccountId," + "je.type_enum as entryType,je.amount as amount, "
                     + "glAccount.classification_enum as classification,je.office_id as officeId  "
                     + "from acc_gl_journal_entry je , acc_gl_account glAccount " + "where je.account_id = glAccount.id "
